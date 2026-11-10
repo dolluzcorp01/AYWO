@@ -1,5 +1,6 @@
 // The app's Text and TextInput: the same as React Native's, but they follow the large-text setting (LLD L9, scale 1.3).
 import { forwardRef } from 'react';
+import type { ComponentRef } from 'react';
 import { StyleSheet, Text as RNText, TextInput as RNTextInput } from 'react-native';
 import type { StyleProp, TextInputProps, TextProps, TextStyle } from 'react-native';
 import { useTextScale } from '@/lib/prefs';
@@ -21,7 +22,7 @@ export function Text({ style, ...rest }: TextProps) {
   return <RNText {...rest} style={scaled(style, scale)} />;
 }
 
-export const TextInput = forwardRef<RNTextInput, TextInputProps>(function TextInput({ style, ...rest }, ref) {
+export const TextInput = forwardRef<ComponentRef<typeof RNTextInput>, TextInputProps>(function TextInput({ style, ...rest }, ref) {
   const scale = useTextScale();
   return <RNTextInput {...rest} ref={ref} style={scaled(style, scale)} />;
 });

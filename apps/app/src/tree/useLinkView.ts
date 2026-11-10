@@ -11,11 +11,10 @@ export interface OutsiderNode {
 
 export type LinkAnswer =
   | { mode: 'member'; tree_id: string }
-  | (ApiTree & {
+  | (ApiTree<OutsiderNode> & {
       mode: 'outsider';
       tree_name: string;
       shared_by: string | null;
-      nodes: OutsiderNode[];
       labels?: Record<string, RelationInput>;
     });
 

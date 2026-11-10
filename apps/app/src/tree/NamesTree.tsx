@@ -31,7 +31,7 @@ const ZOOM_STEP = 1.25;
 
 interface Props {
   /** Family and outsiders use the same tree; outsider data has names and photos only. */
-  data: ApiTree & { nodes: { id: string; name: string; nameUnknown: boolean; photoUrl: string | null }[] };
+  data: ApiTree<{ id: string; name: string; nameUnknown: boolean; photoUrl: string | null }>;
   viewerId: string | null;
   onOpenPerson: (personId: string) => void;
   /** Room to leave at the bottom for the floating tab bar. */

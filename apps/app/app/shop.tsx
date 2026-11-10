@@ -62,7 +62,8 @@ export default function Shop() {
         },
         { description: t(`ops.shop.products.${product}`), methodLabel: t('ops.shop.pay') },
       ),
-    onSuccess: setState,
+    // 'bought' only comes from an in-app store purchase; it ends the same way as a started order.
+    onSuccess: (result) => setState(result === 'bought' ? 'started' : result),
   });
 
   const needsAddress = !!products.data?.needs_address;

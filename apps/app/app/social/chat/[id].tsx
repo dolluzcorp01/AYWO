@@ -199,7 +199,7 @@ export default function ChatRoom() {
               keyboardShouldPersistTaps="handled"
               ListEmptyComponent={<Note>{t('social.chat.sayHello')}</Note>}
               ListFooterComponent={
-                chat.hasNextPage ? <TextButton label={t('social.chat.older')} onPress={() => chat.fetchNextPage()} disabled={chat.isFetchingNextPage} /> : null
+                chat.hasNextPage ? <TextButton label={t('social.chat.older')} onPress={() => chat.fetchNextPage()} disabled={chat.isFetchingNextPage} /> : undefined
               }
             />
           )}

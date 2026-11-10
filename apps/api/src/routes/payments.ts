@@ -229,7 +229,7 @@ export async function paymentRoutes(app: FastifyInstance): Promise<void> {
       stripe.checkout.sessions.create({
         mode: 'subscription',
         // 'card' covers Apple Pay and Google Pay on Stripe's own page, where the browser supports them.
-        payment_method_types: ['card'],
+        allowed_payment_method_types: ['card'],
         line_items: [{ price: yearly ? config.STRIPE_PRICE_YEARLY : config.STRIPE_PRICE_MONTHLY, quantity: 1 }],
         client_reference_id: userId,
         ...(buyer.email ? { customer_email: buyer.email } : {}),
@@ -349,7 +349,7 @@ export async function paymentRoutes(app: FastifyInstance): Promise<void> {
       const session = await stripeCall(() =>
         stripe.checkout.sessions.create({
           mode: 'payment',
-          payment_method_types: ['card'],
+          allowed_payment_method_types: ['card'],
           // One line for the whole order, so a coupon's discount is exact whatever the quantity.
           line_items: [
             {
