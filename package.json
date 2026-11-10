@@ -1,0 +1,24 @@
+{
+  "name": "aywo",
+  "private": true,
+  "packageManager": "pnpm@12.16.1",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "pnpm --filter @aywo/app start",
+    "dev:api": "pnpm --filter @aywo/api dev",
+    "migrate": "pnpm --filter @aywo/api migrate",
+    "test": "vitest run",
+    "test:db": "pg_prove -h localhost -U aywo -d aywo db/tests/*.sql",
+    "typecheck": "tsc -p tsconfig.json --noEmit && pnpm --filter @aywo/api typecheck && pnpm --filter @aywo/app typecheck",
+    "locales:translate": "tsx --env-file=.env scripts/translate-locales.ts",
+    "locales:check": "tsx scripts/check-locales.ts",
+    "legal:check": "tsx scripts/check-legal.ts",
+    "kin:seed": "tsx --env-file=.env scripts/seed-kin-terms.ts"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": ">=0.136.0",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

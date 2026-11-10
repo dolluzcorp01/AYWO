@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@aywo/shared": ["../../packages/shared/src/index.ts"],
+      "@aywo/kinship": ["../../packages/kinship/src/index.ts"],
+      "@aywo/lighten": ["../../packages/lighten/src/index.ts"],
+      "@aywo/gedcom": ["../../packages/gedcom/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

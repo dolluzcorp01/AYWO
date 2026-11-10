@@ -1,0 +1,31 @@
+# Local development: a Postgres with pgTAP for the rule tests, and the API.
+#   docker compose up -d db
+#   pnpm --filter @aywo/api migrate -- --seed
+# Production uses DigitalOcean managed Postgres, not this database. See docs/DEPLOY.md.
+services:
+  db:
+    build: ./db
+    environment:
+      POSTGRES_USER: aywo
+      POSTGRES_PASSWORD: aywo
+      POSTGRES_DB: aywo
+    ports:
+      - "5432:5432"
+    volumes:
+      - aywo-db:/var/lib/postgresql/data
+
+  api:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://aywo:aywo@db:5432/aywo
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+volumes:
+  aywo-db:

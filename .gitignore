@@ -1,0 +1,10 @@
+node_modules/
+.expo/
+dist/
+*.tsbuildinfo
+.env
+.env.local
+supabase/.temp/
+# Real family files are never committed. Tests read them from a path outside the repo.
+*.lighten.zip
+*.ged

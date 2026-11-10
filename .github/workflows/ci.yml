@@ -1,0 +1,42 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  rules:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://aywo:aywo@localhost:5432/aywo
+      JWT_SECRET: ci-only-secret-at-least-32-characters-long
+      OTP_SECRET: ci-only-secret-16-chars
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: |
+          docker compose up -d db
+          until docker compose exec -T db pg_isready -U aywo; do sleep 2; done
+      - run: pnpm --filter @aywo/api exec tsx src/migrate.ts --seed
+      - name: Rule tests (pgTAP)
+        run: |
+          sudo apt-get update && sudo apt-get install -y libtap-parser-sourcehandler-pgtap-perl postgresql-client
+          PGPASSWORD=aywo pg_prove -h localhost -U aywo -d aywo db/tests/*.sql

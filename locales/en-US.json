@@ -1,0 +1,137 @@
+{
+  "welcome": {
+    "title": "Across years,\nwe're one.",
+    "subtitle": "Your family tree, in your language, with everyone in it.",
+    "chooseLanguage": "Choose your language",
+    "getStarted": "Get started"
+  },
+  "phone": {
+    "title": "What's your mobile number?",
+    "subtitle": "If family already added you, we'll find you.",
+    "countryCode": "Country code",
+    "placeholder": "Mobile number",
+    "privacyNote": "Only for signing in. Never shown to anyone.",
+    "terms": "By continuing you agree to the <terms>Terms</terms> and <privacy>Privacy policy</privacy>.",
+    "send": "Send code",
+    "sendFailed": "We couldn't send the code. Check the number and try again."
+  },
+  "otp": {
+    "title": "Enter the 6-digit code",
+    "sentTo": "Sent by SMS to {{phone}}",
+    "verify": "Verify",
+    "resend": "Send the code again",
+    "resendIn": "Resend code in {{seconds}} seconds",
+    "wrongCode": "That code didn't work. Try again."
+  },
+  "home": {
+    "noTrees": "No family tree yet."
+  },
+  "card": {
+    "goBack": "Back",
+    "seenBy": "Seen by {{name}}",
+    "yourRelation": "Your {{path}}",
+    "also": "Also: {{word}}",
+    "call": "Call",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "locked": "{{what}} is locked",
+    "noContacts": "No contact details saved yet.",
+    "wantToCall": "Want to call {{name}}?",
+    "askExplain": "Contact numbers are hidden. Ask {{name}} once to open them.",
+    "plusExplain": "Calls and WhatsApp come with AYWO Plus. Your tree stays free.",
+    "askFor": "Ask {{name}} for contacts",
+    "askSent": "Asked. {{name}} has been told.",
+    "askFailed": "That didn't go through. Try again.",
+    "theCreator": "the tree's Creator",
+    "closeFamily": "Close family"
+  },
+  "word": {
+    "title": "What do you call {{name}}?",
+    "explain": "The word depends on who is older: this person or {{than}}.",
+    "olderThan": "Older than {{than}}",
+    "youngerThan": "Younger than {{than}}",
+    "you": "you",
+    "alsoSaves": "This saves who is older, so every cousin sees the right word too.",
+    "useWord": "Yes, use {{word}}",
+    "pickOne": "Choose one",
+    "saveFailed": "We couldn't save that. Try again.",
+    "alreadyKnown": "This word has already been answered.",
+    "sentForApproval": "Thank you. This has gone to the tree's Creator to approve."
+  },
+  "link": {
+    "notFound": "This link has ended or isn't right. Ask your relative for a new one.",
+    "sharedBy": "Shared with you by {{name}}. Names and photos only.",
+    "inThisFamily": "In this family?",
+    "makeOwn": "Make your own tree",
+    "contactsPrivate": "Contact details stay private to family.",
+    "pitchTitle": "Your family deserves this too",
+    "pitchText": "Start your own tree in two minutes. The tree is always free.",
+    "startTree": "Start my family tree"
+  },
+  "kin": {
+    "F": "father",
+    "M": "mother",
+    "P": "parent",
+    "S": "son",
+    "D": "daughter",
+    "C": "child",
+    "B": "brother",
+    "Z": "sister",
+    "G": "sibling",
+    "H": "husband",
+    "W": "wife",
+    "E": "spouse",
+    "elder": "elder",
+    "younger": "younger",
+    "half": "half-",
+    "step": "step-",
+    "join": "'s "
+  },
+  "tabs": {
+    "home": "Home",
+    "family": "Family",
+    "activity": "Activity",
+    "me": "Me",
+    "chat": "Chat"
+  },
+  "tree": {
+    "namesOnly": "Names only",
+    "myView": "My view",
+    "seeAs": "See as...",
+    "myViewHelp": "Tap anyone to centre them.",
+    "namesHelp": "Pinch to zoom, drag to move.",
+    "seeingAs": "Seeing the tree from {{name}}'s place.",
+    "seeAsTitle": "See the tree as...",
+    "seenFromHere": "Seen from here",
+    "you": "You",
+    "backToMe": "Back to me",
+    "backToThem": "Back to the centre",
+    "showAll": "All {{count}}",
+    "askWord": "{{elder}} or {{younger}}?",
+    "nameNotKnown": "Name not known",
+    "moreBelow": "+{{count}} below",
+    "jumpToMe": "Jump to me",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "close": "Close",
+    "loading": "Loading the tree",
+    "loadFailed": "We couldn't open this tree. Check your connection.",
+    "tryAgain": "Try again",
+    "openCard": "Open",
+    "section": {
+      "grandparents": "{{who}}'s parents",
+      "parents": "Parents",
+      "partners": "Partner",
+      "siblings": "Brothers and sisters",
+      "children": "Children",
+      "siblingsChildren": "{{who}}'s children"
+    },
+    "addTo": "+ Add to {{name}}",
+    "moreSiblings": "siblings",
+    "moreChildren": "children"
+  },
+  "nav": {
+    "together": "Together",
+    "you": "You"
+  }
+}

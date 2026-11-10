@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+.expo
+**/.expo
+dist
+**/dist
+.env
+.git
+docs
+apps/app/*
+!apps/app/package.json

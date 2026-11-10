@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["XXXTEAMID.in.aywo.app"],
+        "components": [
+          { "/": "/link/*", "comment": "Family links" },
+          { "/": "/invite/*", "comment": "Invite links" },
+          { "/": "/social/groups/join/*", "comment": "Friends group links" },
+          { "/": "/social/sos/watch/*", "comment": "SOS links" },
+          { "/": "/help/*", "comment": "Help tickets" },
+          { "/": "/offers", "comment": "Offers" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": { "apps": ["XXXTEAMID.in.aywo.app"] }
+}

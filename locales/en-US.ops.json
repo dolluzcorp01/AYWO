@@ -1,0 +1,293 @@
+{
+  "ops": {
+    "update": {
+      "mustTitle": "Please update AYWO",
+      "mustText": "This version is too old to use safely. The update is free and keeps your family's data safe.",
+      "button": "Update now",
+      "mayTitle": "A new version is ready",
+      "mayText": "Update for the latest fixes and features.",
+      "later": "Later"
+    },
+    "maintenance": {
+      "title": "Back very soon",
+      "text": "AYWO is being improved. Please try again in a little while. Your family's data is safe."
+    },
+    "whatsNew": {
+      "title": "What's new",
+      "ok": "Got it"
+    },
+    "crash": {
+      "title": "Something went wrong",
+      "text": "This screen stopped working. We've been told and will fix it. Your family's data is safe.",
+      "again": "Go to Home"
+    },
+    "sos": {
+      "label": "SOS. Hold for 2 seconds to alert your family.",
+      "hint": "Hold for 2 seconds. Your SOS contacts hear an alarm at once.",
+      "keep": "Keep holding…",
+      "title": "SOS",
+      "sub": "Hold 2 seconds to alert your family",
+      "explain": "Hold the bar for 2 seconds. A tap alone does nothing."
+    },
+    "banner": {
+      "close": "Close this message"
+    },
+    "report": {
+      "short": "Report",
+      "memory": "Report this memory",
+      "title": {
+        "post": "Report this memory",
+        "post_comment": "Report this comment",
+        "message": "Report this message",
+        "person_comment": "Report this comment",
+        "profile": "Report this person"
+      },
+      "why": "What's wrong? AYWO staff will look within 24 hours. The person won't know who reported it.",
+      "reasons": {
+        "harassment": "Bullying or harassment",
+        "hate": "Hate",
+        "nudity": "Nudity",
+        "violence": "Violence or threats",
+        "self_harm": "Self-harm",
+        "spam": "Spam",
+        "fake": "Fake or misleading",
+        "other": "Something else"
+      },
+      "selfHarm": "If someone may be in danger right now, call 112 or use SOS.",
+      "note": "Anything else we should know (optional)",
+      "alsoBlock": "Also block {{name}}",
+      "blockHelp": "You won't see each other's memories or messages.",
+      "pick": "Choose what's wrong to send.",
+      "send": "Send report",
+      "thanksTitle": "Thank you",
+      "thanks": "We'll look at it within 24 hours and act if it breaks the AYWO rules.",
+      "thanksBlocked": "We'll look at it within 24 hours. {{name}} is blocked.",
+      "ok": "OK"
+    },
+    "block": {
+      "short": "Block",
+      "block": "Block",
+      "unblock": "Unblock",
+      "title": "Block {{name}}?",
+      "text": "You won't see each other's memories, comments or messages, and they can't start a chat with you. They aren't told.",
+      "unblockTitle": "Unblock {{name}}?",
+      "unblockText": "You'll see each other's memories and messages again.",
+      "listTitle": "Blocked people",
+      "listSubtitle": "People you blocked can't chat with you, and you don't see each other's posts.",
+      "none": "You haven't blocked anyone.",
+      "since": "Blocked {{when}}"
+    },
+    "chat": {
+      "people": "People in this chat",
+      "madeIt": "started this chat",
+      "remove": "Remove",
+      "done": "Done"
+    },
+    "help": {
+      "title": "Help centre",
+      "subtitle": "Quick answers, or ask AYWO Support.",
+      "quick": "Quick answers",
+      "faq": "Questions people ask",
+      "sos": "How SOS works",
+      "privacy": "Privacy and your account",
+      "ask": "Ask AYWO Support",
+      "newTitle": "Your question",
+      "topic": "What is it about?",
+      "safetyNote": "If someone is in danger now, use SOS or call 112. Support answers within a day.",
+      "subject": "In a few words",
+      "body": "Tell us more",
+      "send": "Send",
+      "yours": "Your questions",
+      "none": "You haven't asked anything yet.",
+      "status": {
+        "open": "We're looking at it",
+        "waiting": "We replied",
+        "closed": "Closed"
+      },
+      "support": "AYWO Support",
+      "you": "You",
+      "closedNote": "This is closed. Write again to open it.",
+      "replyTime": "We usually answer within a day.",
+      "reply": "Your reply",
+      "sendReply": "Send",
+      "solved": "My problem is solved"
+    },
+    "offers": {
+      "title": "Offers",
+      "subtitle": "Codes for printed posters, family books and premium invites.",
+      "none": "No offers right now. Check back soon.",
+      "percentOff": "{{value}}% off",
+      "amountOff": "{{amount}} off",
+      "until": "until {{date}}",
+      "copy": "Copy code",
+      "copied": "Copied",
+      "use": "Use it"
+    },
+    "orders": {
+      "title": "My orders",
+      "subtitle": "Where your posters and books are.",
+      "none": "No orders yet.",
+      "shop": "Order a poster or book",
+      "refunded": "Refunded",
+      "digital": "Ready",
+      "cancelled": "Cancelled",
+      "steps": {
+        "queued": "Ordered",
+        "printing": "Printing",
+        "shipped": "On its way",
+        "delivered": "Delivered"
+      },
+      "tracking": "{{carrier}} {{number}}",
+      "track": "Track parcel",
+      "help": "Need help with an order?"
+    },
+    "shop": {
+      "title": "Order a poster or book",
+      "subtitle": "Your family tree, printed and sent home.",
+      "products": {
+        "tree_poster": "Family tree poster",
+        "family_book": "Family book",
+        "premium_invite": "Premium invite"
+      },
+      "about": {
+        "tree_poster": "A large printed poster of your family tree, with names and photos.",
+        "family_book": "A printed book with your family tree, people and memories."
+      },
+      "whichTree": "Which family tree?",
+      "quantity": "How many (1 to 10)",
+      "address": "Send to",
+      "name": "Name",
+      "line1": "House and street",
+      "line2": "Area or landmark (optional)",
+      "city": "City or town",
+      "state": "State",
+      "pin": "PIN code",
+      "phone": "Phone for the courier",
+      "addressAbroad": "You'll enter the address on the secure payment page.",
+      "coupon": "Coupon code",
+      "apply": "Apply",
+      "saved": "{{title}}: you save {{amount}}",
+      "total": "Total",
+      "pay": "Pay securely",
+      "cancelled": "Payment wasn't finished. Nothing was charged.",
+      "secure": "Payment happens on Razorpay's or Stripe's own secure page. AYWO never sees your card or UPI details.",
+      "thanksTitle": "Thank you",
+      "thanks": "Your payment is being confirmed. You'll get a notification at each step, and can follow it in My orders."
+    },
+    "refer": {
+      "title": "Invite and earn",
+      "subtitle": "Bring family and friends to AYWO. You both get 30 days of AYWO Plus.",
+      "yourCode": "Your code",
+      "share": "Share",
+      "copy": "Copy link",
+      "message": "Join our family on AYWO. Use my code {{code}} for 30 free days of AYWO Plus: {{link}}",
+      "how": "How it works",
+      "step1": "1. Share your code or link with someone new to AYWO.",
+      "step2": "2. They sign up and join or build a family tree.",
+      "step3": "3. You both get {{days}} days of AYWO Plus, free.",
+      "sofar": "So far",
+      "joined_one": "{{count}} person joined with your code",
+      "joined_other": "{{count}} people joined with your code",
+      "rewarded_one": "{{count}} reward earned",
+      "rewarded_other": "{{count}} rewards earned",
+      "freeUntil": "Free Plus until {{date}}",
+      "gotCode": "Got a code?",
+      "gotCodeHelp": "If someone invited you, type their code. It works in your first 14 days.",
+      "claim": "Use code",
+      "claimed": "Thanks! {{name}} invited you. Your free days start once you're in a family tree.",
+      "fine": "Up to 12 rewards a year. Free days are added on top of any Plus you have."
+    },
+    "card": {
+      "title": "Emergency card",
+      "subtitle": "What helpers should know if you send an SOS.",
+      "blood": "Blood group",
+      "notSure": "Not sure",
+      "allergies": "Allergies",
+      "allergiesHint": "For example penicillin, peanuts",
+      "conditions": "Health conditions",
+      "conditionsHint": "For example diabetes, asthma",
+      "medications": "Regular medicines",
+      "note": "Anything else",
+      "noteHint": "For example: hearing aid, speaks Tamil only",
+      "who": "Only the people your SOS reaches see this, while it runs and for a day after.",
+      "save": "Save",
+      "saved": "Saved.",
+      "delete": "Delete my card",
+      "sosNote": "Blood group, allergies and medicines, shown to helpers during an SOS.",
+      "open": "Fill in or change",
+      "theirs": "{{name}}'s emergency card"
+    },
+    "dates": {
+      "title": "Coming up",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "birthday": "{{name}}'s birthday",
+      "anniversary": "{{names}}'s anniversary",
+      "birthdayShort": "Birthday",
+      "turns_one": "Turns {{count}}",
+      "turns_other": "Turns {{count}}",
+      "years_one": "{{count}} year",
+      "years_other": "{{count}} years",
+      "onThisDay_one": "On this day, {{count}} year ago",
+      "onThisDay_other": "On this day, {{count}} years ago"
+    },
+    "nav": {
+      "offers": "Offers and shop",
+      "help": "Help centre"
+    },
+    "me": {
+      "more": "Shop and offers",
+      "offers": "Offers",
+      "shop": "Order a poster or book",
+      "orders": "My orders",
+      "invite": "Invite and earn",
+      "inviteValue": "30 days free",
+      "card": "Emergency card",
+      "cardSet": "Filled in",
+      "cardNotSet": "Not yet",
+      "blocked": "Blocked people",
+      "helpCentre": "Help centre",
+      "answers_one": "{{count}} reply",
+      "answers_other": "{{count}} replies"
+    },
+    "prefs": {
+      "offersTitle": "Offers and news",
+      "offers": "Send me offers and news from AYWO",
+      "offersHelp": "At most a couple a week. Safety alerts and SOS always reach you, whatever you choose here.",
+      "emailTitle": "Email",
+      "emailOk": "{{email}} is confirmed. Emails come here.",
+      "emailCheck": "Confirm {{email}} to get emails from AYWO. We send a 6-digit code.",
+      "sendCode": "Send code",
+      "code": "6-digit code",
+      "confirm": "Confirm",
+      "resend": "Send again"
+    }
+  },
+  "help": {
+    "categories": {
+      "account": "Account and sign-in",
+      "tree": "Family tree",
+      "payment": "Plus and payments",
+      "order": "Orders",
+      "privacy": "Privacy",
+      "safety": "Safety",
+      "bug": "Something isn't working",
+      "other": "Something else"
+    }
+  },
+  "errors": {
+    "coupon_invalid": "That code isn't valid. Check the spelling.",
+    "coupon_expired": "That code has ended or hasn't started yet.",
+    "coupon_not_for_product": "That code doesn't work for this item.",
+    "coupon_min_amount": "Add a little more to use this code.",
+    "coupon_new_users_only": "That code is for a first order only.",
+    "coupon_used_up": "That code has been fully used.",
+    "coupon_already_used": "You've already used that code.",
+    "referral_invalid": "That code isn't right. Check it with the person who invited you.",
+    "referral_too_late": "Codes work only in your first 14 days on AYWO.",
+    "referral_already": "You've already used an invite code.",
+    "chat_blocked": "You can't send messages in this chat.",
+    "email_missing": "Add an email address first.",
+    "email_code_wrong": "That code isn't right, or it has expired. Ask for a new one."
+  }
+}
