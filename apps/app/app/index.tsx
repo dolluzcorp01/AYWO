@@ -12,7 +12,7 @@ import { Checkbox, ErrorText, Field, PrimaryButton, TextButton } from '@/compone
 import { englishFor, firstScreenLanguages, moreLanguageCount } from '@/i18n/languages';
 import type { Language } from '@/i18n/languages';
 import { LegalLinks } from '@/legal/LegalLinks';
-import { setLanguage, setLargeText, useLargeText } from '@/lib/prefs';
+import { setLanguage, setLargeText, setSimpleMode, useLargeText, useSimpleMode } from '@/lib/prefs';
 import { PublicAnnouncementBar } from '@/ops/Announcements';
 import { colors, fonts, minTapSize, shadows } from '@/theme/tokens';
 
@@ -27,6 +27,7 @@ export default function Welcome() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const large = useLargeText();
+  const simple = useSimpleMode();
   const [picker, setPicker] = useState<{ startWith: Language | null } | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkText, setLinkText] = useState('');
@@ -88,6 +89,7 @@ export default function Welcome() {
           </Pressable>
         </View>
         <Checkbox label={t('settings.largeText')} on={large} onChange={setLargeText} />
+        <Checkbox label={t('settings.simpleMode')} help={t('settings.simpleModeHelp')} on={simple} onChange={setSimpleMode} />
         <View style={styles.spacer} />
         <PrimaryButton label={t('welcome.getStarted')} onPress={() => router.push('/phone')} />
         <TextButton label={t('welcome.gotLink')} onPress={() => setLinkOpen(true)} />

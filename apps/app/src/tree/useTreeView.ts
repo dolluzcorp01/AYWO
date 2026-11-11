@@ -1,3 +1,4 @@
+import type { ContactsAnswer } from '@aywo/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { ApiTree, RelationInput } from '@aywo/layout';
 import { api } from '@/lib/api';
@@ -29,6 +30,8 @@ export interface TreeViewAnswer extends ApiTree<TreeNode> {
   role: 'none' | 'viewer' | 'commenter' | 'editor' | 'co_creator' | 'creator';
   viewer_person_id: string | null;
   labels: Record<string, TreeLabel>;
+  /** What each person's card may show of their numbers; values only where the server allows. */
+  contacts?: Record<string, ContactsAnswer>;
 }
 
 export interface TreeLabel extends RelationInput {
@@ -45,7 +48,8 @@ export interface TreeLabel extends RelationInput {
 export function useTreeView(treeId: string, mode: TreeMode, lang: string, seeAsId: string | null) {
   return useQuery({
     queryKey: ['tree-view', treeId, mode, lang, seeAsId],
-    enabled: mode !== 'see_as' || seeAsId !== null,
+    // No tree yet (still loading the list): wait instead of asking for nothing.
+    enabled: !!treeId && (mode !== 'see_as' || seeAsId !== null),
     placeholderData: keepPreviousData,
     queryFn: () =>
       api.post<TreeViewAnswer>('/tree-view', { tree_id: treeId, mode, lang, focus_person_id: seeAsId ?? undefined }),

@@ -20,7 +20,7 @@ import { mainTree, useMe, useTrees, useUpdateMe } from '@/lib/account';
 import { useFeature } from '@/ops/appConfig';
 import type { MyExtras } from '@/ops/types';
 import { useErrorText } from '@/lib/errors';
-import { setLanguage, setLargeText, useLargeText } from '@/lib/prefs';
+import { setLanguage, setLargeText, setSimpleMode, useLargeText, useSimpleMode } from '@/lib/prefs';
 import { FAMILY_PLAN_MAX, usePlan } from '@/pay/usePlan';
 import { SosButton } from '@/social/SosButton';
 import { canShare } from '@/tree/roles';
@@ -38,6 +38,7 @@ export default function MeScreen() {
   const plan = usePlan();
   const prefs = useNotificationPrefs();
   const large = useLargeText();
+  const simple = useSimpleMode();
   const [picking, setPicking] = useState(false);
   const extras = useQuery({ queryKey: ['my-extras'], queryFn: () => api.rpc<MyExtras>('my_extras') });
   const ordersOn = useFeature('orders');
@@ -79,6 +80,12 @@ export default function MeScreen() {
   function toggleLarge(on: boolean) {
     setLargeText(on);
     update.mutate({ large_text: on });
+  }
+
+  function toggleSimple(on: boolean) {
+    void setSimpleMode(on);
+    // Elder mode brings large text with it.
+    update.mutate(on ? { simple_mode: true, large_text: true } : { simple_mode: false });
   }
 
   const memberCount = plan.data?.members.length;
@@ -160,6 +167,9 @@ export default function MeScreen() {
           <Row title={t('settings.language')} value={languageLabel(i18n.language)} onPress={() => setPicking(true)} />
           <View style={styles.row}>
             <Checkbox label={t('settings.largeText')} on={large} onChange={toggleLarge} />
+          </View>
+          <View style={styles.row}>
+            <Checkbox label={t('settings.simpleMode')} help={t('settings.simpleModeHelp')} on={simple} onChange={toggleSimple} />
           </View>
           <Row
             title={t('settings.notifications')}

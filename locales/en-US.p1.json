@@ -563,7 +563,9 @@
     "planWarningDelete": "I understand. Delete anyway",
     "deleteBooked": "Your account will be deleted on {{date}}",
     "deleteBookedHelp": "You asked to delete it. Changed your mind? Keep it with one tap.",
-    "keepAccount": "Keep my account"
+    "keepAccount": "Keep my account",
+    "simpleMode": "Simple mode for elders",
+    "simpleModeHelp": "A few big buttons on Home, larger text and bigger buttons everywhere."
   },
   "time": {
     "justNow": "Just now",
@@ -791,5 +793,20 @@
     "yearsSince_other": "{{count}} years since they passed",
     "nothingMonth": "No family dates this month. Add birthdays, wedding dates and the day someone passed in the family tree, and they show here.",
     "nothingDay": "Nothing on this day."
+  },
+  "elder": {
+    "callTitle": "Call family",
+    "callSubtitle": "Tap a big button to call",
+    "callEmpty": "No phone numbers in your family tree yet. Add them on each person's card and they show here.",
+    "openTree": "Open the family tree",
+    "howToCall": "See how to call",
+    "call": "Call",
+    "callName": "Call {{name}}",
+    "whatsappName": "WhatsApp {{name}}",
+    "myFamily": "My family",
+    "photos": "Family photos",
+    "dates": "Family dates",
+    "showEverything": "Show everything",
+    "turnOffNote": "To go back to the full Home, open Me and turn off Simple mode."
   }
 }

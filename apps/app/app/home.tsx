@@ -2,13 +2,14 @@
 // you, family dates, quick ways into family life, offers, and memories. Activity lives behind the bell.
 import { closeFamily, focusView, graphFromApi } from '@aywo/layout';
 import { useQuery } from '@tanstack/react-query';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
+import { ContactIcon } from '@/components/ContactIcon';
 import { DeleteBanner } from '@/components/DeleteBanner';
-import { BellIcon, CalendarIcon, ChatIcon, ChevronIcon, FriendsIcon, InviteIcon, PartyIcon, PhotoIcon, RingsIcon } from '@/components/Icons';
+import { BellIcon, CalendarIcon, ChatIcon, LinkedPeopleIcon, ChevronIcon, FriendsIcon, InviteIcon, PartyIcon, PhotoIcon, RingsIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { TAB_BAR_SPACE, TabBar } from '@/components/TabBar';
 import { useDesktop } from '@/components/WebFrame';
@@ -18,6 +19,7 @@ import { api } from '@/lib/api';
 import { firstName, mainTree, useMe, useTrees } from '@/lib/account';
 import type { TreeRow } from '@/lib/account';
 import { useErrorText } from '@/lib/errors';
+import { useSimpleMode } from '@/lib/prefs';
 import { AnnouncementBar, HomeOfferCards } from '@/ops/Announcements';
 import { useFeature } from '@/ops/appConfig';
 import { FamilyDates, OnThisDayCard } from '@/ops/HomeExtras';
@@ -47,6 +49,9 @@ export default function Home() {
   const trees = useTrees();
   // Hooks stay above the early returns, so every render calls the same ones.
   const desktop = useDesktop();
+  const simple = useSimpleMode();
+  // "Show everything" from the simple Home opens this full Home for one visit.
+  const { full } = useLocalSearchParams<{ full?: string }>();
 
   if (trees.isError) {
     return (
@@ -69,6 +74,8 @@ export default function Home() {
   const main = mainTree(trees.data) as TreeRow;
   const others = trees.data.filter((tree) => tree.id !== main.id);
   const name = firstName(me.data?.display_name);
+
+  if (simple && full !== '1') return <SimpleHome tree={main} name={name} />;
 
   // On a computer: the family on the left, what needs you and the ways in on the right.
   if (desktop) {
@@ -342,6 +349,56 @@ function Quick({ label, badge, onPress, icon }: { label: string; badge?: number;
   );
 }
 
+/** Elder mode: the greeting, SOS, and a few very big buttons. Everything else is behind "Show everything". */
+function SimpleHome({ tree, name }: { tree: TreeRow; name: string | null }) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const counts = useCounts().data;
+  const on = { chat: useFeature('chat'), memories: useFeature('memories') };
+  const ink = colors.logoIndigo;
+  const tiles: { key: string; label: string; badge?: number; icon: ReactNode; go: () => void }[] = [
+    { key: 'call', label: t('elder.callTitle'), icon: <ContactIcon kind="mobile" color={ink} size={40} />, go: () => router.push('/call-family') },
+    { key: 'tree', label: t('elder.myFamily'), icon: <LinkedPeopleIcon color={ink} size={40} width={1.8} />, go: () => router.push({ pathname: '/tree/[id]', params: { id: tree.id } }) },
+    ...(on.memories ? [{ key: 'photos', label: t('elder.photos'), icon: <PhotoIcon color={ink} size={40} width={1.8} />, go: () => router.push('/social/memories') }] : []),
+    { key: 'dates', label: t('elder.dates'), icon: <CalendarIcon color={ink} size={40} width={1.8} />, go: () => router.push('/calendar') },
+    ...(on.chat ? [{ key: 'chat', label: t('social.home.chat'), badge: counts?.unread_chats, icon: <ChatIcon color={ink} size={40} width={1.8} />, go: () => router.push('/social/chat') }] : []),
+  ];
+  return (
+    <Screen flush>
+      <ScrollView contentContainerStyle={[styles.scroll, styles.simpleScroll]}>
+        <Top treeId={tree.id} name={name} />
+        <DeleteBanner />
+        <IncomingSos />
+        <SosEntry />
+        <View style={styles.tiles}>
+          {tiles.map((tile) => (
+            <Pressable
+              key={tile.key}
+              accessibilityRole="button"
+              accessibilityLabel={tile.badge ? `${tile.label}, ${tile.badge}` : tile.label}
+              onPress={tile.go}
+              style={styles.tile}
+            >
+              {tile.icon}
+              <Text style={styles.tileText} numberOfLines={2}>{tile.label}</Text>
+              {tile.badge ? (
+                <View style={[styles.badge, styles.tileBadge]}>
+                  <Text style={styles.badgeText}>{tile.badge > 99 ? '99+' : tile.badge}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+          ))}
+        </View>
+        <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/home', params: { full: '1' } })} style={styles.showAll}>
+          <Text style={styles.showAllText}>{t('elder.showEverything')}</Text>
+        </Pressable>
+        <Text style={styles.simpleNote}>{t('elder.turnOffNote')}</Text>
+      </ScrollView>
+      <TabBar active="home" />
+    </Screen>
+  );
+}
+
 function QuickActions() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -450,6 +507,27 @@ const styles = StyleSheet.create({
   faces: { flexDirection: 'row' },
   faceOverlap: { marginStart: -10 },
   inviteText: { flex: 1, color: colors.text, fontFamily: fonts.bold, fontSize: 15 },
+  simpleScroll: { maxWidth: 640, width: '100%', alignSelf: 'center' },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  tile: {
+    flexBasis: '46%',
+    flexGrow: 1,
+    minHeight: 150,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: radius.card,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.dashed,
+    ...shadows.card,
+  },
+  tileText: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 20, textAlign: 'center' },
+  tileBadge: { position: 'absolute', top: 12, right: 12 },
+  showAll: { minHeight: 64, alignItems: 'center', justifyContent: 'center', borderRadius: radius.button, borderWidth: 1, borderColor: colors.cardBorder, backgroundColor: colors.card },
+  showAllText: { color: colors.logoIndigo, fontFamily: fonts.bold, fontSize: 18 },
+  simpleNote: { color: colors.muted, fontFamily: fonts.medium, fontSize: 14, textAlign: 'center' },
   quickRow: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 },
   quick: { width: '33.33%', alignItems: 'center', gap: 7 },
   quickIcon: {

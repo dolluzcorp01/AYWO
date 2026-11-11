@@ -9,12 +9,14 @@ import { BackIcon } from '@/components/ContactIcon';
 import { CheckIcon, CloseIcon } from '@/components/Icons';
 import { Text, TextInput } from '@/components/Text';
 import { hideToastIf, showToast } from '@/components/Toast';
+import { useSimpleMode } from '@/lib/prefs';
 import { colors, fonts, gradients, minTapSize, radius, shadows } from '@/theme/tokens';
 
 export function PrimaryButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
+  const big = useSimpleMode();
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} onPress={onPress} disabled={disabled} style={{ opacity: disabled ? 0.5 : 1 }}>
-      <View style={styles.button}>
+      <View style={[styles.button, big && styles.bigButton]}>
         <Text style={styles.buttonText}>{label}</Text>
       </View>
     </Pressable>
@@ -23,13 +25,14 @@ export function PrimaryButton({ label, onPress, disabled }: { label: string; onP
 
 /** White pill under a primary button: 'Not me', 'Just have a look'. */
 export function SecondaryButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
+  const big = useSimpleMode();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled }}
       onPress={onPress}
       disabled={disabled}
-      style={[styles.secondary, { opacity: disabled ? 0.5 : 1 }]}
+      style={[styles.secondary, big && styles.bigSecondary, { opacity: disabled ? 0.5 : 1 }]}
     >
       <Text style={styles.secondaryText}>{label}</Text>
     </Pressable>
@@ -38,8 +41,9 @@ export function SecondaryButton({ label, onPress, disabled }: { label: string; o
 
 /** Purple words that act as a button: 'Someone already in the tree', 'Copy link'. */
 export function TextButton({ label, onPress, disabled, danger }: { label: string; onPress: () => void; disabled?: boolean; danger?: boolean }) {
+  const big = useSimpleMode();
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} disabled={disabled} style={[styles.textButton, { opacity: disabled ? 0.5 : 1 }]}>
+    <Pressable accessibilityRole="button" onPress={onPress} disabled={disabled} style={[styles.textButton, big && styles.bigMin, { opacity: disabled ? 0.5 : 1 }]}>
       <Text style={[styles.textButtonText, danger && styles.danger]}>{label}</Text>
     </Pressable>
   );
@@ -270,6 +274,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   secondaryText: { color: colors.text, fontFamily: fonts.bold, fontSize: 16, textAlign: 'center' },
+  // Elder mode: the main buttons grow by about a third, so they are easier to hit.
+  bigButton: { height: 72 },
+  bigSecondary: { minHeight: 72 },
+  bigMin: { minHeight: 60 },
   textButton: { minHeight: minTapSize, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 },
   textButtonText: { color: colors.relation, fontFamily: fonts.bold, fontSize: 15, textAlign: 'center' },
   danger: { color: colors.alert },

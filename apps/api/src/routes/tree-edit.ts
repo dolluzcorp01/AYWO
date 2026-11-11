@@ -128,6 +128,7 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
         email: z.string().trim().max(300).nullable().optional(),
         language_code: z.string().max(20).optional(),
         large_text: z.boolean().optional(),
+        simple_mode: z.boolean().optional(),
         photo_path: z.string().max(300).nullable().optional(),
       })
       .strict()
