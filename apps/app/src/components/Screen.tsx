@@ -1,13 +1,17 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { OfflineBar } from '@/components/OfflineBar';
 import { colors } from '@/theme/tokens';
 
 /** The warm cream page from the Warm Daylight design: calm, with no glows, so cards and faces carry the colour. */
 export function Screen({ children, flush }: { children: ReactNode; flush?: boolean }) {
   return (
     <View style={styles.page}>
-      <SafeAreaView style={flush ? styles.flush : styles.body}>{children}</SafeAreaView>
+      <SafeAreaView style={flush ? styles.flush : styles.body}>
+        <OfflineBar inset={flush} />
+        {children}
+      </SafeAreaView>
     </View>
   );
 }

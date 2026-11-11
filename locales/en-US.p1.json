@@ -105,7 +105,8 @@
     "family_loop": "That would make someone their own ancestor, so it can't be saved.",
     "version_conflict": "Someone else changed this just now. Load the latest and make your change again.",
     "already_in_tree": "You already have a card in this tree.",
-    "plan_cancel_first": "Your AYWO Plus is still running. Cancel it first, or confirm that you understand it will go on being charged."
+    "plan_cancel_first": "Your AYWO Plus is still running. Cancel it first, or confirm that you understand it will go on being charged.",
+    "offline": "You're offline. This needs the internet, so try again when you're connected."
   },
   "language": {
     "title": "Choose your language",
@@ -808,5 +809,13 @@
     "dates": "Family dates",
     "showEverything": "Show everything",
     "turnOffNote": "To go back to the full Home, open Me and turn off Simple mode."
+  },
+  "offline": {
+    "title": "You're offline",
+    "savedAt": "Showing the copy saved at {{when}}",
+    "savedCopy": "Showing the copy saved on this device",
+    "tryNow": "Try now",
+    "checking": "Checking...",
+    "notSaved": "You're offline, and this page isn't saved on this device yet. It opens when you're back online."
   }
 }

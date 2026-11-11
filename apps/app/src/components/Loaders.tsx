@@ -2,10 +2,13 @@
 // Drawn in code rather than GIFs, so they stay sharp at any size and on any background.
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, Animated, Easing, Platform, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, Path, Polygon, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import { LOGO_ORANGE, LOGO_PURPLE, MARK_VIEW_BOX, type LogoPiece } from '@/components/logoArt';
-import { colors } from '@/theme/tokens';
+import { Text } from '@/components/Text';
+import { useOffline } from '@/lib/offline';
+import { colors, fonts } from '@/theme/tokens';
 
 export const nativeDriver = Platform.OS !== 'web';
 
@@ -138,7 +141,15 @@ const APART = [1, 1, -0.05, 0, 0, 1, 1];
 const APART_AT = [0, 0.04, 0.18, 0.24, 0.7, 0.86, 1];
 
 /** A screen or section is loading: the two logo pieces part and come back together as one, over a moving bar. */
+/** The page loader. Offline, a page that was never saved on this device would spin for ever, so it says why instead. */
 export function PageLoader({ size = 96, label }: { size?: number; label?: string }) {
+  const { t } = useTranslation();
+  const offline = useOffline();
+  if (offline) return <Text style={styles.offlineText}>{t('offline.notSaved')}</Text>;
+  return <AnimatedLoader size={size} label={label} />;
+}
+
+function AnimatedLoader({ size, label }: { size: number; label?: string }) {
   const reduced = useReducedMotion();
   const loop = useLoop(PAGE_LOOP_MS, reduced);
   // A quick answer should not flash an animation at the person.
@@ -181,6 +192,7 @@ export function PageLoader({ size = 96, label }: { size?: number; label?: string
 }
 
 const styles = StyleSheet.create({
+  offlineText: { color: colors.muted, fontFamily: fonts.medium, fontSize: 16, textAlign: 'center', maxWidth: 420, padding: 20 },
   middle: { alignItems: 'center', justifyContent: 'center' },
   page: { alignItems: 'center', gap: 14 },
   bar: { height: 5, borderRadius: 3, backgroundColor: colors.cardBorder, overflow: 'hidden' },

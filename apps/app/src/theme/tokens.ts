@@ -16,6 +16,8 @@ export const colors = {
   activeTab: '#2F3379',
   alert: '#E5383B',
   alertTint: '#FDEDED',
+  /** Quiet text on the dark offline bar. */
+  textOnDark: '#D9D6E8',
   logoPurple: '#8E26E1',
   logoIndigo: '#2F3379',
   logoYellow: '#FDD623',
