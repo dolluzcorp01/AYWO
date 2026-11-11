@@ -2,7 +2,8 @@
 // and they get exactly its permissions, and changing the role changes everyone in it. People can be added before their
 // first sign-in: the invite waits for their number. Every staff member uses an authenticator app as a second step.
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import { PhoneField } from '@/components/PhoneField';
+import { toE164 } from '@/lib/phone';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -186,8 +187,8 @@ function StaffDialog({ row, roles, onDone, onClose }: { row?: StaffRow; roles: T
   const [invited, setInvited] = useState(false);
   const action = useAction();
 
-  const parsed = parsePhoneNumberFromString(phone.trim());
-  const phoneOk = !!row || (!!parsed && parsed.isValid());
+  const e164 = toE164(phone);
+  const phoneOk = !!row || !!e164;
   const ready = phoneOk && (role === 'aywo_admin' || team !== 'custom' || granted.length > 0);
 
   async function save() {
@@ -200,7 +201,7 @@ function StaffDialog({ row, roles, onDone, onClose }: { row?: StaffRow; roles: T
     const ok = await action.run(async () => {
       if (row) await api.patch(`/admin/staff/${row.profile_id}`, body);
       else {
-        const answer = await api.post<{ invited?: boolean }>('/admin/staff', { phone: parsed?.number, ...body });
+        const answer = await api.post<{ invited?: boolean }>('/admin/staff', { phone: e164, ...body });
         waitsForSignIn = !!answer?.invited;
       }
       await onDone();
@@ -221,7 +222,7 @@ function StaffDialog({ row, roles, onDone, onClose }: { row?: StaffRow; roles: T
 
   return (
     <DialogFrame title={row ? t('admin.staff.changeTitle', { name: row.display_name || t('admin.users.noName') }) : t('admin.staff.addTitle')} text={row ? undefined : t('admin.staff.addText')}>
-      {row ? null : <Field label={t('admin.staff.phone')} value={phone} onChange={setPhone} placeholder="+919800000000" />}
+      {row ? null : <PhoneField label={t('admin.staff.phone')} value={phone} onChangeText={setPhone} invalid={!!phone && !e164} />}
       <FilterChips
         value={role}
         onChange={setRole}

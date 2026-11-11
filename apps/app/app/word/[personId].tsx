@@ -9,7 +9,7 @@ import { Avatar } from '@/components/Avatar';
 import { BackIcon } from '@/components/ContactIcon';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, Heading, Muted, NeonPanel, PrimaryButton } from '@/components/ui';
+import { Card, ErrorText, Heading, Muted, NeonPanel, PrimaryButton } from '@/components/ui';
 import { useSetElderYounger } from '@/tree/useCard';
 import { useTreeView } from '@/tree/useTreeView';
 import type { TreeMode } from '@/tree/useTreeView';
@@ -144,7 +144,7 @@ export default function WordConfirm() {
         >
           <Text style={styles.differentText}>{t('kinWord.different')}</Text>
         </Pressable>
-        {save.isError ? <Text accessibilityRole="alert" style={styles.error}>{t('word.saveFailed')}</Text> : null}
+        {save.isError ? <ErrorText>{t('word.saveFailed')}</ErrorText> : null}
       </ScrollView>
       <PrimaryButton
         label={picked ? t('word.useWord', { word: picked.word }) : t('word.pickOne')}
@@ -177,7 +177,6 @@ const styles = StyleSheet.create({
   nativeOn: { color: colors.logoYellow },
   help: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14 },
   helpOn: { color: colors.onNeon },
-  error: { color: colors.alert, fontFamily: fonts.bold, fontSize: 14 },
   different: { minHeight: minTapSize, justifyContent: 'center', alignSelf: 'flex-start' },
   differentText: { color: colors.relation, fontFamily: fonts.bold, fontSize: 14, textDecorationLine: 'underline' },
 });

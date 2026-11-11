@@ -3,13 +3,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { parsePhoneNumberFromString } from 'libphonenumber-js';
-import { getLocales } from 'expo-localization';
-import type { CountryCode } from 'libphonenumber-js';
 import { DownIcon, UpIcon } from '@/components/Icons';
+import { PhoneField } from '@/components/PhoneField';
 import { Text } from '@/components/Text';
-import { Card, Field, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
+import { Card, ErrorText, Field, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
 import { api } from '@/lib/api';
+import { toE164 } from '@/lib/phone';
 import { usePeople } from '@/social/AudiencePicker';
 import { ActionError, Gate, Note, Page, Row, useName } from '@/social/parts';
 import type { SosContact } from '@/social/types';
@@ -52,14 +51,13 @@ export default function SosContacts() {
   }
 
   function addTyped() {
-    const region = (getLocales()[0]?.regionCode ?? 'IN') as CountryCode;
-    const phone = parsePhoneNumberFromString(typedPhone.trim(), region);
-    if (!phone?.isValid()) {
+    const phone = toE164(typedPhone);
+    if (!phone) {
       setBadPhone(true);
       return;
     }
     setBadPhone(false);
-    add.mutate({ phone: phone.number, name: typedName.trim() });
+    add.mutate({ phone, name: typedName.trim() });
   }
 
   const list = contacts.data ?? [];
@@ -126,8 +124,16 @@ export default function SosContacts() {
           <SectionTitle>{t('social.sos.byNumber')}</SectionTitle>
           <Note>{t('social.sos.byNumberNote')}</Note>
           <Field label={t('social.sos.contactName')} value={typedName} onChangeText={setTypedName} maxLength={80} />
-          <Field label={t('social.sos.contactPhone')} value={typedPhone} onChangeText={setTypedPhone} keyboardType="phone-pad" />
-          {badPhone ? <Note>{t('errors.phone_not_valid')}</Note> : null}
+          <PhoneField
+            label={t('social.sos.contactPhone')}
+            value={typedPhone}
+            onChangeText={(v) => {
+              setTypedPhone(v);
+              setBadPhone(false);
+            }}
+            invalid={badPhone}
+          />
+          {badPhone ? <ErrorText>{t('errors.phone_not_valid')}</ErrorText> : null}
           <SecondaryButton label={t('social.sos.addNumber')} disabled={!typedPhone.trim() || add.isPending} onPress={addTyped} />
         </>
       )}

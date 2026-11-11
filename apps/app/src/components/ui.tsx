@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -7,6 +8,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { BackIcon } from '@/components/ContactIcon';
 import { CheckIcon, CloseIcon } from '@/components/Icons';
 import { Text, TextInput } from '@/components/Text';
+import { hideToastIf, showToast } from '@/components/Toast';
 import { colors, fonts, gradients, minTapSize, radius, shadows } from '@/theme/tokens';
 
 export function PrimaryButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
@@ -119,11 +121,23 @@ export function SectionTitle({ children }: { children: ReactNode }) {
   return <Text accessibilityRole="header" style={styles.section}>{children}</Text>;
 }
 
+/**
+ * A problem after an action. Shown in place and, the moment it appears, in the standard popup at the top,
+ * so it is seen even when this line is below the fold. One look for every screen.
+ */
 export function ErrorText({ children }: { children: ReactNode }) {
+  const message = typeof children === 'string' ? children : null;
+  useEffect(() => {
+    if (!message) return;
+    showToast('error', message);
+    // Fixed (the line went away): its popup goes too, so an old problem is never left on screen.
+    return () => hideToastIf(message);
+  }, [message]);
   return <Text accessibilityRole="alert" style={styles.error}>{children}</Text>;
 }
 
-export function Field({ label, style, ...input }: { label?: string } & ComponentProps<typeof TextInput>) {
+/** A labelled text box. `invalid` gives it a red border, so the box with the problem is easy to find. */
+export function Field({ label, style, invalid, ...input }: { label?: string; invalid?: boolean } & ComponentProps<typeof TextInput>) {
   return (
     <View style={styles.field}>
       {label ? <Label>{label}</Label> : null}
@@ -131,7 +145,7 @@ export function Field({ label, style, ...input }: { label?: string } & Component
         accessibilityLabel={label}
         placeholderTextColor={colors.muted}
         {...input}
-        style={[styles.input, style]}
+        style={[styles.input, style, invalid && styles.inputInvalid]}
       />
     </View>
   );
@@ -293,6 +307,7 @@ const styles = StyleSheet.create({
   section: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
   error: { color: colors.alert, fontFamily: fonts.bold, fontSize: 14, lineHeight: 20 },
   field: { gap: 6 },
+  inputInvalid: { borderColor: colors.alert, borderWidth: 2 },
   input: {
     minHeight: 54,
     borderRadius: radius.button,

@@ -18,6 +18,7 @@ import '@/social/sosTask';
 import { Launch } from '@/components/Launch';
 import { WebFrame } from '@/components/WebFrame';
 import { RestartPrompt } from '@/i18n/RestartPrompt';
+import { ToastHost } from '@/components/Toast';
 import { safeNext } from '@/lib/account';
 import { api, deviceStore, hasSession, onSessionChange } from '@/lib/api';
 import { loadPrefs } from '@/lib/prefs';
@@ -141,6 +142,7 @@ export default function RootLayout() {
           </AppFrame>
           <SignInGate signedIn={signedIn} />
           <RestartPrompt />
+          <ToastHost />
         </QueryClientProvider>
       ) : null}
       <Launch ready={ready} />

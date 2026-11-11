@@ -5,8 +5,10 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
+import { PhoneField } from '@/components/PhoneField';
 import { Text } from '@/components/Text';
 import { Card, Field, Pills, PrimaryButton, SectionTitle, SmallButton } from '@/components/ui';
+import { toE164 } from '@/lib/phone';
 import { api } from '@/lib/api';
 import { mainTree, useMe, useTrees } from '@/lib/account';
 import { startOrder } from '@/pay/order';
@@ -69,7 +71,10 @@ export default function Shop() {
   const needsAddress = !!products.data?.needs_address;
   const addressOk =
     !needsAddress ||
-    (address.name.trim() && address.line1.trim() && address.city.trim() && address.state.trim() && /^\d{6}$/.test(address.postal_code.trim()) && address.phone.trim().length >= 10);
+    (address.name.trim() && address.line1.trim() && address.city.trim() && address.state.trim() && /^\d{6}$/.test(address.postal_code.trim()) && !!toE164(address.phone));
+  // Typed but not right yet: outlined in red, so it is clear why Pay is still grey.
+  const pinBad = !!address.postal_code.trim() && !/^\d{6}$/.test(address.postal_code.trim());
+  const phoneBad = !!address.phone.trim() && !toE164(address.phone);
   const set = (key: keyof ShippingAddress) => (value: string) => setAddress((old) => ({ ...old, [key]: value }));
 
   if (state === 'started') {
@@ -116,8 +121,8 @@ export default function Shop() {
                 <Field label={t('ops.shop.line2')} value={address.line2 ?? ''} onChangeText={set('line2')} maxLength={200} />
                 <Field label={t('ops.shop.city')} value={address.city} onChangeText={set('city')} maxLength={100} />
                 <Field label={t('ops.shop.state')} value={address.state} onChangeText={set('state')} maxLength={100} />
-                <Field label={t('ops.shop.pin')} value={address.postal_code} onChangeText={set('postal_code')} maxLength={6} keyboardType="number-pad" autoComplete="postal-code" />
-                <Field label={t('ops.shop.phone')} value={address.phone} onChangeText={set('phone')} maxLength={15} keyboardType="phone-pad" autoComplete="tel" />
+                <Field label={t('ops.shop.pin')} value={address.postal_code} onChangeText={set('postal_code')} maxLength={6} keyboardType="number-pad" autoComplete="postal-code" invalid={pinBad} />
+                <PhoneField label={t('ops.shop.phone')} value={address.phone} onChangeText={set('phone')} autoComplete="tel" invalid={phoneBad} />
               </Card>
             ) : (
               <Note>{t('ops.shop.addressAbroad')}</Note>
