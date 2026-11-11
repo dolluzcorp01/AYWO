@@ -36,11 +36,6 @@ export function callingCode(country: CountryCode): string {
   return `+${getCountryCallingCode(country)}`;
 }
 
-/** 🇮🇳 from IN. */
-export function flagOf(country: string): string {
-  return String.fromCodePoint(...[...country.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
-}
-
 export interface CountryOption {
   code: CountryCode;
   name: string;
