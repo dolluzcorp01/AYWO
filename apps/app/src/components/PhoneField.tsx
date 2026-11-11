@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
 import type { CountryCode } from 'libphonenumber-js';
+import * as FLAGS from 'country-flag-icons/string/3x2';
+import { SvgXml } from 'react-native-svg';
 import { CloseIcon } from '@/components/Icons';
 import { Text, TextInput } from '@/components/Text';
-import { callingCode, countryOptions, defaultCountry, flagOf, joinPhone, splitPhone } from '@/lib/phone';
+import { callingCode, countryOptions, defaultCountry, joinPhone, splitPhone } from '@/lib/phone';
 import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
 
 interface Props {
@@ -67,7 +69,7 @@ export function PhoneField({ label, value, onChangeText, placeholder, invalid, e
           onPress={() => setPicking(true)}
           style={[styles.box, styles.countryBox, invalid && styles.invalid]}
         >
-          <Text style={styles.flag}>{flagOf(country)}</Text>
+          <Flag code={country} />
           <Text style={styles.code}>{callingCode(country)}</Text>
           <Text style={styles.caret}>▾</Text>
         </Pressable>
@@ -85,6 +87,19 @@ export function PhoneField({ label, value, onChangeText, placeholder, invalid, e
         />
       </View>
       <CountryPicker visible={picking} language={i18n.language} current={country} onPick={choose} onClose={() => setPicking(false)} />
+    </View>
+  );
+}
+
+/**
+ * A flag drawn from the app's own pictures, so it looks the same everywhere: Windows has no flag emoji and
+ * would show the letters "IN" instead.
+ */
+function Flag({ code }: { code: string }) {
+  const xml = (FLAGS as Record<string, string>)[code];
+  return (
+    <View style={styles.flagBox} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {xml ? <SvgXml xml={xml} width={24} height={16} /> : <Text style={styles.flagText}>{code}</Text>}
     </View>
   );
 }
@@ -135,7 +150,7 @@ function CountryPicker({ visible, language, current, onPick, onClose }: {
                 onPress={() => onPick(item.code)}
                 style={[styles.option, item.code === current && styles.optionOn]}
               >
-                <Text style={styles.flag}>{flagOf(item.code)}</Text>
+                <Flag code={item.code} />
                 <Text style={styles.optionName} numberOfLines={1}>{item.name}</Text>
                 <Text style={styles.optionDial}>{item.dial}</Text>
               </Pressable>
@@ -166,7 +181,8 @@ const styles = StyleSheet.create({
   number: { flex: 1, minWidth: 0 },
   invalid: { borderColor: colors.alert, borderWidth: 2 },
   disabled: { color: colors.muted },
-  flag: { fontSize: 18 },
+  flagBox: { width: 24, height: 16, borderRadius: 3, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  flagText: { color: colors.muted, fontFamily: fonts.bold, fontSize: 9 },
   code: { color: colors.text, fontFamily: fonts.bold, fontSize: 16 },
   caret: { color: colors.muted, fontSize: 12 },
   scrim: { flex: 1, backgroundColor: colors.scrim, alignItems: 'center', justifyContent: 'center', padding: 16 },
