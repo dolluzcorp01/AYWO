@@ -10,7 +10,11 @@
     "placeholder": "Mobile number",
     "country": "Country code {{code}}. Tap to change",
     "chooseCountry": "Choose country",
-    "search": "Search country or code"
+    "search": "Search country or code",
+    "fromContacts": "Choose from contacts",
+    "contactsDenied": "AYWO can't open your contacts. Allow Contacts for AYWO in your phone's settings, or type the number.",
+    "contactsFailed": "Your contacts didn't open. Please type the number.",
+    "contactNoNumber": "That contact has no phone number. Please type it."
   },
   "guide": {
     "intro": "Let's add your close family",

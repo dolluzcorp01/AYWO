@@ -13,7 +13,7 @@
       "associatedDomains": ["applinks:aywo.in"],
       "infoPlist": {
         "UIBackgroundModes": ["location", "remote-notification"],
-        "NSContactsUsageDescription": "AYWO uses your contacts only when you choose someone to invite.",
+        "NSContactsUsageDescription": "AYWO reads a contact only when you choose one, to fill in a relative's name and number or to invite them.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -46,7 +46,8 @@
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_LOCATION",
         "RECORD_AUDIO",
-        "CALL_PHONE"
+        "CALL_PHONE",
+        "READ_CONTACTS"
       ]
     },
     "web": { "bundler": "metro", "output": "single" },

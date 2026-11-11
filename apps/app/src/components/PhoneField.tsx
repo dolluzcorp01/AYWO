@@ -6,9 +6,12 @@ import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
 import type { CountryCode } from 'libphonenumber-js';
 import * as FLAGS from 'country-flag-icons/string/3x2';
 import { SvgXml } from 'react-native-svg';
-import { CloseIcon } from '@/components/Icons';
+import { CloseIcon, ContactsIcon } from '@/components/Icons';
+import { showToast } from '@/components/Toast';
 import { Text, TextInput } from '@/components/Text';
 import { callingCode, countryOptions, defaultCountry, joinPhone, splitPhone } from '@/lib/phone';
+import { bestNumber, canPickContact, ContactsDenied, pickContact } from '@/lib/pickContact';
+import type { PickedContact } from '@/lib/pickContact';
 import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
 
 interface Props {
@@ -20,9 +23,11 @@ interface Props {
   invalid?: boolean;
   editable?: boolean;
   autoComplete?: 'tel' | 'off';
+  /** Shows a "Choose from contacts" button; called with the chosen contact after its number is filled in. */
+  onPickContact?: (contact: PickedContact) => void;
 }
 
-export function PhoneField({ label, value, onChangeText, placeholder, invalid, editable = true, autoComplete = 'off' }: Props) {
+export function PhoneField({ label, value, onChangeText, placeholder, invalid, editable = true, autoComplete = 'off', onPickContact }: Props) {
   const { t, i18n } = useTranslation();
   const [country, setCountry] = useState<CountryCode>(() => splitPhone(value, defaultCountry()).country);
   const [national, setNational] = useState(() => splitPhone(value, defaultCountry()).national);
@@ -50,6 +55,25 @@ export function PhoneField({ label, value, onChangeText, placeholder, invalid, e
     }
     setNational(text);
     onChangeText(joinPhone(country, text));
+  }
+
+  async function fromContacts() {
+    try {
+      const picked = await pickContact();
+      if (!picked) return;
+      const number = bestNumber(picked, country);
+      if (number) {
+        const next = splitPhone(number, country);
+        setCountry(next.country);
+        setNational(next.national);
+        onChangeText(joinPhone(next.country, next.national));
+      } else {
+        showToast('error', t('phoneField.contactNoNumber'));
+      }
+      onPickContact?.(picked);
+    } catch (error) {
+      showToast('error', t(error instanceof ContactsDenied ? 'phoneField.contactsDenied' : 'phoneField.contactsFailed'));
+    }
   }
 
   function choose(code: CountryCode) {
@@ -85,6 +109,11 @@ export function PhoneField({ label, value, onChangeText, placeholder, invalid, e
           maxLength={18}
           style={[styles.box, styles.number, invalid && styles.invalid, !editable && styles.disabled]}
         />
+        {onPickContact && editable && canPickContact() ? (
+          <Pressable accessibilityRole="button" accessibilityLabel={t('phoneField.fromContacts')} onPress={() => void fromContacts()} style={[styles.box, styles.contactsButton]}>
+            <ContactsIcon color={colors.logoIndigo} size={22} />
+          </Pressable>
+        ) : null}
       </View>
       <CountryPicker visible={picking} language={i18n.language} current={country} onPick={choose} onClose={() => setPicking(false)} />
     </View>
@@ -179,6 +208,7 @@ const styles = StyleSheet.create({
   },
   countryBox: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   number: { flex: 1, minWidth: 0 },
+  contactsButton: { width: 54, paddingHorizontal: 0, alignItems: 'center', justifyContent: 'center' },
   invalid: { borderColor: colors.alert, borderWidth: 2 },
   disabled: { color: colors.muted },
   flagBox: { width: 24, height: 16, borderRadius: 3, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.cardBorder },

@@ -6,10 +6,13 @@ import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';
 import { Avatar } from '@/components/Avatar';
-import { PlusIcon } from '@/components/Icons';
+import { ContactsIcon, PlusIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { PhoneField } from '@/components/PhoneField';
+import { showToast } from '@/components/Toast';
+import { bestNumber, canPickContact, ContactsDenied, pickContact } from '@/lib/pickContact';
+import type { PickedContact } from '@/lib/pickContact';
 import { Card, Checkbox, ConfirmDialog, ErrorText, Field, Label, Loading, LoadFailed, Pills, PrimaryButton, SmallButton, TextButton, TopBar } from '@/components/ui';
 import { uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
@@ -132,6 +135,27 @@ export default function PersonDetails() {
     setContacts((now) => ({ ...now, [kind]: value, ...(kind === 'mobile' && sameWhatsapp ? { whatsapp: value } : {}) }));
     if (badField === kind || (kind === 'mobile' && sameWhatsapp && badField === 'whatsapp')) setBadField(null);
     setFailure(null);
+  }
+
+  /** A contact fills the name (unless one is typed already) and the mobile number. */
+  function applyPicked(picked: PickedContact, number: string | null) {
+    if (picked.name && !form.name.trim()) {
+      setForm((now) => ({ ...now, name: picked.name, nameUnknown: false }));
+      if (badField === 'name') setBadField(null);
+    }
+    if (number) changeContact('mobile', number);
+  }
+
+  async function fillFromContacts() {
+    try {
+      const picked = await pickContact();
+      if (!picked) return;
+      const number = bestNumber(picked);
+      if (!number) showToast('error', t('phoneField.contactNoNumber'));
+      applyPicked(picked, number);
+    } catch (error) {
+      showToast('error', t(error instanceof ContactsDenied ? 'phoneField.contactsDenied' : 'phoneField.contactsFailed'));
+    }
   }
 
   function setWhatsappSame(on: boolean) {
@@ -379,6 +403,12 @@ export default function PersonDetails() {
             />
           </View>
         </View>
+        {!editing && contactsOpen && canPickContact() ? (
+          <Pressable accessibilityRole="button" onPress={() => void fillFromContacts()} style={styles.fromContacts}>
+            <ContactsIcon color={colors.logoPurple} size={20} />
+            <Text style={styles.fromContactsText}>{t('phoneField.fromContacts')}</Text>
+          </Pressable>
+        ) : null}
         <Checkbox label={t('details.nameUnknown')} on={form.nameUnknown} onChange={(on) => change('nameUnknown', on)} />
 
         <Label>{t('details.gender')}</Label>
@@ -435,6 +465,7 @@ export default function PersonDetails() {
               onChangeText={(v) => changeContact('mobile', v)}
               placeholder={hidden('mobile') ? t('details.contactHidden') : t('details.mobilePlaceholder')}
               invalid={badField === 'mobile'}
+              onPickContact={editing ? undefined : (picked) => applyPicked(picked, null)}
             />
             {contacts.mobile.trim() ? (
               <Checkbox label={t('details.sameAsMobile')} on={sameWhatsapp} onChange={setWhatsappSame} />
@@ -527,6 +558,8 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-end' },
   nameField: { flex: 1, minWidth: 0 },
   nameInput: { borderWidth: 2, borderColor: colors.logoPurple },
+  fromContacts: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start' },
+  fromContactsText: { color: colors.logoPurple, fontFamily: fonts.bold, fontSize: 15 },
   photo: { width: 76, height: 76, borderRadius: 38 },
   photoPlus: {
     position: 'absolute',
