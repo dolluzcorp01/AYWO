@@ -3,6 +3,7 @@
 // tap the centre card to open it. Wide families scroll sideways.
 import { focusView, graphFromApi, relationText } from '@aywo/layout';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
@@ -171,7 +172,7 @@ export function MyView({ data, viewerId, focusId, seeingAs, onFocus, onOpenPerso
   const [expanded, setExpanded] = useState({ siblings: false, children: false });
   useEffect(() => setExpanded({ siblings: false, children: false }), [focusId]);
   const drawn = useMemo(() => layout(view, width, expanded), [view, width, expanded]);
-  const sideways = useRef<ScrollView>(null);
+  const sideways = useRef<ComponentRef<typeof ScrollView>>(null);
 
   // A wide family scrolls sideways; it always opens with the centre person in the middle of the screen.
   // Done once the content has its size, because a scroll asked for earlier is ignored.

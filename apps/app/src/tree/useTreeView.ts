@@ -24,11 +24,10 @@ export interface TreeNode {
   photoUrl: string | null;
 }
 
-export interface TreeViewAnswer extends ApiTree {
+export interface TreeViewAnswer extends ApiTree<TreeNode> {
   tree: { id: string; name: string };
   role: 'none' | 'viewer' | 'commenter' | 'editor' | 'co_creator' | 'creator';
   viewer_person_id: string | null;
-  nodes: TreeNode[];
   labels: Record<string, TreeLabel>;
 }
 

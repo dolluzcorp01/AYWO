@@ -2,7 +2,7 @@
 FROM node:lts-slim
 RUN corepack enable
 WORKDIR /repo
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc tsconfig.base.json ./
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
 COPY apps/api ./apps/api
 COPY apps/app/package.json ./apps/app/package.json
 COPY packages ./packages

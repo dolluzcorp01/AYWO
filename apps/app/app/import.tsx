@@ -220,7 +220,7 @@ export default function ImportScreen() {
           keyExtractor={(p) => p.tempId}
           contentContainerStyle={styles.list}
           initialNumToRender={12}
-          ListHeaderComponent={needGender.length > 0 ? <SectionTitle>{t('import.genderUnknownCount', { count: needGender.length })}</SectionTitle> : null}
+          ListHeaderComponent={needGender.length > 0 ? <SectionTitle>{t('import.genderUnknownCount', { count: needGender.length })}</SectionTitle> : undefined}
           renderItem={({ item, index }) => (
             <>
               {index === needGender.length && guessedGender.length > 0 ? (
