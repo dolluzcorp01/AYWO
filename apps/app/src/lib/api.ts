@@ -188,7 +188,8 @@ export async function uploadFile(kind: 'photos' | 'imports' | 'chat' | 'posts', 
     extension: file.extension,
   });
   const blob = await (await fetch(file.uri)).blob();
-  const response = await fetch(url, { method: 'PUT', headers: { 'Content-Type': file.contentType }, body: blob });
-  if (!response.ok) throw new ApiFailure(response.status, 'upload_failed', 'errors.upload_failed');
+  // A refused or unreachable file store is an upload problem, not "no connection": the API answered a moment ago.
+  const response = await fetch(url, { method: 'PUT', headers: { 'Content-Type': file.contentType }, body: blob }).catch(() => null);
+  if (!response?.ok) throw new ApiFailure(response?.status ?? 0, 'upload_failed', 'errors.upload_failed');
   return path;
 }

@@ -36,8 +36,10 @@ npx expo install --check
 ```
 
 ```bash
-docker compose up -d db
+docker compose up -d
 ```
+
+Starts Postgres and MinIO (the local file store for photos, voice notes and imports; console at http://localhost:9001, minioadmin / minioadmin). The `.env.example` values already point at it.
 
 ```bash
 pnpm migrate -- --seed

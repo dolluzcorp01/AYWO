@@ -1,4 +1,4 @@
-// DigitalOcean Spaces (S3-compatible). Private: the app gets short-lived signed links only.
+// DigitalOcean Spaces (S3-compatible; MinIO on a laptop). Private: the app gets short-lived signed links only.
 import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { config } from '../config.ts';
@@ -7,6 +7,8 @@ const s3 = new S3Client({
   endpoint: config.SPACES_ENDPOINT,
   region: config.SPACES_REGION,
   credentials: { accessKeyId: config.SPACES_KEY, secretAccessKey: config.SPACES_SECRET },
+  // MinIO on a laptop serves files as /bucket/file; Spaces as bucket.host/file.
+  forcePathStyle: config.SPACES_PATH_STYLE === 'true',
   // The SDK's default adds checksums that signed uploads from a browser or phone do not send, and Spaces may not support.
   requestChecksumCalculation: 'WHEN_REQUIRED',
   responseChecksumValidation: 'WHEN_REQUIRED',
