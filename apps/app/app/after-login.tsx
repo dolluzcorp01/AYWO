@@ -10,7 +10,7 @@ import { claimCandidates, safeNext } from '@/lib/account';
 import type { Me } from '@/lib/account';
 import { api, deviceStore } from '@/lib/api';
 import { errorCode, useErrorText } from '@/lib/errors';
-import { isLargeText, setLanguage, setLargeText } from '@/lib/prefs';
+import { isLargeText, isSimpleMode, setLanguage, setLargeText, setSimpleMode } from '@/lib/prefs';
 import { registerForPush } from '@/pay/registerPush';
 import { LEGAL_VERSION } from '@/legal/publisher';
 
@@ -31,11 +31,12 @@ export default function AfterLogin() {
 
       if (isNew) {
         // A new account takes what was chosen on Welcome.
-        await api.patch('/me', { language_code: i18n.language, large_text: isLargeText() });
+        await api.patch('/me', { language_code: i18n.language, large_text: isLargeText(), simple_mode: isSimpleMode() });
       } else {
         // A returning person gets their saved choices on this phone too.
         if (me.language_code && me.language_code !== i18n.language && me.language_code !== 'en') await setLanguage(me.language_code);
         if (me.large_text !== isLargeText()) await setLargeText(me.large_text);
+        if (!!me.simple_mode !== isSimpleMode()) await setSimpleMode(!!me.simple_mode);
       }
 
       // The phone screen says signing in accepts the Terms and Privacy policy; this records that (LLD S-02).

@@ -9,6 +9,8 @@ export interface Me {
   email: string | null;
   language_code: string;
   large_text: boolean;
+  /** Elder mode: a simple Home with a few big buttons. */
+  simple_mode: boolean;
   plus: boolean;
   plus_until: string | null;
   admin_role: string | null;
@@ -76,7 +78,7 @@ export function useTrees() {
 export function useUpdateMe() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (changes: { display_name?: string; email?: string; language_code?: string; large_text?: boolean; photo_path?: string }) =>
+    mutationFn: (changes: { display_name?: string; email?: string; language_code?: string; large_text?: boolean; simple_mode?: boolean; photo_path?: string }) =>
       api.patch<Me>('/me', changes),
     onSuccess: (_answer, changes) => {
       client.invalidateQueries({ queryKey: ['me'] });
