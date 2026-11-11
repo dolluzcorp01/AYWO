@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
+import { DeleteBanner } from '@/components/DeleteBanner';
 import { BellIcon, ChatIcon, ChevronIcon, FriendsIcon, InviteIcon, PartyIcon, PhotoIcon, RingsIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { TAB_BAR_SPACE, TabBar } from '@/components/TabBar';
@@ -75,6 +76,7 @@ export default function Home() {
       <Screen flush>
         <ScrollView contentContainerStyle={[styles.scroll, styles.desktopScroll]}>
           <Top treeId={main.id} name={name} />
+          <DeleteBanner />
           <AnnouncementBar />
           <IncomingSos />
           <View style={styles.columns}>
@@ -102,6 +104,7 @@ export default function Home() {
     <Screen flush>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Top treeId={main.id} name={name} />
+        <DeleteBanner />
         <AnnouncementBar />
         <IncomingSos />
         <SosEntry />

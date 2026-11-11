@@ -15,6 +15,7 @@ export const colors = {
   ask: '#A94A00',
   activeTab: '#2F3379',
   alert: '#E5383B',
+  alertTint: '#FDEDED',
   logoPurple: '#8E26E1',
   logoIndigo: '#2F3379',
   logoYellow: '#FDD623',

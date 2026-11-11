@@ -15,6 +15,7 @@ import { Card, Checkbox, ErrorText, Loading, LoadFailed, NeonPanel } from '@/com
 import { languageLabel } from '@/i18n/languages';
 import { HELP_PAGES } from '@/legal/LegalLinks';
 import { api } from '@/lib/api';
+import { DeleteBanner } from '@/components/DeleteBanner';
 import { mainTree, useMe, useTrees, useUpdateMe } from '@/lib/account';
 import { useFeature } from '@/ops/appConfig';
 import type { MyExtras } from '@/ops/types';
@@ -104,6 +105,8 @@ export default function MeScreen() {
             <Text style={styles.editText}>{t('me.edit')}</Text>
           </Pressable>
         </View>
+
+        <DeleteBanner />
 
         <Pressable accessibilityRole="button" onPress={() => router.push(planOn ? '/family-plan' : '/plus')}>
           <NeonPanel style={styles.plus}>
