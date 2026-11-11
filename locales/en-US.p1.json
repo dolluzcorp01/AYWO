@@ -349,6 +349,8 @@
     "month": "In a month",
     "year": "In a year",
     "message": "Join our family tree, {{tree}}, on AYWO: {{url}}",
+    "messageFrom": "{{sharer}} invited you to our family tree, {{tree}}, on AYWO. See the family and where you fit: {{url}}",
+    "messageFor": "{{sharer}} added you to our family tree, {{tree}}, as their {{relation}}. See the family and where you fit: {{url}}",
     "whatsapp": "Send on WhatsApp",
     "copy": "Copy link",
     "copied": "Link copied",

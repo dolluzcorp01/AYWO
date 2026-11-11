@@ -10,6 +10,7 @@ import { safeError, toHttpError } from './errors.ts';
 import { startJobs } from './jobs.ts';
 import { adminRoutes } from './routes/admin.ts';
 import { authRoutes } from './routes/auth.ts';
+import { linkPageRoutes } from './routes/link-page.ts';
 import { opsRoutes } from './routes/ops.ts';
 import { paymentRoutes } from './routes/payments.ts';
 import { rpcRoutes } from './routes/rpc.ts';
@@ -64,6 +65,7 @@ export async function buildServer() {
   await app.register(authRoutes);
   await app.register(rpcRoutes);
   await app.register(treeViewRoutes);
+  await app.register(linkPageRoutes);
   await app.register(uploadRoutes);
   await app.register(treeEditRoutes);
   await app.register(paymentRoutes);

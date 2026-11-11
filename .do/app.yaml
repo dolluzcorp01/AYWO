@@ -70,6 +70,16 @@ ingress:
       match:
         authority:
           exact: api.aywo.in
+    # Family links go to the API, which serves the same web page with a WhatsApp preview card for that link
+    # (apps/api/src/routes/link-page.ts). Must stay above the web rule.
+    - component:
+        name: api
+        preserve_path_prefix: true
+      match:
+        authority:
+          exact: aywo.in
+        path:
+          prefix: /link/
     - component:
         name: web
       match:
