@@ -240,6 +240,7 @@ export default function ShareScreen() {
               }}
               placeholder={t('details.mobilePlaceholder')}
               invalid={badPhone}
+              onPickContact={() => setBadPhone(false)}
             />
             <Muted>{t('share.phoneHelp')}</Muted>
             {badPhone ? <ErrorText>{t('details.badPhone')}</ErrorText> : null}

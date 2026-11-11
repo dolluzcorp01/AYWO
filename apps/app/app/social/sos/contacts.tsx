@@ -132,6 +132,9 @@ export default function SosContacts() {
               setBadPhone(false);
             }}
             invalid={badPhone}
+            onPickContact={(picked) => {
+              if (picked.name && !typedName.trim()) setTypedName(picked.name.slice(0, 80));
+            }}
           />
           {badPhone ? <ErrorText>{t('errors.phone_not_valid')}</ErrorText> : null}
           <SecondaryButton label={t('social.sos.addNumber')} disabled={!typedPhone.trim() || add.isPending} onPress={addTyped} />

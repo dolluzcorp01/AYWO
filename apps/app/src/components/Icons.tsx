@@ -17,6 +17,15 @@ function Icon({ color, size = 20, width = 2, mirror, children }: IconProps & { c
   );
 }
 
+/** An address-book card with a person: "Choose from contacts". */
+export const ContactsIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <Path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z" />
+    <Path d="M4 7h3M4 12h3M4 17h3" />
+    <Circle cx={12.5} cy={10} r={2.5} />
+    <Path d="M8.5 17c.7-2 2.2-3 4-3s3.3 1 4 3" />
+  </Icon>
+);
 export const CloseIcon = (p: IconProps) => <Icon {...p}><Path d="M6 6l12 12M18 6L6 18" /></Icon>;
 export const PlusIcon = (p: IconProps) => <Icon {...p}><Path d="M12 5v14M5 12h14" /></Icon>;
 export const CheckIcon = (p: IconProps) => <Icon {...p}><Path d="M5 13l4 4L19 7" /></Icon>;
