@@ -34,7 +34,7 @@ export async function treeViewRoutes(app: FastifyInstance): Promise<void> {
       const role = (await db.query(`select tree_role($1) as role`, [body.tree_id])).rows[0].role as string;
       const tree = (await db.query(`select id, name, creator_person_id from trees where id = $1`, [body.tree_id])).rows[0];
       const persons = (await db.query(`select ${PERSON_FIELDS} from persons where tree_id = $1 and deleted_at is null`, [body.tree_id])).rows as PersonRow[];
-      const unions = (await db.query(`select id, partner1_id, partner2_id, seq1, kind, status, version from unions where tree_id = $1`, [body.tree_id])).rows;
+      const unions = (await db.query(`select id, partner1_id, partner2_id, seq1, kind, status, version, start_date from unions where tree_id = $1`, [body.tree_id])).rows;
       const links = (await db.query(`select parent_id, child_id, union_id, kind from parent_child where tree_id = $1`, [body.tree_id])).rows;
       const contacts = (await db.query(`select tree_contacts($1) as c`, [body.tree_id])).rows[0].c;
 

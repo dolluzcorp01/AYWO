@@ -22,7 +22,12 @@ export function FamilyDates() {
     d.days === 0 ? t('ops.dates.today') : d.days === 1 ? t('ops.dates.tomorrow') : new Date(`${d.date}T00:00:00`).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' });
   return (
     <View style={styles.block}>
-      <Text accessibilityRole="header" style={styles.section}>{t('ops.dates.title')}</Text>
+      <View style={styles.headRow}>
+        <Text accessibilityRole="header" style={styles.section}>{t('ops.dates.title')}</Text>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/calendar')} hitSlop={10}>
+          <Text style={styles.seeAll}>{t('calendar.seeAll')}</Text>
+        </Pressable>
+      </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
         {list.map((d) => (
           <Pressable
@@ -69,6 +74,8 @@ export function OnThisDayCard() {
 
 const styles = StyleSheet.create({
   block: { gap: 10 },
+  headRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  seeAll: { color: colors.logoPurple, fontFamily: fonts.bold, fontSize: 14 },
   section: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 18, letterSpacing: -0.3 },
   strip: { gap: 10, paddingRight: 8 },
   date: {

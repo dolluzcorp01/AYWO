@@ -86,6 +86,14 @@ export const adminJobs: Job[] = [
       await asServer((db) => db.query(`select birthday_reminders()`));
     },
   },
+  {
+    // The same for remembrance days (0015): a quiet push at 8 in the morning, once a day.
+    name: 'remembrance_reminders',
+    everyMinutes: 60,
+    run: async () => {
+      await asServer((db) => db.query(`select remembrance_reminders()`));
+    },
+  },
   { name: 'storage_trash', everyMinutes: 15, run: emptyStorageTrash },
   { name: 'upload_sizes', everyMinutes: 10, run: checkUploadSizes },
   {

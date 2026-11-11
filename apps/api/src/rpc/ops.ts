@@ -26,6 +26,7 @@ export const opsRpc: RpcList = {
   sos_emergency_card: { args: ['p_event'] },
 
   upcoming_dates: { args: ['p_days'] },
+  family_calendar: { args: ['p_from', 'p_to'] },
   on_this_day: { args: [] },
 
   coupon_quote: { args: ['p_code', 'p_product', 'p_amount_minor', 'p_currency'] },
