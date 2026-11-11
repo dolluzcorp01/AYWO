@@ -31,6 +31,7 @@ import { useActivity } from '@/tree/useEdit';
 import type { RequestItem } from '@/tree/useEdit';
 import { useTreeView } from '@/tree/useTreeView';
 import type { TreeNode } from '@/tree/useTreeView';
+import { FamilyGuideCard } from '@/tree/FamilyGuideCard';
 import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
 
 function useCounts() {
@@ -236,6 +237,7 @@ function FamilyCard({ tree }: { tree: TreeRow }) {
   const generations = data ? generationCount(data.nodes, data.links) : null;
   const open = () => router.push({ pathname: '/tree/[id]', params: { id: tree.id } });
   return (
+    <>
     <Pressable accessibilityRole="button" onPress={open} style={styles.familyCard}>
       <View style={styles.familyHead}>
         <View style={styles.topText}>
@@ -255,6 +257,9 @@ function FamilyCard({ tree }: { tree: TreeRow }) {
         <Text style={styles.openText}>{t('home.openTree')}</Text>
       </View>
     </Pressable>
+    {/* Outside the card's own button, so each relative button opens its own form. */}
+    {data ? <FamilyGuideCard treeId={tree.id} tree={data} me={viewerId} /> : null}
+    </>
   );
 }
 

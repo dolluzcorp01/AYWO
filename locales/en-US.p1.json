@@ -12,6 +12,44 @@
     "chooseCountry": "Choose country",
     "search": "Search country or code"
   },
+  "guide": {
+    "intro": "Let's add your close family",
+    "stepOf": "Step {{n}} of 4",
+    "cardTitle": "Add your family",
+    "cardProgress": "{{done}} of 4 added",
+    "mother": "Mother",
+    "father": "Father",
+    "partner": "Partner",
+    "child": "Child",
+    "steps": {
+      "mother": {
+        "title": "Who is your mother?",
+        "help": "Add her name. A year of birth is enough.",
+        "add": "Add my mother"
+      },
+      "father": {
+        "title": "Who is your father?",
+        "help": "Add his name. A year of birth is enough.",
+        "add": "Add my father"
+      },
+      "partner": {
+        "title": "Are you married?",
+        "help": "Add your husband or wife.",
+        "add": "Add my husband or wife"
+      },
+      "child": {
+        "title": "Do you have children?",
+        "help": "Add your first child. You can add more later.",
+        "add": "Add a child"
+      }
+    },
+    "skip": "Skip",
+    "later": "I'll do this later",
+    "doneTitle": "Your family is growing",
+    "doneBody_one": "{{count}} person in your tree. Share it so family can add more.",
+    "doneBody_other": "{{count}} people in your tree. Share it so family can add more.",
+    "openTree": "Open the tree"
+  },
   "errors": {
     "account_blocked": "This account has been blocked. Please contact AYWO support.",
     "already_decided": "Someone has already decided this.",
