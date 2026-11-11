@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { DeleteBanner } from '@/components/DeleteBanner';
-import { BellIcon, ChatIcon, ChevronIcon, FriendsIcon, InviteIcon, PartyIcon, PhotoIcon, RingsIcon } from '@/components/Icons';
+import { BellIcon, CalendarIcon, ChatIcon, ChevronIcon, FriendsIcon, InviteIcon, PartyIcon, PhotoIcon, RingsIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { TAB_BAR_SPACE, TabBar } from '@/components/TabBar';
 import { useDesktop } from '@/components/WebFrame';
@@ -355,6 +355,7 @@ function QuickActions() {
       {on.memories ? <Quick label={t('social.home.memories')} onPress={() => router.push('/social/memories')} icon={<PhotoIcon color={ink} size={22} width={1.8} />} /> : null}
       {on.invites ? <Quick label={t('social.home.invites')} badge={counts?.open_invites} onPress={() => router.push('/social/invites')} icon={<InviteIcon color={ink} size={22} width={1.8} />} /> : null}
       {on.alerts ? <Quick label={t('social.home.alerts')} badge={counts?.unseen_alerts} onPress={() => router.push('/social/alerts')} icon={<BellIcon color={ink} size={22} width={1.8} />} /> : null}
+      <Quick label={t('calendar.short')} onPress={() => router.push('/calendar')} icon={<CalendarIcon color={ink} size={22} width={1.8} />} />
       <Quick label={t('social.home.groups')} onPress={() => router.push('/social/groups')} icon={<FriendsIcon color={ink} size={22} width={1.8} />} />
       {on.pop ? <Quick label={t('social.home.pop')} onPress={() => router.push('/social/pop/new')} icon={<PartyIcon color={ink} size={22} width={1.8} />} /> : null}
     </View>

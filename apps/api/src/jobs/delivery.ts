@@ -12,7 +12,7 @@ import { sendSms } from '../services/sms.ts';
 const BATCH = 200;
 const MAX_ATTEMPTS = 10;
 const SMS_MAX_LENGTH = 300;
-const PUSH_ONLY_BY_DEFAULT = new Set(['chat_message', 'memory_comment', 'rsvp', 'promo', 'birthdays_today']);
+const PUSH_ONLY_BY_DEFAULT = new Set(['chat_message', 'memory_comment', 'rsvp', 'promo', 'birthdays_today', 'remembrance_today']);
 
 // HLD: 'Push for normal, SMS for alerts and SOS'. Only the server inserts notifications, so the payload flag is safe.
 const URGENT_KIND = /^(sos|alert|help_request|blood_)/;
@@ -36,6 +36,8 @@ function pathFor(kind: string, payload: Record<string, unknown> | null): string 
   if (kind.startsWith('chat_') && isUuid(payload?.chat_id)) return `/social/chat/${payload?.chat_id}`;
   if (kind.startsWith('memory_') && isUuid(payload?.post_id)) return `/social/memories/${payload?.post_id}`;
   if ((kind.startsWith('invite') || kind === 'rsvp') && isUuid(payload?.event_id)) return `/social/invites/${payload?.event_id}`;
+  // Birthdays and remembrance days open the family calendar on today.
+  if (kind === 'birthdays_today' || kind === 'remembrance_today') return '/calendar';
   if (kind === 'alert') return '/social/alerts';
   if (kind === 'group_added') return '/social/groups';
   if (kind === 'request_created' || kind === 'request_routed' || kind === 'merge_candidate') return '/activity';

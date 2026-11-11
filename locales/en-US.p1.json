@@ -323,7 +323,11 @@
     "remove": "Remove from the tree",
     "removeTitle": "Remove {{name}}?",
     "removeHelp": "You can bring them back from History.",
-    "removeConfirm": "Yes, remove"
+    "removeConfirm": "Yes, remove",
+    "weddingDate": "Wedding date (optional)",
+    "weddingWith": "Wedding date with {{name}}",
+    "weddingPlaceholder": "e.g. 21/03/1995",
+    "badWeddingDate": "Type the full wedding date, like 21/03/1995. It can't be in the future."
   },
   "share": {
     "action": "Share",
@@ -758,5 +762,34 @@
         "helpA": "Write to {{email}} or call {{phone}}. Hours: {{supportHours}}."
       }
     }
+  },
+  "calendar": {
+    "title": "Family calendar",
+    "short": "Calendar",
+    "subtitle": "Birthdays, anniversaries and remembrance days",
+    "seeAll": "Calendar",
+    "today": "Today",
+    "backToToday": "Back to today",
+    "previous": "Previous month",
+    "next": "Next month",
+    "dayCount_one": "{{count}} family date",
+    "dayCount_other": "{{count}} family dates",
+    "kinds": {
+      "birthday": "Birthday",
+      "anniversary": "Anniversary",
+      "remembrance": "Remembrance",
+      "event": "Invitation"
+    },
+    "yourBirthday": "Your birthday",
+    "birthdayOf": "{{name}}'s birthday",
+    "turns_one": "Turns {{count}}",
+    "turns_other": "Turns {{count}}",
+    "married_one": "{{count}} year married",
+    "married_other": "{{count}} years married",
+    "remembering": "Remembering {{name}}",
+    "yearsSince_one": "{{count}} year since they passed",
+    "yearsSince_other": "{{count}} years since they passed",
+    "nothingMonth": "No family dates this month. Add birthdays, wedding dates and the day someone passed in the family tree, and they show here.",
+    "nothingDay": "Nothing on this day."
   }
 }

@@ -12,7 +12,7 @@ export interface ApiNode {
 /** N is the screen's own node type, so its extra fields stay typed (an intersection of two arrays would lose them). */
 export interface ApiTree<N extends ApiNode = ApiNode> {
   nodes: N[];
-  unions: { id: string; partner1_id: string; partner2_id: string | null; seq1?: number | null }[];
+  unions: { id: string; partner1_id: string; partner2_id: string | null; seq1?: number | null; kind?: string; status?: string; version?: number; start_date?: string | null }[];
   links: { parent_id: string; child_id: string; union_id: string | null }[];
 }
 

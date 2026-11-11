@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
-import { BellIcon, ChatIcon, FriendsIcon, InviteIcon, PartyIcon, PhotoIcon, PlusIcon } from '@/components/Icons';
+import { BellIcon, CalendarIcon, ChatIcon, FriendsIcon, InviteIcon, PartyIcon, PhotoIcon, PlusIcon } from '@/components/Icons';
 import { Text } from '@/components/Text';
 import { api } from '@/lib/api';
 import { mainTree, useTrees } from '@/lib/account';
@@ -110,6 +110,7 @@ export function SideNav() {
         <Item tight={tight} label={t('social.home.chat')} active={on('/social/chat')} badge={counts.data?.unread_chats} onPress={() => go('/social/chat')} icon={(c) => <ChatIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('social.home.memories')} active={on('/social/memories')} onPress={() => go('/social/memories')} icon={(c) => <PhotoIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('social.home.invites')} active={on('/social/invites') || on('/social/pop')} badge={counts.data?.open_invites} onPress={() => go('/social/invites')} icon={(c) => <InviteIcon color={c} size={20} width={1.8} />} />
+        <Item tight={tight} label={t('calendar.short')} active={on('/calendar')} onPress={() => go('/calendar')} icon={(c) => <CalendarIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('social.home.alerts')} active={on('/social/alerts')} badge={counts.data?.unseen_alerts} onPress={() => go('/social/alerts')} icon={(c) => <BellIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('social.home.groups')} active={on('/social/groups')} onPress={() => go('/social/groups')} icon={(c) => <FriendsIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('social.home.pop')} active={false} onPress={() => router.push('/social/pop/new')} icon={(c) => <PartyIcon color={c} size={20} width={1.8} />} />

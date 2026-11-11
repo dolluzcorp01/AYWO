@@ -83,6 +83,11 @@ export function savePerson(personId: string, version: number, fields: PersonFiel
   return api.patch<PersonSaveAnswer>(`/persons/${personId}`, { version, ...fields });
 }
 
+/** A couple's wedding date: a full date, or null to clear it. Only for those who may edit both partners. */
+export function saveWeddingDate(unionId: string, version: number | null, date: string | null) {
+  return api.rpc<{ status: 'saved'; version: number }>('union_set_date', { p_union: unionId, p_version: version, p_date: date });
+}
+
 export function deletePerson(personId: string, version: number) {
   return api.del<PersonSaveAnswer>(`/persons/${personId}?version=${version}`);
 }

@@ -19,7 +19,7 @@ import type { PickedFile } from '@/lib/api';
 import { dateToText, normalizeContact, parseDateText } from '@/lib/contacts';
 import { errorCode, useErrorText } from '@/lib/errors';
 import { pickPhoto } from '@/lib/pick';
-import { deleteContact, deletePerson, savePerson, setContact, useAddRelative, useContactsForEdit } from '@/tree/useEdit';
+import { deleteContact, deletePerson, savePerson, saveWeddingDate, setContact, useAddRelative, useContactsForEdit } from '@/tree/useEdit';
 import type { ContactKind, LinkKind, PersonFields, Relation } from '@/tree/useEdit';
 import { useTreeView } from '@/tree/useTreeView';
 import type { TreeNode } from '@/tree/useTreeView';
@@ -67,7 +67,7 @@ function formFrom(node: TreeNode): Form {
 }
 
 type Contacts = Record<ContactKind, string>;
-type BadField = 'name' | 'born' | 'died' | ContactKind;
+type BadField = 'name' | 'born' | 'died' | 'wedding' | ContactKind;
 const NO_CONTACTS: Contacts = { mobile: '', whatsapp: '', email: '' };
 
 export default function PersonDetails() {
@@ -110,6 +110,8 @@ export default function PersonDetails() {
   const [notice, setNotice] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
   const [loadedVersion, setLoadedVersion] = useState<number | null>(null);
+  // Wedding dates as typed, by couple. 'new' is the couple being made when adding a husband or wife.
+  const [weddings, setWeddings] = useState<Record<string, string>>({});
 
   // Fill the form once, and again only when the person asks for the latest after a clash.
   useEffect(() => {
@@ -118,6 +120,11 @@ export default function PersonDetails() {
       // Naming the "unknown parent" as Mother or Father: the gender comes with it, unless one is already set.
       setForm(params.gender && loaded.gender === 'unknown' ? { ...loaded, gender: params.gender } : loaded);
       setLoadedVersion(node.version);
+      const typed: Record<string, string> = {};
+      for (const u of tree.data?.unions ?? []) {
+        if (u.kind === 'marriage' && u.partner2_id && (u.partner1_id === node.id || u.partner2_id === node.id)) typed[u.id] = dateToText(u.start_date, 'exact');
+      }
+      setWeddings(typed);
     }
   }, [node, loadedVersion]);
 
@@ -230,6 +237,23 @@ export default function PersonDetails() {
     };
   }
 
+  /** The wedding dates that changed, checked. Only a full date makes sense for an anniversary. */
+  function weddingChanges(): { changes: { id: string; date: string | null }[] } | { problem: string } {
+    const changes: { id: string; date: string | null }[] = [];
+    for (const [id, text] of Object.entries(weddings)) {
+      const before = id === 'new' ? '' : dateToText(tree.data?.unions.find((u) => u.id === id)?.start_date, 'exact');
+      if (text.trim() === before) continue;
+      if (!text.trim()) {
+        changes.push({ id, date: null });
+        continue;
+      }
+      const parsed = parseDateText(text);
+      if (!parsed || parsed.precision !== 'exact' || parsed.date > new Date().toISOString().slice(0, 10)) return { problem: t('details.badWeddingDate') };
+      changes.push({ id, date: parsed.date });
+    }
+    return { changes };
+  }
+
   /** Makes the stored contacts match the boxes. A contact is replaced by removing the old one and adding the new. */
   async function saveContacts(id: string, plan: { kind: ContactKind; value: string; normalized: string | null }[]) {
     for (const { kind, value, normalized } of plan) {
@@ -245,6 +269,12 @@ export default function PersonDetails() {
     if ('problem' in built) {
       setFailure(built.problem);
       setBadField(built.field);
+      return;
+    }
+    const wedding = weddingChanges();
+    if ('problem' in wedding) {
+      setFailure(wedding.problem);
+      setBadField('wedding');
       return;
     }
     const plan: { kind: ContactKind; value: string; normalized: string | null }[] = [];
@@ -279,6 +309,10 @@ export default function PersonDetails() {
         }
         // Numbers never travel in a request, so they are saved only by those who may write directly.
         await saveContacts(personId, plan);
+        for (const change of wedding.changes) {
+          const union = tree.data?.unions.find((u) => u.id === change.id);
+          await saveWeddingDate(change.id, union?.version ?? null, change.date);
+        }
         await client.invalidateQueries({ queryKey: ['tree-view', treeId] });
         await client.invalidateQueries({ queryKey: ['person-card', personId] });
         if (params.back === 'guide') router.back();
@@ -306,6 +340,8 @@ export default function PersonDetails() {
       try {
         if (photoPath) await savePerson(answer.person_id, 1, { photo_path: photoPath });
         await saveContacts(answer.person_id, plan);
+        const newWedding = wedding.changes.find((c) => c.id === 'new');
+        if (newWedding?.date && answer.union_id) await saveWeddingDate(answer.union_id, null, newWedding.date);
       } catch {
         await client.invalidateQueries({ queryKey: ['tree-view', treeId] });
         setNotice(t('details.partlySaved'));
@@ -373,6 +409,21 @@ export default function PersonDetails() {
   const anchorName = anchorNode ? (anchorNode.nameUnknown ? t('tree.nameNotKnown') : anchorNode.name) : '';
   const hasParents = editing ? tree.data.links.some((l) => l.child_id === personId) : params.relation === 'child' || params.relation === 'sibling';
   const title = editing ? (node?.nameUnknown ? t('tree.nameNotKnown') : (node?.name ?? '')) : t('details.newPerson');
+  // A wedding date box for each marriage of this person, or for the one being made. Only for those who may edit.
+  const mayEdit = tree.data.role === 'editor' || tree.data.role === 'co_creator' || tree.data.role === 'creator';
+  const nameOf = (id: string | null) => {
+    const n = tree.data?.nodes.find((x) => x.id === id);
+    return n ? (n.nameUnknown ? t('tree.nameNotKnown') : n.name) : '';
+  };
+  const weddingBoxes: { id: string; label: string }[] = !mayEdit
+    ? []
+    : editing
+      ? tree.data.unions
+          .filter((u) => u.kind === 'marriage' && u.partner2_id && (u.partner1_id === personId || u.partner2_id === personId))
+          .map((u) => ({ id: u.id, label: t('details.weddingWith', { name: nameOf(u.partner1_id === personId ? u.partner2_id : u.partner1_id) }) }))
+      : params.relation === 'spouse'
+        ? [{ id: 'new', label: t('details.weddingDate') }]
+        : [];
   const subtitle = editing ? t('details.editing') : params.relation ? t(`details.relationOf.${params.relation}`, { name: anchorName }) : undefined;
 
   return (
@@ -456,6 +507,22 @@ export default function PersonDetails() {
             </View>
           ) : null}
         </View>
+
+        {weddingBoxes.map((box) => (
+          <Field
+            key={box.id}
+            label={box.label}
+            value={weddings[box.id] ?? ''}
+            onChangeText={(v) => {
+              setWeddings((now) => ({ ...now, [box.id]: v }));
+              setFailure(null);
+              if (badField === 'wedding') setBadField(null);
+            }}
+            placeholder={t('details.weddingPlaceholder')}
+            keyboardType="numbers-and-punctuation"
+            invalid={badField === 'wedding'}
+          />
+        ))}
 
         {contactsOpen ? (
           <>

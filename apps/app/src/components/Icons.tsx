@@ -98,6 +98,13 @@ export const FriendsIcon = (p: IconProps) => (
     <Path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.8 3 2.6 3.5 5.2" />
   </Icon>
 );
+/** A page of a wall calendar: the family calendar. */
+export const CalendarIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <Path d="M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
+    <Path d="M3 10h18M8 3v4M16 3v4" />
+  </Icon>
+);
 export const PartyIcon = (p: IconProps) => (
   <Icon {...p}>
     <Path d="M4 20l5-14 9 9z" />
