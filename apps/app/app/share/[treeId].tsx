@@ -5,7 +5,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Modal, Pressable, ScrollView, Share as NativeShare, StyleSheet, View } from 'react-native';
+import { relationText } from '@aywo/layout';
 import { goBack } from '@/lib/nav';
+import { useMe } from '@/lib/account';
 import { Avatar } from '@/components/Avatar';
 import { ContactIcon } from '@/components/ContactIcon';
 import { ChevronIcon } from '@/components/Icons';
@@ -41,6 +43,7 @@ export default function ShareScreen() {
   const router = useRouter();
   const errorText = useErrorText();
   const tree = useTreeView(treeId, 'mine', i18n.language, null);
+  const me = useMe();
   const create = useCreateShare(treeId);
   const canManage = canShare(tree.data?.role);
   const existing = useShares(treeId, canManage);
@@ -115,8 +118,18 @@ export default function ShareScreen() {
     return share.link_url;
   }
 
+  // Personal when we can: "Pavithran added you to ... as their sister". A word the tree is still unsure of
+  // ("Anna or Thambi?") is left out rather than guessed.
+  const sharer = me.data?.display_name?.trim() || null;
+  const said = person ? relationText(data.labels[person.id]) : null;
+  // "as their sister": the tree shows "Sister" as a title; mid-sentence English wants lower case.
+  const word = said?.kind === 'word' ? (i18n.language.startsWith('en') ? said.word.toLocaleLowerCase(i18n.language) : said.word) : null;
   const message = (url: string) =>
-    t('share.message', { tree: data.tree.name, url });
+    sharer && word
+      ? t('share.messageFor', { sharer, tree: data.tree.name, relation: word, url })
+      : sharer
+        ? t('share.messageFrom', { sharer, tree: data.tree.name, url })
+        : t('share.message', { tree: data.tree.name, url });
 
   async function sendWhatsApp() {
     try {
