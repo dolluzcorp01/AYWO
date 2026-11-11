@@ -1,9 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { ApiFailure } from '@/lib/api';
+import { isOffline } from '@/lib/offline';
 
 /** The i18n key to show for a failed call. Anything that is not a server answer is treated as a connection problem. */
 export function errorKey(error: unknown): string {
-  return error instanceof ApiFailure ? error.messageKey : 'errors.network';
+  if (error instanceof ApiFailure) return error.messageKey;
+  // No answer at all: say plainly that this needs internet, rather than "something went wrong".
+  return isOffline() ? 'errors.offline' : 'errors.network';
 }
 
 export function errorCode(error: unknown): string | null {

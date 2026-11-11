@@ -14,6 +14,7 @@ import { PageLoader } from '@/components/Loaders';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { goBack } from '@/lib/nav';
 import { Avatar } from '@/components/Avatar';
+import { OfflineBar } from '@/components/OfflineBar';
 import { BackIcon, ContactIcon, LockIcon } from '@/components/ContactIcon';
 import { CommentIcon, HistoryIcon, PencilIcon, PlusIcon, ShareIcon } from '@/components/Icons';
 import { Text } from '@/components/Text';
@@ -174,6 +175,7 @@ export default function PersonCard() {
           {label ? <Text style={styles.path}>{t('card.yourRelation', { path: describePath(label.pathCode, pathWords) })}</Text> : null}
           {label?.also ? <Text style={styles.path}>{t('card.also', { word: label.also.label })}</Text> : null}
         </LinearGradient>
+        <OfflineBar inset />
 
         <View style={styles.body}>
           {actions.length > 0 ? (

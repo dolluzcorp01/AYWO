@@ -5,7 +5,7 @@ import {
   PlusJakartaSans_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/plus-jakarta-sans';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import type { Href } from 'expo-router';
 import { Stack, usePathname, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -22,6 +22,9 @@ import { ToastHost } from '@/components/Toast';
 import { safeNext } from '@/lib/account';
 import { api, deviceStore, hasSession, onSessionChange } from '@/lib/api';
 import { loadPrefs } from '@/lib/prefs';
+import { startOfflineChecks } from '@/lib/offline';
+import { KEEP_DAYS, shouldKeep } from '@/lib/offlineKeep';
+import { offlinePersister } from '@/lib/offlineStore';
 import { makeClient } from '@/lib/queryClient';
 import { AppGate } from '@/ops/appConfig';
 import { CrashBoundary, installCrashReporter, setCrashRoute } from '@/ops/crash';
@@ -98,10 +101,22 @@ function SignInGate({ signedIn }: { signedIn: boolean }) {
   return null;
 }
 
+// The family, saved on the phone for offline use (see offlineKeep.ts for what is kept and what never is).
+const PERSIST = {
+  persister: offlinePersister,
+  maxAge: KEEP_DAYS * 24 * 60 * 60_000,
+  buster: 'v1',
+  dehydrateOptions: { shouldDehydrateQuery: (q: { queryKey: readonly unknown[]; state: { status: string } }) => shouldKeep(q.queryKey, q.state.status) },
+};
+
 export default function RootLayout() {
   const [queryClient] = useState(makeClient);
   const [fontsReady, fontError] = useFonts({ PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold });
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    startOfflineChecks();
+  }, []);
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -114,6 +129,8 @@ export default function RootLayout() {
     let live = true;
     Promise.all([hasSession(), loadPrefs().catch(() => undefined)])
       .then(([session]) => {
+        // Signed out (for example the session ended while the app was closed): no family stays on the phone.
+        if (!session) void offlinePersister.removeClient();
         if (live) setSignedIn(session);
       })
       .catch(() => {
@@ -122,7 +139,10 @@ export default function RootLayout() {
     const stop = onSessionChange((now) => {
       setSignedIn(now);
       // The next person on this phone must not see the last person's family.
-      if (!now) queryClient.clear();
+      if (!now) {
+        queryClient.clear();
+        void offlinePersister.removeClient();
+      }
     });
     return () => {
       live = false;
@@ -135,7 +155,7 @@ export default function RootLayout() {
   return (
     <>
       {ready ? (
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider client={queryClient} persistOptions={PERSIST}>
           <StatusBar style="dark" />
           <AppFrame>
             <Stack screenOptions={{ headerShown: false }} />
@@ -143,7 +163,7 @@ export default function RootLayout() {
           <SignInGate signedIn={signedIn} />
           <RestartPrompt />
           <ToastHost />
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       ) : null}
       <Launch ready={ready} />
     </>

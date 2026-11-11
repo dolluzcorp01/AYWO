@@ -1,8 +1,22 @@
 // The one way the app talks to the server. Keeps the session, refreshes it, and turns failures into ApiFailure.
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { markOffline, markOnline, setHealthUrl } from '@/lib/offline';
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+setHealthUrl(`${API_URL}/health`);
+
+/** fetch, noting whether AYWO answered at all. No answer means offline; any answer, even an error, means online. */
+async function reach(url: string, init: RequestInit): Promise<Response> {
+  try {
+    const response = await fetch(url, init);
+    markOnline();
+    return response;
+  } catch (error) {
+    markOffline();
+    throw error;
+  }
+}
 
 const ACCESS = 'aywo.access';
 const REFRESH = 'aywo.refresh';
@@ -53,15 +67,18 @@ export function onSessionChange(listener: (signedIn: boolean) => void): () => vo
 async function refreshSession(): Promise<boolean> {
   const token = await deviceStore.get(REFRESH);
   if (!token) return false;
-  const response = await fetch(`${API_URL}/auth/refresh`, {
+  const response = await reach(`${API_URL}/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refresh_token: token }),
   });
-  if (!response.ok) {
+  // Only a refused token ends the session. A server hiccup (for example 502 while a new version starts) must not sign
+  // everyone out; the next call simply tries again.
+  if (response.status === 400 || response.status === 401 || response.status === 403) {
     await clearSession();
     return false;
   }
+  if (!response.ok) throw new ApiFailure(response.status, 'server_error', 'errors.server_error');
   await saveSession(await response.json());
   return true;
 }
@@ -111,7 +128,7 @@ export function forgetStaffProof(): Promise<void> {
 async function send(method: string, path: string, body: unknown): Promise<Response> {
   const token = await deviceStore.get(ACCESS);
   const proof = path.startsWith('/admin') ? await deviceStore.get(STAFF_PROOF) : null;
-  return fetch(`${API_URL}${path}`, {
+  return reach(`${API_URL}${path}`, {
     method,
     headers: {
       ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
