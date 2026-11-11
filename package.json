@@ -7,6 +7,7 @@
     "dev": "pnpm --filter @aywo/app start",
     "dev:api": "pnpm --filter @aywo/api dev",
     "migrate": "pnpm --filter @aywo/api migrate",
+    "dev:plus": "pnpm --filter @aywo/api dev:plus",
     "test": "vitest run",
     "test:db": "pg_prove -h localhost -U aywo -d aywo db/tests/*.sql",
     "typecheck": "tsc -p tsconfig.json --noEmit && pnpm --filter @aywo/api typecheck && pnpm --filter @aywo/app typecheck",

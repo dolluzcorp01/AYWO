@@ -7,7 +7,8 @@ import { StyleSheet, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { Text, TextInput } from '@/components/Text';
 import { Card, Heading, Muted, PrimaryButton } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, ApiFailure } from '@/lib/api';
+import { errorKey } from '@/lib/errors';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 
 export default function Phone() {
@@ -31,8 +32,10 @@ export default function Phone() {
     try {
       await api.post('/auth/otp/send', { phone });
       router.push({ pathname: '/otp', params: { phone, ...(next ? { next } : {}) } });
-    } catch {
-      setMessageKey('phone.sendFailed');
+    } catch (error) {
+      // "Check the number" only when the server refused the number. Too many tries and no connection say so.
+      if (error instanceof ApiFailure && error.status !== 429) setMessageKey('phone.sendFailed');
+      else setMessageKey(errorKey(error));
     } finally {
       setBusy(false);
     }

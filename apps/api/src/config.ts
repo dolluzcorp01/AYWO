@@ -14,6 +14,9 @@ const schema = z.object({
 
   DATABASE_URL: z.string(),
   DATABASE_SSL: z.string().default('false'),
+  // The database's CA certificate (PEM text). DigitalOcean: Databases > your cluster > Download CA certificate.
+  // With it the API checks it is really talking to our database, not just that the line is encrypted.
+  DATABASE_CA_CERT: z.string().default(''),
 
   JWT_SECRET: z.string().min(32),
   OTP_SECRET: z.string().min(16),
@@ -76,6 +79,11 @@ if (isProduction && (/dummy/i.test(config.JWT_SECRET) || /dummy/i.test(config.OT
 /** Six digits, and not one a person would try first. */
 function strongTestCode(code: string): boolean {
   return /^\d{6}$/.test(code) && !/^(\d)\1{5}$/.test(code) && !'0123456789'.includes(code) && !'9876543210'.includes(code);
+}
+
+// Encryption without a checked certificate lets anyone in the middle pretend to be the database.
+if (isProduction && config.DATABASE_SSL === 'true' && !config.DATABASE_CA_CERT.includes('BEGIN CERTIFICATE')) {
+  throw new Error('DATABASE_CA_CERT must hold the database CA certificate in production');
 }
 
 if (isProduction && config.OTP_TEST_PHONE && !strongTestCode(config.OTP_TEST_CODE)) {

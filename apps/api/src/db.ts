@@ -6,9 +6,19 @@ import { config } from './config.ts';
 const DATE_OID = 1082;
 pg.types.setTypeParser(DATE_OID, (value) => value);
 
+/**
+ * TLS settings for every database connection. With the CA certificate the server's identity is checked.
+ * Without it (local only; production refuses to start) the line is encrypted but not verified.
+ */
+export function databaseSsl(): pg.ConnectionConfig['ssl'] {
+  if (config.DATABASE_SSL !== 'true') return undefined;
+  if (config.DATABASE_CA_CERT) return { ca: config.DATABASE_CA_CERT.replace(/\\n/g, '\n'), rejectUnauthorized: true };
+  return { rejectUnauthorized: false };
+}
+
 export const pool = new pg.Pool({
   connectionString: config.DATABASE_URL,
-  ssl: config.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
+  ssl: databaseSsl(),
   max: 20,
 });
 

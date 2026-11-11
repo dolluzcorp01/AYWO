@@ -5,7 +5,7 @@ region: blr
 services:
   - name: api
     github:
-      repo: YOUR_GITHUB_ORG/aywo
+      repo: dolluzcorp01/AYWO
       branch: main
       deploy_on_push: true
     dockerfile_path: apps/api/Dockerfile
@@ -19,6 +19,9 @@ services:
         value: production
       - key: DATABASE_SSL
         value: "true"
+      - key: DATABASE_CA_CERT
+        scope: RUN_TIME
+        type: SECRET
       - key: DATABASE_URL
         scope: RUN_TIME
         type: SECRET
@@ -29,7 +32,7 @@ services:
 static_sites:
   - name: web
     github:
-      repo: YOUR_GITHUB_ORG/aywo
+      repo: dolluzcorp01/AYWO
       branch: main
       deploy_on_push: true
     build_command: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @aywo/app exec expo export --platform web
@@ -46,16 +49,20 @@ jobs:
   - name: migrate
     kind: PRE_DEPLOY
     github:
-      repo: YOUR_GITHUB_ORG/aywo
+      repo: dolluzcorp01/AYWO
       branch: main
     dockerfile_path: apps/api/Dockerfile
-    run_command: pnpm exec tsx src/migrate.ts
+    # --seed is safe on every deploy: seeds only add missing rows, never overwrite staff edits.
+    run_command: pnpm exec tsx src/migrate.ts --seed
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
         type: SECRET
       - key: DATABASE_SSL
         value: "true"
+      - key: DATABASE_CA_CERT
+        scope: RUN_TIME
+        type: SECRET
 ingress:
   rules:
     - component:

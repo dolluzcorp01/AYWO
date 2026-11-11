@@ -1,5 +1,5 @@
 import { languageChain } from '@aywo/shared';
-import { getLocales } from 'expo-localization';
+import { getCalendars, getLocales } from 'expo-localization';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import enUS from '../../../../locales/en-US.json';
@@ -70,7 +70,7 @@ export function ensureLocale(code: string): void {
 
 function phoneLanguage(): string {
   const locale = getLocales()[0];
-  return matchPhoneLanguage(locale?.languageTag, locale?.languageCode);
+  return matchPhoneLanguage(locale?.languageTag, locale?.languageCode, getCalendars()[0]?.timeZone);
 }
 
 const firstLanguage = phoneLanguage();

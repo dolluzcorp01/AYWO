@@ -4,7 +4,7 @@ Order agreed with the founder: web first, then Android, then iOS, with the backe
 
 ## 1. GitHub
 
-Push this folder to a new private repo. Replace `YOUR_GITHUB_ORG/aywo` in `.do/app.yaml`. CI (`.github/workflows/ci.yml`) runs type checks, unit tests and database rule tests on each pull request.
+Repo: `dolluzcorp01/AYWO` (make it private before real data goes in). CI (`.github/workflows/ci.yml`) runs type checks, unit tests and database rule tests on each pull request.
 
 ## 2. DigitalOcean
 
@@ -14,11 +14,13 @@ Push this folder to a new private repo. Replace `YOUR_GITHUB_ORG/aywo` in `.do/a
 | Spaces (Bangalore) | Files | Private bucket `aywo`. Add a CORS rule for `https://aywo.in`, methods GET and PUT, or web uploads fail. |
 | App Platform, or a Droplet running `apps/api/Dockerfile` | API on `api.aywo.in`, web on `aywo.in` | `.do/app.yaml` describes it, including a migration step before each deploy. More than one API instance is safe: jobs take an advisory lock and chat fan-out goes through Postgres NOTIFY. |
 
-First deploy: set every value from `.env.example`, then:
+First deploy: set every value from `.env.example`. The migration step in `.do/app.yaml` runs `migrate.ts --seed` before every deploy; seeds only add missing rows, so staff edits to the dictionary are kept. On a Droplet run it yourself:
 
 ```bash
 pnpm --filter @aywo/api exec tsx src/migrate.ts --seed
 ```
+
+`DATABASE_CA_CERT`: paste the cluster's CA certificate (Databases > your cluster > Download CA certificate). With `DATABASE_SSL=true` the API refuses to start in production without it, because an unchecked certificate lets anyone in the middle pretend to be the database.
 
 ```bash
 pnpm --filter @aywo/api exec tsx src/create-admin.ts +91XXXXXXXXXX
