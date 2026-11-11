@@ -42,6 +42,8 @@ const schema = z.object({
   SPACES_BUCKET: z.string().default('aywo'),
   SPACES_KEY: z.string().default('dummy'),
   SPACES_SECRET: z.string().default('dummy'),
+  // 'true' for MinIO on a laptop (http://localhost:9000/aywo/file). DigitalOcean Spaces uses the default.
+  SPACES_PATH_STYLE: z.string().default('false'),
 
   RAZORPAY_KEY_ID: z.string().default('rzp_test_dummy'),
   RAZORPAY_KEY_SECRET: z.string().default('dummy'),
@@ -79,6 +81,11 @@ if (isProduction && (/dummy/i.test(config.JWT_SECRET) || /dummy/i.test(config.OT
 /** Six digits, and not one a person would try first. */
 function strongTestCode(code: string): boolean {
   return /^\d{6}$/.test(code) && !/^(\d)\1{5}$/.test(code) && !'0123456789'.includes(code) && !'9876543210'.includes(code);
+}
+
+// The laptop file store's public password, or a file store on this machine, must never hold real families' photos.
+if (isProduction && (config.SPACES_KEY === 'minioadmin' || /localhost|127\.0\.0\.1/.test(config.SPACES_ENDPOINT))) {
+  throw new Error('SPACES_ENDPOINT and SPACES_KEY must point at the real file store in production');
 }
 
 // Encryption without a checked certificate lets anyone in the middle pretend to be the database.
