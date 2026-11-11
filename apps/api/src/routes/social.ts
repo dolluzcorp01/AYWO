@@ -8,7 +8,7 @@ import type { WebSocket } from 'ws';
 import { z } from 'zod';
 import { isUserBlocked, requireUser } from '../auth-tokens.ts';
 import { config } from '../config.ts';
-import { asCaller, asServer } from '../db.ts';
+import { asCaller, asServer, databaseSsl } from '../db.ts';
 import { ApiError, safeError } from '../errors.ts';
 import { sendPush } from '../services/push.ts';
 import { sendSms } from '../services/sms.ts';
@@ -110,7 +110,7 @@ async function startListener(log: FastifyBaseLogger): Promise<void> {
   if (listener) return;
   const client = new pg.Client({
     connectionString: config.DATABASE_URL,
-    ssl: config.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
+    ssl: databaseSsl(),
   });
   listener = client;
   const lost = (err?: Error) => {

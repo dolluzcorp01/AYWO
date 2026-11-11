@@ -240,13 +240,15 @@ function FamilyCard({ tree }: { tree: TreeRow }) {
       <View style={styles.familyHead}>
         <View style={styles.topText}>
           <Text style={styles.eyebrow}>{t('home.yourFamily')}</Text>
-          <Text style={styles.treeName} numberOfLines={1}>{tree.name}</Text>
+          <Text style={styles.treeName} numberOfLines={2}>{tree.name}</Text>
         </View>
-        <View style={styles.pill}>
-          <Text style={styles.pillText}>
-            {generations ? t('home.peopleAndGenerations', { people: tree.people, generations }) : t('home.peopleCount', { count: tree.people })}
-          </Text>
-        </View>
+      </View>
+      {/* Under the name, not beside it, so a long family name gets the full width. */}
+      <View style={styles.pill}>
+        <Text style={styles.pillText}>
+          {t('home.peopleCount', { count: tree.people })}
+          {generations ? ` · ${t('home.generationCount', { count: generations })}` : ''}
+        </Text>
       </View>
       {data && viewerId ? <MiniTree nodes={data.nodes} viewerId={viewerId} focus={focusView(graphFromApi(data), viewerId)} /> : <View style={styles.miniSpace} />}
       <View style={styles.openButton}>
@@ -407,7 +409,7 @@ const styles = StyleSheet.create({
   },
   familyHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   treeName: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 24, letterSpacing: -0.6, marginTop: 2 },
-  pill: { borderRadius: 999, backgroundColor: colors.tint, paddingHorizontal: 10, paddingVertical: 6 },
+  pill: { alignSelf: 'flex-start', marginTop: 8, borderRadius: 999, backgroundColor: colors.tint, paddingHorizontal: 10, paddingVertical: 6 },
   pillText: { color: colors.text, fontFamily: fonts.semibold, fontSize: 12 },
   mini: { alignItems: 'center', paddingVertical: 12 },
   miniRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },

@@ -27,11 +27,12 @@ export default function Otp() {
     return () => clearTimeout(timer);
   }, [wait]);
 
-  async function verify() {
+  async function verify(entered: string = code) {
+    if (busy) return;
     setBusy(true);
     setMessageKey(null);
     try {
-      await saveSession(await api.post<{ access_token: string; refresh_token: string }>('/auth/otp/verify', { phone, code }));
+      await saveSession(await api.post<{ access_token: string; refresh_token: string }>('/auth/otp/verify', { phone, code: entered }));
       router.replace({ pathname: '/after-login', params: next ? { next } : {} });
     } catch (error) {
       setMessageKey(error instanceof ApiFailure && error.code === 'otp_wrong' ? 'otp.wrongCode' : errorKey(error));
@@ -42,7 +43,9 @@ export default function Otp() {
 
   async function resend() {
     setWait(RESEND_SECONDS);
-    await api.post('/auth/otp/send', { phone }).catch(() => undefined);
+    setMessageKey(null);
+    // A refused resend (too many codes, no connection) used to fail silently, leaving people waiting for an SMS.
+    await api.post('/auth/otp/send', { phone }).catch((error: unknown) => setMessageKey(errorKey(error)));
   }
 
   return (
@@ -52,7 +55,12 @@ export default function Otp() {
         <Muted>{t('otp.sentTo', { phone })}</Muted>
         <TextInput
           value={code}
-          onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
+          onChangeText={(v) => {
+            const digits = v.replace(/\D/g, '').slice(0, 6);
+            setCode(digits);
+            // The sixth digit sends it, as people expect (and as an SMS autofill does in one go).
+            if (digits.length === 6 && digits !== code) void verify(digits);
+          }}
           keyboardType="number-pad"
           autoComplete="sms-otp"
           textContentType="oneTimeCode"
@@ -67,7 +75,7 @@ export default function Otp() {
       ) : (
         <Text accessibilityRole="button" onPress={resend} style={[styles.resend, styles.resendOn]}>{t('otp.resend')}</Text>
       )}
-      <PrimaryButton label={t('otp.verify')} onPress={verify} disabled={code.length !== 6 || busy} />
+      <PrimaryButton label={t('otp.verify')} onPress={() => void verify()} disabled={code.length !== 6 || busy} />
     </Screen>
   );
 }

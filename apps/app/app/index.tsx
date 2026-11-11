@@ -1,4 +1,5 @@
 // S-01 Welcome + language (wireframe Main)
+import { getCalendars } from 'expo-localization';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,7 @@ import { Avatar } from '@/components/Avatar';
 import { LanguagePicker } from '@/components/LanguagePicker';
 import { Text } from '@/components/Text';
 import { Checkbox, ErrorText, Field, PrimaryButton, TextButton } from '@/components/ui';
-import { firstScreenLanguages, moreLanguageCount } from '@/i18n/languages';
+import { englishFor, firstScreenLanguages, moreLanguageCount } from '@/i18n/languages';
 import type { Language } from '@/i18n/languages';
 import { LegalLinks } from '@/legal/LegalLinks';
 import { setLanguage, setLargeText, useLargeText } from '@/lib/prefs';
@@ -32,8 +33,10 @@ export default function Welcome() {
   const [linkBad, setLinkBad] = useState(false);
 
   function tapChip(language: Language) {
-    // English has regional variants too, but American English is a fine first answer. Change it from the full list.
-    if (language.variants.length === 1 || language.id === 'en') {
+    // English has regional variants too: start with the one for this device's time zone. Change it from the full list.
+    if (language.id === 'en') {
+      setLanguage(englishFor(getCalendars()[0]?.timeZone));
+    } else if (language.variants.length === 1) {
       setLanguage(language.variants[0].code);
     } else {
       setPicker({ startWith: language });

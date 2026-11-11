@@ -14,11 +14,13 @@ export async function sendSms(phone: string, text: string, otp?: string): Promis
           method: 'POST',
           headers: { 'Content-Type': 'application/json', authkey: config.MSG91_AUTH_KEY },
           body: JSON.stringify({ template_id: config.MSG91_TEMPLATE_ID, mobile: phone.replace('+', ''), otp }),
+          signal: AbortSignal.timeout(15_000),
         })
       : await fetch('https://control.msg91.com/api/v5/flow', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', authkey: config.MSG91_AUTH_KEY },
           body: JSON.stringify({ template_id: config.MSG91_TEMPLATE_ID, recipients: [{ mobiles: phone.replace('+', ''), text }] }),
+          signal: AbortSignal.timeout(15_000),
         });
     if (!response.ok) throw new Error(`msg91 failed: ${response.status}`);
     return;

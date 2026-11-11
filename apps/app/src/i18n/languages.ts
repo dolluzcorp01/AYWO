@@ -77,17 +77,31 @@ export function languageLabel(code: string): string {
   return language.variants.length > 1 && variant ? `${language.native} · ${variant.label}` : language.native;
 }
 
+/**
+ * Which English to start with. Browsers and phones in India very often report en-US, so the time zone decides:
+ * India gets English (India), the UK English (UK), everyone else English (United States). Change it any time in Me.
+ */
+export function englishFor(timeZone: string | null | undefined): string {
+  if (timeZone === 'Asia/Kolkata' || timeZone === 'Asia/Calcutta') return 'en-IN';
+  if (timeZone === 'Europe/London') return 'en-GB';
+  return 'en-US';
+}
+
 /** The phone's own language when AYWO has it, otherwise English (LLD L12). */
-export function matchPhoneLanguage(tag: string | null | undefined, languageCode: string | null | undefined): string {
-  if (tag) {
+export function matchPhoneLanguage(
+  tag: string | null | undefined,
+  languageCode: string | null | undefined,
+  timeZone?: string | null,
+): string {
+  if (tag && tag !== 'en-US') {
     for (const language of languages) {
       const exact = language.variants.find((v) => v.code === tag);
       if (exact) return exact.code;
     }
   }
-  if (languageCode) {
+  if (languageCode && languageCode !== 'en') {
     const language = languages.find((l) => l.id === languageCode);
     if (language) return language.variants[0].code;
   }
-  return 'en-US';
+  return englishFor(timeZone);
 }

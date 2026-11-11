@@ -67,7 +67,7 @@ export default function InviteLanding() {
             ) : null}
           </View>
           <Text style={styles.stats}>
-            {t('invite.stats', { people: data.nodes.length, generations: generationCount(data.nodes, data.links) })}
+            {t('home.peopleCount', { count: data.nodes.length })} · {t('home.generationCount', { count: generationCount(data.nodes, data.links) })}
           </Text>
         </LinearGradient>
 
