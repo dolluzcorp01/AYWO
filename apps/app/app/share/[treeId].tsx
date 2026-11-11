@@ -9,9 +9,10 @@ import { goBack } from '@/lib/nav';
 import { Avatar } from '@/components/Avatar';
 import { ContactIcon } from '@/components/ContactIcon';
 import { ChevronIcon } from '@/components/Icons';
+import { PhoneField } from '@/components/PhoneField';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, ConfirmDialog, ErrorText, Field, Loading, LoadFailed, Muted, NeonPanel, SectionTitle, SmallButton, Switch, TextButton, TopBar } from '@/components/ui';
+import { Card, ConfirmDialog, ErrorText, Loading, LoadFailed, Muted, NeonPanel, SectionTitle, SmallButton, Switch, TextButton, TopBar } from '@/components/ui';
 import { normalizeContact } from '@/lib/contacts';
 import { useErrorText } from '@/lib/errors';
 import { canShare } from '@/tree/roles';
@@ -217,7 +218,7 @@ export default function ShareScreen() {
 
         {needsPhone ? (
           <Card style={styles.phoneCard}>
-            <Field
+            <PhoneField
               label={t('share.phone')}
               value={phone}
               onChangeText={(v) => {
@@ -225,7 +226,7 @@ export default function ShareScreen() {
                 setBadPhone(false);
               }}
               placeholder={t('details.mobilePlaceholder')}
-              keyboardType="phone-pad"
+              invalid={badPhone}
             />
             <Muted>{t('share.phoneHelp')}</Muted>
             {badPhone ? <ErrorText>{t('details.badPhone')}</ErrorText> : null}

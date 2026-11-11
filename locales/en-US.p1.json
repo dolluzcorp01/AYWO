@@ -3,7 +3,14 @@
     "cancel": "Cancel",
     "save": "Save",
     "continue": "Continue",
-    "done": "Done"
+    "done": "Done",
+    "close": "Close"
+  },
+  "phoneField": {
+    "placeholder": "Mobile number",
+    "country": "Country code {{code}}. Tap to change",
+    "chooseCountry": "Choose country",
+    "search": "Search country or code"
   },
   "errors": {
     "account_blocked": "This account has been blocked. Please contact AYWO support.",
@@ -257,9 +264,10 @@
     "earlier": "Earlier in the family",
     "later": "Later in the family",
     "mobile": "Mobile (optional)",
-    "mobilePlaceholder": "+91",
+    "mobilePlaceholder": "Mobile number",
+    "sameAsMobile": "WhatsApp is on the same number",
     "contactHidden": "Saved. Type here to replace it.",
-    "badPhone": "Check the number. Start with the country code, like +91.",
+    "badPhone": "This mobile number doesn't look right. Check the digits and the country.",
     "badEmail": "That email address doesn't look right.",
     "more": "+ WhatsApp, email, places, notes",
     "birthPlace": "Birth place",

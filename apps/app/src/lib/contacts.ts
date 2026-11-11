@@ -1,14 +1,11 @@
 // Cleans a typed contact into the stored form used for 'Is this you?' matching and for opening the dialler.
-import { getLocales } from 'expo-localization';
-import { parsePhoneNumberFromString } from 'libphonenumber-js';
-import type { CountryCode } from 'libphonenumber-js';
+import { toE164 } from '@/lib/phone';
 
 export function normalizeContact(kind: 'mobile' | 'whatsapp' | 'email', value: string): string | null {
   const text = value.trim();
   if (kind === 'email') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text) ? text.toLowerCase() : null;
-  const region = (getLocales()[0]?.regionCode ?? 'IN') as CountryCode;
-  const parsed = parsePhoneNumberFromString(text, region);
-  return parsed && parsed.isValid() ? parsed.number : null;
+  // A number without its + code is read as the device's country (India unless it clearly says otherwise).
+  return toE164(text);
 }
 
 /** 'Born (year is fine)': 1968, 1968-03-21 or 21/03/1968. Null means the text could not be read as a date. */

@@ -17,7 +17,7 @@ import { Avatar } from '@/components/Avatar';
 import { BackIcon, ContactIcon, LockIcon } from '@/components/ContactIcon';
 import { CommentIcon, HistoryIcon, PencilIcon, PlusIcon, ShareIcon } from '@/components/Icons';
 import { Text } from '@/components/Text';
-import { Card, PrimaryButton } from '@/components/ui';
+import { Card, ErrorText, PrimaryButton } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
 import { canComment, canSeeHistory, canShare } from '@/tree/roles';
 import { useAskForContacts, usePersonCard } from '@/tree/useCard';
@@ -210,7 +210,7 @@ export default function PersonCard() {
               <PrimaryButton label={t('card.askFor', { name: askFrom })} onPress={() => ask.mutate()} disabled={ask.isPending} />
             )
           ) : null}
-          {ask.isError ? <Text accessibilityRole="alert" style={styles.error}>{t('card.askFailed')}</Text> : null}
+          {ask.isError ? <ErrorText>{t('card.askFailed')}</ErrorText> : null}
 
           {family.length > 0 ? (
             <>
@@ -314,7 +314,6 @@ const styles = StyleSheet.create({
   cardTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 18, marginBottom: 8 },
   cardText: { color: colors.muted, fontFamily: fonts.medium, fontSize: 14, lineHeight: 21 },
   note: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14, textAlign: 'center' },
-  error: { color: colors.alert, fontFamily: fonts.bold, fontSize: 14, textAlign: 'center' },
   section: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {

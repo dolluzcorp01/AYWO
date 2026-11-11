@@ -1,5 +1,5 @@
 // F-SOS-05: the local emergency number. 112 reaches emergency services from any GSM phone, so it is the default.
-import { getLocales } from 'expo-localization';
+import { defaultCountry } from '@/lib/phone';
 
 const BY_REGION: Record<string, string> = {
   IN: '112',
@@ -30,6 +30,6 @@ const BY_REGION: Record<string, string> = {
 };
 
 export function emergencyNumber(): string {
-  const region = getLocales()[0]?.regionCode ?? '';
-  return BY_REGION[region] ?? '112';
+  // From the time zone first: a browser in India that says en-US must still show 112, not 911.
+  return BY_REGION[defaultCountry()] ?? '112';
 }

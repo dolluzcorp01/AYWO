@@ -9,6 +9,7 @@ import { Avatar } from '@/components/Avatar';
 import { PlusIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { PhoneField } from '@/components/PhoneField';
 import { Card, Checkbox, ConfirmDialog, ErrorText, Field, Label, Loading, LoadFailed, Pills, PrimaryButton, SmallButton, TextButton, TopBar } from '@/components/ui';
 import { uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
@@ -63,6 +64,7 @@ function formFrom(node: TreeNode): Form {
 }
 
 type Contacts = Record<ContactKind, string>;
+type BadField = 'name' | 'born' | 'died' | ContactKind;
 const NO_CONTACTS: Contacts = { mobile: '', whatsapp: '', email: '' };
 
 export default function PersonDetails() {
@@ -93,6 +95,10 @@ export default function PersonDetails() {
   const [more, setMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  // The box the last problem was about, outlined in red until it is changed.
+  const [badField, setBadField] = useState<BadField | null>(null);
+  // WhatsApp on the same number as the mobile: one tick instead of typing it twice.
+  const [sameWhatsapp, setSameWhatsapp] = useState(false);
   const [clash, setClash] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
@@ -110,9 +116,23 @@ export default function PersonDetails() {
     if (!stored.data) return;
     const next = { ...NO_CONTACTS };
     for (const c of stored.data) if (!next[c.kind] && c.value) next[c.kind] = c.value;
+    const same = !!next.mobile && !!next.whatsapp && normalizeContact('mobile', next.mobile) === normalizeContact('whatsapp', next.whatsapp);
     setContacts(next);
-    if (next.whatsapp || next.email) setMore(true);
+    setSameWhatsapp(same);
+    if ((next.whatsapp && !same) || next.email) setMore(true);
   }, [stored.data]);
+
+  function changeContact(kind: ContactKind, value: string) {
+    setContacts((now) => ({ ...now, [kind]: value, ...(kind === 'mobile' && sameWhatsapp ? { whatsapp: value } : {}) }));
+    if (badField === kind || (kind === 'mobile' && sameWhatsapp && badField === 'whatsapp')) setBadField(null);
+    setFailure(null);
+  }
+
+  function setWhatsappSame(on: boolean) {
+    setSameWhatsapp(on);
+    setContacts((now) => ({ ...now, whatsapp: on ? now.mobile : '' }));
+    if (badField === 'whatsapp') setBadField(null);
+  }
 
   /** Past the add screen as well. A reloaded web page has neither behind it. */
   function backToTree() {
@@ -123,6 +143,8 @@ export default function PersonDetails() {
   function change<K extends keyof Form>(key: K, value: Form[K]) {
     setForm((now) => ({ ...now, [key]: value }));
     setFailure(null);
+    if ((key === 'name' || key === 'nameUnknown') && badField === 'name') setBadField(null);
+    if ((key === 'born' || key === 'died') && badField === key) setBadField(null);
   }
 
   async function choosePhoto() {
@@ -142,18 +164,18 @@ export default function PersonDetails() {
   }
 
   /** Everything the form holds, as columns. Failing a check returns a message instead. */
-  function fieldsFromForm(): { fields: PersonFields } | { problem: string } {
+  function fieldsFromForm(): { fields: PersonFields } | { problem: string; field: BadField } {
     const name = form.name.trim();
-    if (!form.nameUnknown && !name) return { problem: t('details.nameNeeded') };
+    if (!form.nameUnknown && !name) return { problem: t('details.nameNeeded'), field: 'name' };
     let birth: { date: string; precision: string } | null = null;
     if (form.born.trim()) {
       birth = parseDateText(form.born);
-      if (!birth) return { problem: t('details.badDate') };
+      if (!birth) return { problem: t('details.badDate'), field: 'born' };
     }
     let death: { date: string; precision: string } | null = null;
     if (form.died.trim()) {
       death = parseDateText(form.died);
-      if (!death) return { problem: t('details.badDate') };
+      if (!death) return { problem: t('details.badDate'), field: 'died' };
     }
     return {
       fields: {
@@ -188,6 +210,7 @@ export default function PersonDetails() {
     const built = fieldsFromForm();
     if ('problem' in built) {
       setFailure(built.problem);
+      setBadField(built.field);
       return;
     }
     const plan: { kind: ContactKind; value: string; normalized: string | null }[] = [];
@@ -197,6 +220,9 @@ export default function PersonDetails() {
       const unchanged = (stored.data?.find((c) => c.kind === kind)?.value ?? '') === value.trim();
       if (value.trim() && !normalized && !unchanged) {
         setFailure(t(kind === 'email' ? 'details.badEmail' : 'details.badPhone'));
+        setBadField(kind);
+        // The box may be folded away under "More": open it so the red box can be seen.
+        if (kind !== 'mobile') setMore(true);
         return;
       }
       plan.push({ kind, value, normalized });
@@ -204,6 +230,7 @@ export default function PersonDetails() {
 
     setBusy(true);
     setFailure(null);
+    setBadField(null);
     setClash(false);
     try {
       const photoPath = photo ? await uploadFile('photos', photo) : null;
@@ -336,6 +363,7 @@ export default function PersonDetails() {
               onChangeText={(v) => change('name', v)}
               placeholder={t('details.namePlaceholder')}
               editable={!form.nameUnknown}
+              invalid={badField === 'name'}
               style={styles.nameInput}
             />
           </View>
@@ -373,6 +401,7 @@ export default function PersonDetails() {
               onChangeText={(v) => change('born', v)}
               placeholder={t('details.bornPlaceholder')}
               keyboardType="numbers-and-punctuation"
+              invalid={badField === 'born'}
             />
           </View>
           {hasParents ? (
@@ -388,30 +417,38 @@ export default function PersonDetails() {
         </View>
 
         {contactsOpen ? (
-          <Field
-            label={t('details.mobile')}
-            value={contacts.mobile}
-            onChangeText={(v) => setContacts((c) => ({ ...c, mobile: v }))}
-            placeholder={hidden('mobile') ? t('details.contactHidden') : t('details.mobilePlaceholder')}
-            keyboardType="phone-pad"
-          />
+          <>
+            <PhoneField
+              label={t('details.mobile')}
+              value={contacts.mobile}
+              onChangeText={(v) => changeContact('mobile', v)}
+              placeholder={hidden('mobile') ? t('details.contactHidden') : t('details.mobilePlaceholder')}
+              invalid={badField === 'mobile'}
+            />
+            {contacts.mobile.trim() ? (
+              <Checkbox label={t('details.sameAsMobile')} on={sameWhatsapp} onChange={setWhatsappSame} />
+            ) : null}
+          </>
         ) : null}
 
         {more ? (
           <>
             {contactsOpen ? (
               <>
-                <Field
-                  label={t('card.whatsapp')}
-                  value={contacts.whatsapp}
-                  onChangeText={(v) => setContacts((c) => ({ ...c, whatsapp: v }))}
-                  placeholder={hidden('whatsapp') ? t('details.contactHidden') : t('details.mobilePlaceholder')}
-                  keyboardType="phone-pad"
-                />
+                {sameWhatsapp ? null : (
+                  <PhoneField
+                    label={t('card.whatsapp')}
+                    value={contacts.whatsapp}
+                    onChangeText={(v) => changeContact('whatsapp', v)}
+                    placeholder={hidden('whatsapp') ? t('details.contactHidden') : t('details.mobilePlaceholder')}
+                    invalid={badField === 'whatsapp'}
+                  />
+                )}
                 <Field
                   label={t('card.email')}
                   value={contacts.email}
-                  onChangeText={(v) => setContacts((c) => ({ ...c, email: v }))}
+                  invalid={badField === 'email'}
+                  onChangeText={(v) => changeContact('email', v)}
                   placeholder={hidden('email') ? t('details.contactHidden') : undefined}
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -421,7 +458,7 @@ export default function PersonDetails() {
             <Field label={t('details.birthPlace')} value={form.birthPlace} onChangeText={(v) => change('birthPlace', v)} />
             {form.living === 'deceased' ? (
               <>
-                <Field label={t('details.died')} value={form.died} onChangeText={(v) => change('died', v)} placeholder={t('details.bornPlaceholder')} keyboardType="numbers-and-punctuation" />
+                <Field label={t('details.died')} value={form.died} onChangeText={(v) => change('died', v)} placeholder={t('details.bornPlaceholder')} keyboardType="numbers-and-punctuation" invalid={badField === 'died'} />
                 <Field label={t('details.deathPlace')} value={form.deathPlace} onChangeText={(v) => change('deathPlace', v)} />
               </>
             ) : null}

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { Text, TextInput } from '@/components/Text';
-import { Heading, Muted, PrimaryButton } from '@/components/ui';
+import { ErrorText, Heading, Muted, PrimaryButton } from '@/components/ui';
 import { api, ApiFailure, saveSession } from '@/lib/api';
 import { errorKey } from '@/lib/errors';
 import { colors, fonts } from '@/theme/tokens';
@@ -68,7 +68,7 @@ export default function Otp() {
           accessibilityLabel={t('otp.title')}
           style={styles.code}
         />
-        {messageKey ? <Text accessibilityRole="alert" style={styles.error}>{t(messageKey)}</Text> : null}
+        {messageKey ? <ErrorText>{t(messageKey)}</ErrorText> : null}
       </View>
       {wait > 0 ? (
         <Text style={styles.resend}>{t('otp.resendIn', { seconds: wait })}</Text>
@@ -94,7 +94,6 @@ const styles = StyleSheet.create({
     letterSpacing: 12,
     textAlign: 'center',
   },
-  error: { color: colors.alert, fontFamily: fonts.bold, fontSize: 14 },
   resend: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14, textAlign: 'center', marginBottom: 12, minHeight: 44, textAlignVertical: 'center' },
   resendOn: { color: colors.logoPurple },
 });
