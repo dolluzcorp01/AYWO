@@ -1,5 +1,6 @@
 // Operations release jobs. Each is safe to run again: finished work is marked and never done twice.
-import { asServer } from '../db.ts';
+import { forgetBlockMemory } from '../auth-tokens.ts';
+import { asCaller, asServer } from '../db.ts';
 import type { Job } from '../jobs.ts';
 import { deleteObject, objectSize } from '../services/storage.ts';
 
@@ -42,7 +43,27 @@ async function checkUploadSizes(): Promise<void> {
   await asServer((db) => db.query(`delete from upload_log where checked_at < now() - interval '30 days'`));
 }
 
+/**
+ * Deletes accounts whose 30 days are over (0014), each as that person, with the same account_delete() an
+ * immediate delete used. One account failing does not stop the others; the failure is reported at the end.
+ */
+export async function deleteDueAccounts(): Promise<void> {
+  const { rows } = await asServer((db) => db.query(`select id from accounts_due_for_deletion($1) as id`, [BATCH]));
+  const failed: string[] = [];
+  for (const { id } of rows as { id: string }[]) {
+    try {
+      await asCaller(id, (db) => db.query(`select account_delete(true)`));
+      forgetBlockMemory(id);
+    } catch {
+      failed.push(id);
+    }
+  }
+  if (failed.length) throw new Error(`account deletion failed for ${failed.length} account(s); retried next run`);
+}
+
 export const adminJobs: Job[] = [
+  // Hourly: a deletion happens within an hour of its date. Re-running is safe: a deleted account is not listed again.
+  { name: 'account_deletions', everyMinutes: 60, run: deleteDueAccounts },
   {
     name: 'work_overdue',
     everyMinutes: 15,

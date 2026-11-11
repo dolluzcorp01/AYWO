@@ -12,6 +12,7 @@ export const treeEditRpc: RpcList = {
   history_revert: { args: ['p_history', 'p_batch'] },
   merge_scan: { args: ['p_tree'] },
   merge_apply: { args: ['p_request', 'p_keep'] },
-  account_delete: { args: ['p_plan_acknowledged'] },
+  // account_delete is not here on purpose: only the account_deletions job runs it, 30 days after
+  // POST /account/delete booked it (0014), so no call can skip the grace period.
   tree_add_me: { args: ['p_tree', 'p_anchor', 'p_relation', 'p_name', 'p_gender'] },
 };

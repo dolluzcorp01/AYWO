@@ -12,6 +12,8 @@ export interface Me {
   plus: boolean;
   plus_until: string | null;
   admin_role: string | null;
+  /** Set when the person asked to delete the account: the day it goes. Signing in and tapping Keep cancels it. */
+  delete_after: string | null;
   /** A short-lived link to the account photo. */
   photo_url: string | null;
 }
@@ -55,6 +57,15 @@ export interface ClaimDetails {
 
 export function useMe() {
   return useQuery({ queryKey: ['me'], queryFn: () => api.get<Me>('/me') });
+}
+
+/** Cancels a booked account deletion. */
+export function useKeepAccount() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<Me>('/account/keep'),
+    onSuccess: (answer) => client.setQueryData(['me'], answer),
+  });
 }
 
 export function useTrees() {

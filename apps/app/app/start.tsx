@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Avatar } from '@/components/Avatar';
+import { DeleteBanner } from '@/components/DeleteBanner';
 import { DownloadIcon, LinkedPeopleIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { TAB_BAR_SPACE, TabBar } from '@/components/TabBar';
@@ -49,6 +50,7 @@ export default function Start() {
             <Avatar personId={me.data?.id ?? 'me'} size={48} ring />
           </Pressable>
         </View>
+        <DeleteBanner />
         <Text accessibilityRole="header" style={styles.title}>{name ? t('start.title', { name }) : t('start.titleNoName')}</Text>
 
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.push('/import')}>

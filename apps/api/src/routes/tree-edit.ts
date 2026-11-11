@@ -7,7 +7,7 @@ import { languageChain } from '@aywo/shared';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import type { PoolClient } from 'pg';
 import { z } from 'zod';
-import { forgetBlockMemory, requireUser } from '../auth-tokens.ts';
+import { requireUser } from '../auth-tokens.ts';
 import { config } from '../config.ts';
 import { asCaller } from '../db.ts';
 import { ApiError } from '../errors.ts';
@@ -523,12 +523,17 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
     return { url: await signedReadUrl(path) };
   });
 
+  // Books the deletion for 30 days ahead and signs out everywhere (0014). The daily account_deletions job deletes.
   app.post('/account/delete', { config: { rateLimit: { max: 5, timeWindow: '10 minutes' } } }, async (req) => {
     const userId = await requireUser(req);
     // 409 plan_cancel_first until a payer whose plan will renew has seen the warning (settings/privacy.tsx).
     const body = z.object({ plan_acknowledged: z.boolean().default(false) }).parse(req.body ?? {});
-    const answer = await asCaller(userId, (db) => call(db, 'account_delete($1)', [body.plan_acknowledged]));
-    forgetBlockMemory(userId);
-    return answer;
+    return asCaller(userId, (db) => call(db, 'account_delete_request($1)', [body.plan_acknowledged]));
+  });
+
+  // "Keep my account": cancels a booked deletion.
+  app.post('/account/keep', { config: { rateLimit: { max: 10, timeWindow: '10 minutes' } } }, async (req) => {
+    const userId = await requireUser(req);
+    return withPhotoUrl(await asCaller(userId, (db) => call<{ photo_path?: string | null }>(db, 'account_delete_cancel()')));
   });
 }

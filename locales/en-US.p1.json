@@ -547,16 +547,19 @@
     "exportButton": "Download my data",
     "signOut": "Sign out",
     "deleteTitle": "Delete my account",
-    "deleteHelp": "Your account goes for good. Your trees pass to a successor or Co-creator.",
+    "deleteHelp": "We delete your account 30 days after you ask. Sign in during that time to keep it. After that it goes for good, and your trees pass to a successor or Co-creator.",
     "deleteButton": "Delete my account",
     "deleteWord": "delete",
-    "deleteConfirmTitle": "This can't be undone",
-    "deleteConfirmHelp": "To confirm, type the word: {{word}}",
+    "deleteConfirmTitle": "Delete in 30 days?",
+    "deleteConfirmHelp": "We sign you out now and delete your account in 30 days. Sign in before then to keep it. To confirm, type the word: {{word}}",
     "planWarningTitle": "Your AYWO Plus is still running",
     "planWarningStore": "Deleting doesn't stop payments. Cancel in App Store or Google Play first.",
     "planWarningWeb": "Deleting doesn't stop payments. Cancel on the Family plan screen first.",
     "planWarningGo": "Go to my plan",
-    "planWarningDelete": "I understand. Delete anyway"
+    "planWarningDelete": "I understand. Delete anyway",
+    "deleteBooked": "Your account will be deleted on {{date}}",
+    "deleteBookedHelp": "You asked to delete it. Changed your mind? Keep it with one tap.",
+    "keepAccount": "Keep my account"
   },
   "time": {
     "justNow": "Just now",
@@ -599,7 +602,7 @@
       "removalTitle": "Asking for something to be removed",
       "removalBody": "Anyone added to a tree without agreeing can ask for removal through the takedown form, with or without an account. AYWO Admins review these requests and may remove a person from a tree.",
       "endingTitle": "Leaving, and being blocked",
-      "endingBody": "You can delete your account in the app at any time. A tree you created passes to its successor or a Co-creator, and with neither it is closed. We may block an account that breaks these terms.",
+      "endingBody": "You can delete your account in the app at any time. It is deleted 30 days later, unless you sign in and keep it. A tree you created passes to its successor or a Co-creator, and with neither it is closed. We may block an account that breaks these terms.",
       "liabilityTitle": "Limits",
       "liabilityBody": "AYWO is offered as it is. Family details come from families, and relationship words may be wrong, so please don't rely on them for legal, medical or inheritance matters. The SOS and alert features depend on your phone and network: they do not replace emergency services. To the extent the law allows, we are not liable for indirect loss.",
       "changesTitle": "Changes",
@@ -624,7 +627,7 @@
       "locationTitle": "Location, photos and your phone's contacts",
       "locationBody": "AYWO reads your location only while you run an SOS, and shares it only with the people that SOS goes to, until it ends. It reads your photos and contacts only when you choose one to add.",
       "keepTitle": "How long we keep it",
-      "keepBody": "For as long as your account or the family tree exists. When you delete your account, your name, number, photo and your own contact details go. Entries you added to a tree stay with that tree, because they belong to the family's history. Payment records are kept as long as the law requires.",
+      "keepBody": "For as long as your account or the family tree exists. When you delete your account, we wait 30 days in case you change your mind. Then your name, number, photo and your own contact details go. Entries you added to a tree stay with that tree, because they belong to the family's history. Payment records are kept as long as the law requires.",
       "rightsTitle": "Your rights",
       "rightsBody": "You can see and correct your details, download a copy of your data, delete your account, withdraw consent and name someone to act for you. Complain to our Grievance Officer, {{grievanceOfficer}}, at {{grievanceEmail}}. Under India's Digital Personal Data Protection Act, 2023, you can also go to the Data Protection Board of India. Someone who is not on AYWO can use the takedown form.",
       "childrenTitle": "Children",
@@ -750,7 +753,7 @@
       "account": {
         "title": "Your account",
         "deleteQ": "How do I delete my account?",
-        "deleteA": "Open your profile, then Privacy and account, then Delete. It happens immediately, so download a copy first if you want one, and cancel any subscription. Your name, number and photo are removed. Entries you added to a tree stay with that tree.",
+        "deleteA": "Open your profile, then Privacy and account, then Delete. You are signed out, and the account is deleted 30 days later. Sign in before then and tap Keep my account if you change your mind. Download a copy first if you want one, and cancel any subscription. Your name, number and photo are removed. Entries you added to a tree stay with that tree.",
         "helpQ": "How do I get help?",
         "helpA": "Write to {{email}} or call {{phone}}. Hours: {{supportHours}}."
       }
