@@ -12,5 +12,6 @@ export default defineConfig({
       '@aywo/layout': src('layout'),
     },
   },
-  test: { include: ['packages/*/src/**/*.test.ts'] },
+  // App logic with no React Native imports (such as src/tree/familyGaps.ts) is tested here too.
+  test: { include: ['packages/*/src/**/*.test.ts', 'apps/app/src/**/*.test.ts'] },
 });

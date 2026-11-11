@@ -32,7 +32,8 @@ export default function Start() {
     try {
       const tree = await api.post<{ id: string }>('/trees', { name: t('start.treeName', { name: me.data?.display_name ?? '' }) });
       await client.invalidateQueries({ queryKey: ['trees'] });
-      router.replace({ pathname: '/tree/[id]', params: { id: tree.id } });
+      // A new tree starts with the family guide: mother, father, partner, children, one at a time.
+      router.replace({ pathname: '/guide/[treeId]', params: { treeId: tree.id } });
     } catch (error) {
       setFailure(error);
       setBusy(false);

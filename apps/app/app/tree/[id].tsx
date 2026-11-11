@@ -10,6 +10,7 @@ import { TabBar } from '@/components/TabBar';
 import { Text } from '@/components/Text';
 import { useErrorText } from '@/lib/errors';
 import { canShare } from '@/tree/roles';
+import { FamilyGuideCard } from '@/tree/FamilyGuideCard';
 import { MyView } from '@/tree/MyView';
 import { NamesTree } from '@/tree/NamesTree';
 import { SeeAsPicker } from '@/tree/SeeAsPicker';
@@ -124,7 +125,9 @@ export default function TreeScreen() {
           onAskWord={askWord}
           onShowAll={() => changeMode('names')}
           onAdd={mode === 'see_as' ? undefined : addTo}
-        />
+        >
+          {mode === 'mine' ? <FamilyGuideCard treeId={id} tree={data} me={viewerId} /> : null}
+        </MyView>
       ) : null}
 
       <TabBar active="family" treeId={id} anchorId={focusId} />

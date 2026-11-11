@@ -75,6 +75,10 @@ export default function PersonDetails() {
     relation?: Relation;
     union?: string;
     linkKind?: LinkKind;
+    /** Started from the family guide or quick-add: Mother and Father come with the gender already chosen. */
+    gender?: 'male' | 'female';
+    /** 'guide': go back to the family guide after saving, not to the tree. */
+    back?: 'guide';
   }>();
   const { treeId, personId } = params;
   const editing = !!personId;
@@ -89,7 +93,7 @@ export default function PersonDetails() {
   const node = personId ? tree.data?.nodes.find((n) => n.id === personId) : undefined;
   const anchorNode = params.anchor ? tree.data?.nodes.find((n) => n.id === params.anchor) : undefined;
 
-  const [form, setForm] = useState<Form>(EMPTY);
+  const [form, setForm] = useState<Form>(() => (params.gender ? { ...EMPTY, gender: params.gender } : EMPTY));
   const [contacts, setContacts] = useState<Contacts>(NO_CONTACTS);
   const [photo, setPhoto] = useState<PickedFile | null>(null);
   const [more, setMore] = useState(false);
@@ -107,7 +111,9 @@ export default function PersonDetails() {
   // Fill the form once, and again only when the person asks for the latest after a clash.
   useEffect(() => {
     if (node && loadedVersion === null) {
-      setForm(formFrom(node));
+      const loaded = formFrom(node);
+      // Naming the "unknown parent" as Mother or Father: the gender comes with it, unless one is already set.
+      setForm(params.gender && loaded.gender === 'unknown' ? { ...loaded, gender: params.gender } : loaded);
       setLoadedVersion(node.version);
     }
   }, [node, loadedVersion]);
@@ -136,6 +142,10 @@ export default function PersonDetails() {
 
   /** Past the add screen as well. A reloaded web page has neither behind it. */
   function backToTree() {
+    if (params.back === 'guide') {
+      router.back();
+      return;
+    }
     if (router.canDismiss()) router.dismiss(2);
     else router.replace({ pathname: '/tree/[id]', params: { id: treeId } });
   }
@@ -247,7 +257,8 @@ export default function PersonDetails() {
         await saveContacts(personId, plan);
         await client.invalidateQueries({ queryKey: ['tree-view', treeId] });
         await client.invalidateQueries({ queryKey: ['person-card', personId] });
-        goBack(router);
+        if (params.back === 'guide') router.back();
+        else goBack(router);
         return;
       }
 

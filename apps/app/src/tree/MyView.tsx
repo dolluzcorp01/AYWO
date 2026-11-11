@@ -3,7 +3,7 @@
 // tap the centre card to open it. Wide families scroll sideways.
 import { focusView, graphFromApi, relationText } from '@aywo/layout';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { ComponentRef } from 'react';
+import type { ComponentRef, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
@@ -30,6 +30,8 @@ interface Props {
   onShowAll: () => void;
   /** '+ Add' under the centre card (E1). Left out for those who cannot change the tree. */
   onAdd?: (personId: string) => void;
+  /** Shown under the add button, such as the "Add your family" card. */
+  children?: ReactNode;
 }
 
 const CARD_W = 92;
@@ -162,7 +164,7 @@ function layout(view: ReturnType<typeof focusView>, width: number, expanded: { s
   return { placed: [...placed.values()], paths, width: canvasWidth, height };
 }
 
-export function MyView({ data, viewerId, focusId, seeingAs, onFocus, onOpenPerson, onAskWord, onShowAll, onAdd }: Props) {
+export function MyView({ data, viewerId, focusId, seeingAs, onFocus, onOpenPerson, onAskWord, onShowAll, onAdd, children }: Props) {
   const { t } = useTranslation();
   // A first guess from the window (minus the side menu on a computer), corrected once the screen is measured.
   const windowWidth = useWindowDimensions().width;
@@ -256,6 +258,7 @@ export function MyView({ data, viewerId, focusId, seeingAs, onFocus, onOpenPerso
             <Text style={styles.addText}>{t('tree.addTo', { name: nameOf(focus) })}</Text>
           </Pressable>
         ) : null}
+        {children}
         {!isViewer ? (
           <Pressable accessibilityRole="button" onPress={() => onFocus(viewerId)} style={styles.link}>
             <Text style={styles.linkText}>{seeingAs ? t('tree.backToThem') : t('tree.backToMe')}</Text>
