@@ -5,7 +5,8 @@ import websocket from '@fastify/websocket';
 import Fastify from 'fastify';
 import type { FastifyRequest } from 'fastify';
 import { ZodError } from 'zod';
-import { config, isProduction } from './config.ts';
+import { backupKey, config, isProduction } from './config.ts';
+import { asServer } from './db.ts';
 import { safeError, toHttpError } from './errors.ts';
 import { startJobs } from './jobs.ts';
 import { adminRoutes } from './routes/admin.ts';
@@ -16,6 +17,7 @@ import { paymentRoutes } from './routes/payments.ts';
 import { rpcRoutes } from './routes/rpc.ts';
 import { socialRoutes } from './routes/social.ts';
 import { trackRoutes } from './routes/track.ts';
+import { recordServerError } from './services/serverErrors.ts';
 import { treeEditRoutes } from './routes/tree-edit.ts';
 import { treeViewRoutes } from './routes/tree-view.ts';
 import { uploadRoutes } from './routes/uploads.ts';
@@ -58,10 +60,38 @@ export async function buildServer() {
     const known = toHttpError(error);
     if (known) return reply.status(known.status).send({ code: known.code, message_key: `errors.${known.code}` });
     req.log.error(safeError(error));
+    recordServerError(req.method, req.routeOptions?.url ?? 'unknown', error);
     return reply.status(500).send({ code: 'server_error', message_key: 'errors.server_error' });
   });
 
+  // For DigitalOcean's health check: is the server up. Kept simple, so a database hiccup does not restart the server.
   app.get('/health', async () => ({ ok: true }));
+
+  // For an uptime monitor: can the server reach the database, are jobs failing, how old is the last backup.
+  // 503 when the database cannot be reached. Counts only, nothing about anyone.
+  app.get('/health/deep', async (_req, reply) => {
+    try {
+      const facts = await Promise.race([
+        asServer(async (db) => {
+          const { rows } = await db.query(
+            `select (select count(*)::int from job_status where failures_in_row >= 3) as failing_jobs,
+                    (select extract(epoch from now() - max(finished_at)) / 3600 from backup_runs where ok) as backup_hours`,
+          );
+          return rows[0] as { failing_jobs: number; backup_hours: number | null };
+        }),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('database timeout')), 3000)),
+      ]);
+      return {
+        ok: facts.failing_jobs === 0,
+        db: true,
+        failing_jobs: facts.failing_jobs,
+        backups: backupKey() ? 'on' : 'off',
+        last_backup_hours: facts.backup_hours === null ? null : Math.round(Number(facts.backup_hours) * 10) / 10,
+      };
+    } catch {
+      return reply.status(503).send({ ok: false, db: false });
+    }
+  });
 
   await app.register(authRoutes);
   await app.register(rpcRoutes);

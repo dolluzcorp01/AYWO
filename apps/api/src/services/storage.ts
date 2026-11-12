@@ -3,7 +3,8 @@ import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectComm
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { config } from '../config.ts';
 
-const s3 = new S3Client({
+/** Shared with the backup service, which writes to its own bucket. */
+export const s3 = new S3Client({
   endpoint: config.SPACES_ENDPOINT,
   region: config.SPACES_REGION,
   credentials: { accessKeyId: config.SPACES_KEY, secretAccessKey: config.SPACES_SECRET },

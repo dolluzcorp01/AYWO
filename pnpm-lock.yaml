@@ -184,6 +184,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1161.0
         version: 3.1164.0
+      '@aws-sdk/lib-storage':
+        specifier: ^3.1166.0
+        version: 3.1166.0(@aws-sdk/client-s3@3.1164.0)
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1161.0
         version: 3.1164.0
@@ -488,6 +491,12 @@ packages:
   '@aws-sdk/credential-provider-web-identity@3.972.88':
     resolution: {integrity: sha512-RmeE04naP7gWzux9l1vqNQPzuo2OkH0Ca9WDtX5Zf4NERoBLeWZNU2g1ka7aJ4Fc9fqBxBLtGL89vYEfFP1LHw==}
     engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/lib-storage@3.1166.0':
+    resolution: {integrity: sha512-B4kZu48nr3inhz/274ZnREoJlo1KvyXTropMfyTFIKvkeQwLiBrPO7w4j8VvPgopPMu3XImmbjORVYID6d3GPg==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@aws-sdk/client-s3': ^3.1166.0
 
   '@aws-sdk/middleware-sdk-s3@3.972.87':
     resolution: {integrity: sha512-LO1E63hw8wFLOTWgS2xpMQGGAI5DUbA9OcZC9x4ADDwYwU3oqMl3jumxQq/m/5g4Pri2SN8tLaumHtynA5gU9A==}
@@ -1771,6 +1780,10 @@ packages:
     resolution: {integrity: sha512-JJ/46AWQ4ipS1N2eZmUj7yzIhH8NhQIfAE+dce7NSB6dmFh+7hvD4pbofcoT4I0Xzfy/LNhZx3V2QhwYyAiqdg==}
     engines: {node: '>=18.0.0'}
 
+  '@smithy/core@3.40.0':
+    resolution: {integrity: sha512-DssGno52pzZ5m6RlDtyKuBIpZNPg9pqgs0CnNDKz9IatxCsmvNmJNn5Zn6rf77MthZo9wf89OvZFhTY/RwxhxQ==}
+    engines: {node: '>=18.0.0'}
+
   '@smithy/credential-provider-imds@4.5.2':
     resolution: {integrity: sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg==}
     engines: {node: '>=18.0.0'}
@@ -2080,6 +2093,9 @@ packages:
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
 
+  buffer@5.6.0:
+    resolution: {integrity: sha512-/gDYp/UtU0eA1ys8bOs9J6a+E/KWIY+DZ+Q2WESNUA0jFRsJOc0SNUO6xJ5SGA1xueg3NL65W6s+NY5l9cunuw==}
+
   bytes@3.1.2:
     resolution: {integrity: sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==}
     engines: {node: '>= 0.8'}
@@ -2373,6 +2389,10 @@ packages:
   event-target-shim@5.0.1:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
+
+  events@3.3.0:
+    resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
+    engines: {node: '>=0.8.x'}
 
   expect-type@1.4.0:
     resolution: {integrity: sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==}
@@ -2928,6 +2948,9 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  ieee754@1.2.1:
+    resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
 
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
@@ -3914,6 +3937,9 @@ packages:
   std-env@4.3.0:
     resolution: {integrity: sha512-OtU/EgQ1kIm5KwqQpBC6ZEMXrZRui11w8zgfTWp8cdO9B8OaPsbA8bTHO2P+HNo1VlUTGMVBwPhydu6poeXiag==}
 
+  stream-browserify@3.0.0:
+    resolution: {integrity: sha512-H73RAHsVBapbim0tU2JwwOiXUj+fikfiaoYAKHF3VJfA0pe2BCzkhAHBlLG6REzE+2WNZcxOXjK7lkso+9euLA==}
+
   stream-buffers@2.2.0:
     resolution: {integrity: sha512-uyQK/mx5QjHun80FLJTfaWE7JtwfRMKBLkMne6udYOmvH0CawotVa7TfgYHzAnpphn4+TweIx1QKMnRIbipmUg==}
     engines: {node: '>= 0.10.0'}
@@ -4425,6 +4451,16 @@ snapshots:
       '@aws-sdk/types': 3.975.0
       '@smithy/core': 3.39.0
       '@smithy/types': 4.20.0
+      tslib: 2.9.1
+
+  '@aws-sdk/lib-storage@3.1166.0(@aws-sdk/client-s3@3.1164.0)':
+    dependencies:
+      '@aws-sdk/client-s3': 3.1164.0
+      '@smithy/core': 3.40.0
+      '@smithy/types': 4.20.0
+      buffer: 5.6.0
+      events: 3.3.0
+      stream-browserify: 3.0.0
       tslib: 2.9.1
 
   '@aws-sdk/middleware-sdk-s3@3.972.87':
@@ -5918,6 +5954,11 @@ snapshots:
       '@smithy/types': 4.20.0
       tslib: 2.9.1
 
+  '@smithy/core@3.40.0':
+    dependencies:
+      '@smithy/types': 4.20.0
+      tslib: 2.9.1
+
   '@smithy/credential-provider-imds@4.5.2':
     dependencies:
       '@smithy/core': 3.39.0
@@ -6261,6 +6302,11 @@ snapshots:
 
   buffer-from@1.1.2: {}
 
+  buffer@5.6.0:
+    dependencies:
+      base64-js: 1.5.1
+      ieee754: 1.2.1
+
   bytes@3.1.2: {}
 
   call-bind-apply-helpers@1.0.2:
@@ -6556,6 +6602,8 @@ snapshots:
   etag@1.8.1: {}
 
   event-target-shim@5.0.1: {}
+
+  events@3.3.0: {}
 
   expect-type@1.4.0: {}
 
@@ -7175,6 +7223,8 @@ snapshots:
   i18next@26.7.2(typescript@6.0.3):
     optionalDependencies:
       typescript: 6.0.3
+
+  ieee754@1.2.1: {}
 
   ignore@5.3.2: {}
 
@@ -8345,6 +8395,11 @@ snapshots:
   statuses@2.0.2: {}
 
   std-env@4.3.0: {}
+
+  stream-browserify@3.0.0:
+    dependencies:
+      inherits: 2.0.4
+      readable-stream: 3.6.2
 
   stream-buffers@2.2.0: {}
 

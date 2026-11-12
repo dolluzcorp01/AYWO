@@ -64,6 +64,13 @@ const schema = z.object({
   // Seals staff authenticator secrets in the database. Optional: without it a key is made from JWT_SECRET.
   // A separate random value is better, so a leaked JWT_SECRET does not also open these.
   STAFF_SECRET_KEY: z.string().default(''),
+  // Nightly database backup, encrypted with this key (32 random bytes, base64: openssl rand -base64 32).
+  // Keep a copy somewhere safe outside DigitalOcean: without it a backup cannot be opened. Empty turns backups off.
+  BACKUP_KEY: z.string().default(''),
+  // Where backups go. A separate bucket from people's photos. Empty means "<SPACES_BUCKET>-backups".
+  SPACES_BACKUP_BUCKET: z.string().default(''),
+  // Who gets an email when something breaks (a job keeps failing, a backup fails, errors spike). Empty: logs only.
+  OPS_ALERT_EMAIL: z.string().default(''),
 });
 
 export const config = schema.parse(process.env);
@@ -77,6 +84,17 @@ if (isProduction && config.STAFF_SECRET_KEY && config.STAFF_SECRET_KEY.length < 
 if (isProduction && (/dummy/i.test(config.JWT_SECRET) || /dummy/i.test(config.OTP_SECRET))) {
   throw new Error('JWT_SECRET and OTP_SECRET must be real random values in production');
 }
+
+/** The backup key as 32 bytes, or null when backups are off. A key of the wrong size refuses to start the server. */
+export function backupKey(): Buffer | null {
+  if (!config.BACKUP_KEY) return null;
+  const key = Buffer.from(config.BACKUP_KEY, 'base64');
+  if (key.length !== 32) throw new Error('BACKUP_KEY must be 32 random bytes in base64 (openssl rand -base64 32)');
+  return key;
+}
+backupKey();
+
+export const backupBucket = config.SPACES_BACKUP_BUCKET || `${config.SPACES_BUCKET}-backups`;
 
 /** Six digits, and not one a person would try first. */
 function strongTestCode(code: string): boolean {
