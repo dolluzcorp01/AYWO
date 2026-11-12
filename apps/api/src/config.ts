@@ -42,7 +42,7 @@ const schema = z.object({
   SPACES_BUCKET: z.string().default('aywo'),
   SPACES_KEY: z.string().default('dummy'),
   SPACES_SECRET: z.string().default('dummy'),
-  // 'true' for MinIO on a laptop (http://localhost:9000/aywo/file). DigitalOcean Spaces uses the default.
+  // 'true' for the local file store on a laptop (http://localhost:9000/aywo/file). DigitalOcean Spaces uses the default.
   SPACES_PATH_STYLE: z.string().default('false'),
 
   RAZORPAY_KEY_ID: z.string().default('rzp_test_dummy'),

@@ -39,7 +39,7 @@ npx expo install --check
 docker compose up -d
 ```
 
-Starts Postgres and MinIO (the local file store for photos, voice notes and imports; console at http://localhost:9001, minioadmin / minioadmin). The `.env.example` values already point at it.
+Starts Postgres and SeaweedFS (the local S3 file store for photos, voice notes and imports, at http://localhost:9000 with the local-only keys minioadmin / minioadmin). The `.env.example` values already point at it. Coming from the older MinIO setup: run `docker compose up -d --remove-orphans` once.
 
 ```bash
 pnpm migrate -- --seed
