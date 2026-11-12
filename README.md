@@ -111,7 +111,7 @@ The founder's laptop has no Node, so this was checked in a browser engine:
 - Payment reconciliation if a provider gives up on a webhook.
 - Losing tree access does not remove someone from that tree's chats. The person who made a group chat can remove them.
 - A wallet (stored money). Deferred to version 2: RBI prepaid rules and Apple and Google billing rules.
-- Automatic refunds of AYWO Plus. Plan refunds stay in the App Store, Play Console, Razorpay or Stripe dashboards; order refunds are in the staff panel.
+- Automatic refunds of AYWO Plus. Plan refunds stay in the App Store, Play Console, Razorpay or Stripe dashboards; order refunds are in the admin panel.
 
 ## App icon and loading animations
 

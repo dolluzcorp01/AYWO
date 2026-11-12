@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { BellIcon, CalendarIcon, ChatIcon, FriendsIcon, InviteIcon, PartyIcon, PhotoIcon, PlusIcon, ShieldIcon, SignOutIcon } from '@/components/Icons';
 import { ConfirmDialog } from '@/components/ui';
@@ -14,6 +14,7 @@ import { Text } from '@/components/Text';
 import { api } from '@/lib/api';
 import { mainTree, useMe, useTrees } from '@/lib/account';
 import { logOut } from '@/lib/logout';
+import { LogoLink } from '@/components/LogoLink';
 import { SosBar } from '@/ops/SosBar';
 import type { HomeCounts } from '@/social/types';
 import { useActivity } from '@/tree/useEdit';
@@ -89,10 +90,7 @@ export function SideNav() {
   return (
     <View style={styles.nav}>
       <ScrollView style={styles.scroll} contentContainerStyle={[styles.navInner, tight && styles.navInnerTight]}>
-        <Pressable accessibilityRole="link" accessibilityLabel={t('tabs.home')} onPress={() => go('/home')} style={styles.logoLink}>
-          {/* The image itself must not take the click (a browser starts dragging an image on press), so the link gets it. */}
-          <Image source={require('../../assets/aywo_logo_app.png')} style={[styles.logo, tight && styles.logoTight, styles.noPointer]} resizeMode="contain" accessibilityLabel="AYWO" />
-        </Pressable>
+        <LogoLink label={t('tabs.home')} onPress={() => go('/home')} height={tight ? 26 : 30} style={[styles.logoLink, tight && styles.logoLinkTight]} />
 
         <Pressable
           accessibilityRole="button"
@@ -128,9 +126,9 @@ export function SideNav() {
         <Item tight={tight} label="AYWO Plus" active={on('/plus') || on('/family-plan')} onPress={() => go('/family-plan')} icon={(c) => <PlusIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('ops.nav.offers')} active={on('/offers') || on('/shop') || on('/orders')} onPress={() => go('/offers')} icon={(c) => <PartyIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('ops.nav.help')} active={on('/help')} onPress={() => go('/help')} icon={(c) => <ChatIcon color={c} size={20} width={1.8} />} />
-        {/* Staff only: the way into the staff panel (it used to need typing /admin). */}
+        {/* Staff only: the way into the admin panel (it used to need typing /admin). */}
         {me.data?.admin_role ? (
-          <Item tight={tight} label={t('nav.staffPanel')} active={on('/admin')} onPress={() => go('/admin')} icon={(c) => <ShieldIcon color={c} size={20} width={1.8} />} />
+          <Item tight={tight} label={t('nav.adminPanel')} active={on('/admin')} onPress={() => go('/admin')} icon={(c) => <ShieldIcon color={c} size={20} width={1.8} />} />
         ) : null}
         <Item tight={tight} label={t('settings.signOut')} active={false} onPress={() => setSigningOut(true)} icon={(c) => <SignOutIcon color={c} size={20} width={1.8} />} />
       </ScrollView>
@@ -157,10 +155,8 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   navInner: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 8, gap: 2 },
   navInnerTight: { paddingTop: 12, gap: 0 },
-  logoLink: { alignSelf: 'flex-start' },
-  noPointer: { pointerEvents: 'none' },
-  logo: { height: 30, width: 104, marginBottom: 14, marginLeft: 6 },
-  logoTight: { height: 26, marginBottom: 8 },
+  logoLink: { marginBottom: 14, marginLeft: 6 },
+  logoLinkTight: { marginBottom: 8 },
   add: { minHeight: 44, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 10 },
   addTight: { minHeight: 40, marginBottom: 6 },
   addText: { color: colors.text, fontFamily: fonts.bold, fontSize: 15 },

@@ -9,7 +9,8 @@ interface IconProps {
   width?: number;
 }
 
-function Icon({ color, size = 20, width = 2, mirror, children }: IconProps & { children: ReactNode; mirror?: boolean }) {
+/** The shared line-icon frame, for icons kept next to the screens that use them. */
+export function Icon({ color, size = 20, width = 2, mirror, children }: IconProps & { children: ReactNode; mirror?: boolean }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={width} style={mirror && layoutIsRtl() ? { transform: [{ scaleX: -1 }] } : undefined}>
       {children}
@@ -106,7 +107,7 @@ export const SignOutIcon = (p: IconProps) => (
   </Icon>
 );
 
-/** A shield: the staff panel. */
+/** A shield: the admin panel. */
 export const ShieldIcon = (p: IconProps) => (
   <Icon {...p}>
     <Path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
