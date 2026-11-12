@@ -21,7 +21,9 @@ export const opsRpc: RpcList = {
   marketing_set: { args: ['p_on'] },
 
   emergency_card_get: { args: [] },
-  emergency_card_save: { args: ['p_card'] },
+  // p_agree_version: the health notice the person ticked "I agree" to (0019), when agreeing with this save.
+  emergency_card_save: { args: ['p_card', 'p_agree_version'] },
+  my_consents: { args: [] },
   emergency_card_delete: { args: [] },
   sos_emergency_card: { args: ['p_event'] },
 

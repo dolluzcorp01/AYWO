@@ -147,9 +147,8 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
   app.post('/me/consents', async (req) => {
     const userId = await requireUser(req);
     const body = z.object({ kind: z.enum(['terms', 'privacy', 'parental']), version: z.string().min(1).max(40) }).parse(req.body);
-    await asCaller(userId, (db) =>
-      db.query(`insert into consents (profile_id, kind, version) values ($1, $2, $3) on conflict do nothing`, [userId, body.kind, body.version]),
-    );
+    // Also goes in the consent history shown on "My consents" (0019).
+    await asCaller(userId, (db) => db.query(`select consent_accept($1, $2)`, [body.kind, body.version]));
     return { ok: true };
   });
 
@@ -518,7 +517,12 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
 
   app.post('/account/export', { config: { rateLimit: { max: 5, timeWindow: '10 minutes' } } }, async (req) => {
     const userId = await requireUser(req);
-    const data = await asCaller(userId, (db) => call(db, 'account_export()'));
+    const data = await asCaller(userId, async (db) => ({
+      ...((await call(db, 'account_export()')) as Record<string, unknown>),
+      // The person's right to a copy covers their health card and the record of what they agreed to (0019).
+      emergency_card: await call(db, 'emergency_card_get()'),
+      consents_and_history: await call(db, 'my_consents()'),
+    }));
     const path = `exports/${userId}/${randomUUID()}.json`;
     await uploadObject(path, JSON.stringify(data, null, 2), 'application/json');
     return { url: await signedReadUrl(path) };

@@ -36,6 +36,7 @@ The poster and book now have a print and ship workflow in the staff panel (Order
 | DigitalOcean app settings | `BACKUP_KEY` (copy kept outside DigitalOcean) and `OPS_ALERT_EMAIL`. See `docs/runbook-backups.md`. |
 | DigitalOcean, Apps, aywo, Settings, Alerts | Emails for deploy failed, domain failed, CPU, memory and restart alerts (rules are in `.do/app.yaml`). |
 | After going live | One practice restore into an empty database (`docs/runbook-backups.md`, step 4). |
+| Lawyer review | The emergency card health notice (`locales/*.ops.json`, `ops.consent`) and My consents wording, with the privacy policy. If the notice changes in a way that matters, raise `health_notice_version()` in a new migration: everyone is asked to agree again and helpers stop seeing cards until they do. DPDP Rule 3 applies from about May 2027. |
 
 Both `.well-known` files must be served from `https://aywo.in/.well-known/` as `application/json`, with no redirect. Check after each web deploy:
 `curl -I https://aywo.in/.well-known/apple-app-site-association`
