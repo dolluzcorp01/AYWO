@@ -98,6 +98,21 @@ export const FriendsIcon = (p: IconProps) => (
     <Path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.8 3 2.6 3.5 5.2" />
   </Icon>
 );
+/** A door with an arrow out: sign out. */
+export const SignOutIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <Path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" />
+    <Path d="M10 16l-4-4 4-4M6 12h10" />
+  </Icon>
+);
+
+/** A shield: the staff panel. */
+export const ShieldIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <Path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
+  </Icon>
+);
+
 /** A microphone: speak instead of typing. */
 export const MicIcon = (p: IconProps) => (
   <Icon {...p}>

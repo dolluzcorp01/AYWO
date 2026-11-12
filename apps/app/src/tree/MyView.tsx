@@ -78,7 +78,12 @@ function layout(view: ReturnType<typeof focusView>, width: number, expanded: { s
   const besideFocus = room - FOCUS_W - (partners.length ? PARTNER_GAP + CARD_W : 0) - GAP;
   const siblings = fitting(view.siblings, besideFocus, MORE_SIBLINGS, expanded.siblings);
   const children = fitting(view.children, room, MORE_CHILDREN, expanded.children);
-  const middle = [...siblings, view.focusId, ...partners];
+  // Everyone keeps their birth-order place: the focus person is drawn bigger where they stand, not moved to the end.
+  // A partner sits right beside them; '+N' (hidden brothers and sisters) stays at the start.
+  const shown = new Set(siblings);
+  const inOrder = view.siblingRow.filter((id) => id === view.focusId || shown.has(id));
+  const bloodRow = [...(shown.has(MORE_SIBLINGS) ? [MORE_SIBLINGS] : []), ...inOrder];
+  const middle = bloodRow.flatMap((id) => (id === view.focusId ? [id, ...partners] : [id]));
 
   const rows: { ids: string[]; y: number; h: number }[] = [];
   let y = EDGE;
@@ -109,7 +114,7 @@ function layout(view: ReturnType<typeof focusView>, width: number, expanded: { s
     const p = placed.get(id) as Placed;
     return p.x + p.w / 2;
   };
-  const blood = [...siblings, view.focusId];
+  const blood = bloodRow;
   const bloodMid = (cx(blood[0]) + cx(blood[blood.length - 1])) / 2;
   const coupleMid = partners.length ? (cx(view.focusId) + cx(partners[0])) / 2 : cx(view.focusId);
   if (parents.length) put(parents, rows[1].y, bloodMid);

@@ -3,7 +3,7 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { ChevronIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
@@ -28,6 +28,8 @@ export default function Calendar() {
   const router = useRouter();
   const errorText = useErrorText();
   const today = ymd(new Date());
+  // On a computer there is room: a wider month with taller days. Phones keep the compact one.
+  const wide = useWindowDimensions().width >= 1000;
   const [[year, month0], setMonth] = useState<[number, number]>(() => [new Date().getFullYear(), new Date().getMonth()]);
   const [picked, setPicked] = useState<string | null>(null);
 
@@ -71,7 +73,7 @@ export default function Calendar() {
     <Screen>
       <TopBar title={t('calendar.title')} subtitle={t('calendar.subtitle')} onBack={() => goBack(router)} />
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.card}>
+        <View style={[styles.card, wide && styles.cardWide]}>
           <View style={styles.monthRow}>
             <Pressable accessibilityRole="button" accessibilityLabel={t('calendar.previous')} onPress={() => move(-1)} style={styles.arrow}>
               <View style={styles.flip}>
@@ -121,10 +123,10 @@ export default function Calendar() {
                         setPicked(day.date);
                       } else setPicked(isPicked ? null : day.date);
                     }}
-                    style={styles.cell}
+                    style={[styles.cell, wide && styles.cellWide]}
                   >
-                    <View style={[styles.dayCircle, day.date === today && styles.todayCircle, isPicked && styles.pickedCircle]}>
-                      <Text style={[styles.dayNumber, !day.inMonth && styles.otherMonth, day.date === today && styles.todayNumber, isPicked && styles.pickedNumber]}>
+                    <View style={[styles.dayCircle, wide && styles.dayCircleWide, day.date === today && styles.todayCircle, isPicked && styles.pickedCircle]}>
+                      <Text style={[styles.dayNumber, wide && styles.dayNumberWide, !day.inMonth && styles.otherMonth, day.date === today && styles.todayNumber, isPicked && styles.pickedNumber]}>
                         {day.day}
                       </Text>
                     </View>
@@ -157,7 +159,7 @@ export default function Calendar() {
           <EmptyState message={picked ? t('calendar.nothingDay') : t('calendar.nothingMonth')} />
         ) : (
           groups.map(([date, list]) => (
-            <View key={date} style={styles.group}>
+            <View key={date} style={[styles.group, wide && styles.groupWide]}>
               <Text accessibilityRole="header" style={styles.groupTitle}>{dayTitle(date)}</Text>
               {list.map((item, i) => (
                 <ItemRow key={`${item.kind}-${item.person_id ?? item.event_id}-${i}`} item={item} onPress={() => open(item)} />
@@ -213,6 +215,11 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     ...shadows.card,
   },
+  cardWide: { maxWidth: 900, padding: 20 },
+  cellWide: { minHeight: 84, paddingVertical: 8 },
+  dayCircleWide: { width: 44, height: 44, borderRadius: 22 },
+  dayNumberWide: { fontSize: 18 },
+  groupWide: { maxWidth: 900 },
   monthRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   arrow: { width: minTapSize, height: minTapSize, alignItems: 'center', justifyContent: 'center', borderRadius: 999, backgroundColor: colors.tint },
   flip: { transform: [{ scaleX: -1 }] },
