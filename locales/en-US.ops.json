@@ -261,6 +261,58 @@
       "code": "6-digit code",
       "confirm": "Confirm",
       "resend": "Send again"
+    },
+    "consent": {
+      "noticeTitle": "Before you save: how we use your health details",
+      "whatTitle": "What we keep",
+      "whatBody": "Only what you type on this card: blood group, allergies, health conditions, regular medicines, and anything else you add. Every box is optional.",
+      "whyTitle": "Why",
+      "whyBody": "So the people your SOS reaches can help you safely, for example a doctor knowing your blood group or a medicine you must not be given. We use it for nothing else: no advertising, no profiling, never sold.",
+      "whoTitle": "Who sees it",
+      "whoBody": "Only the people an SOS you send reaches, while it runs and for one day after. Not your family tree, not other members, and not our staff.",
+      "howLongTitle": "How long we keep it",
+      "howLongBody": "Until you withdraw or delete your account. Withdrawing deletes the card at once.",
+      "optionalTitle": "Your choice",
+      "optionalBody": "This is optional. SOS works the same without it.",
+      "withdrawTitle": "Withdraw and delete?",
+      "withdrawBody": "Tap \"Withdraw and delete\" on this page or on Me, Privacy and account, My consents. It takes one tap, just like agreeing.",
+      "complainTitle": "Questions or complaints",
+      "complainBody": "Write to our Grievance Officer, {{grievanceOfficer}}, at {{grievanceEmail}}. You can also complain to the Data Protection Board of India.",
+      "agreeLabel": "I have read this and agree that AYWO may keep these health details and show them to the people my SOS reaches.",
+      "tickFirst": "Tick \"I agree\" first, or leave the health boxes empty. The card is only saved with your agreement.",
+      "agreedOn": "You agreed to keep this card on {{date}}.",
+      "hiddenUntilAgree": "Your SOS helpers can't see this card yet. Read the notice below and tick \"I agree\" to turn it on.",
+      "withdraw": "Withdraw and delete my card",
+      "withdrawMessage": "Your emergency card is deleted now, and SOS helpers will not see it. You can fill it in again later.",
+      "withdrawConfirm": "Withdraw and delete"
+    },
+    "myConsents": {
+      "title": "My consents",
+      "subtitle": "What you agreed to, when, and how to take it back",
+      "terms": "Terms of use",
+      "privacy": "Privacy policy",
+      "health_card": "Emergency card (health details)",
+      "marketing": "Offers and news messages",
+      "parental": "Parent or guardian consent",
+      "notGiven": "Not given",
+      "off": "Off",
+      "agreedOn": "Agreed on {{date}} (version {{version}})",
+      "olderNotice": "Agreed to an older notice. Open the card to read the new one; until then SOS helpers don't see it.",
+      "neededHelp": "Needed to use AYWO. To withdraw it, delete your account.",
+      "read": "Read it",
+      "deleteAccount": "Delete my account",
+      "healthHelp": "Optional. Shown only to the people an SOS you send reaches. Withdrawing deletes the card.",
+      "openCard": "Open my card",
+      "readAndAgree": "Read the notice",
+      "marketingHelp": "Optional. Occasional offers and news from AYWO.",
+      "turnOn": "Turn on",
+      "turnOff": "Turn off",
+      "history": "History",
+      "noHistory": "Nothing recorded yet.",
+      "granted": "Agreed: {{what}}",
+      "withdrawn": "Withdrew: {{what}}",
+      "complain": "Questions or complaints: our Grievance Officer, {{grievanceOfficer}}, {{grievanceEmail}}. You can also go to the Data Protection Board of India.",
+      "onSince": "On since {{date}}"
     }
   },
   "help": {
@@ -288,6 +340,8 @@
     "referral_already": "You've already used an invite code.",
     "chat_blocked": "You can't send messages in this chat.",
     "email_missing": "Add an email address first.",
-    "email_code_wrong": "That code isn't right, or it has expired. Ask for a new one."
+    "email_code_wrong": "That code isn't right, or it has expired. Ask for a new one.",
+    "consent_needed": "Tick \"I agree\" to save health details on your card.",
+    "consent_outdated": "The notice was updated. Read the new one and tick \"I agree\" again."
   }
 }

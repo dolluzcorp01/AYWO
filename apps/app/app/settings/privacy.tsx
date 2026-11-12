@@ -69,6 +69,7 @@ export default function Privacy() {
         <Card style={styles.card}>
           <TextButton label={t('legal.termsLink')} onPress={() => router.push('/terms')} />
           <TextButton label={t('legal.privacyLink')} onPress={() => router.push('/privacy')} />
+          <TextButton label={t('ops.myConsents.title')} onPress={() => router.push('/settings/consents')} />
           <TextButton label={t('ops.me.blocked')} onPress={() => router.push('/settings/blocked')} />
         </Card>
 

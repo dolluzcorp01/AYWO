@@ -254,7 +254,7 @@ select ok((select plus_bonus_until > now() + interval '59 days' from profiles wh
 
 -- ===== Emergency card, family dates =====
 select test_login('00000000-0000-0000-0000-0000000000f4');
-select lives_ok($$ select emergency_card_save('{"blood_group": "O+", "allergies": "Penicillin"}') $$, 'Asha fills in an emergency card');
+select lives_ok($$ select emergency_card_save('{"blood_group": "O+", "allergies": "Penicillin"}', health_notice_version()) $$, 'Asha agrees to the notice and fills in an emergency card (0019)');
 select throws_ok($$ select emergency_card_save('{"blood_group": "Z+"}') $$, '23514', null, 'an unknown blood group is refused');
 select is(emergency_card_get() ->> 'allergies', 'Penicillin', 'Asha reads it back');
 select ok((my_extras() ->> 'has_emergency_card')::boolean, 'Me knows the card is there');
