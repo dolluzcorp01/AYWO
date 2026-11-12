@@ -9,6 +9,8 @@ import { Avatar } from '@/components/Avatar';
 import { SearchIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text, TextInput } from '@/components/Text';
+import { useVoiceInput } from '@/voice/useVoiceInput';
+import { VoiceButton } from '@/voice/VoiceButton';
 import { BackButton, Card, ErrorText, Loading, Muted, SectionTitle } from '@/components/ui';
 import { deviceStore } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
@@ -29,6 +31,8 @@ export default function Search() {
   const router = useRouter();
   const errorText = useErrorText();
   const [text, setText] = useState('');
+  // Say the name to find them. A search starts fresh, so speech replaces what was typed.
+  const searchVoice = useVoiceInput('', setText);
   const [query, setQuery] = useState('');
   const [recent, setRecent] = useState<Recent[]>([]);
   const recentKey = `aywo.recent.${treeId}`;
@@ -76,6 +80,7 @@ export default function Search() {
             accessibilityLabel={t('search.placeholder')}
             style={styles.input}
           />
+          <VoiceButton voice={searchVoice} size={40} />
         </View>
       </View>
       <View style={styles.help}>

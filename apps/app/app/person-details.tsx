@@ -19,6 +19,9 @@ import type { PickedFile } from '@/lib/api';
 import { dateToText, normalizeContact, parseDateText } from '@/lib/contacts';
 import { errorCode, useErrorText } from '@/lib/errors';
 import { pickPhoto } from '@/lib/pick';
+import { asName } from '@/voice/speech';
+import { useVoiceInput } from '@/voice/useVoiceInput';
+import { VoiceButton } from '@/voice/VoiceButton';
 import { deleteContact, deletePerson, savePerson, saveWeddingDate, setContact, useAddRelative, useContactsForEdit } from '@/tree/useEdit';
 import type { ContactKind, LinkKind, PersonFields, Relation } from '@/tree/useEdit';
 import { useTreeView } from '@/tree/useTreeView';
@@ -180,6 +183,9 @@ export default function PersonDetails() {
     if (router.canDismiss()) router.dismiss(2);
     else router.replace({ pathname: '/tree/[id]', params: { id: treeId } });
   }
+
+  // Speak the name instead of typing it. English names get capitals; Tamil script is left as it is.
+  const nameVoice = useVoiceInput(form.name, (v) => change('name', v), { shape: asName });
 
   function change<K extends keyof Form>(key: K, value: Form[K]) {
     setForm((now) => ({ ...now, [key]: value }));
@@ -451,6 +457,7 @@ export default function PersonDetails() {
               editable={!form.nameUnknown}
               invalid={badField === 'name'}
               style={styles.nameInput}
+              accessory={form.nameUnknown ? undefined : <VoiceButton voice={nameVoice} />}
             />
           </View>
         </View>

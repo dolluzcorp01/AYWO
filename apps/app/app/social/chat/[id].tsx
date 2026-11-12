@@ -10,6 +10,8 @@ import { FlatList, Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet,
 import { CameraIcon, CloseIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text, TextInput } from '@/components/Text';
+import { useVoiceInput } from '@/voice/useVoiceInput';
+import { VoiceButton } from '@/voice/VoiceButton';
 import { ConfirmDialog, SmallButton, TextButton, TopBar } from '@/components/ui';
 import { api, uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
@@ -44,6 +46,8 @@ export default function ChatRoom() {
   const showName = useName();
 
   const [text, setText] = useState('');
+  // Speak a message: one phrase at a time, added to what is typed; tap Send when it reads right.
+  const textVoice = useVoiceInput(text, setText);
   const [reply, setReply] = useState<Message | null>(null);
   const [recording, setRecording] = useState(false);
   const [micDenied, setMicDenied] = useState(false);
@@ -247,6 +251,7 @@ export default function ChatRoom() {
               maxLength={4000}
               style={styles.input}
             />
+            <VoiceButton voice={textVoice} size={44} />
             {text.trim() ? (
               <SmallButton label={t('social.chat.send')} disabled={send.isPending} onPress={() => send.mutate({ body: text })} />
             ) : (

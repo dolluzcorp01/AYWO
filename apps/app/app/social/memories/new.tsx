@@ -10,6 +10,8 @@ import type { PickedFile } from '@/lib/api';
 import { PeoplePicker, PersonSearch, useCircles } from '@/social/AudiencePicker';
 import { pickPhotos } from '@/social/media';
 import { ActionError, Gate, Note, Page, Row } from '@/social/parts';
+import { useVoiceInput } from '@/voice/useVoiceInput';
+import { VoiceButton } from '@/voice/VoiceButton';
 
 const MOST_PHOTOS = 20;
 
@@ -21,6 +23,8 @@ export default function NewMemory() {
   const [scope, setScope] = useState<string | null>(null);
   const [body, setBody] = useState('');
   const [date, setDate] = useState('');
+  // A story is easier told than typed: the mic keeps listening through pauses and adds full stops.
+  const bodyVoice = useVoiceInput(body, setBody, { long: true });
   const [photos, setPhotos] = useState<PickedFile[]>([]);
   const [tagged, setTagged] = useState<{ id: string; name: string }[]>([]);
   const [taggedFriends, setTaggedFriends] = useState<string[]>([]);
@@ -93,7 +97,7 @@ export default function NewMemory() {
         </ScrollView>
       ) : null}
 
-      <Field label={t('social.memories.words')} value={body} onChangeText={setBody} multiline maxLength={4000} style={styles.words} />
+      <Field label={t('social.memories.words')} value={body} onChangeText={setBody} multiline maxLength={4000} style={styles.words} accessory={<VoiceButton voice={bodyVoice} />} />
       <Field label={t('social.memories.when')} value={date} onChangeText={setDate} placeholder={t('social.datePlaceholder')} autoCapitalize="none" />
       {!dateOk ? <Note>{t('social.dateHelp')}</Note> : null}
 

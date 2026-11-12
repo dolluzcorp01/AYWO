@@ -141,16 +141,27 @@ export function ErrorText({ children }: { children: ReactNode }) {
 }
 
 /** A labelled text box. `invalid` gives it a red border, so the box with the problem is easy to find. */
-export function Field({ label, style, invalid, ...input }: { label?: string; invalid?: boolean } & ComponentProps<typeof TextInput>) {
+/** accessory: something beside the box, such as the mic button. */
+export function Field({ label, style, invalid, accessory, ...input }: { label?: string; invalid?: boolean; accessory?: ReactNode } & ComponentProps<typeof TextInput>) {
+  const box = (
+    <TextInput
+      accessibilityLabel={label}
+      placeholderTextColor={colors.muted}
+      {...input}
+      style={[styles.input, accessory ? styles.inputBeside : null, style, invalid && styles.inputInvalid]}
+    />
+  );
   return (
     <View style={styles.field}>
       {label ? <Label>{label}</Label> : null}
-      <TextInput
-        accessibilityLabel={label}
-        placeholderTextColor={colors.muted}
-        {...input}
-        style={[styles.input, style, invalid && styles.inputInvalid]}
-      />
+      {accessory ? (
+        <View style={[styles.fieldRow, input.multiline && styles.fieldRowTop]}>
+          {box}
+          {accessory}
+        </View>
+      ) : (
+        box
+      )}
     </View>
   );
 }
@@ -315,6 +326,9 @@ const styles = StyleSheet.create({
   section: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
   error: { color: colors.alert, fontFamily: fonts.bold, fontSize: 14, lineHeight: 20 },
   field: { gap: 6 },
+  fieldRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  fieldRowTop: { alignItems: 'flex-start' },
+  inputBeside: { flex: 1, minWidth: 0 },
   inputInvalid: { borderColor: colors.alert, borderWidth: 2 },
   input: {
     minHeight: 54,

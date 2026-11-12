@@ -817,5 +817,14 @@
     "tryNow": "Try now",
     "checking": "Checking...",
     "notSaved": "You're offline, and this page isn't saved on this device yet. It opens when you're back online."
+  },
+  "voice": {
+    "speak": "Speak instead of typing",
+    "stop": "Stop listening",
+    "denied": "Allow the microphone to speak instead of typing. You can turn it on in your phone or browser settings.",
+    "noSpeech": "Didn't hear anything. Tap the mic and speak again.",
+    "notAvailable": "Speaking in this language isn't available on this device yet. Please type instead.",
+    "network": "Speaking needs the internet on this device. Please type, or try again when you're connected.",
+    "failed": "The mic didn't work. Please type instead."
   }
 }
