@@ -370,6 +370,11 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const q = z.object({ days: z.coerce.number().int().min(7).max(180).default(30) }).parse(req.query);
     return staffCall(req, ['analytics'], 'admin_analytics', [q.days]);
   });
+  // Step by step, for devices that first opened the app in the window (0017).
+  app.get('/admin/funnel', (req) => {
+    const q = z.object({ days: z.coerce.number().int().min(1).max(400).default(30) }).parse(req.query);
+    return staffCall(req, ['analytics'], 'admin_funnel', [q.days]);
+  });
   app.get('/admin/health', (req) => {
     const q = z.object({ days: z.coerce.number().int().min(1).max(30).default(7) }).parse(req.query);
     return staffCall(req, ['settings', 'analytics'], 'admin_app_health', [q.days]);

@@ -8,6 +8,7 @@ import { Text, TextInput } from '@/components/Text';
 import { ErrorText, Heading, Muted, PrimaryButton } from '@/components/ui';
 import { api, ApiFailure, saveSession } from '@/lib/api';
 import { errorKey } from '@/lib/errors';
+import { track } from '@/lib/track';
 import { colors, fonts } from '@/theme/tokens';
 
 const RESEND_SECONDS = 30;
@@ -33,6 +34,7 @@ export default function Otp() {
     setMessageKey(null);
     try {
       await saveSession(await api.post<{ access_token: string; refresh_token: string }>('/auth/otp/verify', { phone, code: entered }));
+      track('code_verified');
       router.replace({ pathname: '/after-login', params: next ? { next } : {} });
     } catch (error) {
       setMessageKey(error instanceof ApiFailure && error.code === 'otp_wrong' ? 'otp.wrongCode' : errorKey(error));

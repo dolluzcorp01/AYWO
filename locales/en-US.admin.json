@@ -667,7 +667,8 @@
       "referrals": "Joined by invite",
       "plans": "Plans by store",
       "languages": "Languages",
-      "devices": "Phones"
+      "devices": "Phones",
+      "funnelAllTime": "Funnel (all time, from accounts)"
     },
     "settings": {
       "title": "App settings",
@@ -783,6 +784,30 @@
         "plus": "Added on top of any free days they already have. They get a notification."
       },
       "days": "Days (1 to 365)"
+    },
+    "funnel": {
+      "title": "Step by step: devices that first opened the app in the last {{count}} days",
+      "help": "Anonymous: a random id per device, no names or numbers. Each step counts once per device.",
+      "empty": "No devices opened the app in this period yet.",
+      "biggestDrop": "Most people stop before \"{{step}}\": {{count}} lost there.",
+      "byPlatform": "By phone or web",
+      "byLanguage": "By language",
+      "splitLine": "{{opened}} opened, {{verified}}% verified, {{tree}}% started a tree, {{five}}% reached 5 people",
+      "platforms": {
+        "web": "Web",
+        "android": "Android",
+        "ios": "iPhone"
+      },
+      "steps": {
+        "app_opened": "Opened the app",
+        "code_requested": "Asked for a code",
+        "code_verified": "Verified the code",
+        "name_saved": "Saved their name",
+        "tree_started": "Started a tree",
+        "first_relative": "Added a first relative",
+        "five_people": "Reached 5 people",
+        "invite_sent": "Invited someone"
+      }
     }
   },
   "errors": {

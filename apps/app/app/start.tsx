@@ -15,6 +15,7 @@ import { Card, ErrorText, NeonPanel } from '@/components/ui';
 import { firstName, useMe } from '@/lib/account';
 import { api } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
+import { track } from '@/lib/track';
 import { colors, fonts, gradients, minTapSize } from '@/theme/tokens';
 
 export default function Start() {
@@ -33,6 +34,7 @@ export default function Start() {
     try {
       const tree = await api.post<{ id: string }>('/trees', { name: t('start.treeName', { name: me.data?.display_name ?? '' }) });
       await client.invalidateQueries({ queryKey: ['trees'] });
+      track('tree_started');
       // A new tree starts with the family guide: mother, father, partner, children, one at a time.
       router.replace({ pathname: '/guide/[treeId]', params: { treeId: tree.id } });
     } catch (error) {
