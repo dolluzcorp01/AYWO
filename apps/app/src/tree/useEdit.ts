@@ -2,6 +2,7 @@
 // Paths and shapes follow docs/BUILD-CONTRACT.md. These hooks are the one place to touch if an answer's shape moves.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiFailure } from '@/lib/api';
+import { track } from '@/lib/track';
 
 export type Relation = 'parent' | 'child' | 'spouse' | 'sibling';
 export type LinkKind = 'birth' | 'adopted' | 'step' | 'foster' | 'unknown';
@@ -197,7 +198,10 @@ export function useCreateShare(treeId: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (input: ShareInput) => api.post<{ id: string; link_url: string }>(`/trees/${treeId}/shares`, input),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['shares', treeId] }),
+    onSuccess: () => {
+      track('invite_sent');
+      return client.invalidateQueries({ queryKey: ['shares', treeId] });
+    },
   });
 }
 

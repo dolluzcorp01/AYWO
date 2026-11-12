@@ -64,6 +64,14 @@ export async function deleteDueAccounts(): Promise<void> {
 export const adminJobs: Job[] = [
   // Hourly: a deletion happens within an hour of its date. Re-running is safe: a deleted account is not listed again.
   { name: 'account_deletions', everyMinutes: 60, run: deleteDueAccounts },
+  // Daily: funnel notes older than 400 days go (0017).
+  {
+    name: 'app_events_cleanup',
+    everyMinutes: 24 * 60,
+    run: async () => {
+      await asServer((db) => db.query(`select app_events_cleanup()`));
+    },
+  },
   {
     name: 'work_overdue',
     everyMinutes: 15,

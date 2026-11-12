@@ -19,6 +19,7 @@ import type { PickedFile } from '@/lib/api';
 import { dateToText, normalizeContact, parseDateText } from '@/lib/contacts';
 import { errorCode, useErrorText } from '@/lib/errors';
 import { pickPhoto } from '@/lib/pick';
+import { track } from '@/lib/track';
 import { asName } from '@/voice/speech';
 import { useVoiceInput } from '@/voice/useVoiceInput';
 import { VoiceButton } from '@/voice/VoiceButton';
@@ -342,6 +343,10 @@ export default function PersonDetails() {
         setBusy(false);
         return;
       }
+      // Funnel steps: the tree now has one more person than it showed.
+      const people = (tree.data?.nodes.length ?? 1) + 1;
+      if (people >= 2) track('first_relative');
+      if (people >= 5) track('five_people');
       // The person exists from here on. A failed photo or contact must not look like the whole add failed.
       try {
         if (photoPath) await savePerson(answer.person_id, 1, { photo_path: photoPath });

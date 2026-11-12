@@ -29,6 +29,7 @@ import { firstName, useMe } from '@/lib/account';
 import { api, uploadFile } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
 import { pickImportFile } from '@/lib/pick';
+import { track } from '@/lib/track';
 import { relativesOf, withSplits } from '@/import/types';
 import type { ImportAnswer, ImportedPerson, ImportGender, ImportPlaceholder, ImportPreview } from '@/import/types';
 import { generationCount } from '@/tree/stats';
@@ -123,6 +124,7 @@ export default function ImportScreen() {
 
   async function openTree(treeId: string) {
     await client.invalidateQueries({ queryKey: ['trees'] });
+    track('tree_started');
     router.replace({ pathname: '/tree/[id]', params: { id: treeId } });
   }
 

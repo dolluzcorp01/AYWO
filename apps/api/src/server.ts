@@ -15,6 +15,7 @@ import { opsRoutes } from './routes/ops.ts';
 import { paymentRoutes } from './routes/payments.ts';
 import { rpcRoutes } from './routes/rpc.ts';
 import { socialRoutes } from './routes/social.ts';
+import { trackRoutes } from './routes/track.ts';
 import { treeEditRoutes } from './routes/tree-edit.ts';
 import { treeViewRoutes } from './routes/tree-view.ts';
 import { uploadRoutes } from './routes/uploads.ts';
@@ -72,6 +73,7 @@ export async function buildServer() {
   await app.register(adminRoutes);
   await app.register(socialRoutes);
   await app.register(opsRoutes);
+  await app.register(trackRoutes);
   return app;
 }
 

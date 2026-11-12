@@ -10,6 +10,7 @@ import { Card, ErrorText, Heading, Muted, PrimaryButton } from '@/components/ui'
 import { api, ApiFailure } from '@/lib/api';
 import { errorKey } from '@/lib/errors';
 import { toE164 } from '@/lib/phone';
+import { track } from '@/lib/track';
 import { colors, fonts } from '@/theme/tokens';
 
 export default function Phone() {
@@ -31,6 +32,7 @@ export default function Phone() {
     setMessageKey(null);
     try {
       await api.post('/auth/otp/send', { phone });
+      track('code_requested');
       router.push({ pathname: '/otp', params: { phone, ...(next ? { next } : {}) } });
     } catch (error) {
       // "Check the number" only when the server refused the number. Too many tries and no connection say so.

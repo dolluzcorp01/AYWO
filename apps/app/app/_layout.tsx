@@ -23,6 +23,7 @@ import { safeNext } from '@/lib/account';
 import { api, deviceStore, hasSession, onSessionChange } from '@/lib/api';
 import { loadPrefs } from '@/lib/prefs';
 import { startOfflineChecks } from '@/lib/offline';
+import { track } from '@/lib/track';
 import { KEEP_DAYS, shouldKeep } from '@/lib/offlineKeep';
 import { offlinePersister } from '@/lib/offlineStore';
 import { makeClient } from '@/lib/queryClient';
@@ -116,6 +117,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     startOfflineChecks();
+    track('app_opened');
   }, []);
 
   useEffect(() => {

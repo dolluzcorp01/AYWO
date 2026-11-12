@@ -16,6 +16,7 @@ import { uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
 import { pickPhoto } from '@/lib/pick';
+import { track } from '@/lib/track';
 import { colors, fonts, gradients } from '@/theme/tokens';
 
 const AVATAR = 132;
@@ -55,6 +56,7 @@ export default function Profile() {
     try {
       const photoPath = photo ? await uploadFile('photos', photo) : null;
       await update.mutateAsync({ display_name: name.trim(), ...(photoPath ? { photo_path: photoPath } : {}) });
+      if (!editing) track('name_saved');
       if (editing) goBack(router);
       else router.replace((safeNext(params.next) ?? '/home') as Href);
     } catch (error) {

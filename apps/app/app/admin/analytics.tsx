@@ -2,15 +2,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/components/Text';
+import { Funnel } from '@/admin/Funnel';
+import type { FunnelAnswer } from '@/admin/Funnel';
 import type { Analytics } from '@/admin/types';
 import { AdminPage, Bars, Facts, FilterChips, money, Panel, QueryState, Section, StatCard, StatRow } from '@/admin/ui';
 import { api } from '@/lib/api';
+import { colors, fonts } from '@/theme/tokens';
 
 export default function AdminAnalytics() {
   const { t, i18n } = useTranslation();
   const [days, setDays] = useState<'7' | '30' | '90'>('30');
   const query = useQuery({ queryKey: ['admin', 'analytics', days], queryFn: () => api.get<Analytics>(`/admin/analytics?days=${days}`) });
+  const funnel = useQuery({ queryKey: ['admin', 'funnel', days], queryFn: () => api.get<FunnelAnswer>(`/admin/funnel?days=${days}`) });
 
   return (
     <AdminPage title={t('admin.analytics.title')} subtitle={t('admin.analytics.subtitle')} gates={['analytics']}>
@@ -23,6 +28,10 @@ export default function AdminAnalytics() {
           { value: '90', label: t('admin.analytics.lastDays', { count: 90 }) },
         ]}
       />
+      <Panel title={t('admin.funnel.title', { count: Number(days) })}>
+        <Text style={styles.help}>{t('admin.funnel.help')}</Text>
+        <QueryState query={funnel}>{(data) => <Funnel data={data} />}</QueryState>
+      </Panel>
       <QueryState query={query}>
         {(data) => {
           const dayLabels = data.daily.map((d) => d.day.slice(5, 10));
@@ -49,7 +58,7 @@ export default function AdminAnalytics() {
                   <Bars label={t('admin.analytics.sos')} values={series('sos')} days={dayLabels} />
                 </View>
               </Section>
-              <Panel title={t('admin.analytics.funnel')}>
+              <Panel title={t('admin.analytics.funnelAllTime')}>
                 <Facts
                   items={[
                     [t('admin.analytics.funnelSigned'), `${data.funnel.signed_up}`],
@@ -81,3 +90,7 @@ export default function AdminAnalytics() {
     </AdminPage>
   );
 }
+
+const styles = StyleSheet.create({
+  help: { color: colors.muted, fontFamily: fonts.medium, fontSize: 13, marginBottom: 6 },
+});
