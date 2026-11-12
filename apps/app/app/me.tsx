@@ -11,7 +11,7 @@ import { LanguagePicker } from '@/components/LanguagePicker';
 import { Screen } from '@/components/Screen';
 import { TAB_BAR_SPACE, TabBar } from '@/components/TabBar';
 import { Text } from '@/components/Text';
-import { Card, Checkbox, ErrorText, Loading, LoadFailed, NeonPanel } from '@/components/ui';
+import { Card, Checkbox, ConfirmDialog, ErrorText, Loading, LoadFailed, NeonPanel, SecondaryButton } from '@/components/ui';
 import { languageLabel } from '@/i18n/languages';
 import { HELP_PAGES } from '@/legal/LegalLinks';
 import { api } from '@/lib/api';
@@ -20,6 +20,7 @@ import { mainTree, useMe, useTrees, useUpdateMe } from '@/lib/account';
 import { useFeature } from '@/ops/appConfig';
 import type { MyExtras } from '@/ops/types';
 import { useErrorText } from '@/lib/errors';
+import { logOut } from '@/lib/logout';
 import { setLanguage, setLargeText, setSimpleMode, useLargeText, useSimpleMode } from '@/lib/prefs';
 import { FAMILY_PLAN_MAX, usePlan } from '@/pay/usePlan';
 import { SosButton } from '@/social/SosButton';
@@ -33,6 +34,7 @@ export default function MeScreen() {
   const router = useRouter();
   const errorText = useErrorText();
   const me = useMe();
+  const [signingOut, setSigningOut] = useState(false);
   const trees = useTrees();
   const update = useUpdateMe();
   const plan = usePlan();
@@ -210,6 +212,25 @@ export default function MeScreen() {
             <Row key={page.key} title={t(page.label)} onPress={() => router.push(page.href as Href)} last={i === HELP_PAGES.length - 1} />
           ))}
         </Card>
+
+        {me.data?.admin_role ? (
+          <Card style={styles.list}>
+            <Row title={t('nav.staffPanel')} onPress={() => router.push('/admin')} last />
+          </Card>
+        ) : null}
+
+        <SecondaryButton label={t('settings.signOut')} onPress={() => setSigningOut(true)} />
+        <ConfirmDialog
+          visible={signingOut}
+          title={t('nav.signOutTitle')}
+          message={t('nav.signOutMessage')}
+          confirmLabel={t('settings.signOut')}
+          onConfirm={() => {
+            setSigningOut(false);
+            void logOut();
+          }}
+          onCancel={() => setSigningOut(false)}
+        />
       </ScrollView>
       <TabBar active="me" />
       <LanguagePicker visible={picking} current={i18n.language} onPick={chooseLanguage} onClose={() => setPicking(false)} />

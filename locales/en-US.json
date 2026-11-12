@@ -132,6 +132,9 @@
   },
   "nav": {
     "together": "Together",
-    "you": "You"
+    "you": "You",
+    "staffPanel": "Staff panel",
+    "signOutTitle": "Sign out?",
+    "signOutMessage": "You can sign in again any time with your phone number."
   }
 }

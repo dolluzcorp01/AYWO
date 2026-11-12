@@ -189,4 +189,8 @@ describe('focus view', () => {
     expect(view.siblings).toEqual(['me']);
     expect(view.children).toEqual(['niece']);
   });
+  it('keeps brothers and sisters in the same order whoever is tapped (nobody jumps sides)', () => {
+    expect(focusView(graph, 'me').siblingRow).toEqual(focusView(graph, 'sis').siblingRow);
+    expect(focusView(graph, 'me').siblingRow.slice().sort()).toEqual(['me', 'sis']);
+  });
 });

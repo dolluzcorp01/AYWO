@@ -8,6 +8,9 @@ export interface FocusView {
   parents: string[];
   partners: string[];
   siblings: string[];
+  /** The brothers and sisters with the focus person among them, in birth order: a fixed order, so tapping someone
+   * never moves them to another place in the row. */
+  siblingRow: string[];
   children: string[];
   siblingsChildren: { siblingId: string; ids: string[] }[];
 }
@@ -36,6 +39,7 @@ export function focusView(graph: TreeGraph, focusId: string): FocusView {
       (index.unionsOf.get(focusId) ?? []).map((u) => partnerOf(u, focusId)).filter((id) => id !== null),
     ),
     siblings,
+    siblingRow: bySiblingOrder(index, [...siblings, focusId]),
     children: bySiblingOrder(index, unique(childrenOf(focusId))),
     siblingsChildren: siblings
       .map((siblingId) => ({ siblingId, ids: bySiblingOrder(index, unique(childrenOf(siblingId))) }))

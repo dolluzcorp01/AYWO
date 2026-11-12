@@ -380,6 +380,6 @@ const styles = StyleSheet.create({
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   centreText: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15, lineHeight: 22, textAlign: 'center' },
   scrim: { flex: 1, backgroundColor: colors.scrim, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  dialog: { alignSelf: 'stretch', maxWidth: 480, width: '100%', backgroundColor: colors.card, borderRadius: radius.hero, padding: 22, gap: 8, ...shadows.raised },
+  dialog: { alignSelf: 'center', maxWidth: 480, width: '100%', backgroundColor: colors.card, borderRadius: radius.hero, padding: 22, gap: 8, ...shadows.raised },
   dialogTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 18 },
 });
