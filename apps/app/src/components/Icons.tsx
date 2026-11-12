@@ -98,6 +98,14 @@ export const FriendsIcon = (p: IconProps) => (
     <Path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.8 3 2.6 3.5 5.2" />
   </Icon>
 );
+/** A microphone: speak instead of typing. */
+export const MicIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <Path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" />
+    <Path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+  </Icon>
+);
+
 /** A page of a wall calendar: the family calendar. */
 export const CalendarIcon = (p: IconProps) => (
   <Icon {...p}>
