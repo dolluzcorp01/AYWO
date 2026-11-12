@@ -86,4 +86,4 @@ Migration `0012_operations.sql` runs with the others (`pnpm migrate`). It adds t
 4. **Spaces permissions.** The key needs delete and head (size) rights on the bucket, for the clean-up and size-check jobs.
 5. **Phone links.** Fill in `apps/app/public/.well-known/` (see GO-LIVE-PLACEHOLDERS.md) and check both files are served as JSON over https with no redirect.
 6. **Email.** Notification emails now go only to confirmed addresses. People confirm with a 6-digit code under Me > Notifications. SendGrid must be live for codes to arrive.
-7. **After deploy,** in the staff panel: App settings > App versions should match `app.json` (0.1.0 at launch). Raise the minimum only when an old version must stop.
+7. **After deploy,** in the admin panel: App settings > App versions should match `app.json` (0.1.0 at launch). Raise the minimum only when an old version must stop.

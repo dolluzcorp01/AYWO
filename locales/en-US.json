@@ -133,7 +133,8 @@
   "nav": {
     "together": "Together",
     "you": "You",
-    "staffPanel": "Staff panel",
+    "adminPanel": "Admin panel",
+    "backToApp": "Back to AYWO",
     "signOutTitle": "Sign out?",
     "signOutMessage": "You can sign in again any time with your phone number."
   }

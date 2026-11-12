@@ -1,4 +1,4 @@
-// Shared pieces of the staff panel: page frame, table, search, paging, dialogs. Web only, using the frozen tokens.
+// Shared pieces of the admin panel: page frame, table, search, paging, dialogs. Web only, using the frozen tokens.
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';

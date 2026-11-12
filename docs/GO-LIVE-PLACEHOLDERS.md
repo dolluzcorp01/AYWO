@@ -22,7 +22,7 @@ Then:
 3. Set `LEGAL_DRAFT` to `false` to remove the draft notice.
 4. If the Terms or Privacy policy changed after people have signed up, change `LEGAL_VERSION`, so consent is recorded again.
 
-The poster and book now have a print and ship workflow in the staff panel (Orders). Before selling them, agree a printer and courier, confirm the prices in `apps/api/src/routes/payments.ts` (`ORDER_PRICES`), and give an Operations staff member the Orders permission.
+The poster and book now have a print and ship workflow in the admin panel (Orders). Before selling them, agree a printer and courier, confirm the prices in `apps/api/src/routes/payments.ts` (`ORDER_PRICES`), and give an Operations staff member the Orders permission.
 
 ## Operations release: values to fill in
 
@@ -31,8 +31,8 @@ The poster and book now have a print and ship workflow in the staff panel (Order
 | `apps/app/public/.well-known/apple-app-site-association` | Replace `XXXTEAMID` with the Apple Developer Team ID (two places). |
 | `apps/app/public/.well-known/assetlinks.json` | Replace the fingerprint with the SHA-256 of the Play App Signing key (Play Console, App integrity). |
 | `apps/app/src/ops/appConfig.tsx` `STORE_LINKS.ios` | Replace `idXXX` with the App Store id once the app is listed. |
-| Staff panel, App settings, Support | Support email and hours shown to people (seeded as `XXX`). |
-| Staff panel, App settings, App versions | Raise the minimum version when an old version must stop working. Seeded at 0.1.0, the version in `app.json`. |
+| Admin panel, App settings, Support | Support email and hours shown to people (seeded as `XXX`). |
+| Admin panel, App settings, App versions | Raise the minimum version when an old version must stop working. Seeded at 0.1.0, the version in `app.json`. |
 | DigitalOcean app settings | `BACKUP_KEY` (copy kept outside DigitalOcean) and `OPS_ALERT_EMAIL`. See `docs/runbook-backups.md`. |
 | DigitalOcean, Apps, aywo, Settings, Alerts | Emails for deploy failed, domain failed, CPU, memory and restart alerts (rules are in `.do/app.yaml`). |
 | After going live | One practice restore into an empty database (`docs/runbook-backups.md`, step 4). |

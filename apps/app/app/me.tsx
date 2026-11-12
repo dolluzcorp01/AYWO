@@ -215,7 +215,7 @@ export default function MeScreen() {
 
         {me.data?.admin_role ? (
           <Card style={styles.list}>
-            <Row title={t('nav.staffPanel')} onPress={() => router.push('/admin')} last />
+            <Row title={t('nav.adminPanel')} onPress={() => router.push('/admin')} last />
           </Card>
         ) : null}
 

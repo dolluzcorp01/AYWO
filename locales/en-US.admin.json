@@ -16,8 +16,8 @@
       "pageOf": "Page {{page}} of {{pages}}, {{total}} in all"
     },
     "gate": {
-      "webOnly": "The staff panel opens only on the web.",
-      "signIn": "Sign in to open the staff panel.",
+      "webOnly": "The admin panel opens only on the web.",
+      "signIn": "Sign in to open the admin panel.",
       "signInButton": "Sign in",
       "notStaff": "This area is only for AYWO staff.",
       "goHome": "Go to Home"
