@@ -8,10 +8,14 @@
     "start": "tsx src/server.ts",
     "migrate": "tsx --env-file=../../.env src/migrate.ts",
     "dev:plus": "tsx --env-file=../../.env src/dev-give-plus.ts",
+    "backup:now": "tsx --env-file=../../.env src/backup-now.ts",
+    "backup:list": "tsx --env-file=../../.env src/backup-now.ts --list",
+    "backup:restore": "tsx --env-file=../../.env src/restore-backup.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1161.0",
+    "@aws-sdk/lib-storage": "^3.1166.0",
     "@aws-sdk/s3-request-presigner": "^3.1161.0",
     "@aywo/gedcom": "workspace:*",
     "@aywo/kinship": "workspace:*",

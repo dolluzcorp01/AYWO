@@ -33,6 +33,9 @@ The poster and book now have a print and ship workflow in the staff panel (Order
 | `apps/app/src/ops/appConfig.tsx` `STORE_LINKS.ios` | Replace `idXXX` with the App Store id once the app is listed. |
 | Staff panel, App settings, Support | Support email and hours shown to people (seeded as `XXX`). |
 | Staff panel, App settings, App versions | Raise the minimum version when an old version must stop working. Seeded at 0.1.0, the version in `app.json`. |
+| DigitalOcean app settings | `BACKUP_KEY` (copy kept outside DigitalOcean) and `OPS_ALERT_EMAIL`. See `docs/runbook-backups.md`. |
+| DigitalOcean, Apps, aywo, Settings, Alerts | Emails for deploy failed, domain failed, CPU, memory and restart alerts (rules are in `.do/app.yaml`). |
+| After going live | One practice restore into an empty database (`docs/runbook-backups.md`, step 4). |
 
 Both `.well-known` files must be served from `https://aywo.in/.well-known/` as `application/json`, with no redirect. Check after each web deploy:
 `curl -I https://aywo.in/.well-known/apple-app-site-association`

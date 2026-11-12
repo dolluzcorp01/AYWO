@@ -28,6 +28,8 @@ pnpm --filter @aywo/api exec tsx src/create-admin.ts +91XXXXXXXXXX
 
 `JWT_SECRET` and `OTP_SECRET`: `openssl rand -base64 48`. The API refuses to start in production on the dummy values.
 
+`BACKUP_KEY`: `openssl rand -base64 32`, and keep a copy outside DigitalOcean. Turns on the nightly encrypted database backup to the `<SPACES_BUCKET>-backups` bucket. `OPS_ALERT_EMAIL`: who gets alert emails. Both, the restore steps and what triggers an alert: [runbook-backups.md](runbook-backups.md).
+
 `CLIENT_IP_HEADER`: rate limits count visitors by this header. Confirm `do-connecting-ip` really arrives on App Platform. On a bare Droplet with nothing in front, set it empty, or the limits can be escaped.
 
 Spaces: add a lifecycle rule to expire `exports/` and `imports/` after 30 days. Files are not removed when an account is deleted, so add a sweep job before launch.

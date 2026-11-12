@@ -808,6 +808,31 @@
         "five_people": "Reached 5 people",
         "invite_sent": "Invited someone"
       }
+    },
+    "ops": {
+      "backups": "Database backups",
+      "lastGood_one": "Last good backup: {{when}} ({{count}} hour ago)",
+      "lastGood_other": "Last good backup: {{when}} ({{count}} hours ago)",
+      "noBackup": "No good backup yet. Check that BACKUP_KEY is set (docs/runbook-backups.md).",
+      "when": "When",
+      "result": "Result",
+      "size": "Size",
+      "detail": "File or error",
+      "running": "Running",
+      "ok": "OK",
+      "failed": "Failed",
+      "jobs": "Background jobs",
+      "jobsFine": "No job is failing.",
+      "jobsFailing": "Failing 3 times or more in a row: {{names}}",
+      "job": "Job",
+      "lastOk": "Last OK",
+      "failuresInRow": "Fails in a row",
+      "lastError": "Last error",
+      "serverErrors": "Server errors",
+      "serverErrorTotal_one": "{{count}} server error in this period.",
+      "serverErrorTotal_other": "{{count}} server errors in this period.",
+      "route": "Route",
+      "appCrashes": "Errors in the app"
     }
   },
   "errors": {

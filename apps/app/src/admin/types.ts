@@ -374,6 +374,11 @@ export interface Analytics {
 export interface AppHealth {
   errors: { fingerprint: string; message: string; count: number; people: number; last_seen: string; first_seen: string; platforms: string[]; versions: (string | null)[]; routes: (string | null)[]; stack: string | null }[];
   total: number;
+  job_status: { name: string; last_ok_at: string | null; last_error_at: string | null; last_error: string | null; failures_in_row: number }[];
+  backups: { id: number; started_at: string; finished_at: string | null; ok: boolean | null; object_key: string | null; bytes: number | null; error: string | null }[];
+  last_good_backup: string | null;
+  server_errors: { route: string; message: string; count: number; last_seen: string }[];
+  server_error_total: number;
 }
 
 export type ConfigKey = 'min_version' | 'latest_version' | 'maintenance' | 'features' | 'whats_new' | 'support';

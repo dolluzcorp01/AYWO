@@ -2,6 +2,10 @@
 # Secrets are set in the DigitalOcean dashboard, never here. Full list in .env.example.
 name: aywo
 region: blr
+# DigitalOcean emails the team when a deploy or the domain fails. Who gets them is set in the dashboard (Settings, Alerts).
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
 services:
   - name: api
     github:
@@ -14,6 +18,20 @@ services:
     instance_size_slug: apps-s-1vcpu-1gb
     health_check:
       http_path: /health
+    # The server is struggling: busy, short of memory, or restarting again and again.
+    alerts:
+      - rule: CPU_UTILIZATION
+        operator: GREATER_THAN
+        value: 80
+        window: TEN_MINUTES
+      - rule: MEM_UTILIZATION
+        operator: GREATER_THAN
+        value: 85
+        window: TEN_MINUTES
+      - rule: RESTART_COUNT
+        operator: GREATER_THAN
+        value: 3
+        window: FIVE_MINUTES
     envs:
       - key: NODE_ENV
         value: production
@@ -29,6 +47,13 @@ services:
         value: https://api.aywo.in
       - key: WEB_URL
         value: https://aywo.in
+      # Nightly encrypted database backup (docs/runbook-backups.md). Keep a copy of the key outside DigitalOcean.
+      - key: BACKUP_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: OPS_ALERT_EMAIL
+        scope: RUN_TIME
+        type: SECRET
 static_sites:
   - name: web
     github:

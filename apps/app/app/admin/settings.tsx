@@ -195,14 +195,77 @@ function Health() {
           { value: '30', label: t('admin.analytics.lastDays', { count: 30 }) },
         ]}
       />
-      <QueryState query={query} isEmpty={(data) => data.errors.length === 0} emptyText={t('admin.settings.noCrashes')}>
+      <QueryState query={query}>
         {(data) => (
           <>
-            <Message text={t('admin.settings.crashTotal', { count: data.total })} />
-            <DataTable columns={columns} rows={data.errors} rowKey={(e) => e.fingerprint} />
+            <ServerHealth data={data} />
+            <Text style={adminStyles.cellStrong}>{t('admin.ops.appCrashes')}</Text>
+            {data.errors.length === 0 ? (
+              <Message text={t('admin.settings.noCrashes')} />
+            ) : (
+              <>
+                <Message text={t('admin.settings.crashTotal', { count: data.total })} />
+                <DataTable columns={columns} rows={data.errors} rowKey={(e) => e.fingerprint} />
+              </>
+            )}
           </>
         )}
       </QueryState>
+    </>
+  );
+}
+
+/** Backups, background jobs and server errors: what the people running AYWO need to see first when something breaks. */
+const STALE_HOURS = 36;
+function ServerHealth({ data }: { data: AppHealth }) {
+  const { t, i18n } = useTranslation();
+  const lastGood = data.last_good_backup ? new Date(data.last_good_backup) : null;
+  const hours = lastGood ? Math.round((Date.now() - lastGood.getTime()) / 3_600_000) : null;
+  const lastRun = data.backups[0];
+  const backupProblem = !lastGood || (hours !== null && hours > STALE_HOURS) || lastRun?.ok === false;
+  const failing = data.job_status.filter((j) => j.failures_in_row >= 3);
+  const mb = (bytes: number | null) => (bytes === null ? '-' : `${(bytes / 1024 / 1024).toFixed(1)} MB`);
+
+  const backupColumns: Column<AppHealth['backups'][number]>[] = [
+    { key: 'when', label: t('admin.ops.when'), render: (b) => formatDate(b.started_at, i18n.language) },
+    { key: 'result', label: t('admin.ops.result'), flex: 0.7, render: (b) => (b.ok === null ? t('admin.ops.running') : b.ok ? t('admin.ops.ok') : t('admin.ops.failed')) },
+    { key: 'size', label: t('admin.ops.size'), flex: 0.6, render: (b) => mb(b.bytes) },
+    { key: 'detail', label: t('admin.ops.detail'), flex: 2, render: (b) => b.error ?? b.object_key ?? '-' },
+  ];
+  const jobColumns: Column<AppHealth['job_status'][number]>[] = [
+    { key: 'name', label: t('admin.ops.job'), render: (j) => j.name },
+    { key: 'ok', label: t('admin.ops.lastOk'), render: (j) => (j.last_ok_at ? formatDate(j.last_ok_at, i18n.language) : '-') },
+    { key: 'fails', label: t('admin.ops.failuresInRow'), flex: 0.6, render: (j) => `${j.failures_in_row}` },
+    { key: 'err', label: t('admin.ops.lastError'), flex: 2, render: (j) => (j.failures_in_row > 0 ? (j.last_error ?? '-') : '-') },
+  ];
+  const errorColumns: Column<AppHealth['server_errors'][number]>[] = [
+    { key: 'route', label: t('admin.ops.route'), render: (e) => e.route },
+    { key: 'msg', label: t('admin.settings.crash'), flex: 2, render: (e) => e.message },
+    { key: 'count', label: t('admin.settings.times'), flex: 0.5, render: (e) => `${e.count}` },
+    { key: 'last', label: t('admin.settings.lastSeen'), render: (e) => formatDate(e.last_seen, i18n.language) },
+  ];
+
+  return (
+    <>
+      <Panel title={t('admin.ops.backups')}>
+        <Message
+          alert={backupProblem}
+          text={
+            lastGood
+              ? t('admin.ops.lastGood', { when: formatDate(lastGood.toISOString(), i18n.language), count: hours ?? 0 })
+              : t('admin.ops.noBackup')
+          }
+        />
+        {data.backups.length ? <DataTable columns={backupColumns} rows={data.backups.slice(0, 7)} rowKey={(b) => `${b.id}`} /> : null}
+      </Panel>
+      <Panel title={t('admin.ops.jobs')}>
+        <Message alert={failing.length > 0} text={failing.length ? t('admin.ops.jobsFailing', { names: failing.map((j) => j.name).join(', ') }) : t('admin.ops.jobsFine')} />
+        {data.job_status.length ? <DataTable columns={jobColumns} rows={data.job_status} rowKey={(j) => j.name} /> : null}
+      </Panel>
+      <Panel title={t('admin.ops.serverErrors')}>
+        <Message alert={data.server_error_total > 0} text={t('admin.ops.serverErrorTotal', { count: data.server_error_total })} />
+        {data.server_errors.length ? <DataTable columns={errorColumns} rows={data.server_errors} rowKey={(e) => `${e.route}|${e.message}`} /> : null}
+      </Panel>
     </>
   );
 }
