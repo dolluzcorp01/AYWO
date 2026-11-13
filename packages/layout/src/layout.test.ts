@@ -87,6 +87,38 @@ const cousinMarriage: TreeGraph = {
   ],
 };
 
+// Pavithran's family: his mother married in from her own family (her parents are in the tree too).
+const marriedIn: TreeGraph = {
+  persons: people('papa', 'vadivelu', 'narasiman', 'kaveri', 'veeraiyan', 'ezhilarasi', 'sathana', 'pavithran'),
+  unions: [
+    { id: 'g1', partner1Id: 'papa', partner2Id: 'vadivelu' },
+    { id: 'g2', partner1Id: 'narasiman', partner2Id: 'kaveri' },
+    { id: 'p1', partner1Id: 'veeraiyan', partner2Id: 'ezhilarasi' },
+  ],
+  links: [
+    ...links(['papa', 'vadivelu'], ['veeraiyan'], 'g1'),
+    ...links(['narasiman', 'kaveri'], ['ezhilarasi'], 'g2'),
+    ...links(['veeraiyan', 'ezhilarasi'], ['sathana', 'pavithran'], 'p1'),
+  ],
+};
+
+describe('someone who married in, with their own parents in the tree', () => {
+  const layout = layoutLineTree(marriedIn, { focusId: 'pavithran' });
+  it('shows once: no faded copy beside the partner', () => {
+    expect(layout.cards.filter((c) => c.personId === 'ezhilarasi').length).toBe(1);
+    expect(layout.lines.filter((l) => l.kind === 'ghost').length).toBe(0);
+  });
+  it('the marriage line joins the two real cards on the same row, with no one between them', () => {
+    const v = spot(layout, 'veeraiyan');
+    const e = spot(layout, 'ezhilarasi');
+    expect(v && e && v.y === e.y).toBe(true);
+    const between = layout.cards.filter((c) => c.y === v?.y && c.x > Math.min(v.x, e?.x ?? 0) && c.x < Math.max(v.x, e?.x ?? 0));
+    expect(between).toEqual([]);
+    expect(layout.unions.find((u) => u.unionId === 'p1')?.y).toBe(v?.y);
+    expect(overlaps(layout)).toEqual([]);
+  });
+});
+
 describe('T-TREE-03: cousin marriage', () => {
   const layout = layoutLineTree(cousinMarriage);
   it('each person has one real card, and one ghost at the second position', () => {

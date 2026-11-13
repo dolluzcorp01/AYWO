@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Field, Pills, PrimaryButton, SectionTitle } from '@/components/ui';
 import { api } from '@/lib/api';
 import { AudiencePicker, usePeople } from '@/social/AudiencePicker';
+import { InviteFamily } from '@/social/InviteFamily';
 import { ActionError, Gate, Note, Page, Row, useName } from '@/social/parts';
 import type { Audience } from '@/social/types';
 
@@ -50,7 +51,7 @@ export default function NewChat() {
           <Gate query={people}>
             {(list) =>
               list.length === 0 ? (
-                <Note>{t('social.audience.nobody')}</Note>
+                <Note>{t('social.chat.inviteHelp')}</Note>
               ) : (
                 <>
                   {list.map((p) => (
@@ -60,6 +61,7 @@ export default function NewChat() {
               )
             }
           </Gate>
+          <InviteFamily title={t('social.chat.notJoinedTitle')} />
         </>
       ) : (
         <>
@@ -71,6 +73,7 @@ export default function NewChat() {
             disabled={!name.trim() || !audience || group.isPending}
             onPress={() => group.mutate()}
           />
+          <InviteFamily title={t('social.chat.notJoinedTitle')} help={t('social.chat.inviteHelp')} />
         </>
       )}
     </Page>
