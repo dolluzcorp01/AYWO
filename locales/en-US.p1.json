@@ -275,6 +275,8 @@
     "step": "Step",
     "foster": "Foster",
     "someoneNew": "Someone new",
+    "alsoParentOf": "Also the parent of",
+    "alsoParentHelp": "Ticked brothers and sisters get this mother or father too. Untick anyone who has a different mother or father.",
     "alreadyInTree": "Someone already in the tree"
   },
   "details": {
