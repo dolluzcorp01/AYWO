@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { EmptyState, PrimaryButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useTimeAgo } from '@/lib/time';
+import { InviteFamily } from '@/social/InviteFamily';
 import { Gate, Page, Row, useName } from '@/social/parts';
 import type { ChatRow } from '@/social/types';
 import { FETCH_WHEN_OFFLINE_MS, useChatSocket } from '@/social/useChatSocket';
@@ -37,7 +38,9 @@ export default function ChatList() {
         {(list) => (
           <>
             <PrimaryButton label={t('social.chat.new')} onPress={() => router.push('/social/chat/new')} />
-            {list.length === 0 ? <EmptyState message={t('social.chat.empty')} /> : null}
+            {list.length === 0 ? (
+              <InviteFamily title={t('social.chat.inviteTitle')} help={t('social.chat.inviteHelp')} fallback={<EmptyState message={t('social.chat.empty')} />} />
+            ) : null}
             {list.map((chat) => (
               <Row
                 key={chat.id}

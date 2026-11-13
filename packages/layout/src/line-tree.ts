@@ -228,9 +228,55 @@ export function layoutLineTree(graph: TreeGraph, options: LayoutOptions = {}): T
     }))
     .sort((a, b) => (index.unionsOf.get(b) ?? []).length - (index.unionsOf.get(a) ?? []).length);
 
+  const built: Block[] = [];
+  for (const id of roots) if (!placed.has(id) && !hidden.has(id)) built.push(buildBlock(id));
+  for (const p of graph.persons) if (!placed.has(p.id) && !hidden.has(p.id)) built.push(buildBlock(p.id));
+
+  // The row a card sits on: its own generation, or for a stand-in its partner's (the card just beside it).
+  const rowOf = (b: Block, it: RowItem): number => {
+    const own = rank.get(it.personId) ?? 0;
+    if (!it.ghost) return own;
+    const partner = (index.unionsOf.get(it.personId) ?? [])
+      .map((u) => partnerOf(u, it.personId))
+      .find((id) => id !== null && b.items.some((o) => o.personId === id && !o.ghost));
+    return partner ? (rank.get(partner) ?? own) : own;
+  };
+  const realBlock = (personId: string) => built.find((b) => b.items.some((it) => it.personId === personId && !it.ghost));
+
+  // Families joined by a marriage sit side by side: after a family whose row ends with a stand-in for someone
+  // who married in, comes that person's own family.
   const blocks: Block[] = [];
-  for (const id of roots) if (!placed.has(id) && !hidden.has(id)) blocks.push(buildBlock(id));
-  for (const p of graph.persons) if (!placed.has(p.id) && !hidden.has(p.id)) blocks.push(buildBlock(p.id));
+  const left = built.slice();
+  while (left.length) {
+    let current = left.shift() as Block;
+    blocks.push(current);
+    for (;;) {
+      const ghosts = current.items.filter((it) => it.ghost).sort((a, b) => b.x - a.x);
+      const next = ghosts.map((g) => realBlock(g.personId)).find((b): b is Block => !!b && left.includes(b));
+      if (!next) break;
+      left.splice(left.indexOf(next), 1);
+      blocks.push(next);
+      current = next;
+    }
+  }
+
+  // A stand-in is only needed when the real card is far away. When the person's own family sits right next door
+  // and nothing is between the two cards on that row, the stand-in goes and the marriage line reaches the real card
+  // (so someone who married in shows once, not twice).
+  for (let i = 0; i + 1 < blocks.length; i++) {
+    const a = blocks[i];
+    const b = blocks[i + 1];
+    a.items = a.items.filter((it) => {
+      if (!it.ghost) return true;
+      const r = rowOf(a, it);
+      const sameRowA = a.items.filter((o) => o !== it && rowOf(a, o) === r);
+      if (sameRowA.some((o) => o.x > it.x)) return true;
+      const real = b.items.find((o) => o.personId === it.personId && !o.ghost);
+      if (!real || (rank.get(real.personId) ?? 0) !== r) return true;
+      const sameRowB = b.items.filter((o) => o !== real && rowOf(b, o) === r);
+      return sameRowB.some((o) => o.x < real.x);
+    });
+  }
 
   // Final positions
   const cards: CardPos[] = [];
@@ -244,14 +290,7 @@ export function layoutLineTree(graph: TreeGraph, options: LayoutOptions = {}): T
   for (const b of blocks) {
     // A row's ghost sits on its partner's row, which is the row of the card just placed beside it.
     b.items.forEach((it) => {
-      const own = rank.get(it.personId) ?? 0;
-      let r = own;
-      if (it.ghost) {
-        const partner = (index.unionsOf.get(it.personId) ?? [])
-          .map((u) => partnerOf(u, it.personId))
-          .find((id) => id !== null && b.items.some((o) => o.personId === id && !o.ghost));
-        r = partner ? (rank.get(partner) ?? own) : own;
-      }
+      const r = rowOf(b, it);
       const card: CardPos = {
         personId: it.personId,
         x: it.x + offset,
