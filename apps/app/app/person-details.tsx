@@ -25,6 +25,8 @@ import { useVoiceInput } from '@/voice/useVoiceInput';
 import { VoiceButton } from '@/voice/VoiceButton';
 import { deleteContact, deletePerson, savePerson, saveWeddingDate, setContact, useAddRelative, useContactsForEdit } from '@/tree/useEdit';
 import type { ContactKind, LinkKind, PersonFields, Relation } from '@/tree/useEdit';
+import { AlsoParentOf } from '@/tree/AlsoParentOf';
+import { alsoChildCandidates } from '@/tree/alsoChildren';
 import { useTreeView } from '@/tree/useTreeView';
 import type { TreeNode } from '@/tree/useTreeView';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
@@ -86,6 +88,8 @@ export default function PersonDetails() {
     gender?: 'male' | 'female';
     /** 'guide': go back to the family guide after saving, not to the tree. */
     back?: 'guide';
+    /** Adding a parent from the add screen: the brothers and sisters already ticked there, comma separated. */
+    also?: string;
   }>();
   const { treeId, personId } = params;
   const editing = !!personId;
@@ -116,6 +120,8 @@ export default function PersonDetails() {
   const [loadedVersion, setLoadedVersion] = useState<number | null>(null);
   // Wedding dates as typed, by couple. 'new' is the couple being made when adding a husband or wife.
   const [weddings, setWeddings] = useState<Record<string, string>>({});
+  // Brothers and sisters unticked for 'Also the parent of' (everyone offered starts ticked).
+  const [unticked, setUnticked] = useState<string[] | null>(null);
 
   // Fill the form once, and again only when the person asks for the latest after a clash.
   useEffect(() => {
@@ -337,6 +343,7 @@ export default function PersonDetails() {
         p_person: built.fields,
         ...(params.union ? { p_union: params.union } : {}),
         ...(params.relation !== 'spouse' && params.linkKind ? { p_link_kind: params.linkKind } : {}),
+        ...(alsoTicked.length ? { p_also_children: alsoTicked } : {}),
       });
       if (answer.status === 'requested') {
         setNotice(t('details.addRequested'));
@@ -435,6 +442,13 @@ export default function PersonDetails() {
       : params.relation === 'spouse'
         ? [{ id: 'new', label: t('details.weddingDate') }]
         : [];
+  const alsoPeople =
+    !editing && params.relation === 'parent' && params.anchor
+      ? alsoChildCandidates(tree.data.nodes, tree.data.links, params.anchor).map((n) => ({ id: n.id, name: n.nameUnknown ? t('tree.nameNotKnown') : n.name }))
+      : [];
+  // Ticks chosen on the add screen come along; otherwise everyone offered starts ticked.
+  const untickedNow = unticked ?? (params.also !== undefined ? alsoPeople.map((p) => p.id).filter((id) => !params.also!.split(',').includes(id)) : []);
+  const alsoTicked = alsoPeople.map((p) => p.id).filter((id) => !untickedNow.includes(id));
   const subtitle = editing ? t('details.editing') : params.relation ? t(`details.relationOf.${params.relation}`, { name: anchorName }) : undefined;
 
   return (
@@ -597,6 +611,12 @@ export default function PersonDetails() {
             <SmallButton label={t('details.loadLatest')} onPress={loadLatest} />
           </Card>
         ) : null}
+        <AlsoParentOf
+          people={alsoPeople}
+          ticked={alsoTicked}
+          onChange={(ids) => setUnticked(alsoPeople.map((p) => p.id).filter((id) => !ids.includes(id)))}
+        />
+
         {failure ? <ErrorText>{failure}</ErrorText> : null}
         {notice ? (
           <Card style={styles.clash}>

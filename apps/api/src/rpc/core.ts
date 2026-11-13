@@ -6,7 +6,7 @@ export const coreRpc: RpcList = {
   claim_candidates: { args: [], rows: true },
   claim_confirm: { args: ['p_person'] },
   claim_undo: { args: ['p_person'] },
-  add_relative: { args: ['p_anchor', 'p_relation', 'p_person', 'p_existing_person', 'p_union', 'p_link_kind'] },
+  add_relative: { args: ['p_anchor', 'p_relation', 'p_person', 'p_existing_person', 'p_union', 'p_link_kind', 'p_also_children'], arrays: ['p_also_children'] },
   import_commit: { args: ['p_import', 'p_tree_name', 'p_fixes', 'p_me_temp'] },
   person_card: { args: ['p_person'] },
   request_contacts: { args: ['p_person'] },

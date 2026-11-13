@@ -12,6 +12,8 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { ErrorText, Loading, LoadFailed, NeonPanel, Pills, PrimaryButton, SectionTitle, TextButton, TopBar } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
+import { AlsoParentOf } from '@/tree/AlsoParentOf';
+import { alsoChildCandidates } from '@/tree/alsoChildren';
 import { PersonPicker } from '@/tree/PersonPicker';
 import { useAddRelative } from '@/tree/useEdit';
 import type { LinkKind, Relation } from '@/tree/useEdit';
@@ -35,6 +37,8 @@ export default function AddRelative() {
   const [linkKind, setLinkKind] = useState<LinkKind>('birth');
   const [picking, setPicking] = useState<'anchor' | 'existing' | null>(null);
   const [requested, setRequested] = useState(false);
+  // Brothers and sisters unticked by the person (everyone offered starts ticked).
+  const [unticked, setUnticked] = useState<string[]>([]);
 
   const data = tree.data;
 
@@ -74,6 +78,11 @@ export default function AddRelative() {
   const unionId = unionChoice === NO_PARTNER ? null : (unionChoice ?? partners[0]?.unionId ?? null);
   const showPartners = relation === 'child' && partners.length > 0;
   const showHow = relation !== 'spouse';
+  const alsoPeople =
+    anchor && relation === 'parent'
+      ? alsoChildCandidates(data.nodes, data.links, anchor.id).map((n) => ({ id: n.id, name: n.nameUnknown ? t('tree.nameNotKnown') : n.name }))
+      : [];
+  const alsoTicked = alsoPeople.map((p) => p.id).filter((id) => !unticked.includes(id));
 
   const relations: { value: Relation; label: string; icon: (color: string) => ReactNode }[] = [
     { value: 'parent', label: t('add.parent'), icon: (c) => <UpIcon color={c} /> },
@@ -92,6 +101,7 @@ export default function AddRelative() {
         relation,
         linkKind,
         ...(showPartners && unionId ? { union: unionId } : {}),
+        ...(alsoPeople.length ? { also: alsoTicked.join(',') } : {}),
       },
     });
   }
@@ -106,6 +116,7 @@ export default function AddRelative() {
         p_existing_person: personId,
         ...(showPartners && unionId ? { p_union: unionId } : {}),
         ...(showHow ? { p_link_kind: linkKind } : {}),
+        ...(alsoTicked.length ? { p_also_children: alsoTicked.filter((id) => id !== personId) } : {}),
       },
       {
         onSuccess: (answer) => {
@@ -178,6 +189,12 @@ export default function AddRelative() {
           </>
         ) : null}
 
+        <AlsoParentOf
+          people={alsoPeople}
+          ticked={alsoTicked}
+          onChange={(ids) => setUnticked(alsoPeople.map((p) => p.id).filter((id) => !ids.includes(id)))}
+        />
+
         {showHow ? (
           <>
             <SectionTitle>{t('add.how')}</SectionTitle>
@@ -211,6 +228,7 @@ export default function AddRelative() {
           if (picking === 'anchor') {
             setAnchorId(personId);
             setUnionChoice(null);
+            setUnticked([]);
             setPicking(null);
           } else {
             linkExisting(personId);

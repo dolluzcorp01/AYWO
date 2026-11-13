@@ -5,5 +5,7 @@ export interface RpcEntry {
   rows?: boolean;
   /** Callable without signing in. */
   anonymous?: boolean;
+  /** Arguments that are Postgres arrays (such as uuid[]): sent as a list of text, not as JSON. */
+  arrays?: string[];
 }
 export type RpcList = Record<string, RpcEntry>;

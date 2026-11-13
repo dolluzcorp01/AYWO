@@ -33,6 +33,8 @@ export interface AddRelativeArgs {
   p_existing_person?: string;
   p_union?: string;
   p_link_kind?: LinkKind;
+  /** Adding a parent: the brothers and sisters who get this parent too. */
+  p_also_children?: string[];
 }
 
 function useTreeRefresh(treeId: string) {
@@ -68,6 +70,7 @@ export function useAddRelative(treeId: string) {
             ...(args.p_existing_person ? { existing_person: args.p_existing_person } : {}),
             ...(args.p_union ? { union: args.p_union } : {}),
             ...(args.p_link_kind ? { link_kind: args.p_link_kind } : {}),
+            ...(args.p_also_children?.length ? { also_children: args.p_also_children } : {}),
           },
         });
         return { status: 'requested' };

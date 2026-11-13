@@ -28,6 +28,10 @@ export async function rpcRoutes(app: FastifyInstance): Promise<void> {
     }
     const params = names.map((n) => {
       const v = input[n];
+      if (entry.arrays?.includes(n) && v !== null) {
+        if (!Array.isArray(v) || v.length > 200 || !v.every((x) => typeof x === 'string')) throw new ApiError(422, 'bad_input');
+        return v;
+      }
       return v !== null && typeof v === 'object' ? JSON.stringify(v) : v;
     });
     // Both the function name and the argument names were checked against the list above.

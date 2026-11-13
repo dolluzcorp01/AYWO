@@ -193,4 +193,10 @@ describe('focus view', () => {
     expect(focusView(graph, 'me').siblingRow).toEqual(focusView(graph, 'sis').siblingRow);
     expect(focusView(graph, 'me').siblingRow.slice().sort()).toEqual(['me', 'sis']);
   });
+  it('a grandparent sees two levels down: children with their partners, and the grandchildren', () => {
+    const view = focusView(graph, 'mum');
+    expect(view.children.slice().sort()).toEqual(['me', 'sis']);
+    expect(view.childPartners).toEqual([{ childId: 'me', ids: ['wife'] }]);
+    expect(view.grandchildren.map((g) => g.ids).flat().sort()).toEqual(['kid', 'niece']);
+  });
 });

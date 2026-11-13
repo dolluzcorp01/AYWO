@@ -59,5 +59,8 @@ export function relationText(label: RelationInput | undefined | null): RelationT
   if (label.source === 'ask' && label.ask && label.ask.length === 2) {
     return { kind: 'ask', elder: label.ask[0].term, younger: label.ask[1].term };
   }
-  return { kind: 'word', word: label.label };
+  // Shown as a title on cards and lists: a built-up English phrase ("sister's child") starts with a capital too.
+  // Mid-sentence use lowers it again (see the share screen).
+  const word = label.label;
+  return { kind: 'word', word: word.charAt(0).toLocaleUpperCase() + word.slice(1) };
 }

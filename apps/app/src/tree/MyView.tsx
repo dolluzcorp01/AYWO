@@ -1,6 +1,7 @@
 // 'My view', drawn (Warm Daylight): grandparents and parents above, the centre person with brothers and sisters
-// beside them and partner on the right, children below, joined by lines. Tap anyone to bring them to the centre;
-// tap the centre card to open it. Wide families scroll sideways.
+// beside them and partner on the right, then two levels down: children with their partners, and under each couple
+// their children. Joined by lines. Tap anyone to bring them to the centre; tap the centre card to open it.
+// Wide families scroll sideways.
 import { focusView, graphFromApi, relationText } from '@aywo/layout';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentRef, ReactNode } from 'react';
@@ -46,6 +47,10 @@ export const MORE_CHILDREN = 'more:children';
 const ROW_GAP = 46;
 const EDGE = 16;
 const MAX_ROW = 6;
+/** Space between one child's family and the next on the rows below. */
+const UNIT_GAP = 28;
+/** Grandchildren drawn under one couple; the rest are in 'All'. */
+const MAX_GRANDCHILDREN = 8;
 
 interface Placed {
   id: string;
@@ -85,9 +90,20 @@ function layout(view: ReturnType<typeof focusView>, width: number, expanded: { s
   const bloodRow = [...(shown.has(MORE_SIBLINGS) ? [MORE_SIBLINGS] : []), ...inOrder];
   const middle = bloodRow.flatMap((id) => (id === view.focusId ? [id, ...partners] : [id]));
 
+  // Two levels down: each child is a small family of their own (child, partner, and their children below).
+  const partnerOfChild = (id: string) => view.childPartners.find((g) => g.childId === id)?.ids.slice(0, 1) ?? [];
+  const kidsOf = (id: string) => view.grandchildren.find((g) => g.childId === id)?.ids.slice(0, MAX_GRANDCHILDREN) ?? [];
+  const units = children.map((id) => {
+    const couple = id === MORE_CHILDREN ? [id] : [id, ...partnerOfChild(id)];
+    const kids = id === MORE_CHILDREN ? [] : kidsOf(id);
+    return { child: id, couple, kids, w: Math.max(rowWidth(couple, null, couple.length - 1), rowWidth(kids, null)) };
+  });
+  const childRow = units.flatMap((u) => u.couple);
+  const grandRow = units.flatMap((u) => u.kids);
+
   const rows: { ids: string[]; y: number; h: number }[] = [];
   let y = EDGE;
-  for (const ids of [grand, parents, middle, children]) {
+  for (const ids of [grand, parents, middle, childRow, grandRow]) {
     const h = ids.includes(view.focusId) ? FOCUS_H : CARD_H;
     rows.push({ ids, y, h });
     if (ids.length) y += h + ROW_GAP;
@@ -119,7 +135,27 @@ function layout(view: ReturnType<typeof focusView>, width: number, expanded: { s
   const coupleMid = partners.length ? (cx(view.focusId) + cx(partners[0])) / 2 : cx(view.focusId);
   if (parents.length) put(parents, rows[1].y, bloodMid);
   if (grand.length) put(grand, rows[0].y, parents.length ? (cx(parents[0]) + cx(parents[parents.length - 1])) / 2 : bloodMid);
-  if (children.length) put(children, rows[3].y, coupleMid);
+  if (units.length) {
+    // The families sit side by side under the centre couple, each couple centred over its own children.
+    const total = units.reduce((sum, u) => sum + u.w, 0) + (units.length - 1) * UNIT_GAP;
+    let left = coupleMid - total / 2;
+    for (const u of units) {
+      const mid = left + u.w / 2;
+      const coupleW = rowWidth(u.couple, null, u.couple.length - 1);
+      let x = mid - coupleW / 2;
+      u.couple.forEach((id, i) => {
+        if (i > 0) x += PARTNER_GAP - GAP;
+        placed.set(id, { id, x, y: rows[3].y, w: CARD_W, h: CARD_H, focus: false });
+        x += CARD_W + GAP;
+      });
+      x = mid - rowWidth(u.kids, null) / 2;
+      for (const id of u.kids) {
+        placed.set(id, { id, x, y: rows[4].y, w: CARD_W, h: CARD_H, focus: false });
+        x += CARD_W + GAP;
+      }
+      left += u.w + UNIT_GAP;
+    }
+  }
 
   // Nothing may hang off the left edge; a wide family makes the canvas wider instead.
   const all = [...placed.values()];
@@ -164,6 +200,14 @@ function layout(view: ReturnType<typeof focusView>, width: number, expanded: { s
     const fromX = partners.length ? (box(view.focusId).x + box(view.focusId).w + box(partners[0]).x) / 2 : centreX(view.focusId);
     const fromY = partners.length ? box(view.focusId).y + box(view.focusId).h / 2 : box(view.focusId).y + box(view.focusId).h;
     bar(children, fromX, fromY);
+  }
+  for (const u of units) {
+    if (u.couple.length === 2) pairLine(u.couple[0], u.couple[1]);
+    if (!u.kids.length) continue;
+    const c = box(u.couple[0]);
+    const fromX = u.couple.length === 2 ? (c.x + c.w + box(u.couple[1]).x) / 2 : centreX(u.couple[0]);
+    const fromY = u.couple.length === 2 ? c.y + c.h / 2 : c.y + c.h;
+    bar(u.kids, fromX, fromY);
   }
 
   return { placed: [...placed.values()], paths, width: canvasWidth, height };
@@ -211,7 +255,7 @@ export function MyView({ data, viewerId, focusId, seeingAs, onFocus, onOpenPerso
   return (
     <ScrollView contentContainerStyle={styles.scroll}>
       <View onLayout={(e: LayoutChangeEvent) => setWidth(Math.max(e.nativeEvent.layout.width, 320))} />
-      <ScrollView ref={sideways} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ width: drawn.width }} onContentSizeChange={centreOnFocus}>
+      <ScrollView ref={sideways} horizontal showsHorizontalScrollIndicator contentContainerStyle={{ width: drawn.width }} onContentSizeChange={centreOnFocus}>
         <View style={{ width: drawn.width, height: drawn.height }}>
           <Svg width={drawn.width} height={drawn.height} style={StyleSheet.absoluteFill}>
             {drawn.paths.map((d, i) => (
