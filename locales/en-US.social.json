@@ -12,8 +12,8 @@
     "unreadCount_other": "{{count}} new",
     "dateLabel": "Date",
     "timeLabel": "Time",
-    "datePlaceholder": "2026-12-25",
-    "timePlaceholder": "18:30",
+    "datePlaceholder": "For example 2026-12-25",
+    "timePlaceholder": "For example 18:30",
     "dateHelp": "Like 2026-12-25 and 18:30.",
     "plus": {
       "title": "This needs AYWO Plus",
@@ -323,6 +323,20 @@
       "silentTitle": "Let family SOS ring on silent",
       "silentBody": "Let an SOS from family ring through Do Not Disturb.",
       "silentAction": "Allow in phone settings"
+    },
+    "missing": {
+      "who": "Choose who can see this.",
+      "whoSend": "Choose who should get this.",
+      "words": "Add a photo or write something.",
+      "date": "Write the date like 2026-12-25, or leave it empty.",
+      "name": "Give it a name.",
+      "title": "Give it a title.",
+      "kind": "Choose what kind it is.",
+      "when": "Add the date and time.",
+      "options": "Add at least one date, place or menu to vote on.",
+      "blood": "Choose the blood group.",
+      "message": "Write the message.",
+      "canva": "Fix the Canva link, or leave it empty."
     }
   },
   "errors": {
