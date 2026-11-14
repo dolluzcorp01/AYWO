@@ -23,7 +23,7 @@ import { colors, fonts, gradients, minTapSize } from '@/theme/tokens';
 const NO_PARTNER = 'none';
 
 export default function AddRelative() {
-  const params = useLocalSearchParams<{ treeId: string; anchor?: string }>();
+  const params = useLocalSearchParams<{ treeId: string; anchor?: string; relation?: string }>();
   const { treeId } = params;
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -32,7 +32,10 @@ export default function AddRelative() {
   const add = useAddRelative(treeId);
 
   const [anchorId, setAnchorId] = useState<string | null>(params.anchor ?? null);
-  const [relation, setRelation] = useState<Relation>('child');
+  // 'Add parent' and the like on a person's Family links open with that choice already made.
+  const [relation, setRelation] = useState<Relation>(
+    params.relation === 'parent' || params.relation === 'spouse' || params.relation === 'sibling' ? params.relation : 'child',
+  );
   const [unionChoice, setUnionChoice] = useState<string | null>(null);
   const [linkKind, setLinkKind] = useState<LinkKind>('birth');
   const [picking, setPicking] = useState<'anchor' | 'existing' | null>(null);

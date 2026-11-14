@@ -13,7 +13,7 @@ export interface ApiNode {
 export interface ApiTree<N extends ApiNode = ApiNode> {
   nodes: N[];
   unions: { id: string; partner1_id: string; partner2_id: string | null; seq1?: number | null; kind?: string; status?: string; version?: number; start_date?: string | null }[];
-  links: { parent_id: string; child_id: string; union_id: string | null }[];
+  links: { parent_id: string; child_id: string; union_id: string | null; kind?: string }[];
 }
 
 export function graphFromApi(tree: ApiTree): TreeGraph {
