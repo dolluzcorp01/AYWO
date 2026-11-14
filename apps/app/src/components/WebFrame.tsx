@@ -1,5 +1,5 @@
 // How the app sits in a browser window. Phones and narrow windows: untouched.
-// A computer, signed in: a side menu on the left and the screen beside it (Home and Family use the full width).
+// A computer, signed in: a side menu on the left and the screen beside it (Home, Family and Calendar use the full width).
 // Sign-in and public pages on a computer: a centred column. The admin web app has its own full-width layout.
 import type { ReactNode } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -20,7 +20,7 @@ export function useDesktop(): boolean {
 export type FrameSection = 'app' | 'public' | 'admin';
 
 /** Screens whose content should use the whole width on a computer, rather than a reading column. */
-const WIDE_ROUTES = new Set(['home', 'tree']);
+const WIDE_ROUTES = new Set(['home', 'tree', 'calendar']);
 
 export function WebFrame({ children, section = 'public', route }: { children: ReactNode; section?: FrameSection; route?: string }) {
   const { width } = useWindowDimensions();

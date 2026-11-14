@@ -1,6 +1,6 @@
 // New invite. Everyone invited comes from the sender's own tree or groups.
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking } from 'react-native';
@@ -20,7 +20,9 @@ export default function NewInvite() {
   const client = useQueryClient();
   const [kind, setKind] = useState<EventKind | null>(null);
   const [title, setTitle] = useState('');
-  const [date, setDate] = useState('');
+  // Opened from a day on the calendar: that day is filled in.
+  const params = useLocalSearchParams<{ date?: string }>();
+  const [date, setDate] = useState(params.date && /^\d{4}-\d{2}-\d{2}$/.test(params.date) ? params.date : '');
   const [time, setTime] = useState('');
   const [place, setPlace] = useState('');
   const [note, setNote] = useState('');
