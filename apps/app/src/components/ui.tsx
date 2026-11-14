@@ -317,7 +317,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  topBar: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  // marginBottom: room between a page's heading and what comes under it, on every screen.
+  topBar: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
   topText: { flex: 1, minWidth: 0 },
   topTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 22, letterSpacing: -0.6 },
   topSubtitle: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 13 },

@@ -299,6 +299,19 @@
       "server": "Server script",
       "action": "Action",
       "target": "On what",
+      "types": {
+        "kin_term": "Word",
+        "user": "Account",
+        "tree": "Tree",
+        "campaign": "Offer",
+        "broadcast": "System notice",
+        "config": "App setting",
+        "invite": "Invite",
+        "order": "Order",
+        "role": "Staff role",
+        "work_item": "Work item",
+        "none": "-"
+      },
       "reason": "Reason",
       "details": "Details",
       "actions": {

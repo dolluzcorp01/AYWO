@@ -7,7 +7,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import type { Href } from 'expo-router';
-import { Stack, usePathname, useRouter, useSegments } from 'expo-router';
+import { Stack, useGlobalSearchParams, usePathname, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
@@ -42,12 +42,19 @@ const PUBLIC_ROUTES = new Set(['phone', 'otp', 'link', 'invite', 'outsider', 'te
 
 // Before the app proper: welcome and the first steps after signing in. On a computer these stay a centred column.
 const ONBOARDING = new Set(['index', 'after-login', 'profile', 'is-this-you', 'start', 'import']);
+// Signed in, these keep the side menu (help pages, bringing in another tree, editing your name): nobody should lose
+// their way back by opening the FAQ or the Contact page.
+const IN_APP_WHEN_SIGNED_IN = new Set(['terms', 'privacy', 'refunds', 'faq', 'contact', 'takedown', 'import', 'profile']);
 
-function AppFrame({ children }: { children: ReactNode }) {
+function AppFrame({ children, signedIn }: { children: ReactNode; signedIn: boolean }) {
   const first = (useSegments() as string[])[0];
   const pathname = usePathname();
   useEffect(() => setCrashRoute(pathname), [pathname]);
-  const section = first === 'admin' ? 'admin' : first === undefined || PUBLIC_ROUTES.has(first) || ONBOARDING.has(first) ? 'public' : 'app';
+  const search = useGlobalSearchParams<{ edit?: string }>();
+  const editingProfile = first === 'profile' && search.edit === '1';
+  const keepMenu = signedIn && IN_APP_WHEN_SIGNED_IN.has(first ?? '') && (first !== 'profile' || editingProfile);
+  const section =
+    first === 'admin' ? 'admin' : keepMenu ? 'app' : first === undefined || PUBLIC_ROUTES.has(first) || ONBOARDING.has(first) ? 'public' : 'app';
   return (
     <WebFrame section={section} route={first}>
       <AppGate staffArea={section === 'admin'}>
@@ -159,7 +166,7 @@ export default function RootLayout() {
       {ready ? (
         <PersistQueryClientProvider client={queryClient} persistOptions={PERSIST}>
           <StatusBar style="dark" />
-          <AppFrame>
+          <AppFrame signedIn={!!signedIn}>
             <Stack screenOptions={{ headerShown: false }} />
           </AppFrame>
           <SignInGate signedIn={signedIn} />

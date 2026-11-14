@@ -157,6 +157,7 @@ export interface AuditRow {
   action: string;
   target_type: string | null;
   target_id: string | null;
+  target_name?: string | null;
   reason: string | null;
   details: Record<string, unknown>;
   created_at: string;
