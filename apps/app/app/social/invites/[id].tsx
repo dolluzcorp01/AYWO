@@ -47,6 +47,9 @@ export default function InviteDetail() {
   const [place, setPlace] = useState('');
   const [menu, setMenu] = useState('');
   const [paymentNote, setPaymentNote] = useState(false);
+  // The host fixes a wrong date, title or place, and takes off someone invited by mistake.
+  const [details, setDetails] = useState<{ title: string; date: string; time: string; place: string; note: string } | null>(null);
+  const [uninviting, setUninviting] = useState<{ id: string; name: string } | null>(null);
 
   const key = ['event', id];
   const event = useQuery({ queryKey: key, queryFn: () => api.rpc<EventDetail>('event_detail', { p_event: id }) });
@@ -68,6 +71,27 @@ export default function InviteDetail() {
     mutationFn: () => api.rpc('event_cancel', { p_event: id }),
     onSettled: () => {
       setCancelling(false);
+      refresh();
+    },
+  });
+  const saveDetails = useMutation({
+    mutationFn: (d: { title: string; date: string; time: string; place: string; note: string }) =>
+      api.rpc('event_update', {
+        p_event: id,
+        p_title: d.title.trim(),
+        p_starts_at: parseDateTime(d.date, d.time)?.toISOString() ?? null,
+        p_place: d.place.trim() || null,
+        p_note: d.note.trim() || null,
+      }),
+    onSuccess: () => {
+      setDetails(null);
+      refresh();
+    },
+  });
+  const uninvite = useMutation({
+    mutationFn: (profileId: string) => api.rpc('event_remove_invitee', { p_event: id, p_profile: profileId }),
+    onSuccess: () => {
+      setUninviting(null);
       refresh();
     },
   });
@@ -173,7 +197,8 @@ export default function InviteDetail() {
                 <Row
                   key={p.profile_id}
                   title={showName(p.name)}
-                  subtitle={`${p.answer ? t(`social.invites.answers.${p.answer}`) : t('social.invites.noAnswer')}${p.guests > 0 ? ` · ${t('social.invites.plusGuests', { count: p.guests })}` : ''}`}
+                  subtitle={`${p.answer ? t(`social.invites.answers.${p.answer}`) : t('social.invites.noAnswer')}${p.guests > 0 ? ` · ${t('social.invites.plusGuests', { count: p.guests })}` : ''}${e.is_mine && !e.cancelled ? ` · ${t('social.invites.tapToUninvite')}` : ''}`}
+                  onPress={e.is_mine && !e.cancelled ? () => setUninviting({ id: p.profile_id, name: showName(p.name) }) : undefined}
                 />
               ))}
 
@@ -207,6 +232,22 @@ export default function InviteDetail() {
                       <SmallButton label={t('social.invites.saveCanva')} kind="plain" disabled={!canva.trim() || saveCanva.isPending} onPress={() => saveCanva.mutate()} />
                     </Card>
                   ) : null}
+                  {!isPop || e.starts_at ? (
+                    <SecondaryButton
+                      label={t('social.invites.editDetails')}
+                      onPress={() => {
+                        const at = e.starts_at ? new Date(e.starts_at) : null;
+                        const two = (n: number) => String(n).padStart(2, '0');
+                        setDetails({
+                          title: e.title,
+                          date: at ? `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}` : '',
+                          time: at ? `${two(at.getHours())}:${two(at.getMinutes())}` : '',
+                          place: e.place ?? '',
+                          note: e.note ?? '',
+                        });
+                      }}
+                    />
+                  ) : null}
                   <TextButton label={t('social.invites.cancel')} danger onPress={() => setCancelling(true)} />
                 </>
               ) : null}
@@ -214,6 +255,39 @@ export default function InviteDetail() {
           );
         }}
       </Gate>
+      <ConfirmDialog
+        visible={!!details}
+        title={t('social.invites.editDetails')}
+        confirmLabel={t('common.save')}
+        busy={saveDetails.isPending}
+        onConfirm={() => details && details.title.trim() && parseDateTime(details.date, details.time) && saveDetails.mutate(details)}
+        onCancel={() => setDetails(null)}
+      >
+        {details ? (
+          <>
+            <Field label={t('social.invites.titleField')} value={details.title} onChangeText={(v) => setDetails({ ...details, title: v })} maxLength={120} />
+            <Field label={t('social.dateLabel')} value={details.date} onChangeText={(v) => setDetails({ ...details, date: v })} placeholder={t('social.datePlaceholder')} autoCapitalize="none" />
+            <Field label={t('social.timeLabel')} value={details.time} onChangeText={(v) => setDetails({ ...details, time: v })} placeholder={t('social.timePlaceholder')} autoCapitalize="none" />
+            {!parseDateTime(details.date, details.time) ? <Note>{t('social.missing.when')}</Note> : null}
+            <Field label={t('social.invites.place')} value={details.place} onChangeText={(v) => setDetails({ ...details, place: v })} maxLength={200} />
+            <Field label={t('social.invites.note')} value={details.note} onChangeText={(v) => setDetails({ ...details, note: v })} multiline maxLength={1000} />
+            <Note>{t('social.invites.editTellsEveryone')}</Note>
+            <ActionError error={saveDetails.error} />
+          </>
+        ) : null}
+      </ConfirmDialog>
+      <ConfirmDialog
+        visible={!!uninviting}
+        title={t('social.invites.uninviteTitle', { name: uninviting?.name ?? '' })}
+        message={t('social.invites.uninviteMessage')}
+        confirmLabel={t('social.invites.uninvite')}
+        danger
+        busy={uninvite.isPending}
+        onConfirm={() => uninviting && uninvite.mutate(uninviting.id)}
+        onCancel={() => setUninviting(null)}
+      >
+        <ActionError error={uninvite.error} />
+      </ConfirmDialog>
       <ConfirmDialog
         visible={cancelling}
         title={t('social.invites.cancelTitle')}

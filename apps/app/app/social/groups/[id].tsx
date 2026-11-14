@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Share } from 'react-native';
-import { ConfirmDialog, PrimaryButton, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
+import { ConfirmDialog, Field, PrimaryButton, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { PeoplePicker } from '@/social/AudiencePicker';
 import { ActionError, Gate, Note, Page, Row, useName } from '@/social/parts';
@@ -39,7 +39,32 @@ export default function GroupScreen() {
       refresh();
     },
   });
-  const remove = useMutation({ mutationFn: (profile: string) => api.rpc('group_remove_member', { p_group: id, p_profile: profile }), onSuccess: refresh });
+  const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null);
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const remove = useMutation({
+    mutationFn: (profile: string) => api.rpc('group_remove_member', { p_group: id, p_profile: profile }),
+    onSuccess: () => {
+      setRemoving(null);
+      refresh();
+    },
+  });
+  const rename = useMutation({
+    mutationFn: (name: string) => api.rpc('group_rename', { p_group: id, p_name: name.trim() }),
+    onSuccess: () => {
+      setRenaming(null);
+      refresh();
+    },
+  });
+  const removeGroup = useMutation({
+    mutationFn: () => api.rpc('group_delete', { p_group: id }),
+    onSuccess: () => {
+      setDeleting(false);
+      client.invalidateQueries({ queryKey: ['groups'] });
+      client.invalidateQueries({ queryKey: ['social-circles'] });
+      router.back();
+    },
+  });
   const leave = useMutation({
     mutationFn: async () => {
       const me = await api.get<{ id: string }>('/me');
@@ -70,7 +95,7 @@ export default function GroupScreen() {
                 key={m.profile_id}
                 title={showName(m.name)}
                 subtitle={m.started_it ? t('social.groups.startedIt') : data.is_mine ? t('social.tapToRemove') : undefined}
-                onPress={data.is_mine && !m.started_it ? () => remove.mutate(m.profile_id) : undefined}
+                onPress={data.is_mine && !m.started_it ? () => setRemoving({ id: m.profile_id, name: showName(m.name) }) : undefined}
               />
             ))}
             <ActionError error={remove.error} />
@@ -83,7 +108,9 @@ export default function GroupScreen() {
             ) : (
               <SecondaryButton label={t('social.groups.addPeople')} onPress={() => setAdding(true)} />
             )}
+            {data.is_mine ? <TextButton label={t('social.groups.rename')} onPress={() => setRenaming(data.name)} /> : null}
             <TextButton label={t('social.groups.leave')} danger onPress={() => setLeaving(true)} />
+            {data.is_mine ? <TextButton label={t('social.groups.delete')} danger onPress={() => setDeleting(true)} /> : null}
           </>
         )}
       </Gate>
@@ -97,6 +124,39 @@ export default function GroupScreen() {
         onCancel={() => setLeaving(false)}
       />
       <ActionError error={leave.error} />
+      <ConfirmDialog
+        visible={!!removing}
+        title={t('social.groups.removeTitle', { name: removing?.name ?? '' })}
+        message={t('social.groups.removeMessage')}
+        confirmLabel={t('social.groups.removeYes')}
+        danger
+        busy={remove.isPending}
+        onConfirm={() => removing && remove.mutate(removing.id)}
+        onCancel={() => setRemoving(null)}
+      />
+      <ConfirmDialog
+        visible={renaming !== null}
+        title={t('social.groups.rename')}
+        confirmLabel={t('common.save')}
+        busy={rename.isPending}
+        onConfirm={() => renaming?.trim() && rename.mutate(renaming)}
+        onCancel={() => setRenaming(null)}
+      >
+        <Field label={t('social.groups.nameLabel')} value={renaming ?? ''} onChangeText={setRenaming} maxLength={80} />
+        <ActionError error={rename.error} />
+      </ConfirmDialog>
+      <ConfirmDialog
+        visible={deleting}
+        title={t('social.groups.deleteTitle')}
+        message={t('social.groups.deleteMessage')}
+        confirmLabel={t('social.groups.delete')}
+        danger
+        busy={removeGroup.isPending}
+        onConfirm={() => removeGroup.mutate()}
+        onCancel={() => setDeleting(false)}
+      >
+        <ActionError error={removeGroup.error} />
+      </ConfirmDialog>
     </Page>
   );
 }

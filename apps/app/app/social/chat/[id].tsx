@@ -12,7 +12,7 @@ import { Screen } from '@/components/Screen';
 import { Text, TextInput } from '@/components/Text';
 import { useVoiceInput } from '@/voice/useVoiceInput';
 import { VoiceButton } from '@/voice/VoiceButton';
-import { ConfirmDialog, SmallButton, TextButton, TopBar } from '@/components/ui';
+import { ConfirmDialog, Field, SmallButton, TextButton, TopBar } from '@/components/ui';
 import { api, uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
 import { useTimeAgo } from '@/lib/time';
@@ -55,6 +55,11 @@ export default function ChatRoom() {
   const [toReport, setToReport] = useState<Message | null>(null);
   const [blocking, setBlocking] = useState(false);
   const [people, setPeople] = useState(false);
+  // Tapping a message opens its choices (reply, edit, delete, report): easy to find with a mouse or a finger.
+  const [chosen, setChosen] = useState<Message | null>(null);
+  const [editing, setEditing] = useState<Message | null>(null);
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [leaving, setLeaving] = useState(false);
   // Kept until a send succeeds, so trying again after a dropped connection cannot post twice.
   const clientId = useRef(newClientId());
   const key = ['chat', id];
@@ -117,6 +122,31 @@ export default function ChatRoom() {
     },
   });
 
+  const edit = useMutation({
+    mutationFn: (input: { messageId: string; body: string }) => api.rpc('message_update', { p_message: input.messageId, p_body: input.body.trim() }),
+    onSuccess: () => {
+      setEditing(null);
+      setText('');
+      client.invalidateQueries({ queryKey: key });
+    },
+  });
+  const rename = useMutation({
+    mutationFn: (name: string) => api.rpc('chat_rename', { p_chat: id, p_name: name.trim() }),
+    onSuccess: () => {
+      setRenaming(null);
+      client.invalidateQueries({ queryKey: key });
+      client.invalidateQueries({ queryKey: ['chats'] });
+    },
+  });
+  const leave = useMutation({
+    mutationFn: () => api.rpc('chat_leave', { p_chat: id }),
+    onSuccess: () => {
+      setLeaving(false);
+      client.invalidateQueries({ queryKey: ['chats'] });
+      goBack();
+    },
+  });
+
   const remove = useMutation({
     mutationFn: (messageId: string) => api.rpc('message_delete', { p_message: messageId }),
     onSettled: () => {
@@ -155,9 +185,9 @@ export default function ChatRoom() {
     return (
       <Pressable
         accessibilityRole="button"
-        accessibilityHint={t('social.chat.replyHint')}
-        onPress={() => setReply(item)}
-        onLongPress={() => (mine ? setToDelete(item) : setToReport(item))}
+        accessibilityHint={t('social.chat.choicesHint')}
+        onPress={() => setChosen(item)}
+        onLongPress={() => setChosen(item)}
         accessibilityActions={mine ? undefined : [{ name: 'longpress', label: t('ops.report.short') }]}
         onAccessibilityAction={() => (mine ? undefined : setToReport(item))}
         style={[styles.bubble, mine ? styles.mine : styles.theirs]}
@@ -176,7 +206,7 @@ export default function ChatRoom() {
         ) : null}
         {item.media_kind === 'voice' && item.media_url ? <VoicePlayer url={item.media_url} ms={item.media_ms} onDark={mine} /> : null}
         {item.body ? <Text style={[styles.body, mine && styles.onMine]}>{item.body}</Text> : null}
-        <Text style={[styles.time, mine && styles.onMine]}>{ago(item.created_at)}</Text>
+        <Text style={[styles.time, mine && styles.onMine]}>{item.edited ? `${ago(item.created_at)} · ${t('social.edited')}` : ago(item.created_at)}</Text>
       </Pressable>
     );
   }
@@ -188,7 +218,11 @@ export default function ChatRoom() {
         {first ? (
           <View style={styles.tools}>
             {first.chat.kind === 'direct' && other ? <TextButton label={t('ops.block.short')} onPress={() => setBlocking(true)} /> : null}
+            {first.chat.kind === 'group' && first.chat.can_rename ? (
+              <TextButton label={t('social.chat.rename')} onPress={() => setRenaming(first.chat.name ?? '')} />
+            ) : null}
             {first.chat.kind === 'group' ? <TextButton label={t('ops.chat.people')} onPress={() => setPeople(true)} /> : null}
+            {first.chat.kind === 'group' ? <TextButton label={t('social.chat.leave')} danger onPress={() => setLeaving(true)} /> : null}
           </View>
         ) : null}
         <Gate query={chat as never} plusMessage={t('social.chat.plusBody')}>
@@ -201,7 +235,12 @@ export default function ChatRoom() {
               keyExtractor={(m) => m.id}
               renderItem={renderMessage}
               keyboardShouldPersistTaps="handled"
-              ListEmptyComponent={<Note>{t('social.chat.sayHello')}</Note>}
+              // The list is drawn upside down (newest at the bottom), which also flips this note: flip it back.
+              ListEmptyComponent={
+                <View style={styles.unflip}>
+                  <Note>{t('social.chat.sayHello')}</Note>
+                </View>
+              }
               ListFooterComponent={
                 chat.hasNextPage ? <TextButton label={t('social.chat.older')} onPress={() => chat.fetchNextPage()} disabled={chat.isFetchingNextPage} /> : undefined
               }
@@ -213,6 +252,25 @@ export default function ChatRoom() {
         {micDenied ? <Note>{t('social.chat.micDenied')}</Note> : null}
         <ActionError error={send.error} />
 
+        {editing ? (
+          <View style={styles.replying}>
+            <Text numberOfLines={1} style={styles.replyingText}>
+              {t('social.chat.editing')}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('social.cancel')}
+              onPress={() => {
+                setEditing(null);
+                setText('');
+              }}
+              style={styles.iconButton}
+            >
+              <CloseIcon color={colors.muted} size={16} />
+            </Pressable>
+          </View>
+        ) : null}
+        <ActionError error={edit.error} />
         {reply ? (
           <View style={styles.replying}>
             <Text numberOfLines={1} style={styles.replyingText}>
@@ -252,7 +310,13 @@ export default function ChatRoom() {
               style={styles.input}
             />
             <VoiceButton voice={textVoice} size={44} />
-            {text.trim() ? (
+            {editing ? (
+              <SmallButton
+                label={t('common.save')}
+                disabled={!text.trim() || edit.isPending}
+                onPress={() => edit.mutate({ messageId: editing.id, body: text })}
+              />
+            ) : text.trim() ? (
               <SmallButton label={t('social.chat.send')} disabled={send.isPending} onPress={() => send.mutate({ body: text })} />
             ) : (
               <SmallButton
@@ -268,6 +332,71 @@ export default function ChatRoom() {
         )}
       </KeyboardAvoidingView>
 
+      {/* The choices for one message. */}
+      <ConfirmDialog
+        visible={!!chosen}
+        title={t('social.chat.messageChoices')}
+        confirmLabel={t('social.chat.reply')}
+        onConfirm={() => {
+          setReply(chosen);
+          setChosen(null);
+        }}
+        onCancel={() => setChosen(null)}
+      >
+        {chosen && chosen.sender_id === me.data?.id && !chosen.media_kind ? (
+          <TextButton
+            label={t('social.edit')}
+            onPress={() => {
+              setEditing(chosen);
+              setReply(null);
+              setText(chosen.body ?? '');
+              setChosen(null);
+            }}
+          />
+        ) : null}
+        {chosen && chosen.sender_id === me.data?.id ? (
+          <TextButton
+            label={t('social.delete')}
+            danger
+            onPress={() => {
+              setToDelete(chosen);
+              setChosen(null);
+            }}
+          />
+        ) : null}
+        {chosen && chosen.sender_id !== me.data?.id ? (
+          <TextButton
+            label={t('ops.report.short')}
+            onPress={() => {
+              setToReport(chosen);
+              setChosen(null);
+            }}
+          />
+        ) : null}
+      </ConfirmDialog>
+      <ConfirmDialog
+        visible={renaming !== null}
+        title={t('social.chat.rename')}
+        confirmLabel={t('common.save')}
+        busy={rename.isPending}
+        onConfirm={() => renaming?.trim() && rename.mutate(renaming)}
+        onCancel={() => setRenaming(null)}
+      >
+        <Field label={t('social.chat.chatName')} value={renaming ?? ''} onChangeText={setRenaming} maxLength={80} />
+        <ActionError error={rename.error} />
+      </ConfirmDialog>
+      <ConfirmDialog
+        visible={leaving}
+        title={t('social.chat.leaveTitle')}
+        message={t('social.chat.leaveMessage')}
+        confirmLabel={t('social.chat.leave')}
+        danger
+        busy={leave.isPending}
+        onConfirm={() => leave.mutate()}
+        onCancel={() => setLeaving(false)}
+      >
+        <ActionError error={leave.error} />
+      </ConfirmDialog>
       <ConfirmDialog
         visible={!!toDelete}
         title={t('social.chat.deleteTitle')}
@@ -313,6 +442,7 @@ export default function ChatRoom() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  unflip: { transform: [{ scaleY: -1 }] },
   tools: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },
   member: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: minTapSize },
   memberName: { flex: 1, color: colors.text, fontFamily: fonts.bold, fontSize: 15 },
