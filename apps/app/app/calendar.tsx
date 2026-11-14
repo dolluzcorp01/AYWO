@@ -1,5 +1,7 @@
 // Family calendar: a month at a time. Birthdays, wedding anniversaries, remembrance days for those who have passed,
-// and invitations. Tap a day to see just that day; tap it again to see the whole month.
+// and invitations. Tap a day to see just that day; tap it again to see the whole month. Tap the month name to jump
+// to any month or year. On a computer the day's list sits beside the month (no scrolling to find it), with ways to
+// add: plan an event on that day, or put a birthday, wedding day or remembrance day on someone in the family.
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,12 +9,15 @@ import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 're
 import { ChevronIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { EmptyState, LoadFailed, Loading, TopBar } from '@/components/ui';
+import { LoadFailed, Loading, SecondaryButton, TopBar } from '@/components/ui';
 import { addMonths, monthGrid, ymd } from '@/calendar/month';
 import { useCalendar } from '@/calendar/useCalendar';
 import type { CalendarItem, CalendarKind } from '@/calendar/useCalendar';
 import { useErrorText } from '@/lib/errors';
+import { mainTree, useTrees } from '@/lib/account';
 import { goBack } from '@/lib/nav';
+import { PersonPicker } from '@/tree/PersonPicker';
+import { useTreeView } from '@/tree/useTreeView';
 import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
 
 const KIND_COLOUR: Record<CalendarKind, string> = {
@@ -30,6 +35,11 @@ export default function Calendar() {
   const today = ymd(new Date());
   // On a computer there is room: a wider month with taller days. Phones keep the compact one.
   const wide = useWindowDimensions().width >= 1000;
+  const [choosingMonth, setChoosingMonth] = useState(false);
+  const [pickingPerson, setPickingPerson] = useState(false);
+  const trees = useTrees();
+  const tree = mainTree(trees.data);
+  const treeView = useTreeView(tree?.id ?? '', 'mine', i18n.language, null);
   const [[year, month0], setMonth] = useState<[number, number]>(() => [new Date().getFullYear(), new Date().getMonth()]);
   const [picked, setPicked] = useState<string | null>(null);
 
@@ -73,6 +83,7 @@ export default function Calendar() {
     <Screen>
       <TopBar title={t('calendar.title')} subtitle={t('calendar.subtitle')} onBack={() => goBack(router)} />
       <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={[styles.layout, wide && styles.layoutWide]}>
         <View style={[styles.card, wide && styles.cardWide]}>
           <View style={styles.monthRow}>
             <Pressable accessibilityRole="button" accessibilityLabel={t('calendar.previous')} onPress={() => move(-1)} style={styles.arrow}>
@@ -81,7 +92,18 @@ export default function Calendar() {
               </View>
             </Pressable>
             <View style={styles.monthMiddle}>
-              <Text accessibilityRole="header" style={styles.monthTitle}>{monthTitle}</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('calendar.chooseMonth')}
+                accessibilityState={{ expanded: choosingMonth }}
+                onPress={() => setChoosingMonth((v) => !v)}
+                style={({ hovered }: { hovered?: boolean }) => [styles.monthButton, (hovered || choosingMonth) && styles.monthButtonOn]}
+              >
+                <Text accessibilityRole="header" style={styles.monthTitle}>{monthTitle}</Text>
+                <View style={[styles.caret, choosingMonth && styles.caretOpen]}>
+                  <ChevronIcon color={colors.text} size={16} />
+                </View>
+              </Pressable>
               {!isThisMonth ? (
                 <Pressable
                   accessibilityRole="button"
@@ -99,6 +121,19 @@ export default function Calendar() {
             </Pressable>
           </View>
 
+          {choosingMonth ? (
+            <MonthChooser
+              year={year}
+              month0={month0}
+              lang={lang}
+              onPick={(y, m) => {
+                setMonth([y, m]);
+                setPicked(null);
+                setChoosingMonth(false);
+              }}
+            />
+          ) : (
+          <>
           <View style={styles.week}>
             {weekdays.map((w, i) => (
               <Text key={i} style={styles.weekday} numberOfLines={1}>{w}</Text>
@@ -149,26 +184,105 @@ export default function Calendar() {
               </View>
             ))}
           </View>
+          </>
+          )}
         </View>
 
-        {calendar.isError ? (
-          <LoadFailed message={errorText(calendar.error)} onRetry={() => calendar.refetch()} />
-        ) : !calendar.data ? (
-          <Loading />
-        ) : shown.length === 0 ? (
-          <EmptyState message={picked ? t('calendar.nothingDay') : t('calendar.nothingMonth')} />
-        ) : (
-          groups.map(([date, list]) => (
-            <View key={date} style={[styles.group, wide && styles.groupWide]}>
-              <Text accessibilityRole="header" style={styles.groupTitle}>{dayTitle(date)}</Text>
-              {list.map((item, i) => (
-                <ItemRow key={`${item.kind}-${item.person_id ?? item.event_id}-${i}`} item={item} onPress={() => open(item)} />
-              ))}
-            </View>
-          ))
-        )}
+        <View style={[styles.side, wide && styles.sideWide]}>
+          <Text accessibilityRole="header" style={styles.sideTitle}>
+            {picked ? dayTitle(picked) : t('calendar.thisMonth', { month: monthTitle })}
+          </Text>
+          {calendar.isError ? (
+            <LoadFailed message={errorText(calendar.error)} onRetry={() => calendar.refetch()} />
+          ) : !calendar.data ? (
+            <Loading />
+          ) : shown.length === 0 ? (
+            <Text style={styles.nothing}>{picked ? t('calendar.nothingDay') : t('calendar.nothingMonth')}</Text>
+          ) : (
+            groups.map(([date, list]) => (
+              <View key={date} style={styles.group}>
+                {!picked ? <Text style={styles.groupTitle}>{dayTitle(date)}</Text> : null}
+                {list.map((item, i) => (
+                  <ItemRow key={`${item.kind}-${item.person_id ?? item.event_id}-${i}`} item={item} onPress={() => open(item)} />
+                ))}
+              </View>
+            ))
+          )}
+
+          {/* Ways to add to the calendar. */}
+          <View style={styles.addBox}>
+            <Text style={styles.addTitle}>{t('calendar.addTitle')}</Text>
+            <SecondaryButton
+              label={picked ? t('calendar.planOnDay') : t('calendar.planEvent')}
+              onPress={() => router.push({ pathname: '/social/invites/new', params: picked ? { date: picked } : {} })}
+            />
+            {tree ? <SecondaryButton label={t('calendar.addFamilyDate')} onPress={() => setPickingPerson(true)} /> : null}
+            <Text style={styles.addHelp}>{t('calendar.addHelp')}</Text>
+          </View>
+        </View>
+        </View>
       </ScrollView>
+      <PersonPicker
+        visible={pickingPerson}
+        title={t('calendar.whoseDate')}
+        people={(treeView.data?.nodes ?? []).filter((n) => !n.nameUnknown)}
+        onPick={(personId) => {
+          setPickingPerson(false);
+          if (tree) router.push({ pathname: '/person-details', params: { treeId: tree.id, personId } });
+        }}
+        onClose={() => setPickingPerson(false)}
+      />
     </Screen>
+  );
+}
+
+/** Jump to any month: the year with arrows (and a few years either side), then the twelve months. */
+function MonthChooser({ year, month0, lang, onPick }: { year: number; month0: number; lang: string; onPick: (year: number, month0: number) => void }) {
+  const { t } = useTranslation();
+  const [shownYear, setShownYear] = useState(year);
+  const now = new Date();
+  const years = Array.from({ length: 7 }, (_, i) => shownYear - 3 + i);
+  return (
+    <View style={styles.chooser}>
+      <View style={styles.yearRow}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('calendar.earlierYears')} onPress={() => setShownYear((y) => y - 7)} style={styles.arrowSmall}>
+          <View style={styles.flip}>
+            <ChevronIcon color={colors.text} size={16} />
+          </View>
+        </Pressable>
+        {years.map((y) => (
+          <Pressable
+            key={y}
+            accessibilityRole="button"
+            accessibilityState={{ selected: y === shownYear }}
+            onPress={() => setShownYear(y)}
+            style={[styles.yearChip, y === shownYear && styles.chipOn]}
+          >
+            <Text style={[styles.chipText, y === shownYear && styles.chipTextOn]}>{y}</Text>
+          </Pressable>
+        ))}
+        <Pressable accessibilityRole="button" accessibilityLabel={t('calendar.laterYears')} onPress={() => setShownYear((y) => y + 7)} style={styles.arrowSmall}>
+          <ChevronIcon color={colors.text} size={16} />
+        </Pressable>
+      </View>
+      <View style={styles.monthGrid}>
+        {Array.from({ length: 12 }, (_, m) => {
+          const on = shownYear === year && m === month0;
+          const current = shownYear === now.getFullYear() && m === now.getMonth();
+          return (
+            <Pressable
+              key={m}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              onPress={() => onPick(shownYear, m)}
+              style={[styles.monthChip, on && styles.chipOn, current && !on && styles.monthCurrent]}
+            >
+              <Text style={[styles.chipText, on && styles.chipTextOn]}>{new Date(shownYear, m, 1).toLocaleDateString(lang, { month: 'long' })}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 
@@ -202,7 +316,30 @@ function ItemRow({ item, onPress }: { item: CalendarItem; onPress: () => void })
 }
 
 const styles = StyleSheet.create({
-  scroll: { gap: 14, paddingBottom: 24 },
+  scroll: { paddingTop: 14, paddingBottom: 24 },
+  layout: { gap: 16 },
+  layoutWide: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', width: '100%', maxWidth: 1140, alignSelf: 'center' },
+  side: { width: '100%', maxWidth: 560, alignSelf: 'center', gap: 10 },
+  sideWide: { width: 340, alignSelf: 'flex-start' },
+  sideTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 18 },
+  nothing: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 15 },
+  addBox: { gap: 8, marginTop: 6, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.cardBorder },
+  addTitle: { color: colors.muted, fontFamily: fonts.bold, fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
+  addHelp: { color: colors.muted, fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },
+  monthButton: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
+  monthButtonOn: { backgroundColor: colors.tint },
+  caret: { transform: [{ rotate: '90deg' }] },
+  caretOpen: { transform: [{ rotate: '-90deg' }] },
+  chooser: { gap: 14, paddingVertical: 8 },
+  yearRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  arrowSmall: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.tint },
+  yearChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: colors.cardBorder },
+  monthGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  monthChip: { width: '31%', minHeight: minTapSize, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: colors.cardBorder },
+  monthCurrent: { borderColor: colors.logoPurple, borderWidth: 2 },
+  chipOn: { backgroundColor: colors.logoIndigo, borderColor: colors.logoIndigo },
+  chipText: { color: colors.text, fontFamily: fonts.bold, fontSize: 14 },
+  chipTextOn: { color: colors.white },
   card: {
     width: '100%',
     maxWidth: 560,
@@ -215,11 +352,11 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     ...shadows.card,
   },
-  cardWide: { maxWidth: 900, padding: 20 },
-  cellWide: { minHeight: 84, paddingVertical: 8 },
+  cardWide: { flex: 1, maxWidth: 760, padding: 18, alignSelf: 'flex-start' },
+  // Room for six weeks and the legend on a laptop screen without scrolling.
+  cellWide: { minHeight: 70, paddingVertical: 6 },
   dayCircleWide: { width: 44, height: 44, borderRadius: 22 },
   dayNumberWide: { fontSize: 18 },
-  groupWide: { maxWidth: 900 },
   monthRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   arrow: { width: minTapSize, height: minTapSize, alignItems: 'center', justifyContent: 'center', borderRadius: 999, backgroundColor: colors.tint },
   flip: { transform: [{ scaleX: -1 }] },
@@ -242,7 +379,7 @@ const styles = StyleSheet.create({
   legend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 14, marginTop: 8, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.cardBorder },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendText: { color: colors.muted, fontFamily: fonts.medium, fontSize: 13 },
-  group: { width: '100%', maxWidth: 560, alignSelf: 'center', gap: 8 },
+  group: { gap: 8 },
   groupTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 16 },
   row: {
     flexDirection: 'row',
