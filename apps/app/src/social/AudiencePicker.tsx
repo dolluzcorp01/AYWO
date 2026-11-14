@@ -96,6 +96,23 @@ export function AudiencePicker({ onChange, kinds }: { onChange: (audience: Audie
   }, [kind, treeId, groupId, branch, people]);
 
   const allowed = kinds ?? (['tree', 'branch', 'people', 'group'] as Kind[]);
+  // Start on the usual answer, so nobody wonders why the send button waits: the whole family tree, and the
+  // tree itself when there is only one to pick. The person can still change both.
+  const loaded = circles.data;
+  useEffect(() => {
+    if (!loaded) return;
+    const wholeTrees = loaded.trees.filter((x) => x.whole_tree);
+    if (kind === null) {
+      if (allowed.includes('tree') && wholeTrees.length > 0) setKind('tree');
+      else if (allowed.includes('group') && loaded.groups.length > 0) setKind('group');
+      return;
+    }
+    const choices = kind === 'tree' ? wholeTrees : kind === 'branch' ? loaded.trees : [];
+    if (choices.length > 0 && !choices.some((x) => x.id === treeId)) setTreeId(choices[0].id);
+    if (kind === 'group' && !groupId && loaded.groups.length === 1) setGroupId(loaded.groups[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, kind]);
+
   return (
     <Gate query={circles}>
       {(data) => {

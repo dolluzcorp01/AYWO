@@ -28,7 +28,7 @@ export default function NewGroup() {
       <Note>{t('social.groups.linkNote')}</Note>
       <PeoplePicker chosen={members} onChange={setMembers} />
       <ActionError error={create.error} />
-      <PrimaryButton label={t('social.groups.create')} disabled={!name.trim() || create.isPending} onPress={() => create.mutate()} />
+      <PrimaryButton label={t('social.groups.create')} disabled={create.isPending} missing={!name.trim() ? t('social.missing.name') : null} onPress={() => create.mutate()} />
     </Page>
   );
 }

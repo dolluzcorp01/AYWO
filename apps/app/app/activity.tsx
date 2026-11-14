@@ -54,6 +54,8 @@ export default function Activity() {
             );
           })}
         </View>
+        {/* One line on what this tab holds, so the page explains itself. */}
+        <Text style={styles.about}>{t(`activity.about.${tab}`)}</Text>
       </View>
 
       {feed.isError ? (
@@ -241,6 +243,7 @@ function ChangeRow({ item }: { item: ChangeItem }) {
 }
 
 const styles = StyleSheet.create({
+  about: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
   header: { paddingHorizontal: 16, paddingTop: 8, gap: 10 },
   tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
   tab: { minHeight: minTapSize - 4, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1, borderColor: colors.cardBorder, backgroundColor: colors.card, justifyContent: 'center' },

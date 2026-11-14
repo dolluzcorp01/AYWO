@@ -1,7 +1,7 @@
 // New memory: where it belongs, photos, words, the date, who is in it, and who may help add to it.
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { Field, Label, Pills, PrimaryButton, SecondaryButton, SectionTitle } from '@/components/ui';
@@ -21,6 +21,14 @@ export default function NewMemory() {
   const client = useQueryClient();
   const circles = useCircles();
   const [scope, setScope] = useState<string | null>(null);
+  const circlesData = circles.data;
+  // Start on the family tree (the usual answer), so the Share button is not waiting on a question nobody saw.
+  useEffect(() => {
+    if (scope || !circlesData) return;
+    const first = circlesData.trees.find((x) => x.whole_tree);
+    if (first) setScope(`tree:${first.id}`);
+    else if (circlesData.groups[0]) setScope(`group:${circlesData.groups[0].id}`);
+  }, [circlesData, scope]);
   const [body, setBody] = useState('');
   const [date, setDate] = useState('');
   // A story is easier told than typed: the mic keeps listening through pauses and adds full stops.
@@ -132,7 +140,8 @@ export default function NewMemory() {
       <ActionError error={post.error} />
       <PrimaryButton
         label={post.isPending ? t('social.sending') : t('social.memories.share')}
-        disabled={!scope || !dateOk || post.isPending || (!body.trim() && photos.length === 0)}
+        disabled={post.isPending}
+        missing={!scope ? t('social.missing.who') : !body.trim() && photos.length === 0 ? t('social.missing.words') : !dateOk ? t('social.missing.date') : null}
         onPress={() => post.mutate()}
       />
     </Page>

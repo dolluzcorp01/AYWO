@@ -74,7 +74,20 @@ export default function NewInvite() {
       <ActionError error={create.error} />
       <PrimaryButton
         label={create.isPending ? t('social.sending') : t('social.invites.send')}
-        disabled={!kind || !title.trim() || !startsAt || !audience || !canvaOk || create.isPending}
+        disabled={create.isPending}
+        missing={
+          !kind
+            ? t('social.missing.kind')
+            : !title.trim()
+              ? t('social.missing.title')
+              : !startsAt
+                ? t('social.missing.when')
+                : !canvaOk
+                  ? t('social.missing.canva')
+                  : !audience
+                    ? t('social.missing.whoSend')
+                    : null
+        }
         onPress={() => create.mutate()}
       />
     </Page>

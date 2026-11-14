@@ -384,6 +384,12 @@
     "all": "All",
     "empty": "Nothing here yet.",
     "emptyNeeds": "Nothing needs you right now.",
+    "about": {
+      "needs_you": "Requests waiting for your answer: someone wants to add or change a relative, see contact numbers, or help edit. Accept or decline here.",
+      "changes": "Every change made to your family tree, newest first: who added, edited or removed someone.",
+      "access": "Who asked to see contact numbers or to help edit the tree, and what was decided.",
+      "all": "Everything above in one list."
+    },
     "someone": "Someone",
     "foundBy": "Found by AYWO",
     "allow": "Allow",

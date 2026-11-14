@@ -51,7 +51,8 @@ export default function NewPopParty() {
       <ActionError error={create.error} />
       <PrimaryButton
         label={create.isPending ? t('social.sending') : t('social.pop.start')}
-        disabled={!title.trim() || !hasOptions || !audience || create.isPending}
+        disabled={create.isPending}
+        missing={!title.trim() ? t('social.missing.name') : !hasOptions ? t('social.missing.options') : !audience ? t('social.missing.whoSend') : null}
         onPress={() => create.mutate()}
       />
     </Page>

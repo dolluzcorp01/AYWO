@@ -70,7 +70,8 @@ export default function NewChat() {
           <ActionError error={group.error} />
           <PrimaryButton
             label={t('social.chat.createGroup')}
-            disabled={!name.trim() || !audience || group.isPending}
+            disabled={group.isPending}
+            missing={!name.trim() ? t('social.missing.name') : !audience ? t('social.missing.whoSend') : null}
             onPress={() => group.mutate()}
           />
           <InviteFamily title={t('social.chat.notJoinedTitle')} help={t('social.chat.inviteHelp')} />

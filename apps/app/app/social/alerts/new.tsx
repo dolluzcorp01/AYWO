@@ -51,7 +51,12 @@ export default function NewAlert() {
       <AudiencePicker onChange={setAudience} />
       <Note>{t('social.alerts.neverBlast')}</Note>
       <ActionError error={send.error} />
-      <PrimaryButton label={t('social.alerts.send')} disabled={!ready || send.isPending} onPress={() => setConfirming(true)} />
+      <PrimaryButton
+        label={t('social.alerts.send')}
+        disabled={!ready || send.isPending}
+        missing={!kind ? t('social.missing.kind') : kind === 'blood' && !blood ? t('social.missing.blood') : !body.trim() ? t('social.missing.message') : !audience ? t('social.missing.whoSend') : null}
+        onPress={() => setConfirming(true)}
+      />
       <ConfirmDialog
         visible={confirming}
         title={t('social.alerts.confirmTitle')}

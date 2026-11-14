@@ -12,14 +12,22 @@ import { hideToastIf, showToast } from '@/components/Toast';
 import { useSimpleMode } from '@/lib/prefs';
 import { colors, fonts, gradients, minTapSize, radius, shadows } from '@/theme/tokens';
 
-export function PrimaryButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
+/**
+ * The main button of a screen. Pass `missing` (what is still needed, such as "Choose who can see this") and the
+ * button waits, saying so underneath. A greyed-out button with no reason leaves people stuck.
+ */
+export function PrimaryButton({ label, onPress, disabled, missing }: { label: string; onPress: () => void; disabled?: boolean; missing?: string | null }) {
   const big = useSimpleMode();
+  const off = !!disabled || !!missing;
   return (
-    <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} onPress={onPress} disabled={disabled} style={{ opacity: disabled ? 0.5 : 1 }}>
-      <View style={[styles.button, big && styles.bigButton]}>
-        <Text style={styles.buttonText}>{label}</Text>
-      </View>
-    </Pressable>
+    <View style={styles.primaryBox}>
+      <Pressable accessibilityRole="button" accessibilityState={{ disabled: off }} accessibilityHint={missing ?? undefined} onPress={onPress} disabled={off} style={{ opacity: off ? 0.5 : 1 }}>
+        <View style={[styles.button, big && styles.bigButton]}>
+          <Text style={styles.buttonText}>{label}</Text>
+        </View>
+      </Pressable>
+      {missing ? <Text style={styles.missing}>{missing}</Text> : null}
+    </View>
   );
 }
 
@@ -272,6 +280,8 @@ export function ConfirmDialog({ visible, title, message, confirmLabel, onConfirm
 }
 
 const styles = StyleSheet.create({
+  primaryBox: { gap: 8 },
+  missing: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14, textAlign: 'center' },
   button: { height: 56, minHeight: minTapSize, borderRadius: radius.button, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, backgroundColor: colors.logoIndigo, ...shadows.card },
   buttonText: { color: colors.white, fontFamily: fonts.bold, fontSize: 17, textAlign: 'center' },
   secondary: {
