@@ -268,7 +268,7 @@ function FamilyCard({ tree }: { tree: TreeRow }) {
       </View>
     </Pressable>
     {/* Outside the card's own button, so each relative button opens its own form. */}
-    {data ? <FamilyGuideCard treeId={tree.id} tree={data} me={viewerId} /> : null}
+    {data ? <FamilyGuideCard treeId={tree.id} tree={data} me={viewerId} full /> : null}
     </>
   );
 }

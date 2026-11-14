@@ -26,8 +26,9 @@ export default function AdminAudit() {
       flex: 1.5,
       render: (row) => (
         <View>
-          <Text style={adminStyles.cellMuted}>{row.target_type ?? '-'}</Text>
-          <Text style={adminStyles.cellMuted}>{row.target_id ?? '-'}</Text>
+          {row.target_name ? <Text style={adminStyles.cellStrong}>{row.target_name}</Text> : null}
+          <Text style={adminStyles.cellMuted}>{t(`admin.audit.types.${row.target_type ?? 'none'}`, { defaultValue: row.target_type ?? '-' })}</Text>
+          {!row.target_name ? <Text style={adminStyles.cellMuted}>{row.target_id ?? '-'}</Text> : null}
         </View>
       ),
     },

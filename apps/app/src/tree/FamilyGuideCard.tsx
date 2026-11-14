@@ -11,7 +11,8 @@ import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
 
 type Tree = Pick<TreeViewAnswer, 'nodes' | 'links' | 'unions'>;
 
-export function FamilyGuideCard({ treeId, tree, me }: { treeId: string; tree: Tree; me: string | null }) {
+/** `full`: as wide as the column it sits in (Home, under the family card), not a centred narrow card. */
+export function FamilyGuideCard({ treeId, tree, me, full }: { treeId: string; tree: Tree; me: string | null; full?: boolean }) {
   const { t } = useTranslation();
   const router = useRouter();
   if (!me || !showFamilyGuide(tree, me)) return null;
@@ -19,7 +20,7 @@ export function FamilyGuideCard({ treeId, tree, me }: { treeId: string; tree: Tr
   const done = steps.filter((s) => s.done).length;
 
   return (
-    <View style={styles.card} accessibilityRole="summary">
+    <View style={[styles.card, full && styles.full]} accessibilityRole="summary">
       <View style={styles.head}>
         <Text accessibilityRole="header" style={styles.title}>{t('guide.cardTitle')}</Text>
         <Text style={styles.progressText}>{t('guide.cardProgress', { done })}</Text>
@@ -48,6 +49,7 @@ export function FamilyGuideCard({ treeId, tree, me }: { treeId: string; tree: Tr
 }
 
 const styles = StyleSheet.create({
+  full: { maxWidth: '100%', alignSelf: 'stretch' },
   card: {
     width: '100%',
     maxWidth: 520,

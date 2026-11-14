@@ -227,7 +227,9 @@ export default function PersonCard() {
                   return (
                     <Pressable key={id} accessibilityRole="button" onPress={() => openPerson(id)} style={styles.chip}>
                       <Avatar personId={id} size={34} photoUrl={person.photoUrl} nameUnknown={person.nameUnknown} />
-                      <Text style={styles.chipText}>{other.kind === 'word' ? `${shown} · ${other.word}` : shown}</Text>
+                      <Text style={styles.chipText}>
+                        {id === data.viewer_person_id ? `${shown} · ${t('tree.you')}` : other.kind === 'word' ? `${shown} · ${other.word}` : shown}
+                      </Text>
                     </Pressable>
                   );
                 })}
