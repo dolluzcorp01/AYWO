@@ -1,21 +1,37 @@
 // One memory: photos, who is in it, reactions, comments, and closing the thread. Anyone can report it or a comment.
+// The author can edit the words and date, remove or reorder photos and untag people; anyone can edit their comment.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
-import { Card, ConfirmDialog, Field, SecondaryButton, SectionTitle, SmallButton, TextButton } from '@/components/ui';
+import { Card, ConfirmDialog, Field, Label, SecondaryButton, SectionTitle, SmallButton, TextButton } from '@/components/ui';
 import { api, uploadFile } from '@/lib/api';
 import { useTimeAgo } from '@/lib/time';
 import { ReportDialog } from '@/ops/Report';
 import type { ReportTarget } from '@/ops/Report';
 import { pickPhotos } from '@/social/media';
+import { moveItem, PhotoStrip } from '@/social/PhotoStrip';
 import { ActionError, Gate, Note, Page, useName, useWhen } from '@/social/parts';
 import type { Post } from '@/social/types';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 
 const EMOJIS = ['❤️', '🙏', '😂', '😢', '👏'];
+
+/** A name with an x to take it off (a tag, a helper). Without onRemove it is just the name. */
+function Chip({ label, removeLabel, onRemove }: { label: string; removeLabel: string; onRemove?: () => void }) {
+  return (
+    <View style={styles.chip}>
+      <Text style={styles.chipText}>{label}</Text>
+      {onRemove ? (
+        <Pressable accessibilityRole="button" accessibilityLabel={removeLabel} onPress={onRemove} style={styles.chipX}>
+          <Text style={styles.chipXText}>✕</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
 
 export default function MemoryDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -27,6 +43,11 @@ export default function MemoryDetail() {
   const showName = useName();
   const [comment, setComment] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draftBody, setDraftBody] = useState('');
+  const [draftDate, setDraftDate] = useState('');
+  const [editingComment, setEditingComment] = useState<{ id: string; body: string } | null>(null);
+  const [removingPhoto, setRemovingPhoto] = useState<string | null>(null);
   const [reporting, setReporting] = useState<{ type: ReportTarget; id: string; ownerId: string; ownerName: string } | null>(null);
 
   const key = ['post', id];
@@ -59,6 +80,44 @@ export default function MemoryDetail() {
     },
     onSuccess: refresh,
   });
+  const update = useMutation({
+    mutationFn: () =>
+      api.rpc('post_update', { p_post: id, p_body: draftBody.trim(), p_happened_on: draftDate.trim() || null }),
+    onSuccess: () => {
+      setEditing(false);
+      refresh();
+    },
+  });
+  const removeMedia = useMutation({
+    mutationFn: (mediaId: string) => api.rpc('post_remove_media', { p_media: mediaId }),
+    onSuccess: () => {
+      setRemovingPhoto(null);
+      refresh();
+    },
+    onError: () => setRemovingPhoto(null),
+  });
+  const reorder = useMutation({
+    mutationFn: (order: string[]) => api.rpc('post_reorder_media', { p_post: id, p_order: order }),
+    onSuccess: refresh,
+  });
+  const untag = useMutation({
+    mutationFn: (tag: { person_id: string | null; profile_id: string | null }) =>
+      api.rpc('post_remove_tag', { p_post: id, p_person: tag.person_id, p_profile: tag.profile_id }),
+    onSuccess: refresh,
+  });
+  const removeHelper = useMutation({
+    mutationFn: (profileId: string) => api.rpc('post_remove_collaborator', { p_post: id, p_profile: profileId }),
+    onSuccess: refresh,
+  });
+  const updateComment = useMutation({
+    mutationFn: (c: { id: string; body: string }) => api.rpc('comment_update', { p_comment: c.id, p_body: c.body.trim() }),
+    onSuccess: () => {
+      setEditingComment(null);
+      refresh();
+    },
+  });
+  const draftDateOk = draftDate.trim() === '' || /^\d{4}-\d{2}-\d{2}$/.test(draftDate.trim());
+
   const removePost = useMutation({
     mutationFn: () => api.rpc('post_delete', { p_post: id }),
     onSuccess: () => {
@@ -73,20 +132,122 @@ export default function MemoryDetail() {
         {(data) => (
           <>
             <Card style={styles.card}>
-              <Text style={styles.who}>{showName(data.author_name)}</Text>
-              <Note>{[data.scope_name, when(data.happened_on, true)].filter(Boolean).join(' · ')}</Note>
-              {data.media.length > 0 ? (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
-                  {data.media.map((m) =>
-                    m.url ? <Image key={m.id} source={{ uri: m.url }} style={styles.photo} accessibilityLabel={t('social.memories.photo')} /> : null,
-                  )}
-                </ScrollView>
-              ) : null}
-              {data.body ? <Text style={styles.body}>{data.body}</Text> : null}
-              {data.tags.length > 0 ? <Note>{t('social.memories.with', { names: data.tags.map((x) => x.name).join(', ') })}</Note> : null}
-              {data.collaborators.length > 0 ? (
-                <Note>{t('social.memories.addedWith', { names: data.collaborators.map((x) => showName(x.name)).join(', ') })}</Note>
-              ) : null}
+              <View style={styles.cardHead}>
+                <View style={styles.flex}>
+                  <Text style={styles.who}>{showName(data.author_name)}</Text>
+                  <Note>
+                    {[data.scope_name, when(data.happened_on, true), data.edited ? t('social.edited') : null].filter(Boolean).join(' · ')}
+                  </Note>
+                </View>
+                {data.is_mine && !editing ? (
+                  <SmallButton
+                    kind="plain"
+                    label={t('social.memories.edit')}
+                    onPress={() => {
+                      setDraftBody(data.body ?? '');
+                      setDraftDate(data.happened_on ?? '');
+                      setEditing(true);
+                    }}
+                  />
+                ) : null}
+              </View>
+
+              {editing ? (
+                <>
+                  {/* Photos: remove any, or move them into the order the family should see. */}
+                  <PhotoStrip
+                    photos={data.media.map((m) => ({ key: m.id, uri: m.url, canRemove: !!m.can_remove }))}
+                    size={140}
+                    busy={removeMedia.isPending || reorder.isPending}
+                    onRemove={(mediaId) => setRemovingPhoto(mediaId)}
+                    onMove={(from, to) => reorder.mutate(moveItem(data.media.map((m) => m.id), from, to))}
+                  />
+                  <ActionError error={removeMedia.error ?? reorder.error} />
+                  {!data.closed ? (
+                    <SecondaryButton label={t('social.memories.addPhotos')} disabled={addPhotos.isPending} onPress={() => addPhotos.mutate()} />
+                  ) : null}
+                  <Field label={t('social.memories.words')} value={draftBody} onChangeText={setDraftBody} multiline maxLength={4000} style={styles.words} />
+                  <Field
+                    label={t('social.memories.when')}
+                    value={draftDate}
+                    onChangeText={setDraftDate}
+                    placeholder={t('social.datePlaceholder')}
+                    autoCapitalize="none"
+                  />
+                  {data.tags.length > 0 ? (
+                    <>
+                      <Label>{t('social.memories.taggedPeople')}</Label>
+                      <View style={styles.chips}>
+                        {data.tags.map((tag) => (
+                          <Chip
+                            key={`${tag.person_id ?? tag.profile_id}`}
+                            label={tag.name}
+                            removeLabel={t('social.memories.untag', { name: tag.name })}
+                            onRemove={tag.can_remove ? () => untag.mutate(tag) : undefined}
+                          />
+                        ))}
+                      </View>
+                    </>
+                  ) : null}
+                  {data.collaborators.length > 0 ? (
+                    <>
+                      <Label>{t('social.memories.helpers')}</Label>
+                      <View style={styles.chips}>
+                        {data.collaborators.map((c) => (
+                          <Chip
+                            key={c.profile_id}
+                            label={showName(c.name)}
+                            removeLabel={t('social.memories.removeHelper', { name: showName(c.name) })}
+                            onRemove={c.can_remove ? () => removeHelper.mutate(c.profile_id) : undefined}
+                          />
+                        ))}
+                      </View>
+                    </>
+                  ) : null}
+                  <ActionError error={update.error ?? untag.error ?? removeHelper.error} />
+                  <View style={styles.row}>
+                    <SmallButton
+                      label={t('common.save')}
+                      disabled={update.isPending || !draftDateOk || (!draftBody.trim() && data.media.length === 0)}
+                      onPress={() => update.mutate()}
+                    />
+                    <SmallButton kind="plain" label={t('common.cancel')} onPress={() => setEditing(false)} />
+                  </View>
+                  {!draftDateOk ? <Note>{t('social.missing.date')}</Note> : null}
+                </>
+              ) : (
+                <>
+                  {data.media.length > 0 ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.strip}>
+                      {data.media.map((m, i) =>
+                        m.url ? <Image key={m.id} source={{ uri: m.url }} style={styles.photo} accessibilityLabel={t('social.photos.photoN', { n: i + 1 })} /> : null,
+                      )}
+                    </ScrollView>
+                  ) : null}
+                  {data.body ? <Text style={styles.body}>{data.body}</Text> : null}
+                  {data.tags.length > 0 ? <Note>{t('social.memories.with', { names: data.tags.map((x) => x.name).join(', ') })}</Note> : null}
+                  {data.collaborators.length > 0 ? (
+                    <Note>{t('social.memories.addedWith', { names: data.collaborators.map((x) => showName(x.name)).join(', ') })}</Note>
+                  ) : null}
+                  {/* Someone tagged in another person's memory can take their own tag off. */}
+                  {!data.is_mine
+                    ? data.tags
+                        .filter((tag) => tag.can_remove)
+                        .map((tag) => (
+                          <TextButton key={`me-${tag.person_id ?? tag.profile_id}`} label={t('social.memories.untagMe')} onPress={() => untag.mutate(tag)} />
+                        ))
+                    : null}
+                  {/* A helper can manage their own photos without the author's edit screen. */}
+                  {!data.is_mine && data.media.some((m) => m.can_remove) ? (
+                    <PhotoStrip
+                      photos={data.media.filter((m) => m.can_remove).map((m) => ({ key: m.id, uri: m.url, canRemove: true }))}
+                      size={80}
+                      busy={removeMedia.isPending}
+                      onRemove={(mediaId) => setRemovingPhoto(mediaId)}
+                    />
+                  ) : null}
+                </>
+              )}
             </Card>
 
             {/* Everyone can see the counts. Adding a reaction needs Plus, which the server decides. */}
@@ -116,9 +277,30 @@ export default function MemoryDetail() {
             {(data.comments ?? []).map((c) => (
               <Card key={c.id} style={styles.comment}>
                 <Text style={styles.who}>{showName(c.author_name)}</Text>
-                <Text style={styles.body}>{c.body}</Text>
+                {editingComment?.id === c.id ? (
+                  <>
+                    <Field
+                      label={t('social.memories.editComment')}
+                      value={editingComment.body}
+                      onChangeText={(body) => setEditingComment({ id: c.id, body })}
+                      multiline
+                      maxLength={2000}
+                    />
+                    <ActionError error={updateComment.error} />
+                    <View style={styles.row}>
+                      <SmallButton
+                        label={t('common.save')}
+                        disabled={!editingComment.body.trim() || updateComment.isPending}
+                        onPress={() => updateComment.mutate(editingComment)}
+                      />
+                      <SmallButton kind="plain" label={t('common.cancel')} onPress={() => setEditingComment(null)} />
+                    </View>
+                  </>
+                ) : (
+                  <Text style={styles.body}>{c.body}</Text>
+                )}
                 <View style={styles.commentFoot}>
-                  <Note>{ago(c.created_at)}</Note>
+                  <Note>{c.edited ? `${ago(c.created_at)} · ${t('social.edited')}` : ago(c.created_at)}</Note>
                   {c.reactions.map((r) => (
                     <Note key={r.emoji}>{`${r.emoji} ${r.count}`}</Note>
                   ))}
@@ -127,6 +309,9 @@ export default function MemoryDetail() {
                       label={c.my_reaction ? t('social.memories.unlike') : t('social.memories.like')}
                       onPress={() => react.mutate({ type: 'comment', target: c.id, emoji: c.my_reaction ? null : EMOJIS[0] })}
                     />
+                  ) : null}
+                  {c.mine && !data.closed && editingComment?.id !== c.id ? (
+                    <TextButton label={t('social.edit')} onPress={() => setEditingComment({ id: c.id, body: c.body })} />
                   ) : null}
                   {c.mine || data.is_mine ? <TextButton label={t('social.delete')} danger onPress={() => removeComment.mutate(c.id)} /> : null}
                   {!c.mine ? (
@@ -151,7 +336,7 @@ export default function MemoryDetail() {
               </>
             )}
 
-            {data.can_edit && !data.closed ? (
+            {data.can_edit && !data.closed && !editing ? (
               <>
                 <SecondaryButton label={t('social.memories.addPhotos')} disabled={addPhotos.isPending} onPress={() => addPhotos.mutate()} />
                 <ActionError error={addPhotos.error} />
@@ -175,6 +360,16 @@ export default function MemoryDetail() {
           </>
         )}
       </Gate>
+      <ConfirmDialog
+        visible={!!removingPhoto}
+        title={t('social.photos.removeTitle')}
+        message={t('social.photos.removeMessage')}
+        confirmLabel={t('social.photos.removeYes')}
+        danger
+        busy={removeMedia.isPending}
+        onConfirm={() => removingPhoto && removeMedia.mutate(removingPhoto)}
+        onCancel={() => setRemovingPhoto(null)}
+      />
       <ConfirmDialog
         visible={confirmDelete}
         title={t('social.memories.deleteTitle')}
@@ -203,6 +398,15 @@ export default function MemoryDetail() {
 
 const styles = StyleSheet.create({
   card: { gap: 8 },
+  cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  flex: { flex: 1, minWidth: 0 },
+  row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  words: { minHeight: 100, paddingTop: 14, textAlignVertical: 'top' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 12, paddingRight: 4, minHeight: 36, borderRadius: 18, backgroundColor: colors.tint },
+  chipText: { color: colors.text, fontFamily: fonts.bold, fontSize: 14 },
+  chipX: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  chipXText: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 13 },
   who: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
   body: { color: colors.text, fontFamily: fonts.medium, fontSize: 15, lineHeight: 22 },
   strip: { gap: 8 },

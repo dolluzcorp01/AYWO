@@ -1,4 +1,5 @@
 // S-19 Dictionary review (LLD L5 no. 20): new words waiting for approval, and 'wrong word' reports.
+// Approved and rejected words can be looked at again and changed, so a wrong decision can be fixed.
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +42,8 @@ function NewWords() {
   const { t, i18n } = useTranslation();
   const client = useQueryClient();
   const [acting, setActing] = useState<{ term: KinTermRow; decision: 'approve' | 'reject' } | null>(null);
-  const { query, page, setPage } = usePagedList<KinTermRow>(['admin', 'kin-terms'], '/admin/kin-terms', { status: 'pending' });
+  const [status, setStatus] = useState<'pending' | 'verified' | 'rejected'>('pending');
+  const { query, page, setPage } = usePagedList<KinTermRow>(['admin', 'kin-terms', status], '/admin/kin-terms', { status });
 
   const columns: Column<KinTermRow>[] = [
     { key: 'word', label: t('admin.dictionary.word'), render: (row) => <WordCell term={row.term} native={row.term_native} /> },
@@ -55,8 +57,16 @@ function NewWords() {
       flex: 1.4,
       render: (row) => (
         <Actions>
-          <SecondaryButton label={t('admin.dictionary.approve')} onPress={() => setActing({ term: row, decision: 'approve' })} />
-          <SecondaryButton label={t('admin.dictionary.reject')} danger onPress={() => setActing({ term: row, decision: 'reject' })} />
+          {status !== 'verified' ? (
+            <SecondaryButton label={t('admin.dictionary.approve')} onPress={() => setActing({ term: row, decision: 'approve' })} />
+          ) : null}
+          {status !== 'rejected' ? (
+            <SecondaryButton
+              label={status === 'verified' ? t('admin.dictionary.takeBack') : t('admin.dictionary.reject')}
+              danger
+              onPress={() => setActing({ term: row, decision: 'reject' })}
+            />
+          ) : null}
         </Actions>
       ),
     },
@@ -64,7 +74,16 @@ function NewWords() {
 
   return (
     <>
-      <QueryState query={query} isEmpty={(data) => data.rows.length === 0} emptyText={t('admin.dictionary.noWords')}>
+      <FilterChips
+        value={status}
+        onChange={setStatus}
+        options={[
+          { value: 'pending', label: t('admin.dictionary.waiting') },
+          { value: 'verified', label: t('admin.dictionary.approvedWords') },
+          { value: 'rejected', label: t('admin.dictionary.rejectedWords') },
+        ]}
+      />
+      <QueryState query={query} isEmpty={(data) => data.rows.length === 0} emptyText={status === 'pending' ? t('admin.dictionary.noWords') : t('admin.dictionary.noneHere')}>
         {(data) => (
           <>
             <DataTable columns={columns} rows={data.rows} rowKey={(row) => row.id} />

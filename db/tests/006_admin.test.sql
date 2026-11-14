@@ -67,7 +67,7 @@ select is(admin_me() ->> 'role', 'sub_admin', 'admin_me gives the role');
 select is(jsonb_array_length(admin_me() -> 'permissions'), 1, 'admin_me lists only what was granted');
 select lives_ok($$ select admin_kin_terms_list('pending') $$, 'Sub-admin reads the word queue');
 select lives_ok($$ select admin_kin_review('30000000-0000-0000-0000-0000000000e1', 'approve') $$, 'Sub-admin approves a word');
-select throws_ok($$ select admin_kin_review('30000000-0000-0000-0000-0000000000e1', 'reject') $$, 'PT409', 'admin_already_decided', 'a word is decided once');
+select throws_ok($$ select admin_kin_review('30000000-0000-0000-0000-0000000000e1', 'approve') $$, 'PT409', 'admin_already_decided', 'the same decision twice says it is already decided');
 select lives_ok($$ select admin_term_report_decide('40000000-0000-0000-0000-0000000000e1', 'accept', 'testwordfixed', null) $$, 'Sub-admin accepts a report with a corrected word');
 select throws_ok($$ select admin_users_list() $$, 'PT403', 'admin_not_allowed', 'dictionary Sub-admin: users refused');
 select throws_ok($$ select admin_user_block('00000000-0000-0000-0000-0000000000e5', 'because of testing') $$, 'PT403', 'admin_not_allowed', 'dictionary Sub-admin: block refused');

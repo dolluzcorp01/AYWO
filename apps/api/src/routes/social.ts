@@ -29,13 +29,13 @@ async function signMessages(list: MessageRow[]): Promise<Record<string, unknown>
 }
 
 interface PostRow {
-  media: { id: string; path: string }[];
+  media: { id: string; path: string; can_remove?: boolean }[];
   [key: string]: unknown;
 }
 
 async function signPosts(list: PostRow[]): Promise<Record<string, unknown>[]> {
   const urls = await signedReadUrls(list.flatMap((p) => p.media.map((m) => m.path)));
-  return list.map((p) => ({ ...p, media: p.media.map((m) => ({ id: m.id, url: urls.get(m.path) ?? null })) }));
+  return list.map((p) => ({ ...p, media: p.media.map((m) => ({ id: m.id, url: urls.get(m.path) ?? null, can_remove: m.can_remove ?? false })) }));
 }
 
 // ===== Live chat =====

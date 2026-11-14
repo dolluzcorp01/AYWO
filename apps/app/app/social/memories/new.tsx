@@ -3,11 +3,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Field, Label, Pills, PrimaryButton, SecondaryButton, SectionTitle } from '@/components/ui';
 import { api, uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
 import { PeoplePicker, PersonSearch, useCircles } from '@/social/AudiencePicker';
+import { moveItem, PhotoStrip } from '@/social/PhotoStrip';
 import { pickPhotos } from '@/social/media';
 import { ActionError, Gate, Note, Page, Row } from '@/social/parts';
 import { useVoiceInput } from '@/voice/useVoiceInput';
@@ -97,13 +98,13 @@ export default function NewMemory() {
       </Gate>
 
       <SecondaryButton label={t('social.memories.addPhotos')} onPress={() => void addPhotos()} />
-      {photos.length > 0 ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
-          {photos.map((photo) => (
-            <Image key={photo.uri} source={{ uri: photo.uri }} style={styles.thumb} accessibilityLabel={t('social.memories.photo')} />
-          ))}
-        </ScrollView>
-      ) : null}
+      {/* Remove a photo picked by mistake, or put them in the order the family should see them. */}
+      <PhotoStrip
+        photos={photos.map((photo, i) => ({ key: String(i), uri: photo.uri }))}
+        onRemove={(key) => setPhotos((now) => now.filter((_, i) => String(i) !== key))}
+        onMove={(from, to) => setPhotos((now) => moveItem(now, from, to))}
+      />
+      {photos.length > 0 ? <Note>{t('social.photos.countOf', { n: photos.length, most: MOST_PHOTOS })}</Note> : null}
 
       <Field label={t('social.memories.words')} value={body} onChangeText={setBody} multiline maxLength={4000} style={styles.words} accessory={<VoiceButton voice={bodyVoice} />} />
       <Field label={t('social.memories.when')} value={date} onChangeText={setDate} placeholder={t('social.datePlaceholder')} autoCapitalize="none" />
@@ -149,8 +150,6 @@ export default function NewMemory() {
 }
 
 const styles = StyleSheet.create({
-  strip: { gap: 8 },
-  thumb: { width: 96, height: 96, borderRadius: 12 },
   words: { minHeight: 110, paddingTop: 14, textAlignVertical: 'top' },
   block: { gap: 10 },
 });

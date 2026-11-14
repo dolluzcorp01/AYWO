@@ -46,11 +46,12 @@ export interface Message {
   media_kind?: 'photo' | 'voice' | null;
   media_ms?: number | null;
   client_id?: string | null;
+  edited?: boolean;
   reply?: { id: string; sender_name: string; body: string | null; media_kind: 'photo' | 'voice' | null } | null;
 }
 
 export interface ChatPage {
-  chat: { id: string; kind: 'group' | 'direct'; name: string | null; members: number };
+  chat: { id: string; kind: 'group' | 'direct'; name: string | null; members: number; can_rename?: boolean };
   messages: Message[];
 }
 
@@ -67,6 +68,7 @@ export interface Comment {
   body: string;
   created_at: string;
   mine: boolean;
+  edited?: boolean;
   reactions: ReactionCount[];
   my_reaction: string | null;
 }
@@ -84,9 +86,10 @@ export interface Post {
   created_at: string;
   is_mine: boolean;
   can_edit: boolean;
-  media: { id: string; url: string | null }[];
-  tags: { person_id: string | null; profile_id: string | null; name: string }[];
-  collaborators: PersonRow[];
+  edited?: boolean;
+  media: { id: string; url: string | null; can_remove?: boolean }[];
+  tags: { person_id: string | null; profile_id: string | null; name: string; can_remove?: boolean }[];
+  collaborators: (PersonRow & { can_remove?: boolean })[];
   reactions: ReactionCount[];
   my_reaction: string | null;
   comment_count: number;
@@ -167,6 +170,7 @@ export interface AlertRow {
   is_mine: boolean;
   recipients: number | null;
   seen: boolean;
+  closed?: boolean;
 }
 
 // ===== SOS =====

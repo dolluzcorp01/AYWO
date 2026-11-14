@@ -82,7 +82,16 @@
       "sendVoice": "Send",
       "playVoice": "Play voice note",
       "pauseVoice": "Pause",
-      "deleteTitle": "Delete this message for everyone?"
+      "deleteTitle": "Delete this message for everyone?",
+      "choicesHint": "Opens reply, edit, delete and report",
+      "editing": "Editing your message",
+      "rename": "Rename",
+      "leave": "Leave chat",
+      "leaveTitle": "Leave this chat?",
+      "leaveMessage": "You will stop getting its messages. Someone in the chat can add you again.",
+      "messageChoices": "Message",
+      "reply": "Reply",
+      "chatName": "Chat name"
     },
     "memories": {
       "title": "Memories",
@@ -101,7 +110,7 @@
       "when": "When did this happen? (optional)",
       "whoIsIn": "Who is in it?",
       "tagSomeone": "Tag someone",
-      "helpers": "Add collaborators",
+      "helpers": "Helpers",
       "helpersNote": "Collaborators can add photos and tags.",
       "share": "Share memory",
       "with": "With {{names}}",
@@ -117,7 +126,13 @@
       "reopen": "Open the thread again",
       "close": "Close the thread",
       "delete": "Delete this memory",
-      "deleteTitle": "Delete this memory? This cannot be undone."
+      "deleteTitle": "Delete this memory? This cannot be undone.",
+      "edit": "Edit",
+      "taggedPeople": "Who is in it",
+      "untag": "Untag {{name}}",
+      "untagMe": "Remove my tag",
+      "removeHelper": "Remove {{name}} as a helper",
+      "editComment": "Edit your comment"
     },
     "groups": {
       "title": "Friends groups",
@@ -141,7 +156,15 @@
       "leaveTitle": "Leave this group?",
       "joinTitle": "Join a group",
       "joinAsk": "Join {{name}}? Members see each other's names and can chat.",
-      "join": "Join"
+      "join": "Join",
+      "rename": "Rename group",
+      "nameLabel": "Group name",
+      "delete": "Delete group",
+      "deleteTitle": "Delete this group?",
+      "deleteMessage": "Everyone in it loses the group and its chat. This cannot be undone.",
+      "removeTitle": "Remove {{name}}?",
+      "removeMessage": "They leave the group. You can add them again later.",
+      "removeYes": "Remove"
     },
     "invites": {
       "title": "Invites",
@@ -206,7 +229,13 @@
       "saveCanva": "Save Canva link",
       "cancel": "Cancel this invite",
       "cancelTitle": "Cancel this invite?",
-      "cancelBody": "Everyone invited will be told."
+      "cancelBody": "Everyone invited will be told.",
+      "editDetails": "Edit details",
+      "editTellsEveryone": "Everyone invited gets a note that the details changed.",
+      "tapToUninvite": "Tap to remove",
+      "uninvite": "Remove",
+      "uninviteTitle": "Remove {{name}} from this invite?",
+      "uninviteMessage": "They will no longer see it. You can invite them again."
     },
     "pop": {
       "new": "New Pop Party",
@@ -255,7 +284,12 @@
       "confirmBody": "Everyone you picked is told now, and may get a text.",
       "sentTo_one": "Sent to {{count}} person, {{when}}",
       "sentTo_other": "Sent to {{count}} people, {{when}}",
-      "from": "From {{name}}, {{when}}"
+      "from": "From {{name}}, {{when}}",
+      "sorted": "Sorted",
+      "markSorted": "Mark as sorted",
+      "reopen": "Not sorted yet",
+      "deleteTitle": "Delete this alert?",
+      "deleteMessage": "It goes from everyone's list. Use 'Mark as sorted' instead if they should still see it."
     },
     "sos": {
       "mark": "SOS",
@@ -337,7 +371,19 @@
       "blood": "Choose the blood group.",
       "message": "Write the message.",
       "canva": "Fix the Canva link, or leave it empty."
-    }
+    },
+    "photos": {
+      "photoN": "Photo {{n}}",
+      "remove": "Remove photo {{n}}",
+      "moveLeft": "Move photo {{n}} left",
+      "moveRight": "Move photo {{n}} right",
+      "countOf": "{{n}} of {{most}} photos. Use ✕ to remove one, ‹ › to change the order.",
+      "removeTitle": "Remove this photo?",
+      "removeMessage": "It will be taken off this memory for everyone.",
+      "removeYes": "Remove photo"
+    },
+    "edited": "edited",
+    "edit": "Edit"
   },
   "errors": {
     "not_allowed": "You do not have permission for this.",
@@ -367,6 +413,7 @@
     "sos_contacts_full": "You already have the most SOS contacts allowed.",
     "sos_no_contacts": "Please choose at least one SOS contact first.",
     "sos_already_active": "Your SOS is already on.",
-    "already_exists": "That is already on the list."
+    "already_exists": "That is already on the list.",
+    "last_photo": "A memory needs a photo or some words. Write something before removing the last photo."
   }
 }
