@@ -22,6 +22,7 @@ import { Card, ErrorText, PrimaryButton } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
 import { canComment, canSeeHistory, canShare } from '@/tree/roles';
 import { useAskForContacts, usePersonCard } from '@/tree/useCard';
+import { FamilyLinks } from '@/tree/FamilyLinks';
 import { useTreeView } from '@/tree/useTreeView';
 import type { TreeMode } from '@/tree/useTreeView';
 import { colors, fonts, gradients, minTapSize } from '@/theme/tokens';
@@ -233,6 +234,8 @@ export default function PersonCard() {
               </View>
             </>
           ) : null}
+
+          {canSeeHistory(role) ? <FamilyLinks data={data} personId={personId} treeId={treeId} onOpen={openPerson} /> : null}
 
           <View style={styles.toolRow}>
             {actionsRow.map((action) => (

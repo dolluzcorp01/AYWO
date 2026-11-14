@@ -15,5 +15,10 @@ export const treeEditRpc: RpcList = {
   // account_delete is not here on purpose: only the account_deletions job runs it, 30 days after
   // POST /account/delete booked it (0014), so no call can skip the grace period.
   union_set_date: { args: ['p_union', 'p_version', 'p_date'] },
+  // PR 23: fix a family link without deleting anyone.
+  link_set_kind: { args: ['p_parent', 'p_child', 'p_kind'] },
+  link_remove: { args: ['p_parent', 'p_child'] },
+  union_set_status: { args: ['p_union', 'p_status'] },
+  union_remove: { args: ['p_union'] },
   tree_add_me: { args: ['p_tree', 'p_anchor', 'p_relation', 'p_name', 'p_gender'] },
 };
