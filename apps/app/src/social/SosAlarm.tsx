@@ -15,15 +15,24 @@ export function useSosAlarm(ringing: boolean): void {
       .catch(() => undefined)
       .then(() => {
         if (!live) return;
-        player.loop = true;
-        player.seekTo(0).catch(() => undefined);
-        player.play();
+        try {
+          player.loop = true;
+          player.seekTo(0).catch(() => undefined);
+          player.play();
+        } catch {
+          // No sound is possible; the vibration still runs.
+        }
       });
     Vibration.vibrate(PATTERN, true);
     return () => {
       live = false;
-      player.pause();
+      // Vibration first: when the screen closes the player may already be gone, and pausing it then fails.
       Vibration.cancel();
+      try {
+        player.pause();
+      } catch {
+        // Already released with the screen: there is nothing left to stop.
+      }
     };
   }, [ringing, player]);
 }

@@ -124,5 +124,5 @@ const styles = StyleSheet.create({
   switches: { gap: 8 },
   row: { flexDirection: 'row', gap: 10 },
   text: { color: colors.muted, fontFamily: fonts.medium, fontSize: 14, lineHeight: 20 },
-  good: { color: '#1F7A4D', fontFamily: fonts.bold, fontSize: 14 },
+  good: { color: colors.good, fontFamily: fonts.bold, fontSize: 14 },
 });

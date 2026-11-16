@@ -32,6 +32,14 @@ export const colors = {
   scrim: 'rgba(29,26,58,.4)',
   barEdge: '#EEEAE3',
   line: '#D9D3EA',
+  /** Quiet green for "that worked" text. */
+  good: '#1F7A4D',
+  /** The filling part of the red SOS bar while it is held. */
+  alertDeep: '#B3161A',
+  /** Warm panels: a celebration banner, and the "on this day" memory on Home. */
+  celebrationTint: '#FFF1E6',
+  warmTint: '#FFF6EE',
+  warmBorder: '#F6DCC5',
 };
 
 export const gradients = {

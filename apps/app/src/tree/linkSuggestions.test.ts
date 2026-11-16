@@ -10,10 +10,10 @@ const links = [
 ];
 
 describe('linkSuggestions', () => {
-  it("on Sathana's page: is Ezhilarasi also her parent", () => {
+  it("on Divya's page: is Lakshmi also her parent", () => {
     expect(linkSuggestions({ nodes, unions, links } as never, 'sathana').map((s) => s.key)).toEqual(['ezhil:sathana']);
   });
-  it("on Ezhilarasi's page: is she also Sathana's parent", () => {
+  it("on Lakshmi's page: is she also Divya's parent", () => {
     expect(linkSuggestions({ nodes, unions, links } as never, 'ezhil').map((s) => s.key)).toEqual(['ezhil:sathana']);
   });
   it('nothing to offer once everyone is linked, or for someone with no partner', () => {

@@ -24,7 +24,8 @@
     "verify": "Verify",
     "resend": "Send the code again",
     "resendIn": "Resend code in {{seconds}} seconds",
-    "wrongCode": "That code didn't work. Try again."
+    "wrongCode": "That code didn't work. Try again.",
+    "changeNumber": "Wrong number? Change it"
   },
   "home": {
     "noTrees": "No family tree yet.",
@@ -41,13 +42,14 @@
     "otherTrees": "Other family trees",
     "peopleCount_one": "{{count}} person",
     "peopleCount_other": "{{count}} people",
+    "generationCount_one": "{{count}} generation",
+    "generationCount_other": "{{count}} generations",
     "anotherTree": "+ Start or bring in another tree",
     "morning": "Good morning",
     "afternoon": "Good afternoon",
     "evening": "Good evening",
     "hi": "Hi {{name}}",
     "yourFamily": "Your family",
-    "peopleAndGenerations": "{{people}} people · {{generations}} generations",
     "andMore_one": "{{when}} · and {{count}} more",
     "andMore_other": "{{when}} · and {{count}} more",
     "latestMemory": "Latest memory",
@@ -75,7 +77,8 @@
     "invite": "Invite",
     "comment": "Comment",
     "history": "History",
-    "edit": "Edit"
+    "edit": "Edit",
+    "openFailed": "That didn't open on this device. Check that the app for it is installed."
   },
   "word": {
     "title": "What do you call {{name}}?",
@@ -166,18 +169,82 @@
   },
   "nav": {
     "together": "Together",
-    "you": "You"
+    "you": "You",
+    "adminPanel": "Admin panel",
+    "backToApp": "Back to AYWO",
+    "signOutTitle": "Sign out?",
+    "signOutMessage": "You can sign in again any time with your phone number."
+  },
+  "languagePick": {
+    "note": "AYWO's screens are in English and Tamil for now. In any other language, family words such as uncle and aunt show in that language, and the screens stay in English until that language is ready.",
+    "full": "Ready",
+    "wordsOnly": "Family words only",
+    "chosenNote": "{{language}} is chosen. Family words such as uncle and aunt will show in {{language}}. The screens stay in English until {{language}} is ready."
   },
   "common": {
     "cancel": "Cancel",
     "save": "Save",
     "continue": "Continue",
-    "done": "Done"
+    "done": "Done",
+    "close": "Close"
+  },
+  "phoneField": {
+    "placeholder": "Mobile number",
+    "country": "Country code {{code}}. Tap to change",
+    "chooseCountry": "Choose country",
+    "search": "Search country or code",
+    "fromContacts": "Choose from contacts",
+    "contactsDenied": "AYWO can't open your contacts. Allow Contacts for AYWO in your phone's settings, or type the number.",
+    "contactsFailed": "Your contacts didn't open. Please type the number.",
+    "contactNoNumber": "That contact has no phone number. Please type it."
+  },
+  "guide": {
+    "intro": "Let's add your close family",
+    "stepOf": "Step {{n}} of 4",
+    "cardTitle": "Add your family",
+    "cardProgress": "{{done}} of 4 added",
+    "mother": "Mother",
+    "father": "Father",
+    "partner": "Partner",
+    "child": "Child",
+    "steps": {
+      "mother": {
+        "title": "Who is your mother?",
+        "help": "Add your mother's name. A year of birth is enough.",
+        "add": "Add my mother"
+      },
+      "father": {
+        "title": "Who is your father?",
+        "help": "Add your father's name. A year of birth is enough.",
+        "add": "Add my father"
+      },
+      "partner": {
+        "title": "Are you married?",
+        "help": "Add your husband or wife.",
+        "add": "Add my husband or wife"
+      },
+      "child": {
+        "title": "Do you have children?",
+        "help": "Add your first child. You can add more later.",
+        "add": "Add a child"
+      }
+    },
+    "skip": "Skip",
+    "later": "I'll do this later",
+    "doneTitle": "Your family is growing",
+    "doneBody_one": "{{count}} person in your tree. Share it so family can add more.",
+    "doneBody_other": "{{count}} people in your tree. Share it so family can add more.",
+    "openTree": "Open the tree",
+    "notInTree": "You don't have a card of your own in this tree yet, so there is no close family to add from here. Open the tree to look around."
   },
   "errors": {
     "account_blocked": "This account has been blocked. Please contact AYWO support.",
     "already_decided": "Someone has already decided this.",
     "already_exists": "That is already on the list.",
+    "already_linked": "They are already linked like that.",
+    "same_person": "Pick someone else. A person cannot be linked to themselves.",
+    "different_parents": "They have different parents in the tree. Link each to the right parents instead.",
+    "bad_also_child": "That brother or sister cannot be linked to this parent. Check their parents first.",
     "already_imported": "This file has already been brought in. Look for the family on Home.",
     "already_reverted": "That has already been undone.",
     "already_the_creator": "This person already runs this tree as its Creator.",
@@ -222,10 +289,11 @@
     "too_many_requests": "Too many tries. Please wait a little and try again.",
     "tree_not_found": "We couldn't open this tree.",
     "upload_failed": "The file didn't upload. Check your connection and try again.",
-    "family_loop": "That would make someone their own ancestor, so it can't be saved.",
+    "family_loop": "That would mix up the generations (like a grandparent as a brother), so it can't be saved.",
     "version_conflict": "Someone else changed this just now. Load the latest and make your change again.",
     "already_in_tree": "You already have a card in this tree.",
     "plan_cancel_first": "Your AYWO Plus is still running. Cancel it first, or confirm that you understand it will go on being charged.",
+    "offline": "You're offline. This needs the internet, so try again when you're connected.",
     "already_plus": "You already have AYWO Plus.",
     "wrong_payment_region": "This payment method is not available for your phone number's country.",
     "payment_provider_error": "The payment provider didn't answer. Please try again in a minute.",
@@ -296,6 +364,7 @@
     "sos_contacts_full": "You already have the most SOS contacts allowed.",
     "sos_no_contacts": "Please choose at least one SOS contact first.",
     "sos_already_active": "Your SOS is already on.",
+    "last_photo": "A memory needs a photo or some words. Write something before removing the last photo.",
     "coupon_invalid": "That code isn't valid. Check the spelling.",
     "coupon_expired": "That code has ended or hasn't started yet.",
     "coupon_not_for_product": "That code doesn't work for this item.",
@@ -308,7 +377,9 @@
     "referral_already": "You've already used an invite code.",
     "chat_blocked": "You can't send messages in this chat.",
     "email_missing": "Add an email address first.",
-    "email_code_wrong": "That code isn't right, or it has expired. Ask for a new one."
+    "email_code_wrong": "That code isn't right, or it has expired. Ask for a new one.",
+    "consent_needed": "Tick \"I agree\" to save health details on your card.",
+    "consent_outdated": "The notice was updated. Read the new one and tick \"I agree\" again."
   },
   "language": {
     "title": "Choose your language",
@@ -394,7 +465,6 @@
     "invitedBy": "{{name}} invited you to {{tree}}",
     "invited": "You're invited to {{tree}}",
     "more": "+{{count}}",
-    "stats": "{{people}} people · {{generations}} generations",
     "areYouIn": "Are you in this family?",
     "explain": "Sign in to see the family from your own place.",
     "signIn": "Sign in to see my family",
@@ -435,6 +505,8 @@
     "step": "Step",
     "foster": "Foster",
     "someoneNew": "Someone new",
+    "alsoParentOf": "Also the parent of",
+    "alsoParentHelp": "Ticked brothers and sisters get this mother or father too. Untick anyone who has a different mother or father.",
     "alreadyInTree": "Someone already in the tree"
   },
   "details": {
@@ -461,15 +533,16 @@
     "born": "Born (year is fine)",
     "bornPlaceholder": "e.g. 1968",
     "died": "Passed away (year is fine)",
-    "badDate": "Type a year like 1968, or a full date like 21/03/1968.",
+    "badDate": "Type a year like 1968, a month like 03/1968, or a full date like 21/03/1968.",
     "childNumber": "Child number",
     "notSet": "Not set",
     "earlier": "Earlier in the family",
     "later": "Later in the family",
     "mobile": "Mobile (optional)",
-    "mobilePlaceholder": "+91",
+    "mobilePlaceholder": "Mobile number",
+    "sameAsMobile": "WhatsApp is on the same number",
     "contactHidden": "Saved. Type here to replace it.",
-    "badPhone": "Check the number. Start with the country code, like +91.",
+    "badPhone": "This mobile number doesn't look right. Check the digits and the country.",
     "badEmail": "That email address doesn't look right.",
     "more": "+ WhatsApp, email, places, notes",
     "birthPlace": "Birth place",
@@ -478,12 +551,16 @@
     "addToTree": "Add to the tree",
     "loadLatest": "Load the latest",
     "sentForApproval": "Thank you. This has gone to the tree's Creator to approve.",
-    "addRequested": "Sent to the tree's Creator to approve.",
+    "addRequested": "Sent to the tree's Creator to approve. Phone numbers and a photo can be added once the person is in the tree.",
     "partlySaved": "Added, but the photo or contacts didn't save. Try again from their card.",
     "remove": "Remove from the tree",
     "removeTitle": "Remove {{name}}?",
     "removeHelp": "You can bring them back from History.",
-    "removeConfirm": "Yes, remove"
+    "removeConfirm": "Yes, remove",
+    "weddingDate": "Wedding date (optional)",
+    "weddingWith": "Wedding date with {{name}}",
+    "weddingPlaceholder": "e.g. 21/03/1995",
+    "badWeddingDate": "Type the full wedding date, like 21/03/1995. It can't be in the future."
   },
   "share": {
     "action": "Share",
@@ -513,9 +590,12 @@
     "month": "In a month",
     "year": "In a year",
     "message": "Join our family tree, {{tree}}, on AYWO: {{url}}",
+    "messageFrom": "{{sharer}} invited you to our family tree, {{tree}}, on AYWO. See the family and where you fit: {{url}}",
+    "messageFor": "{{sharer}} added you to our family tree, {{tree}}, as their {{relation}}. See the family and where you fit: {{url}}",
     "whatsapp": "Send on WhatsApp",
     "copy": "Copy link",
     "copied": "Link copied",
+    "copyFailed": "The link couldn't be copied here. Try Send on WhatsApp instead.",
     "moreWays": "More ways to share",
     "haveAccess": "Who has access",
     "anyoneWithLink": "Anyone with the link",
@@ -531,6 +611,12 @@
     "all": "All",
     "empty": "Nothing here yet.",
     "emptyNeeds": "Nothing needs you right now.",
+    "about": {
+      "needs_you": "Requests waiting for your answer: someone wants to add or change a relative, see contact numbers, or help edit. Accept or decline here.",
+      "changes": "Every change made to your family tree, newest first: who added, edited or removed someone.",
+      "access": "Who asked to see contact numbers or to help edit the tree, and what was decided.",
+      "all": "Everything above in one list."
+    },
     "someone": "Someone",
     "foundBy": "Found by AYWO",
     "allow": "Allow",
@@ -540,6 +626,9 @@
     "compare": "Compare",
     "acceptEdited": "Accept with this name",
     "wrongMatch": "Wrong match? Undo",
+    "wrongMatchTitle": "Undo this match?",
+    "wrongMatchHelp": "The person who joined will no longer be linked to this card in the tree, and will lose what the card let them see. They can be matched again later.",
+    "wrongMatchConfirm": "Yes, undo the match",
     "state": {
       "approved": "Approved.",
       "applied": "Done.",
@@ -595,6 +684,8 @@
     "empty": "No changes yet.",
     "undo": "Undo",
     "undoAll": "Undo all",
+    "undoTitle": "Undo this change?",
+    "undoHelp": "The tree goes back to how it was before this change. You can see it in History afterwards.",
     "undone": "Undone",
     "promise": "Undo restores exactly what was there. Nothing is ever lost.",
     "aywo": "AYWO",
@@ -705,16 +796,21 @@
     "exportButton": "Download my data",
     "signOut": "Sign out",
     "deleteTitle": "Delete my account",
-    "deleteHelp": "Your account goes for good. Your trees pass to a successor or Co-creator.",
+    "deleteHelp": "We delete your account 30 days after you ask. Sign in during that time to keep it. After that it goes for good, and your trees pass to a successor or Co-creator.",
     "deleteButton": "Delete my account",
     "deleteWord": "delete",
-    "deleteConfirmTitle": "This can't be undone",
-    "deleteConfirmHelp": "To confirm, type the word: {{word}}",
+    "deleteConfirmTitle": "Delete in 30 days?",
+    "deleteConfirmHelp": "We sign you out now and delete your account in 30 days. Sign in before then to keep it. To confirm, type the word: {{word}}",
     "planWarningTitle": "Your AYWO Plus is still running",
     "planWarningStore": "Deleting doesn't stop payments. Cancel in App Store or Google Play first.",
     "planWarningWeb": "Deleting doesn't stop payments. Cancel on the Family plan screen first.",
     "planWarningGo": "Go to my plan",
-    "planWarningDelete": "I understand. Delete anyway"
+    "planWarningDelete": "I understand. Delete anyway",
+    "deleteBooked": "Your account will be deleted on {{date}}",
+    "deleteBookedHelp": "You asked to delete it. Changed your mind? Keep it with one tap.",
+    "keepAccount": "Keep my account",
+    "simpleMode": "Simple mode for elders",
+    "simpleModeHelp": "A few big buttons on Home, larger text and bigger buttons everywhere."
   },
   "time": {
     "justNow": "Just now",
@@ -757,7 +853,7 @@
       "removalTitle": "Asking for something to be removed",
       "removalBody": "Anyone added to a tree without agreeing can ask for removal through the takedown form, with or without an account. AYWO Admins review these requests and may remove a person from a tree.",
       "endingTitle": "Leaving, and being blocked",
-      "endingBody": "You can delete your account in the app at any time. A tree you created passes to its successor or a Co-creator, and with neither it is closed. We may block an account that breaks these terms.",
+      "endingBody": "You can delete your account in the app at any time. It is deleted 30 days later, unless you sign in and keep it. A tree you created passes to its successor or a Co-creator, and with neither it is closed. We may block an account that breaks these terms.",
       "liabilityTitle": "Limits",
       "liabilityBody": "AYWO is offered as it is. Family details come from families, and relationship words may be wrong, so please don't rely on them for legal, medical or inheritance matters. The SOS and alert features depend on your phone and network: they do not replace emergency services. To the extent the law allows, we are not liable for indirect loss.",
       "changesTitle": "Changes",
@@ -772,7 +868,7 @@
       "whoTitle": "Who looks after your data",
       "whoBody": "{{company}}, CIN {{cin}}, registered office {{address}}, runs AYWO and decides how your data is used. Privacy contact: {{email}}. Grievance Officer: {{grievanceOfficer}}, {{grievanceEmail}}.",
       "collectTitle": "What we hold",
-      "collectBody": "Your mobile number, name, photo, language and settings. What you and your relatives add to a family tree: names, dates, places, photos, notes and relationships. Your messages, memories, invitations and comments in the app. Whether you pay for AYWO Plus, though never your card or bank details. A delivery address, if you order something printed. A device token, so we can send notifications. Basic technical records, such as IP address, to keep the service safe.",
+      "collectBody": "Your mobile number, name, photo, language and settings. What you and your relatives add to a family tree: names, dates, places, photos, notes and relationships. Your messages, memories, invitations and comments in the app. Whether you pay for AYWO Plus, though never your card or bank details. A delivery address, if you order something printed. A device token, so we can send notifications. Basic technical records, such as IP address, to keep the service safe. A random number made on your device, with its type (Android, iPhone or web) and language, to count how many people reach each step of getting started, such as signing in or starting a tree. It is not linked to your name, number or account. If you fill in the emergency card: the health details you type (blood group, allergies, health conditions, medicines), kept only with your separate agreement, shown only to the people an SOS you send reaches, and deleted when you withdraw.",
       "contactsTitle": "Contact details stay private",
       "contactsBody": "Your login number is used for signing in and for finding you in a tree someone has already saved you in. We never show it to anyone. Phone numbers and emails on a person's card are shown only to those the tree's rules allow, and they never appear in history, logs, notifications or lists.",
       "shareTitle": "Who sees your family's details",
@@ -782,15 +878,15 @@
       "locationTitle": "Location, photos and your phone's contacts",
       "locationBody": "AYWO reads your location only while you run an SOS, and shares it only with the people that SOS goes to, until it ends. It reads your photos and contacts only when you choose one to add.",
       "keepTitle": "How long we keep it",
-      "keepBody": "For as long as your account or the family tree exists. When you delete your account, your name, number, photo and your own contact details go. Entries you added to a tree stay with that tree, because they belong to the family's history. Payment records are kept as long as the law requires.",
+      "keepBody": "For as long as your account or the family tree exists. When you delete your account, we wait 30 days in case you change your mind. Then your name, number, photo and your own contact details go. Entries you added to a tree stay with that tree, because they belong to the family's history. Payment records are kept as long as the law requires.",
       "rightsTitle": "Your rights",
-      "rightsBody": "You can see and correct your details, download a copy of your data, delete your account, withdraw consent and name someone to act for you. Complain to our Grievance Officer, {{grievanceOfficer}}, at {{grievanceEmail}}. Under India's Digital Personal Data Protection Act, 2023, you can also go to the Data Protection Board of India. Someone who is not on AYWO can use the takedown form.",
+      "rightsBody": "You can see and correct your details, download a copy of your data, delete your account, withdraw consent and name someone to act for you. See each consent you gave, and withdraw it, on Me, Privacy and account, My consents. Complain to our Grievance Officer, {{grievanceOfficer}}, at {{grievanceEmail}}. Under India's Digital Personal Data Protection Act, 2023, you can also go to the Data Protection Board of India. Someone who is not on AYWO can use the takedown form.",
       "childrenTitle": "Children",
       "childrenBody": "AYWO isn't meant for anyone under 18 to use without a parent or guardian's consent. Families may record children in a tree. A parent or guardian can ask us to change or remove a child's details.",
       "changesTitle": "Changes",
       "changesBody": "When this policy changes in a way that matters, we will tell you in the app. The version above shows which one you are reading.",
       "cookiesTitle": "Cookies and browser storage",
-      "cookiesBody": "The website keeps your sign-in and settings in your browser. We use no advertising or tracking cookies. When you pay on the website, Razorpay or Stripe may set their own cookies on their payment pages.",
+      "cookiesBody": "The website keeps your sign-in and settings in your browser, and a copy of your family tree without anyone's phone numbers, so it opens offline. Signing out removes the copy. We use no advertising cookies and nothing that follows you to other websites. When you pay on the website, Razorpay or Stripe may set their own cookies on their payment pages.",
       "securityTitle": "Keeping it safe",
       "securityBody": "Data travels encrypted, and access inside the app follows each tree's rules. Staff access is limited by role and recorded. No system is perfect: if a breach could affect you, we will tell you and the authorities as the law requires."
     },
@@ -908,10 +1004,123 @@
       "account": {
         "title": "Your account",
         "deleteQ": "How do I delete my account?",
-        "deleteA": "Open your profile, then Privacy and account, then Delete. It happens immediately, so download a copy first if you want one, and cancel any subscription. Your name, number and photo are removed. Entries you added to a tree stay with that tree.",
+        "deleteA": "Open your profile, then Privacy and account, then Delete. You are signed out, and the account is deleted 30 days later. Sign in before then and tap Keep my account if you change your mind. Download a copy first if you want one, and cancel any subscription. Your name, number and photo are removed. Entries you added to a tree stay with that tree.",
         "helpQ": "How do I get help?",
         "helpA": "Write to {{email}} or call {{phone}}. Hours: {{supportHours}}."
       }
+    }
+  },
+  "calendar": {
+    "title": "Family calendar",
+    "short": "Calendar",
+    "subtitle": "Birthdays, anniversaries and remembrance days",
+    "seeAll": "Calendar",
+    "today": "Today",
+    "backToToday": "Back to today",
+    "chooseMonth": "Choose a month and year",
+    "earlierYears": "Earlier years",
+    "laterYears": "Later years",
+    "thisMonth": "In {{month}}",
+    "addTitle": "Add to the calendar",
+    "planOnDay": "+ Plan an event on this day",
+    "planEvent": "+ Plan an event",
+    "addFamilyDate": "+ Add a birthday, wedding day or remembrance day",
+    "addHelp": "Birthdays, wedding days and remembrance days come from the family tree: pick the person and fill in the date.",
+    "whoseDate": "Whose date?",
+    "previous": "Previous month",
+    "next": "Next month",
+    "dayCount_one": "{{count}} family date",
+    "dayCount_other": "{{count}} family dates",
+    "kinds": {
+      "birthday": "Birthday",
+      "anniversary": "Anniversary",
+      "remembrance": "Remembrance",
+      "event": "Invitation"
+    },
+    "yourBirthday": "Your birthday",
+    "birthdayOf": "{{name}}'s birthday",
+    "turns_one": "Turns {{count}}",
+    "turns_other": "Turns {{count}}",
+    "married_one": "{{count}} year married",
+    "married_other": "{{count}} years married",
+    "remembering": "Remembering {{name}}",
+    "yearsSince_one": "{{count}} year since they passed",
+    "yearsSince_other": "{{count}} years since they passed",
+    "nothingMonth": "No family dates this month. Add birthdays, wedding dates and the day someone passed in the family tree, and they show here.",
+    "nothingDay": "Nothing on this day."
+  },
+  "elder": {
+    "callTitle": "Call family",
+    "callSubtitle": "Tap a big button to call",
+    "callEmpty": "No phone numbers in your family tree yet. Add them on each person's card and they show here.",
+    "openTree": "Open the family tree",
+    "howToCall": "See how to call",
+    "call": "Call",
+    "callName": "Call {{name}}",
+    "whatsappName": "WhatsApp {{name}}",
+    "myFamily": "My family",
+    "photos": "Family photos",
+    "dates": "Family dates",
+    "showEverything": "Show everything",
+    "turnOffNote": "To go back to the full Home, open Me and turn off Simple mode."
+  },
+  "offline": {
+    "title": "You're offline",
+    "savedAt": "Showing the copy saved at {{when}}",
+    "savedCopy": "Showing the copy saved on this device",
+    "tryNow": "Try now",
+    "checking": "Checking...",
+    "notSaved": "You're offline, and this page isn't saved on this device yet. It opens when you're back online."
+  },
+  "voice": {
+    "speak": "Speak instead of typing",
+    "stop": "Stop listening",
+    "denied": "Allow the microphone to speak instead of typing. You can turn it on in your phone or browser settings.",
+    "noSpeech": "Didn't hear anything. Tap the mic and speak again.",
+    "notAvailable": "Speaking in this language isn't available on this device yet. Please type instead.",
+    "network": "Speaking needs the internet on this device. Please type, or try again when you're connected.",
+    "failed": "The mic didn't work. Please type instead."
+  },
+  "links": {
+    "title": "Family links",
+    "parents": "Parents",
+    "partners": "Partners",
+    "children": "Children",
+    "siblings": "Brothers and sisters",
+    "addParent": "+ Add parent",
+    "addPartner": "+ Add partner",
+    "addChild": "+ Add child",
+    "addSibling": "+ Add",
+    "noParents": "No parents added for {{name}} yet.",
+    "noPartners": "No partner added for {{name}} yet.",
+    "noChildren": "No children added for {{name}} yet.",
+    "siblingsHelp": "Brothers and sisters come from sharing the same parents. Fix a parent above to fix them.",
+    "sameParents": "Same parents",
+    "halfThrough": "Through {{name}} only",
+    "change": "Change",
+    "done": "Done",
+    "remove": "Remove",
+    "removeTitle": "Remove this link?",
+    "removeParentMessage": "{{parent}} will no longer be shown as {{child}}'s parent. Both stay in the tree.",
+    "removePartnerMessage": "{{a}} and {{b}} will no longer be shown as partners. Both stay in the tree, and their children keep both parents.",
+    "suggest": "Is {{parent}} also {{child}}'s parent?",
+    "suggestYes": "Yes, link",
+    "sentForApproval": "Sent to the tree's Creator to approve.",
+    "notAllowed": "You can't change or remove this link yourself. Ask the tree's Creator to do it.",
+    "kind": {
+      "birth": "By birth",
+      "adopted": "Adopted",
+      "step": "Step",
+      "foster": "Foster",
+      "unknown": "Not sure"
+    },
+    "status": {
+      "current": "Married",
+      "divorced": "Divorced",
+      "separated": "Separated",
+      "widowed": "Widowed",
+      "annulled": "Annulled",
+      "unknown": "Partner"
     }
   },
   "pay": {
@@ -1003,7 +1212,23 @@
         "razorpay": "Billed by Razorpay",
         "stripe": "Billed by Stripe"
       },
-      "unnamed": "Family member"
+      "unnamed": "Family member",
+      "cancelAskedTrial": "Ending your free months. This page updates by itself in a moment.",
+      "cancelDone": "Cancelled. You will not be charged again. Plus stays on for your family until {{date}}.",
+      "cancelDoneTrial": "Your free months have ended and nothing was charged. Plus is now off for the family."
+    },
+    "pendingWhy": "We are still waiting to hear from the payment service. So that you cannot pay twice by mistake, buying is paused on this phone or browser for 30 minutes. You can leave this page; it carries on checking when you come back.",
+    "checkAgain": "Check again now",
+    "pendingHelp": "Paid, and still nothing? Ask for help",
+    "bonus": {
+      "title": "You have AYWO Plus, free until {{date}}",
+      "short": "Plus is on · free until {{date}}",
+      "why": "These are free Plus days from AYWO, for example for inviting family or as a gift from our support team.",
+      "noBuy": "You cannot buy a plan while your free days are running, so you never pay for days you already have. Come back after {{date}} to choose a plan.",
+      "noFamily": "Free days are for you alone. A family plan for 6 people can be bought after {{date}}."
+    },
+    "push": {
+      "sosChannel": "Family SOS alarms"
     }
   },
   "admin": {
@@ -1020,14 +1245,21 @@
       "save": "Save",
       "previous": "Previous",
       "next": "Next",
-      "pageOf": "Page {{page}} of {{pages}}, {{total}} in all"
+      "pageOf": "Page {{page}} of {{pages}}, {{total}} in all",
+      "unsentText": "You have text that isn't sent yet. Closing now throws it away.",
+      "keepWriting": "Keep writing",
+      "discardClose": "Throw it away and close",
+      "needsText_one": "Still needed: {{field}}, at least {{count}} character.",
+      "needsText_other": "Still needed: {{field}}, at least {{count}} characters.",
+      "moreThan": "{{max}}+"
     },
     "gate": {
-      "webOnly": "The staff panel opens only on the web.",
-      "signIn": "Sign in to open the staff panel.",
+      "webOnly": "The admin panel opens only on the web.",
+      "signIn": "Sign in to open the admin panel.",
       "signInButton": "Sign in",
       "notStaff": "This area is only for AYWO staff.",
-      "goHome": "Go to Home"
+      "goHome": "Go to Home",
+      "checkFailed": "We couldn't check your staff sign-in just now, probably a connection problem. This page and anything you typed are kept."
     },
     "roles": {
       "aywo_admin": "AYWO Admin",
@@ -1162,6 +1394,11 @@
       "newWords": "New words",
       "reports": "Wrong-word reports",
       "noWords": "No new words are waiting.",
+      "waiting": "Waiting",
+      "approvedWords": "Approved",
+      "rejectedWords": "Rejected",
+      "takeBack": "Take back",
+      "noneHere": "No words here.",
       "noReports": "No open reports.",
       "word": "Word",
       "relationship": "Relationship",
@@ -1183,7 +1420,9 @@
       "correctedWord": "Corrected word, in Latin letters",
       "correctedNative": "Corrected word, in its own script",
       "dismissTitle": "Dismiss this report about \"{{word}}\"?",
-      "dismissText": "The word stays as it is."
+      "dismissText": "The word stays as it is.",
+      "takeBackTitle": "Take \"{{word}}\" back out of the dictionary?",
+      "takeBackText": "It was approved, and people see it now. Taking it back removes it from the dictionary for everyone. You can approve it again from the Rejected list."
     },
     "takedowns": {
       "title": "Takedown requests",
@@ -1289,7 +1528,25 @@
       "roleName": "Role name",
       "deleteRole": "Delete role",
       "roleChangesAll_one": "{{count}} person has this role. Changes apply to them at once.",
-      "roleChangesAll_other": "{{count}} people have this role. Changes apply to them at once."
+      "roleChangesAll_other": "{{count}} people have this role. Changes apply to them at once.",
+      "cancelInviteTitle": "Cancel the invite for {{phone}}?",
+      "cancelInviteText": "This number will not become staff when it signs in. You can add it again later.",
+      "keepInvite": "Keep the invite",
+      "needPhone": "Type the full phone number with its country code.",
+      "needPermission": "Tick at least one permission, or choose a team role.",
+      "promoteTitle": "Make {{name}} an AYWO Admin?",
+      "promoteText": "{{name}} will be able to do everything in this panel: add and remove staff and other AYWO Admins, change anyone's permissions, read the audit log, block accounts, refund orders, change app settings, and send notices to every member.",
+      "promoteWarn": "Give this only to someone who runs AYWO with you. Another AYWO Admin can take it away later.",
+      "promoteBack": "No, go back",
+      "promoteConfirm": "Yes, make AYWO Admin",
+      "needRoleName": "Type a role name of at least 2 letters.",
+      "needRolePermission": "Tick at least one permission for this role.",
+      "deleteRoleTitle": "Delete the role {{name}}?",
+      "deleteRoleText": "Nobody has this role now. Once deleted it can't be brought back; you would have to make it again.",
+      "deleteRoleBlocked": "This role can be deleted only when nobody has it. Move its people to another role first.",
+      "roleConfirmTitle": "Change what {{name}} can do?",
+      "roleGains": "They gain: {{list}}",
+      "roleLoses": "They lose: {{list}}"
     },
     "audit": {
       "title": "Audit log",
@@ -1301,6 +1558,19 @@
       "server": "Server script",
       "action": "Action",
       "target": "On what",
+      "types": {
+        "kin_term": "Word",
+        "user": "Account",
+        "tree": "Tree",
+        "campaign": "Offer",
+        "broadcast": "System notice",
+        "config": "App setting",
+        "invite": "Invite",
+        "order": "Order",
+        "role": "Staff role",
+        "work_item": "Work item",
+        "none": "-"
+      },
       "reason": "Reason",
       "details": "Details",
       "actions": {
@@ -1379,7 +1649,9 @@
       "keyLabel": "Setup key",
       "openApp": "Open in authenticator app",
       "step2": "2. Type the 6-digit code the app shows:",
-      "turnOn": "Turn on"
+      "turnOn": "Turn on",
+      "againText": "Your 12-hour staff sign-in has ended. Type a new 6-digit code from your authenticator app to carry on. The page underneath, and anything you typed on it, is still there.",
+      "needsCode": "Type all 6 digits of the code."
     },
     "work": {
       "title": "Work queue",
@@ -1428,7 +1700,9 @@
       "note": "Internal note",
       "noteHelp": "Staff only. The person never sees this.",
       "addNote": "Add note",
-      "close": "Close"
+      "close": "Close",
+      "noteFirst": "Add your note, or clear it, before leaving this item.",
+      "needNote": "Write a note to add it."
     },
     "reports": {
       "title": "Abuse reports",
@@ -1487,7 +1761,8 @@
       "replyHelp": "The person gets a notification and reads it in the app.",
       "send": "Send",
       "sendClose": "Send and close",
-      "isClosed": "This ticket is closed. A reply from the person opens it again."
+      "isClosed": "This ticket is closed. A reply from the person opens it again.",
+      "needReply": "Write your answer first."
     },
     "orders": {
       "title": "Orders",
@@ -1520,7 +1795,7 @@
       "search": "Order id, tracking number or buyer id",
       "empty": "No orders here.",
       "cancelTitle": "Cancel this order?",
-      "cancelText": "The buyer is told. Refund the payment too if it was paid.",
+      "cancelText": "The buyer gets a notification that the order is cancelled.",
       "refundTitle": "Refund {{amount}}?",
       "refundText": "The money goes back through Razorpay or Stripe to the way the buyer paid. This can't be undone.",
       "buyerTold": "The buyer gets a notification.",
@@ -1537,7 +1812,21 @@
       "quantity": "Quantity",
       "design": "Design",
       "noAddress": "This order has no shipping address.",
-      "showAddress": "Show address"
+      "showAddress": "Show address",
+      "notRefunded": "Paid, not refunded",
+      "stepDone": "Saved. The order is now: {{step}}. The buyer has been told.",
+      "keepOrder": "Keep the order",
+      "cancelNoRefund": "Cancelling does not give the money back. The buyer paid {{amount}}, and it stays paid until someone refunds it.",
+      "cancelThenRefund": "After you cancel, you will be asked whether to refund it straight away.",
+      "cancelRefundElsewhere": "This payment can't be refunded from here. After you cancel, refund it at the payment provider.",
+      "cancelNeedsPayments": "You don't have the Payments permission, so you can't refund. After you cancel, ask someone who has it to refund this order. It stays in the Cancelled list marked \"Paid, not refunded\".",
+      "cancelDoneNoRefund": "The order is cancelled and the buyer has been told. It has not been refunded: find it under Cancelled, marked \"Paid, not refunded\".",
+      "refundAfterCancelText": "The order is cancelled, but the buyer has not got the money back yet. Refund it now? The money goes back through Razorpay or Stripe to the way the buyer paid. This can't be undone.",
+      "refundLater": "Not now",
+      "refundDone": "Refunded {{amount}}. The buyer has been told.",
+      "needTracking": "Type the tracking number to mark it shipped.",
+      "trackingUrlBad": "The tracking link must start with https://",
+      "carrierExample": "For example India Post"
     },
     "offers": {
       "title": "Offers",
@@ -1640,7 +1929,51 @@
       "noMessages": "No messages sent yet.",
       "sendTitle_one": "Send to {{count}} person?",
       "sendTitle_other": "Send to {{count}} people?",
-      "sendText": "It can't be taken back. Your reason goes in the audit log."
+      "sendText": "It can't be taken back. Your reason goes in the audit log.",
+      "dateMissing": "Type the start day.",
+      "dateBad": "This isn't a real day. Type year-month-day, like {{example}}.",
+      "endBeforeStart": "The end day is before the start day.",
+      "dateHelp": "Starts at the beginning of this day, India time.",
+      "endHelp": "Runs until the end of this day, India time. Leave empty for no end.",
+      "percentBad": "The percentage must be a whole number from 1 to 90.",
+      "amountBad": "The amount must be more than 0.",
+      "perUserBad": "Uses per person must be from 1 to 100.",
+      "needCode": "Type a code of at least 4 letters or numbers.",
+      "needTitle": "Type a title of at least 3 letters.",
+      "needValue": "Type how much the coupon takes off.",
+      "needProduct": "Tick at least one thing the coupon works on.",
+      "reviewCouponTitle": "Save coupon {{code}}?",
+      "reviewCouponText": "This coupon is switched on, so it takes money off real orders. Please check it once more.",
+      "warnNoEnd": "No end day: this coupon keeps working until someone switches it off.",
+      "warnEnded": "The end day has already passed, so this will not show or work.",
+      "warnNoLimit": "No limit on total uses: any number of orders can use it.",
+      "warnBigPercent": "{{percent}}% off is a large discount. Make sure this is what you mean.",
+      "backToEdit": "Go back",
+      "confirmSave": "Yes, save",
+      "checkAndSave": "Check and save",
+      "currencies": {
+        "INR": "Rupees (INR)",
+        "USD": "US dollars (USD)"
+      },
+      "languages": {
+        "en": "English",
+        "ta": "Tamil"
+      },
+      "keepLanguages": "As now: {{list}}",
+      "needBannerText": "Type the banner text, at least 3 letters.",
+      "needPlacement": "Tick at least one place for the banner to show.",
+      "reviewBannerTitle": "Save this banner?",
+      "reviewBannerText": "This banner is switched on, so the people below see it as soon as it starts. Please check it once more.",
+      "warnBannerNoEnd": "No end day: this banner keeps showing until someone switches it off.",
+      "needHeading": "Type a heading of at least 3 letters.",
+      "needMessage": "Type a message of at least 5 letters.",
+      "opensBad": "This must be an app page that starts with /, for example /offers.",
+      "needCount": "Send stays off until we can count who will get this. Press Try again above.",
+      "counting": "Counting who will get this…",
+      "nobodyToSend": "Nobody in this group has switched on offers, so there is no one to send to. Choose a wider group.",
+      "countFailed": "We couldn't count who will get this. {{why}}",
+      "sentDone_one": "Sent to {{count}} person.",
+      "sentDone_other": "Sent to {{count}} people."
     },
     "analytics": {
       "title": "Analytics",
@@ -1674,7 +2007,8 @@
       "referrals": "Joined by invite",
       "plans": "Plans by store",
       "languages": "Languages",
-      "devices": "Phones"
+      "devices": "Phones",
+      "funnelAllTime": "Funnel (all time, from accounts)"
     },
     "settings": {
       "title": "App settings",
@@ -1731,7 +2065,17 @@
       "healthHelp": "Crashes the apps reported. Numbers, emails and ids are removed before saving. Kept 30 days.",
       "noCrashes": "No crashes reported.",
       "crashTotal_one": "{{count}} crash reported.",
-      "crashTotal_other": "{{count}} crashes reported."
+      "crashTotal_other": "{{count}} crashes reported.",
+      "missingRow": "This setting is missing on the server, so it can't be saved from here. Please tell the technical team.",
+      "saved": "Saved. The apps pick it up within a minute.",
+      "versionBad": "Type a version as three numbers with dots, like 1.4.0.",
+      "support": "Support contact",
+      "supportHelp": "The email address and hours people see on the Contact and Help pages.",
+      "supportEmail": "Support email",
+      "supportHours": "Support hours",
+      "supportHoursExample": "For example Monday to Saturday, 10 am to 6 pm India time",
+      "supportEmailBad": "Type a full email address, like help@example.com.",
+      "supportHoursBad": "Type the hours when support answers."
     },
     "user360": {
       "title": "Account",
@@ -1789,7 +2133,65 @@
         "end": "Every phone and browser is signed out. The account stays open.",
         "plus": "Added on top of any free days they already have. They get a notification."
       },
-      "days": "Days (1 to 365)"
+      "days": "Days (1 to 365)",
+      "reloadFailed": "Your change may be saved, but this page couldn't be reloaded, so it may show old details. {{why}}",
+      "staffLocked": "This is a staff account. Only an AYWO Admin can block it or sign it out everywhere.",
+      "done": {
+        "block": "{{name}} is blocked.",
+        "unblock": "{{name}} is unblocked.",
+        "end": "{{name}} is signed out everywhere.",
+        "plus": "Free Plus days added for {{name}}."
+      },
+      "daysBad": "Days must be a whole number from 1 to 365."
+    },
+    "funnel": {
+      "title": "Step by step: devices that first opened the app in the last {{count}} days",
+      "help": "Anonymous: a random id per device, no names or numbers. Each step counts once per device.",
+      "empty": "No devices opened the app in this period yet.",
+      "biggestDrop": "Most people stop before \"{{step}}\": {{count}} lost there.",
+      "byPlatform": "By phone or web",
+      "byLanguage": "By language",
+      "splitLine": "{{opened}} opened, {{verified}}% verified, {{tree}}% started a tree, {{five}}% reached 5 people",
+      "platforms": {
+        "web": "Web",
+        "android": "Android",
+        "ios": "iPhone"
+      },
+      "steps": {
+        "app_opened": "Opened the app",
+        "code_requested": "Asked for a code",
+        "code_verified": "Verified the code",
+        "name_saved": "Saved their name",
+        "tree_started": "Started a tree",
+        "first_relative": "Added a first relative",
+        "five_people": "Reached 5 people",
+        "invite_sent": "Invited someone"
+      }
+    },
+    "ops": {
+      "backups": "Database backups",
+      "lastGood_one": "Last good backup: {{when}} ({{count}} hour ago)",
+      "lastGood_other": "Last good backup: {{when}} ({{count}} hours ago)",
+      "noBackup": "No good backup yet. Check that BACKUP_KEY is set (docs/runbook-backups.md).",
+      "when": "When",
+      "result": "Result",
+      "size": "Size",
+      "detail": "File or error",
+      "running": "Running",
+      "ok": "OK",
+      "failed": "Failed",
+      "jobs": "Background jobs",
+      "jobsFine": "No job is failing.",
+      "jobsFailing": "Failing 3 times or more in a row: {{names}}",
+      "job": "Job",
+      "lastOk": "Last OK",
+      "failuresInRow": "Fails in a row",
+      "lastError": "Last error",
+      "serverErrors": "Server errors",
+      "serverErrorTotal_one": "{{count}} server error in this period.",
+      "serverErrorTotal_other": "{{count}} server errors in this period.",
+      "route": "Route",
+      "appCrashes": "Errors in the app"
     }
   },
   "social": {
@@ -1805,8 +2207,8 @@
     "unreadCount_other": "{{count}} new",
     "dateLabel": "Date",
     "timeLabel": "Time",
-    "datePlaceholder": "2026-12-25",
-    "timePlaceholder": "18:30",
+    "datePlaceholder": "For example 2026-12-25",
+    "timePlaceholder": "For example 18:30",
     "dateHelp": "Like 2026-12-25 and 18:30.",
     "plus": {
       "title": "This needs AYWO Plus",
@@ -1854,6 +2256,9 @@
       "oneToOne": "1-to-1",
       "group": "Group",
       "pickPerson": "Who do you want to talk to?",
+      "inviteTitle": "Invite your family to chat",
+      "inviteHelp": "You can chat with people once they join AYWO. Send them an invite.",
+      "notJoinedTitle": "Not on AYWO yet",
       "groupName": "Group name",
       "createGroup": "Create group",
       "memberCount_one": "{{count}} person",
@@ -1872,7 +2277,17 @@
       "sendVoice": "Send",
       "playVoice": "Play voice note",
       "pauseVoice": "Pause",
-      "deleteTitle": "Delete this message for everyone?"
+      "deleteTitle": "Delete this message for everyone?",
+      "choicesHint": "Opens reply, edit, delete and report",
+      "editing": "Editing your message",
+      "rename": "Rename",
+      "leave": "Leave chat",
+      "leaveTitle": "Leave this chat?",
+      "leaveMessage": "You will stop getting its messages. Someone in the chat can add you again.",
+      "messageChoices": "Message",
+      "reply": "Reply",
+      "chatName": "Chat name",
+      "tryAgain": "Try again"
     },
     "memories": {
       "title": "Memories",
@@ -1891,7 +2306,7 @@
       "when": "When did this happen? (optional)",
       "whoIsIn": "Who is in it?",
       "tagSomeone": "Tag someone",
-      "helpers": "Add collaborators",
+      "helpers": "Helpers",
       "helpersNote": "Collaborators can add photos and tags.",
       "share": "Share memory",
       "with": "With {{names}}",
@@ -1907,7 +2322,13 @@
       "reopen": "Open the thread again",
       "close": "Close the thread",
       "delete": "Delete this memory",
-      "deleteTitle": "Delete this memory? This cannot be undone."
+      "deleteTitle": "Delete this memory? This cannot be undone.",
+      "edit": "Edit",
+      "taggedPeople": "Who is in it",
+      "untag": "Untag {{name}}",
+      "untagMe": "Remove my tag",
+      "removeHelper": "Remove {{name}} as a helper",
+      "editComment": "Edit your comment"
     },
     "groups": {
       "title": "Friends groups",
@@ -1931,7 +2352,17 @@
       "leaveTitle": "Leave this group?",
       "joinTitle": "Join a group",
       "joinAsk": "Join {{name}}? Members see each other's names and can chat.",
-      "join": "Join"
+      "join": "Join",
+      "rename": "Rename group",
+      "nameLabel": "Group name",
+      "delete": "Delete group",
+      "deleteTitle": "Delete this group?",
+      "deleteMessage": "Everyone in it loses the group and its chat. This cannot be undone.",
+      "removeTitle": "Remove {{name}}?",
+      "removeMessage": "They leave the group. You can add them again later.",
+      "removeYes": "Remove",
+      "starterCannotLeave": "You started this group, so you cannot leave it: nobody else could look after it. You can remove people, or delete the group.",
+      "newLinkDone": "A new link is ready. The old link no longer works."
     },
     "invites": {
       "title": "Invites",
@@ -1996,7 +2427,16 @@
       "saveCanva": "Save Canva link",
       "cancel": "Cancel this invite",
       "cancelTitle": "Cancel this invite?",
-      "cancelBody": "Everyone invited will be told."
+      "cancelBody": "Everyone invited will be told.",
+      "editDetails": "Edit details",
+      "editTellsEveryone": "Everyone invited gets a note that the details changed.",
+      "tapToUninvite": "Tap to remove",
+      "uninvite": "Remove",
+      "uninviteTitle": "Remove {{name}} from this invite?",
+      "uninviteMessage": "They will no longer see it. You can invite them again.",
+      "saveGuests": "Save the number",
+      "guestsAnswerFirst": "Choose Yes, Maybe or No above: the number is saved with your answer.",
+      "guestsSaved": "Saved. The host can see the new number."
     },
     "pop": {
       "new": "New Pop Party",
@@ -2045,7 +2485,12 @@
       "confirmBody": "Everyone you picked is told now, and may get a text.",
       "sentTo_one": "Sent to {{count}} person, {{when}}",
       "sentTo_other": "Sent to {{count}} people, {{when}}",
-      "from": "From {{name}}, {{when}}"
+      "from": "From {{name}}, {{when}}",
+      "sorted": "Sorted",
+      "markSorted": "Mark as sorted",
+      "reopen": "Not sorted yet",
+      "deleteTitle": "Delete this alert?",
+      "deleteMessage": "It goes from everyone's list. Use 'Mark as sorted' instead if they should still see it."
     },
     "sos": {
       "mark": "SOS",
@@ -2112,8 +2557,45 @@
       "seenIt": "I've seen it. Stop the alarm",
       "silentTitle": "Let family SOS ring on silent",
       "silentBody": "Let an SOS from family ring through Do Not Disturb.",
-      "silentAction": "Allow in phone settings"
-    }
+      "silentAction": "Allow in phone settings",
+      "timeUp": "Time is up. Location sharing is ending.",
+      "tryLocation": "Try turning location on again",
+      "locationWaiting": "Your location is not being sent yet: AYWO could not reach the server. It keeps trying. Your SOS is still on.",
+      "stopFailed": "The SOS is still on. Check your connection and press Stop again.",
+      "cannotCheck": "AYWO could not check whether an SOS is already on. You can still start one.",
+      "checkAgain": "Check again",
+      "startTimeout": "This is taking too long, and your contacts may not have been alerted. Try again, or call the emergency number below.",
+      "startFailed": "Your contacts were not alerted. Try again, or call the emergency number below.",
+      "confirmStartTitle": "Start SOS now?",
+      "confirmStartBody": "Your SOS contacts hear an alarm or get a text, and can see your location.",
+      "confirmStart": "Start SOS"
+    },
+    "missing": {
+      "who": "Choose who can see this.",
+      "whoSend": "Choose who should get this.",
+      "words": "Add a photo or write something.",
+      "date": "Write the date like 2026-12-25, or leave it empty.",
+      "name": "Give it a name.",
+      "title": "Give it a title.",
+      "kind": "Choose what kind it is.",
+      "when": "Add the date and time.",
+      "options": "Add at least one date, place or menu to vote on.",
+      "blood": "Choose the blood group.",
+      "message": "Write the message.",
+      "canva": "Fix the Canva link, or leave it empty."
+    },
+    "photos": {
+      "photoN": "Photo {{n}}",
+      "remove": "Remove photo {{n}}",
+      "moveLeft": "Move photo {{n}} left",
+      "moveRight": "Move photo {{n}} right",
+      "countOf": "{{n}} of {{most}} photos. Use ✕ to remove one, ‹ › to change the order.",
+      "removeTitle": "Remove this photo?",
+      "removeMessage": "It will be taken off this memory for everyone.",
+      "removeYes": "Remove photo"
+    },
+    "edited": "edited",
+    "edit": "Edit"
   },
   "ops": {
     "update": {
@@ -2122,7 +2604,9 @@
       "button": "Update now",
       "mayTitle": "A new version is ready",
       "mayText": "Update for the latest fixes and features.",
-      "later": "Later"
+      "later": "Later",
+      "howIos": "To update: open the App Store, search for AYWO, and tap Update.",
+      "howAndroid": "To update: open the Play Store, search for AYWO, and tap Update."
     },
     "maintenance": {
       "title": "Back very soon",
@@ -2135,7 +2619,11 @@
     "crash": {
       "title": "Something went wrong",
       "text": "This screen stopped working. We've been told and will fix it. Your family's data is safe.",
-      "again": "Go to Home"
+      "again": "Go to Home",
+      "stuck": "Still not working? Go to Home, or start AYWO again with the second button.",
+      "reload": "Reload this page",
+      "restart": "Restart AYWO",
+      "restartFailed": "AYWO could not restart itself. Please close the app fully and open it again."
     },
     "sos": {
       "label": "SOS. Hold for 2 seconds to alert your family.",
@@ -2255,7 +2743,14 @@
       },
       "tracking": "{{carrier}} {{number}}",
       "track": "Track parcel",
-      "help": "Need help with an order?"
+      "help": "Need help with an order?",
+      "paidTitle": "Payment received",
+      "paidDone": "Thank you. Your order is below, and you will get a notification at each step.",
+      "paidWaiting": "Your payment is being confirmed. This usually takes a few seconds, and this page refreshes by itself.",
+      "paidSlow": "This is taking longer than usual. If you paid, your order will show here as soon as the payment service tells us. If you did not finish paying, nothing was charged and no order was made.",
+      "checkAgain": "Check again now",
+      "checking": "Checking…",
+      "trackFailed": "The tracking page could not open. Use the tracking number above on the courier's website."
     },
     "shop": {
       "title": "Order a poster or book",
@@ -2288,7 +2783,17 @@
       "cancelled": "Payment wasn't finished. Nothing was charged.",
       "secure": "Payment happens on Razorpay's or Stripe's own secure page. AYWO never sees your card or UPI details.",
       "thanksTitle": "Thank you",
-      "thanks": "Your payment is being confirmed. You'll get a notification at each step, and can follow it in My orders."
+      "thanks": "Your payment is being confirmed. You'll get a notification at each step, and can follow it in My orders.",
+      "couponPlaceholder": "Type your code",
+      "needTree": "Start a family tree first: the poster and book are printed from it.",
+      "needAddress": "Fill in the name, house and street, city and state to continue.",
+      "needPin": "The PIN code needs 6 digits.",
+      "needPhone": "Check the phone number for the courier.",
+      "paying": "Please wait…",
+      "payAgain": "Try paying again",
+      "notPaidTitle": "The payment was not completed",
+      "notPaid": "We have not received a payment for this order. If you closed the payment page without paying, nothing was charged and you can try again below. If you did pay, do not pay again: your order will show in My orders within a few minutes.",
+      "seeOrders": "See My orders"
     },
     "refer": {
       "title": "Invite and earn",
@@ -2377,6 +2882,58 @@
       "code": "6-digit code",
       "confirm": "Confirm",
       "resend": "Send again"
+    },
+    "consent": {
+      "noticeTitle": "Before you save: how we use your health details",
+      "whatTitle": "What we keep",
+      "whatBody": "Only what you type on this card: blood group, allergies, health conditions, regular medicines, and anything else you add. Every box is optional.",
+      "whyTitle": "Why",
+      "whyBody": "So the people your SOS reaches can help you safely, for example a doctor knowing your blood group or a medicine you must not be given. We use it for nothing else: no advertising, no profiling, never sold.",
+      "whoTitle": "Who sees it",
+      "whoBody": "Only the people an SOS you send reaches, while it runs and for one day after. Not your family tree, not other members, and not our staff.",
+      "howLongTitle": "How long we keep it",
+      "howLongBody": "Until you withdraw or delete your account. Withdrawing deletes the card at once.",
+      "optionalTitle": "Your choice",
+      "optionalBody": "This is optional. SOS works the same without it.",
+      "withdrawTitle": "Withdraw and delete?",
+      "withdrawBody": "Tap \"Withdraw and delete\" on this page or on Me, Privacy and account, My consents. It takes one tap, just like agreeing.",
+      "complainTitle": "Questions or complaints",
+      "complainBody": "Write to our Grievance Officer, {{grievanceOfficer}}, at {{grievanceEmail}}. You can also complain to the Data Protection Board of India.",
+      "agreeLabel": "I have read this and agree that AYWO may keep these health details and show them to the people my SOS reaches.",
+      "tickFirst": "Tick \"I agree\" first, or leave the health boxes empty. The card is only saved with your agreement.",
+      "agreedOn": "You agreed to keep this card on {{date}}.",
+      "hiddenUntilAgree": "Your SOS helpers can't see this card yet. Read the notice below and tick \"I agree\" to turn it on.",
+      "withdraw": "Withdraw and delete my card",
+      "withdrawMessage": "Your emergency card is deleted now, and SOS helpers will not see it. You can fill it in again later.",
+      "withdrawConfirm": "Withdraw and delete"
+    },
+    "myConsents": {
+      "title": "My consents",
+      "subtitle": "What you agreed to, when, and how to take it back",
+      "terms": "Terms of use",
+      "privacy": "Privacy policy",
+      "health_card": "Emergency card (health details)",
+      "marketing": "Offers and news messages",
+      "parental": "Parent or guardian consent",
+      "notGiven": "Not given",
+      "off": "Off",
+      "agreedOn": "Agreed on {{date}} (version {{version}})",
+      "olderNotice": "Agreed to an older notice. Open the card to read the new one; until then SOS helpers don't see it.",
+      "neededHelp": "Needed to use AYWO. To withdraw it, delete your account.",
+      "read": "Read it",
+      "deleteAccount": "Delete my account",
+      "healthHelp": "Optional. Shown only to the people an SOS you send reaches. Withdrawing deletes the card.",
+      "openCard": "Open my card",
+      "readAndAgree": "Read the notice",
+      "marketingHelp": "Optional. Occasional offers and news from AYWO.",
+      "turnOn": "Turn on",
+      "turnOff": "Turn off",
+      "history": "History",
+      "noHistory": "Nothing recorded yet.",
+      "granted": "Agreed: {{what}}",
+      "withdrawn": "Withdrew: {{what}}",
+      "complain": "Questions or complaints: our Grievance Officer, {{grievanceOfficer}}, {{grievanceEmail}}. You can also go to the Data Protection Board of India.",
+      "onSince": "On since {{date}}"
     }
   },
   "help": {

@@ -323,7 +323,9 @@ function fromTerm(code: string, term: KinTerm, englishFallback: boolean): KinLab
 }
 
 function lookup(book: TermBook, code: string, languages: string[]): KinLabel {
-  const tries = [code, withoutOrder(code), withoutHalfOrStep(withoutOrder(code))];
+  // The third try keeps elder or younger while dropping half or step: Tamil has no word for "half-brother", but an
+  // elder half-brother is still Anna, never an English word in the middle of a Tamil tree.
+  const tries = [code, withoutOrder(code), withoutHalfOrStep(code), withoutHalfOrStep(withoutOrder(code))];
   for (const language of languages) {
     for (const attempt of tries) {
       const term = book.get(language, attempt);

@@ -34,9 +34,13 @@ export function VoiceRecorder({ onDone, onCancel, onDenied }: { onDone: (file: P
   const [ms, setMs] = useState(0);
   const [ready, setReady] = useState(false);
   const startedAt = useRef(0);
+  // Send, Cancel and the 5 minute limit can all end the recording; only the first one counts.
+  const finished = useRef(false);
 
   useEffect(() => {
     let live = true;
+    // The microphone is handed back however the panel closes, also when the person leaves the chat mid-recording.
+    const recordingOff = () => void setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     (async () => {
       const permission = await AudioModule.requestRecordingPermissionsAsync();
       if (!live) return;
@@ -45,20 +49,41 @@ export function VoiceRecorder({ onDone, onCancel, onDenied }: { onDone: (file: P
         return;
       }
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      if (!live) {
+        recordingOff();
+        return;
+      }
       await recorder.prepareToRecordAsync();
-      if (!live) return;
+      if (!live) {
+        recordingOff();
+        return;
+      }
       recorder.record();
       startedAt.current = Date.now();
       setReady(true);
-    })().catch(onDenied);
+    })().catch(() => {
+      recordingOff();
+      if (live) onDenied();
+    });
     return () => {
       live = false;
+      if (finished.current) return;
+      finished.current = true;
+      try {
+        // The recorder may already be gone with the screen; then there is nothing to stop.
+        void recorder.stop().catch(() => undefined);
+      } catch {
+        // Already released.
+      }
+      recordingOff();
     };
     // Starts once, when this panel opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function finish(send: boolean) {
+    if (finished.current) return;
+    finished.current = true;
     const took = Date.now() - startedAt.current;
     await recorder.stop().catch(() => undefined);
     await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
@@ -88,17 +113,25 @@ export function VoiceRecorder({ onDone, onCancel, onDenied }: { onDone: (file: P
   );
 }
 
-export function VoicePlayer({ url, ms, onDark }: { url: string; ms?: number | null; onDark?: boolean }) {
+export function VoicePlayer({ url, ms, onDark, onStale }: { url: string; ms?: number | null; onDark?: boolean; onStale?: () => void }) {
   const { t } = useTranslation();
-  const player = useAudioPlayer(url);
+  // The signed link changes each time the chat is fetched again. A note that is playing keeps its link until it stops:
+  // changing it would start the note over, or cut it off.
+  const [source, setSource] = useState(url);
+  const player = useAudioPlayer(source);
   const status = useAudioPlayerStatus(player);
   const playing = status.playing;
+  useEffect(() => {
+    if (url !== source && !playing) setSource(url);
+  }, [url, source, playing]);
 
   function toggle() {
     if (playing) {
       player.pause();
       return;
     }
+    // Not loaded when Play is pressed usually means the link ran out: ask the chat for a new one.
+    if (!status.isLoaded) onStale?.();
     if (status.didJustFinish || (status.duration > 0 && status.currentTime >= status.duration)) void player.seekTo(0);
     player.play();
   }

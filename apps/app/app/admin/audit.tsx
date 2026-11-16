@@ -18,7 +18,7 @@ export default function AdminAudit() {
       key: 'action',
       label: t('admin.audit.action'),
       flex: 1.3,
-      render: (row) => t(`admin.audit.actions.${row.action.replace('.', '_')}`, { defaultValue: row.action }),
+      render: (row) => t(`admin.audit.actions.${row.action.replace(/\./g, '_')}`, { defaultValue: row.action }),
     },
     {
       key: 'target',
@@ -37,7 +37,7 @@ export default function AdminAudit() {
       key: 'details',
       label: t('admin.audit.details'),
       flex: 1.5,
-      render: (row) => <Text style={adminStyles.cellMuted}>{Object.keys(row.details).length ? JSON.stringify(row.details) : '-'}</Text>,
+      render: (row) => <Text style={adminStyles.cellMuted}>{row.details && Object.keys(row.details).length ? JSON.stringify(row.details) : '-'}</Text>,
     },
   ];
 

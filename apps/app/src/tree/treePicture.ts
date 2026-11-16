@@ -81,7 +81,9 @@ export function treePicture(data: TreeViewAnswer, options: { includeLiving: bool
     .join('');
 
   const note = includeLiving ? '' : ` · ${t('export.pictureLivingNote')}`;
-  const footer = `${t('export.pictureFooter', { date: today.toISOString().slice(0, 10) })}${note}`;
+  // The date on this phone, not in London: before 05:30 in India the UTC date is still yesterday.
+  const localDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const footer = `${t('export.pictureFooter', { date: localDate })}${note}`;
 
   const html = `<!doctype html>
 <html dir="${dir}"><head><meta charset="utf-8" />

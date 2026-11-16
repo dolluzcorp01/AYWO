@@ -11,9 +11,10 @@ import { Screen } from '@/components/Screen';
 import { Text, TextInput } from '@/components/Text';
 import { useVoiceInput } from '@/voice/useVoiceInput';
 import { VoiceButton } from '@/voice/VoiceButton';
-import { BackButton, Card, ErrorText, Loading, Muted, SectionTitle } from '@/components/ui';
+import { BackButton, Card, ErrorText, Loading, Muted, SectionTitle, TextButton } from '@/components/ui';
 import { deviceStore } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
+import { shownName } from '@/tree/personName';
 import { useTreeSearch } from '@/tree/useEdit';
 import { useTreeView } from '@/tree/useTreeView';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
@@ -87,7 +88,12 @@ export default function Search() {
         <Muted>{t('search.help')}</Muted>
       </View>
 
-      {search.isError ? <ErrorText>{errorText(search.error)}</ErrorText> : null}
+      {search.isError ? (
+        <View style={styles.failed}>
+          <ErrorText>{errorText(search.error)}</ErrorText>
+          <TextButton label={t('tree.tryAgain')} onPress={() => search.refetch()} />
+        </View>
+      ) : null}
       {query ? (
         search.data ? (
           <FlatList
@@ -105,7 +111,7 @@ export default function Search() {
                   <Card style={styles.hit}>
                     <Avatar personId={item.id} size={50} photoUrl={node?.photoUrl} nameUnknown={node?.nameUnknown} />
                     <View style={styles.hitText}>
-                      <Text style={styles.hitName}>{item.name}</Text>
+                      <Text style={styles.hitName}>{shownName(t, item.name, node?.nameUnknown)}</Text>
                       {relation.kind === 'word' ? <Text style={styles.hitRelation}>{relation.word}</Text> : null}
                     </View>
                   </Card>
@@ -122,7 +128,7 @@ export default function Search() {
           <View style={styles.chips}>
             {recent.map((r) => (
               <Pressable key={r.id} accessibilityRole="button" onPress={() => open(r)} style={styles.chip}>
-                <Text style={styles.chipText}>{r.name}</Text>
+                <Text style={styles.chipText}>{shownName(t, r.name, nodes.get(r.id)?.nameUnknown)}</Text>
               </Pressable>
             ))}
           </View>
@@ -148,6 +154,7 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, minHeight: minTapSize, color: colors.text, fontFamily: fonts.bold, fontSize: 16 },
   help: { marginTop: 10, marginBottom: 6 },
+  failed: { alignItems: 'flex-start', gap: 4 },
   list: { gap: 10, paddingVertical: 8 },
   hit: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
   hitText: { flex: 1, minWidth: 0 },

@@ -1,5 +1,5 @@
 // B2 / S-04: 'Is this you?' A person's number matched someone saved in a family tree.
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,12 +11,14 @@ import { Card, ErrorText, Loading, LoadFailed, Muted, NeonPanel, PrimaryButton, 
 import { claimDetails, firstName, rememberNotMe } from '@/lib/account';
 import { api } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
+import { shownName } from '@/tree/personName';
 import { colors, fonts } from '@/theme/tokens';
 
 export default function IsThisYou() {
   const { t } = useTranslation();
   const router = useRouter();
   const errorText = useErrorText();
+  const client = useQueryClient();
   const { next, name } = useLocalSearchParams<{ next?: string; name?: string }>();
   const candidates = useQuery({ queryKey: ['claim-candidates'], queryFn: claimDetails, gcTime: 0 });
   // T-ACC-03: one number can match several people. They answer one at a time.
@@ -44,6 +46,13 @@ export default function IsThisYou() {
     setFailure(null);
     try {
       const treeId = await api.rpc<string>('claim_confirm', { p_person: candidate.person_id });
+      // This person now has a tree, a place in it and maybe a name: Home and the tree must show that at once,
+      // not what they held from before the answer.
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['trees'] }),
+        client.invalidateQueries({ queryKey: ['tree-view'] }),
+        client.invalidateQueries({ queryKey: ['me'] }),
+      ]).catch(() => undefined);
       // Back through the one place that decides, so a nameless account still gets the profile step.
       carryOn({ next: next ?? `/tree/${treeId}`, name: candidate.display_name });
     } catch (error) {
@@ -57,6 +66,7 @@ export default function IsThisYou() {
     setBusy(true);
     await rememberNotMe(candidate.person_id).catch(() => undefined);
     setBusy(false);
+    setFailure(null);
     setIndex(index + 1);
   }
 
@@ -82,7 +92,7 @@ export default function IsThisYou() {
           <Text style={styles.eyebrow}>{t('claim.familyHere')}</Text>
           <Avatar personId={candidate.person_id} size={116} photoUrl={candidate.photo_url} ring />
           <Text accessibilityRole="header" style={styles.question}>{t('claim.isThisYou')}</Text>
-          <Text style={styles.name}>{candidate.display_name}</Text>
+          <Text style={styles.name}>{shownName(t, candidate.display_name)}</Text>
         </NeonPanel>
         <Card style={styles.facts}>
           {candidate.parents.length > 0 ? <Fact text={t('claim.childOf', { names: candidate.parents.join(' & ') })} /> : null}

@@ -9,6 +9,7 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Card, EmptyState, ErrorText, Loading, LoadFailed, Muted, NeonPanel, PrimaryButton, TextButton, TopBar } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
+import { shownName } from '@/tree/personName';
 import { useApplyMerge, useDecideRequest, useMerge } from '@/tree/useEdit';
 import type { MergePerson } from '@/tree/useEdit';
 import { colors, fonts } from '@/theme/tokens';
@@ -41,6 +42,7 @@ export default function MergeScreen() {
   if (!merge.data) {
     return (
       <Screen>
+        <TopBar title={t('merge.title')} onBack={() => goBack(router)} />
         <Loading label={t('tree.loading')} />
       </Screen>
     );
@@ -60,8 +62,8 @@ export default function MergeScreen() {
   const reasons: string[] = [];
   const partner = shared(a.partners, b.partners);
   const parent = shared(a.parents, b.parents);
-  if (partner) reasons.push(t('merge.bothPartner', { name: partner }));
-  if (parent) reasons.push(t('merge.bothChild', { name: parent }));
+  if (partner) reasons.push(t('merge.bothPartner', { name: shownName(t, partner) }));
+  if (parent) reasons.push(t('merge.bothChild', { name: shownName(t, parent) }));
   if (same(a.display_name, b.display_name)) reasons.push(t('merge.namesMatch'));
   else reasons.push(t('merge.namesClose'));
 
@@ -89,7 +91,7 @@ export default function MergeScreen() {
             </View>
           ))}
         </NeonPanel>
-        <Muted>{t('merge.explain', { name: a.display_name })}</Muted>
+        <Muted>{t('merge.explain', { name: shownName(t, a.display_name, a.name_unknown) })}</Muted>
         {apply.isError ? <ErrorText>{errorText(apply.error)}</ErrorText> : null}
         {decide.isError ? <ErrorText>{errorText(decide.error)}</ErrorText> : null}
       </ScrollView>
@@ -108,7 +110,7 @@ function Side({ person }: { person: MergePerson }) {
   return (
     <Card style={styles.side}>
       <Avatar personId={person.id} size={72} photoUrl={person.photo_url} nameUnknown={person.name_unknown} />
-      <Text style={styles.sideName}>{person.name_unknown ? t('tree.nameNotKnown') : person.display_name}</Text>
+      <Text style={styles.sideName}>{shownName(t, person.display_name, person.name_unknown)}</Text>
       {person.added_by ? <Text style={styles.sideNote}>{t('merge.addedBy', { name: person.added_by })}</Text> : null}
     </Card>
   );

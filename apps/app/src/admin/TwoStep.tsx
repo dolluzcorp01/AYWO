@@ -26,7 +26,7 @@ function CodeBox({ value, onChange, onSubmit, label }: { value: string; onChange
 }
 
 /** Asks for today's code. onDone runs once the proof is saved. */
-export function TwoStepCode({ onDone }: { onDone: () => void }) {
+export function TwoStepCode({ onDone, text }: { onDone: () => void; text?: string }) {
   const { t } = useTranslation();
   const [code, setCode] = useState('');
   const action = useAction();
@@ -43,10 +43,10 @@ export function TwoStepCode({ onDone }: { onDone: () => void }) {
         <Text accessibilityRole="header" style={styles.title}>
           {t('admin.twoStep.codeTitle')}
         </Text>
-        <Text style={styles.text}>{t('admin.twoStep.codeText')}</Text>
+        <Text style={styles.text}>{text ?? t('admin.twoStep.codeText')}</Text>
         <CodeBox value={code} onChange={setCode} onSubmit={submit} label={t('admin.twoStep.codeLabel')} />
         {action.failure ? <Message text={action.failure} alert /> : null}
-        <PrimaryButton label={t('admin.twoStep.continue')} onPress={submit} disabled={code.length !== 6 || action.busy} />
+        <PrimaryButton label={t('admin.twoStep.continue')} onPress={submit} disabled={action.busy} missing={code.length !== 6 ? t('admin.twoStep.needsCode') : null} />
         <Text style={styles.small}>{t('admin.twoStep.lost')}</Text>
       </View>
     </View>
@@ -91,7 +91,7 @@ export function TwoStepSetup({ onDone, onCancel }: { onDone: () => void; onCance
             <Text style={styles.step}>{t('admin.twoStep.step2')}</Text>
             <CodeBox value={code} onChange={setCode} onSubmit={confirm} label={t('admin.twoStep.codeLabel')} />
             {action.failure ? <Message text={action.failure} alert /> : null}
-            <PrimaryButton label={t('admin.twoStep.turnOn')} onPress={confirm} disabled={code.length !== 6 || action.busy} />
+            <PrimaryButton label={t('admin.twoStep.turnOn')} onPress={confirm} disabled={action.busy} missing={code.length !== 6 ? t('admin.twoStep.needsCode') : null} />
           </>
         ) : (
           <>

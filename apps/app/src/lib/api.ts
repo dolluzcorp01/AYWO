@@ -2,14 +2,22 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { markOffline, markOnline, setHealthUrl } from '@/lib/offline';
+import { QUICK_TIMEOUT_MS, REQUEST_TIMEOUT_MS, SLOW_TIMEOUT_MS, timedFetch, UPLOAD_TIMEOUT_MS } from '@/lib/timedFetch';
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 setHealthUrl(`${API_URL}/health`);
 
-/** fetch, noting whether AYWO answered at all. No answer means offline; any answer, even an error, means online. */
+// The few calls where the server works for a while before it answers.
+const SLOW_PATHS = /\/(import|export|merge-scan|account\/export)/;
+
+/**
+ * fetch, noting whether AYWO answered at all. No answer means offline; any answer, even an error, means online.
+ * A request that gets no answer in time counts as no answer: without that, a stalled connection spins for ever
+ * and the app never says it is offline.
+ */
 async function reach(url: string, init: RequestInit): Promise<Response> {
   try {
-    const response = await fetch(url, init);
+    const response = await timedFetch(url, init, SLOW_PATHS.test(url) ? SLOW_TIMEOUT_MS : REQUEST_TIMEOUT_MS);
     markOnline();
     return response;
   } catch (error) {
@@ -56,6 +64,13 @@ let refreshing: Promise<boolean> | null = null;
 
 // The sign-in gate listens here, so an ended session sends the person back to Welcome from any screen.
 const sessionListeners = new Set<(signedIn: boolean) => void>();
+// What the listeners were last told (or what the start-up check found). null: nobody has asked yet.
+let known: boolean | null = null;
+
+function tell(signedIn: boolean): void {
+  known = signedIn;
+  sessionListeners.forEach((listener) => listener(signedIn));
+}
 
 export function onSessionChange(listener: (signedIn: boolean) => void): () => void {
   sessionListeners.add(listener);
@@ -66,7 +81,12 @@ export function onSessionChange(listener: (signedIn: boolean) => void): () => vo
 
 async function refreshSession(): Promise<boolean> {
   const token = await deviceStore.get(REFRESH);
-  if (!token) return false;
+  if (!token) {
+    // The session is gone (signed out in another browser tab, or the storage was cleared). Say so, or this screen
+    // stays "signed in" with every call failing. A visitor who never signed in is told nothing.
+    if (known !== false) await clearSession();
+    return false;
+  }
   const response = await reach(`${API_URL}/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -75,6 +95,10 @@ async function refreshSession(): Promise<boolean> {
   // Only a refused token ends the session. A server hiccup (for example 502 while a new version starts) must not sign
   // everyone out; the next call simply tries again.
   if (response.status === 400 || response.status === 401 || response.status === 403) {
+    // Another browser tab may have renewed the session a moment earlier, which makes this tab's token an old one.
+    // The new one is already saved: use it, rather than signing both tabs out.
+    const latest = await deviceStore.get(REFRESH);
+    if (latest && latest !== token) return true;
     await clearSession();
     return false;
   }
@@ -86,18 +110,66 @@ async function refreshSession(): Promise<boolean> {
 export async function saveSession(session: { access_token: string; refresh_token: string }): Promise<void> {
   await deviceStore.set(ACCESS, session.access_token);
   await deviceStore.set(REFRESH, session.refresh_token);
-  sessionListeners.forEach((listener) => listener(true));
+  tell(true);
 }
 
 export async function clearSession(): Promise<void> {
   await deviceStore.remove(ACCESS);
   await deviceStore.remove(REFRESH);
   await deviceStore.remove(STAFF_PROOF);
-  sessionListeners.forEach((listener) => listener(false));
+  tell(false);
 }
 
 export async function hasSession(): Promise<boolean> {
-  return (await deviceStore.get(REFRESH)) !== null;
+  const has = (await deviceStore.get(REFRESH)) !== null;
+  known = has;
+  return has;
+}
+
+/** Whose session a token is: the account id inside it. Only used to notice a different account, never trusted. */
+function accountOf(token: string | null): string | null {
+  try {
+    const part = token?.split('.')[1];
+    if (!part) return null;
+    const payload = JSON.parse(globalThis.atob(part.replace(/-/g, '+').replace(/_/g, '/'))) as { sub?: unknown };
+    return typeof payload.sub === 'string' ? payload.sub : null;
+  } catch {
+    return null;
+  }
+}
+
+// Web: every tab of the browser shares one session. When another tab signs out, signs in, or signs in as someone
+// else, the browser tells this tab, and this tab follows.
+if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', (event) => {
+    // key is null when the whole storage was cleared.
+    if (event.key !== null && event.key !== ACCESS && event.key !== REFRESH) return;
+    let signedIn = false;
+    try {
+      signedIn = window.localStorage.getItem(REFRESH) !== null;
+    } catch {
+      // Storage blocked: treated as signed out.
+    }
+    if (!signedIn) {
+      if (known !== false) tell(false);
+      return;
+    }
+    if (known === false) {
+      tell(true);
+      return;
+    }
+    // Still signed in, but is it the same person? A renewed token keeps its account; a different account must not
+    // be shown the first one's family, so this tab drops everything it holds and starts again.
+    if (event.key === ACCESS && event.oldValue && event.newValue) {
+      const before = accountOf(event.oldValue);
+      const after = accountOf(event.newValue);
+      if (before && after && before !== after) {
+        tell(false);
+        known = true;
+        window.location.reload();
+      }
+    }
+  });
 }
 
 export async function accessToken(): Promise<string | null> {
@@ -108,11 +180,12 @@ export async function accessToken(): Promise<string | null> {
 export async function signOut(): Promise<void> {
   const token = await deviceStore.get(REFRESH);
   if (token) {
-    await fetch(`${API_URL}/auth/logout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: token }),
-    }).catch(() => undefined);
+    // Does not wait long: signing out must work on a bad connection too.
+    await timedFetch(
+      `${API_URL}/auth/logout`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: token }) },
+      QUICK_TIMEOUT_MS,
+    ).catch(() => undefined);
   }
   await clearSession();
 }
@@ -206,7 +279,8 @@ export async function uploadFile(kind: 'photos' | 'imports' | 'chat' | 'posts', 
   });
   const blob = await (await fetch(file.uri)).blob();
   // A refused or unreachable file store is an upload problem, not "no connection": the API answered a moment ago.
-  const response = await fetch(url, { method: 'PUT', headers: { 'Content-Type': file.contentType }, body: blob }).catch(() => null);
+  // Generous: a photo on a slow phone network takes a while. Running out of time is an upload problem too.
+  const response = await timedFetch(url, { method: 'PUT', headers: { 'Content-Type': file.contentType }, body: blob }, UPLOAD_TIMEOUT_MS).catch(() => null);
   if (!response?.ok) throw new ApiFailure(response?.status ?? 0, 'upload_failed', 'errors.upload_failed');
   return path;
 }

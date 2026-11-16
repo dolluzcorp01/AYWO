@@ -5,9 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { Text, TextInput } from '@/components/Text';
-import { ErrorText, Heading, Muted, PrimaryButton } from '@/components/ui';
+import { ErrorText, Heading, Muted, PrimaryButton, TextButton } from '@/components/ui';
 import { api, ApiFailure, saveSession } from '@/lib/api';
 import { errorKey } from '@/lib/errors';
+import { getSignInPhone, setSignInPhone } from '@/lib/signInPhone';
 import { track } from '@/lib/track';
 import { colors, fonts } from '@/theme/tokens';
 
@@ -16,11 +17,23 @@ const RESEND_SECONDS = 30;
 export default function Otp() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { phone, next } = useLocalSearchParams<{ phone: string; next?: string }>();
+  const { next } = useLocalSearchParams<{ next?: string }>();
+  // Handed over in memory by the phone screen (never in the address).
+  const [phone] = useState(getSignInPhone);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [messageKey, setMessageKey] = useState<string | null>(null);
   const [wait, setWait] = useState(RESEND_SECONDS);
+
+  // The number is gone after a page reload, or when this address is opened directly: ask for it again.
+  useEffect(() => {
+    if (!phone) router.replace({ pathname: '/phone', params: next ? { next } : {} });
+  }, [phone, next, router]);
+
+  function changeNumber() {
+    if (router.canGoBack()) router.back();
+    else router.replace({ pathname: '/phone', params: next ? { next } : {} });
+  }
 
   useEffect(() => {
     if (wait <= 0) return;
@@ -29,12 +42,13 @@ export default function Otp() {
   }, [wait]);
 
   async function verify(entered: string = code) {
-    if (busy) return;
+    if (busy || !phone) return;
     setBusy(true);
     setMessageKey(null);
     try {
       await saveSession(await api.post<{ access_token: string; refresh_token: string }>('/auth/otp/verify', { phone, code: entered }));
       track('code_verified');
+      setSignInPhone(null);
       router.replace({ pathname: '/after-login', params: next ? { next } : {} });
     } catch (error) {
       setMessageKey(error instanceof ApiFailure && error.code === 'otp_wrong' ? 'otp.wrongCode' : errorKey(error));
@@ -50,11 +64,14 @@ export default function Otp() {
     await api.post('/auth/otp/send', { phone }).catch((error: unknown) => setMessageKey(errorKey(error)));
   }
 
+  if (!phone) return <Screen>{null}</Screen>;
+
   return (
     <Screen>
       <View style={styles.top}>
         <Heading>{t('otp.title')}</Heading>
         <Muted>{t('otp.sentTo', { phone })}</Muted>
+        <TextButton label={t('otp.changeNumber')} onPress={changeNumber} />
         <TextInput
           value={code}
           onChangeText={(v) => {

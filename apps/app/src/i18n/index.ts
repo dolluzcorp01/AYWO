@@ -50,6 +50,15 @@ function fallbacksOf(code: string): string[] {
   return [...new Set([...languageChain(code).slice(1), SOURCE])].filter((c) => c !== code);
 }
 
+/**
+ * True when AYWO's screens have words in this language (or one it falls back to before English). Today that is
+ * English and Tamil. The other languages can still be chosen: family relationship words follow them, and the screens
+ * stay in English until their files are generated.
+ */
+export function isTranslated(code: string): boolean {
+  return languageChain(code).some((each) => each === SOURCE || each === 'en' || each === 'ta' || each in GENERATED_LOCALES);
+}
+
 const loaded = new Set<string>();
 
 function chainStrings(code: string): [string, Strings][] {

@@ -2,8 +2,12 @@
 // Expo has no push tokens on the web, so both do nothing there and expo-notifications is not even loaded.
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { api } from '@/lib/api';
+import i18n from '@/i18n';
+import { api, deviceStore } from '@/lib/api';
 
+// The token is kept on the device, not just in memory: sign-out must be able to remove it from the server even when
+// this run of the app never registered (the person said no this time, or the app started without a connection).
+const TOKEN = 'aywo.pushToken';
 let lastToken: string | null = null;
 
 /** The sound file bundled through the expo-notifications plugin in app.json. The server names the same file. */
@@ -24,7 +28,8 @@ export async function registerForPush(): Promise<string | null> {
       });
       // A family SOS rings like an alarm, shows on the lock screen, and passes Do Not Disturb once the person allows it.
       await Notifications.setNotificationChannelAsync('sos-alarm', {
-        name: 'Family SOS alarms',
+        // Shown in the phone's own notification settings.
+        name: i18n.t('pay.push.sosChannel'),
         importance: Notifications.AndroidImportance.MAX,
         sound: ALARM_SOUND,
         vibrationPattern: [0, 800, 400, 800, 400, 800],
@@ -42,8 +47,10 @@ export async function registerForPush(): Promise<string | null> {
 
     const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
     const { data: token } = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
-    await api.post('/devices', { expo_push_token: token, platform: Platform.OS });
+    // Saved before the server hears of it: a token the server knows must always be one sign-out can remove.
     lastToken = token;
+    await deviceStore.set(TOKEN, token).catch(() => undefined);
+    await api.post('/devices', { expo_push_token: token, platform: Platform.OS });
     return token;
   } catch {
     return null;
@@ -95,9 +102,21 @@ export async function openDoNotDisturbAccess(): Promise<void> {
   await IntentLauncher.startActivityAsync('android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS').catch(() => undefined);
 }
 
+/** Call while still signed in. Stops this phone getting the notifications of the person who is leaving. */
 export async function unregisterPush(): Promise<void> {
-  if (!lastToken) return;
-  const token = lastToken;
+  if (Platform.OS !== 'ios' && Platform.OS !== 'android') return;
+  const token = lastToken ?? (await deviceStore.get(TOKEN).catch(() => null));
+  if (!token) return;
   lastToken = null;
-  await api.post('/devices/remove', { expo_push_token: token }).catch(() => undefined);
+  try {
+    // Signing out must not hang on a bad connection: a few seconds, then carry on.
+    const removed = await Promise.race([
+      api.post('/devices/remove', { expo_push_token: token }).then(() => true),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 8000)),
+    ]);
+    if (removed) await deviceStore.remove(TOKEN).catch(() => undefined);
+  } catch {
+    // Not removed (no connection). The token stays saved, so the next sign-out, or the next person's sign-in on
+    // this phone, which registers the same token under the new account, puts it right.
+  }
 }

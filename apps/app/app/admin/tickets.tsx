@@ -1,10 +1,10 @@
 // Help tickets from the app's help centre. Staff answers appear to the person as "AYWO Support", never a staff name.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { TicketDetail, TicketRow } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, DataTable, DialogFrame, Field, FilterChips, formatDate, Message, Pager, Pill, QueryState, SecondaryButton, useAction, usePagedList } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, CloseGuard, DataTable, DialogFrame, Field, FilterChips, formatDate, Message, Missing, Pager, Pill, QueryState, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
 import { colors, fonts } from '@/theme/tokens';
@@ -64,7 +64,7 @@ export default function AdminTickets() {
 
 function TicketDialog({ id, onClose }: { id: string; onClose: () => void }) {
   const { t, i18n } = useTranslation();
-  const client = useQueryClient();
+  const refreshAfter = useRefreshAfter();
   const ticket = useQuery({ queryKey: ['admin', 'ticket', id], queryFn: () => api.get<TicketDetail>(`/admin/tickets/${id}`) });
   const [reply, setReply] = useState('');
   const action = useAction();
@@ -73,10 +73,9 @@ function TicketDialog({ id, onClose }: { id: string; onClose: () => void }) {
     const ok = await action.run(() => api.post(`/admin/tickets/${id}/reply`, { body: reply.trim(), close }));
     if (ok) {
       setReply('');
-      await client.invalidateQueries({ queryKey: ['admin', 'tickets'] });
-      await client.invalidateQueries({ queryKey: ['admin', 'work'] });
       if (close) onClose();
-      else await ticket.refetch();
+      // 'ticket' is the open ticket itself; an answer also moves the work queue, its badge and the dashboard.
+      await refreshAfter('tickets', 'ticket', 'work');
     }
   }
 
@@ -86,7 +85,7 @@ function TicketDialog({ id, onClose }: { id: string; onClose: () => void }) {
         {(data) => (
           <View style={{ gap: 10 }}>
             <Text style={adminStyles.cellMuted}>
-              {data.name ?? '-'} · {t(`help.categories.${data.category}`)} · {data.plus ? 'Plus' : t('admin.tickets.free')} · {data.language}
+              {data.name ?? '-'} · {t(`help.categories.${data.category}`)} · {data.plus ? t('admin.users.plus') : t('admin.tickets.free')} · {data.language}
             </Text>
             {data.messages.map((m) => (
               <View key={m.id} style={[styles.bubble, m.from_staff ? styles.ours : styles.theirs]}>
@@ -104,6 +103,7 @@ function TicketDialog({ id, onClose }: { id: string; onClose: () => void }) {
                   <SecondaryButton label={t('admin.tickets.send')} disabled={!reply.trim() || action.busy} onPress={() => send(false)} />
                   <SecondaryButton label={t('admin.tickets.sendClose')} disabled={!reply.trim() || action.busy} onPress={() => send(true)} />
                 </Actions>
+                <Missing reasons={[!reply.trim() && t('admin.tickets.needReply')]} />
               </>
             ) : (
               <Message text={t('admin.tickets.isClosed')} />
@@ -111,9 +111,7 @@ function TicketDialog({ id, onClose }: { id: string; onClose: () => void }) {
           </View>
         )}
       </QueryState>
-      <Actions>
-        <SecondaryButton label={t('admin.work.close')} onPress={onClose} />
-      </Actions>
+      <CloseGuard dirty={!!reply.trim()} onClose={onClose} />
     </DialogFrame>
   );
 }

@@ -337,7 +337,8 @@ function QuickChecks({ preview, split, onSplit, leftOut, onLeaveOut }: {
       {merges.map((merge) => {
         const { parents, partners } = relativesOf(preview, merge.keptId);
         return (
-          <Card key={merge.keptId} style={styles.check}>
+          // Three copies of one person make two merges with the same kept entry: the dropped one tells them apart.
+          <Card key={`${merge.keptId}:${merge.droppedId}`} style={styles.check}>
             <Text style={styles.checkText}>
               {parents[0] && partners[0]
                 ? t('import.samePerson', { name: merge.name, parent: parents[0], partner: partners[0] })

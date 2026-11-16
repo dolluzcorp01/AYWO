@@ -11,6 +11,7 @@ import { Card, ConfirmDialog, ErrorText, Field, Muted, SecondaryButton, TextButt
 import { api, clearSession } from '@/lib/api';
 import { errorCode, useErrorText } from '@/lib/errors';
 import { logOut } from '@/lib/logout';
+import { unregisterPush } from '@/pay/registerPush';
 import { signOutOfStore } from '@/pay/store';
 import { usePlan } from '@/pay/usePlan';
 import { colors, fonts } from '@/theme/tokens';
@@ -33,6 +34,8 @@ export default function Privacy() {
   const remove = useMutation({
     mutationFn: (planAcknowledged: boolean) => api.post<unknown>('/account/delete', { plan_acknowledged: planAcknowledged }),
     onSuccess: async () => {
+      // While the session still works: this phone must stop getting the account's notifications.
+      await unregisterPush().catch(() => undefined);
       await signOutOfStore().catch(() => undefined);
       await clearSession();
     },

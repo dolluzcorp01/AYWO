@@ -13,8 +13,9 @@ import {
 } from '@aywo/layout';
 import type { Point, Viewport, ViewState } from '@aywo/layout';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
+import { PanResponder, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import type { GestureResponderEvent, LayoutChangeEvent } from 'react-native';
 import Svg, { Polyline } from 'react-native-svg';
@@ -28,6 +29,9 @@ const AVATAR = 52;
 const ROW_HEIGHT = 124;
 const COLLAPSE_BEYOND = 3;
 const ZOOM_STEP = 1.25;
+/** The "more below" pill is drawn 28 high; its tap area is a full minTapSize, reaching this far above and below it. */
+const MORE_HEIGHT = 28;
+const MORE_REACH = (minTapSize - MORE_HEIGHT) / 2;
 
 interface Props {
   /** Family and outsiders use the same tree; outsider data has names and photos only. */
@@ -38,8 +42,12 @@ interface Props {
   bottomSpace?: number;
 }
 
-function touchPoints(event: GestureResponderEvent): Point[] {
-  return event.nativeEvent.touches.map((t) => ({ x: t.pageX, y: t.pageY }));
+/**
+ * Fingers in the canvas's own coordinates, which is what zoomAround works in. A touch reports where it is on the
+ * whole page, so the canvas's place on the page (under the header, beside the side menu on a computer) comes off.
+ */
+function touchPoints(event: GestureResponderEvent, origin: Point): Point[] {
+  return event.nativeEvent.touches.map((t) => ({ x: t.pageX - origin.x, y: t.pageY - origin.y }));
 }
 
 export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_SPACE - 18 }: Props) {
@@ -76,6 +84,14 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
   const latest = useRef({ view, viewport, layout });
   latest.current = { view, viewport, layout };
   const gesture = useRef<{ start: ViewState; pinch: number } | null>(null);
+  // Where the canvas sits on the page, measured when it is laid out and again as each gesture starts.
+  const canvas = useRef<ComponentRef<typeof View>>(null);
+  const origin = useRef<Point>({ x: 0, y: 0 });
+  const measureOrigin = () => {
+    canvas.current?.measure((_x: number, _y: number, _width: number, _height: number, pageX: number, pageY: number) => {
+      if (Number.isFinite(pageX) && Number.isFinite(pageY)) origin.current = { x: pageX, y: pageY };
+    });
+  };
 
   const panResponder = useRef(
     PanResponder.create({
@@ -84,14 +100,15 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
       onPanResponderGrant: (e) => {
         const current = latest.current.view;
         if (!current) return;
-        const touches = touchPoints(e);
+        measureOrigin();
+        const touches = touchPoints(e, origin.current);
         gesture.current = { start: current, pinch: touches.length > 1 ? pinchDistance(touches[0], touches[1]) : 0 };
       },
       onPanResponderMove: (e, g) => {
         const now = gesture.current;
         const { viewport: vp, layout: lay, view: current } = latest.current;
         if (!now || !vp || !current) return;
-        const touches = touchPoints(e);
+        const touches = touchPoints(e, origin.current);
         if (touches.length > 1) {
           const distance = pinchDistance(touches[0], touches[1]);
           if (now.pinch > 0 && distance > 0) {
@@ -117,7 +134,40 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
   function onLayout(e: LayoutChangeEvent) {
     const { width, height } = e.nativeEvent.layout;
     setViewport({ width, height });
+    measureOrigin();
   }
+
+  // On a computer: the wheel or two fingers on a trackpad move the tree; a pinch, or Ctrl/Cmd + wheel, zooms around the pointer.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    // On the web the view is the page element itself.
+    const element = canvas.current as unknown as HTMLElement | null;
+    if (!element || typeof element.addEventListener !== 'function') return;
+    const onWheel = (event: WheelEvent) => {
+      const { view: current, viewport: vp, layout: lay } = latest.current;
+      if (!current || !vp) return;
+      // Otherwise the browser scrolls or zooms the whole page instead.
+      event.preventDefault();
+      const box = element.getBoundingClientRect();
+      // Lines (a mouse wheel in some browsers) count as about 16 pixels each.
+      const unit = event.deltaMode === 1 ? 16 : 1;
+      // Like a map: scrolling moves the tree, and a pinch on the trackpad (which browsers report as a wheel with
+      // Ctrl held) or Ctrl/Cmd + wheel zooms. Zooming on every scroll made a laptop's two-finger scroll unusable.
+      if (!event.ctrlKey && !event.metaKey) {
+        // Shift + wheel moves sideways, for a mouse with one wheel.
+        const dx = (event.shiftKey && event.deltaX === 0 ? event.deltaY : event.deltaX) * unit;
+        const dy = (event.shiftKey && event.deltaX === 0 ? 0 : event.deltaY) * unit;
+        setView(clampView({ ...current, offsetX: current.offsetX - dx, offsetY: current.offsetY - dy }, lay, vp));
+        return;
+      }
+      const delta = event.deltaY * unit;
+      const factor = Math.exp(-Math.max(-120, Math.min(120, delta)) * 0.01);
+      const at = { x: event.clientX - box.left, y: event.clientY - box.top };
+      setView(clampView(zoomAround(current, factor, at), lay, vp));
+    };
+    element.addEventListener('wheel', onWheel, { passive: false });
+    return () => element.removeEventListener('wheel', onWheel);
+  }, []);
 
   function zoomBy(factor: number) {
     if (!view || !viewport) return;
@@ -130,7 +180,7 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
   const lines = onScreen ? linesInView(layout.lines, onScreen) : [];
 
   return (
-    <View style={[styles.canvas, { marginBottom: bottomSpace }]} onLayout={onLayout} {...panResponder.panHandlers}>
+    <View ref={canvas} collapsable={false} style={[styles.canvas, { marginBottom: bottomSpace }]} onLayout={onLayout} {...panResponder.panHandlers}>
       {view && viewport ? (
         <>
           <Svg width={viewport.width} height={viewport.height} style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -158,6 +208,7 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
                 key={`${card.personId}-${card.ghost ? 'ghost' : 'real'}`}
                 style={[
                   styles.card,
+                  card.hiddenChildren > 0 && styles.cardWithMore,
                   {
                     left: at.x - CARD_WIDTH / 2,
                     top: at.y - AVATAR / 2,
@@ -189,9 +240,11 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => setExpanded([...expanded, card.personId])}
-                    style={styles.more}
+                    style={styles.moreTap}
                   >
-                    <Text style={styles.moreText}>{t('tree.moreBelow', { count: card.hiddenChildren })}</Text>
+                    <View style={styles.more}>
+                      <Text style={styles.moreText}>{t('tree.moreBelow', { count: card.hiddenChildren })}</Text>
+                    </View>
                   </Pressable>
                 ) : null}
               </View>
@@ -223,8 +276,12 @@ const styles = StyleSheet.create({
   cardPress: { width: CARD_WIDTH, alignItems: 'center', gap: 4, minHeight: minTapSize },
   name: { color: colors.text, fontFamily: fonts.bold, fontSize: 12, lineHeight: 14, textAlign: 'center' },
   ghostName: { color: colors.muted },
+  // Room under the card for the lower part of the pill's tap area, so it is inside the card on every platform.
+  cardWithMore: { paddingBottom: MORE_REACH },
+  // A full-size tap area around the small pill. The margins take the extra height back, so nothing in the tree moves.
+  moreTap: { minHeight: minTapSize, minWidth: minTapSize, marginVertical: -MORE_REACH, alignItems: 'center', justifyContent: 'center' },
   more: {
-    minHeight: 28,
+    minHeight: MORE_HEIGHT,
     paddingHorizontal: 10,
     borderRadius: 14,
     borderWidth: 1,

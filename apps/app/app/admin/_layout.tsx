@@ -1,16 +1,17 @@
 // S-19 to S-21 frame. AYWO's own staff only, and only on the web. Sidebar shows what this person is granted,
 // in groups that open and close, with the way back to the family app and sign out at the bottom.
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Slot, usePathname, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { PageLoader } from '@/components/Loaders';
 import { accessFrom, AdminAccessProvider, MENU } from '@/admin/access';
 import '@/admin/i18n';
 import { TwoStepCode, TwoStepSetup } from '@/admin/TwoStep';
 import type { AdminMe } from '@/admin/types';
+import { isTwoStepFailure, SecondaryButton } from '@/admin/ui';
 import { Avatar } from '@/components/Avatar';
 import { SignOutIcon } from '@/components/Icons';
 import { LogoLink } from '@/components/LogoLink';
@@ -64,31 +65,70 @@ export default function AdminLayout() {
   });
   const access = useMemo(() => (adminMe.data ? accessFrom(adminMe.data) : null), [adminMe.data]);
 
+  // Any page's own request can be the first to learn that the 12-hour second-step proof ran out. Checking
+  // /admin/me again then brings up the code box over the page, instead of leaving a list that will not load.
+  const client = useQueryClient();
+  useEffect(
+    () =>
+      client.getQueryCache().subscribe((event) => {
+        if (event.type !== 'updated' || event.action.type !== 'error') return;
+        const key = event.query.queryKey;
+        if (key[0] !== 'admin' || key[1] === 'me') return;
+        if (isTwoStepFailure(event.action.error)) void client.invalidateQueries({ queryKey: ['admin', 'me'] });
+      }),
+    [client],
+  );
+
+  const signIn = { label: t('admin.gate.signInButton'), onPress: () => router.replace({ pathname: '/phone', params: { next: '/admin' } }) };
   if (!isWeb) return <Refusal text={t('admin.gate.webOnly')} action={{ label: t('admin.gate.goHome'), onPress: () => router.replace('/home') }} />;
-  if (me.isError) {
-    if (me.error instanceof ApiFailure && me.error.status === 401) {
-      return <Refusal text={t('admin.gate.signIn')} action={{ label: t('admin.gate.signInButton'), onPress: () => router.replace({ pathname: '/phone', params: { next: '/admin' } }) }} />;
-    }
-    return <Refusal text={t('admin.common.failed')} action={{ label: t('admin.common.tryAgain'), onPress: () => me.refetch() }} />;
+  // Signed out for real: the session could not be renewed. Anything else that fails while the page is open is
+  // treated as a passing problem below, so a half-written reply is never thrown away.
+  if (me.isError && me.error instanceof ApiFailure && me.error.status === 401) return <Refusal text={t('admin.gate.signIn')} action={signIn} />;
+  if (!me.data) {
+    if (me.isError) return <Refusal text={t('admin.common.failed')} action={{ label: t('admin.common.tryAgain'), onPress: () => me.refetch() }} />;
+    return <Loading label={t('admin.common.loading')} />;
   }
-  if (!me.data) return <Loading label={t('admin.common.loading')} />;
 
   const goHome = { label: t('admin.gate.goHome'), onPress: () => router.replace('/home') };
   if (!isStaff) return <Refusal text={t('admin.gate.notStaff')} action={goHome} />;
-  if (adminMe.isError) {
-    // The second sign-in step: set it up the first time, then a code every 12 hours.
-    if (adminMe.error instanceof ApiFailure && adminMe.error.code === 'admin_two_step_setup') return <TwoStepSetup onDone={() => adminMe.refetch()} />;
-    if (adminMe.error instanceof ApiFailure && adminMe.error.code === 'admin_two_step_required') return <TwoStepCode onDone={() => adminMe.refetch()} />;
-    if (adminMe.error instanceof ApiFailure && adminMe.error.status === 403) return <Refusal text={t('admin.gate.notStaff')} action={goHome} />;
-    return <Refusal text={t('admin.common.failed')} action={{ label: t('admin.common.tryAgain'), onPress: () => adminMe.refetch() }} />;
+
+  const failure = adminMe.isError ? adminMe.error : null;
+  const failureCode = failure instanceof ApiFailure ? failure.code : null;
+  // The second sign-in step: set it up the first time, then a code every 12 hours.
+  const needsSetup = failureCode === 'admin_two_step_setup';
+  const needsCode = failureCode === 'admin_two_step_required';
+  if (failure instanceof ApiFailure && failure.status === 401) return <Refusal text={t('admin.gate.signIn')} action={signIn} />;
+  // Removed from staff, or blocked: a real refusal even when a page is open.
+  if (failure instanceof ApiFailure && failure.status === 403 && !needsSetup && !needsCode) return <Refusal text={t('admin.gate.notStaff')} action={goHome} />;
+
+  if (!access) {
+    if (needsSetup) return <TwoStepSetup onDone={() => adminMe.refetch()} />;
+    if (needsCode) return <TwoStepCode onDone={() => adminMe.refetch()} />;
+    if (failure) return <Refusal text={t('admin.common.failed')} action={{ label: t('admin.common.tryAgain'), onPress: () => adminMe.refetch() }} />;
+    return <Loading label={t('admin.common.loading')} />;
   }
-  if (!access) return <Loading label={t('admin.common.loading')} />;
+
+  // From here a page is open. It stays mounted whatever the background check says, so nothing typed is lost.
+  const afterCode = () => void client.invalidateQueries({ queryKey: ['admin'] });
+  const notice =
+    failure && !needsSetup && !needsCode ? (
+      <View accessibilityRole="alert" style={styles.notice}>
+        <Text style={styles.noticeText}>{t('admin.gate.checkFailed')}</Text>
+        <SecondaryButton label={t('admin.common.tryAgain')} disabled={adminMe.isFetching} onPress={() => adminMe.refetch()} />
+      </View>
+    ) : null;
 
   return (
     <AdminAccessProvider value={access}>
-      <Frame role={access.role} teamRole={access.team_role} openWork={access.open_work} can={access.can}>
+      <Frame role={access.role} teamRole={access.team_role} openWork={access.open_work} can={access.can} notice={notice}>
         <Slot />
       </Frame>
+      {/* Over the page, not instead of it: the page stays mounted underneath with whatever was typed. */}
+      {needsCode || needsSetup ? (
+        <Modal transparent animationType="fade" visible>
+          {needsSetup ? <TwoStepSetup onDone={afterCode} /> : <TwoStepCode onDone={afterCode} text={t('admin.twoStep.againText')} />}
+        </Modal>
+      ) : null}
     </AdminAccessProvider>
   );
 }
@@ -120,6 +160,7 @@ function NavRow({
   expanded?: boolean;
   heading?: boolean;
 }) {
+  const { t } = useTranslation();
   const [hover, setHover] = useState(false);
   const color = active ? colors.logoIndigo : hover || heading ? colors.text : colors.muted;
   return (
@@ -139,7 +180,7 @@ function NavRow({
       </Text>
       {badge ? (
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
+          <Text style={styles.badgeText}>{badge > 99 ? t('admin.common.moreThan', { max: 99 }) : badge}</Text>
         </View>
       ) : null}
       {trailing ? trailing(color) : null}
@@ -152,12 +193,15 @@ function Frame({
   teamRole,
   openWork,
   can,
+  notice,
   children,
 }: {
   role: AdminMe['role'];
   teamRole: string | null;
   openWork: number;
   can: ReturnType<typeof accessFrom>['can'];
+  /** A passing problem, shown above the page without replacing it. */
+  notice?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
@@ -234,7 +278,10 @@ function Frame({
             {items.map((item) => row(item, false))}
           </ScrollView>
         </View>
-        <View style={styles.main}>{children}</View>
+        <View style={styles.main}>
+          {notice}
+          <View style={styles.page}>{children}</View>
+        </View>
         {signOutDialog}
       </View>
     );
@@ -285,7 +332,10 @@ function Frame({
           </View>
         </View>
       </View>
-      <View style={styles.main}>{children}</View>
+      <View style={styles.main}>
+          {notice}
+          <View style={styles.page}>{children}</View>
+        </View>
       {signOutDialog}
     </View>
   );
@@ -322,4 +372,17 @@ const styles = StyleSheet.create({
   accountName: { color: colors.text, fontFamily: fonts.bold, fontSize: 14 },
   accountRole: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 12 },
   main: { flex: 1, minWidth: 0 },
+  page: { flex: 1, minHeight: 0 },
+  notice: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 28,
+    paddingVertical: 10,
+    backgroundColor: colors.alertTint,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  noticeText: { flex: 1, minWidth: 200, color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
 });

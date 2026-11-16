@@ -1,6 +1,7 @@
 // Words for an activity row, and where tapping it goes. Used by Home (F1) and Activity (E4).
 import type { Href } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { shownName } from '@/tree/personName';
 import type { ActivityItem, RequestItem } from '@/tree/useEdit';
 
 export function useActivityText() {
@@ -14,7 +15,8 @@ export function useActivityText() {
     if (item.kind === 'merge') return t('activity.text.merge', { person });
     if (payload?.action === 'add_relative') {
       const relation = payload.relation === 'parent' || payload.relation === 'child' || payload.relation === 'sibling' ? payload.relation : 'spouse';
-      const added = payload.person?.display_name;
+      // A new person whose name is not known arrives as the stored marker: print the translated words instead.
+      const added = payload.person?.display_name ? shownName(t, payload.person.display_name, payload.person.name_unknown) : null;
       return added
         ? t(`activity.text.add.${relation}`, { name, person, added })
         : t(`activity.text.link.${relation}`, { name, person });
@@ -26,7 +28,7 @@ export function useActivityText() {
 
   return (item: ActivityItem): string => {
     const name = item.actor_name || t('activity.someone');
-    const person = item.person_name || t('activity.someone');
+    const person = item.person_name ? shownName(t, item.person_name) : t('activity.someone');
     if (item.type === 'request') {
       const text = request(item, name, person);
       if (item.state === 'pending') return text;

@@ -9,7 +9,7 @@ import type { PoolClient } from 'pg';
 import { z } from 'zod';
 import { requireUser } from '../auth-tokens.ts';
 import { config } from '../config.ts';
-import { asCaller } from '../db.ts';
+import { asCaller, asServer } from '../db.ts';
 import { ApiError } from '../errors.ts';
 import { signedReadUrl, signedReadUrls, uploadObject } from '../services/storage.ts';
 
@@ -533,7 +533,11 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
     const userId = await requireUser(req);
     // 409 plan_cancel_first until a payer whose plan will renew has seen the warning (settings/privacy.tsx).
     const body = z.object({ plan_acknowledged: z.boolean().default(false) }).parse(req.body ?? {});
-    return asCaller(userId, (db) => call(db, 'account_delete_request($1)', [body.plan_acknowledged]));
+    const answer = await asCaller(userId, (db) => call(db, 'account_delete_request($1)', [body.plan_acknowledged]));
+    // The request signs every device out. Their phones must stop getting this account's notifications too; the app
+    // tries to say so itself, but that call can fail. Signing in again (to keep the account) registers the phone again.
+    await asServer((db) => db.query(`delete from device_tokens where profile_id = $1`, [userId]));
+    return answer;
   });
 
   // "Keep my account": cancels a booked deletion.

@@ -8,20 +8,22 @@ import { PhoneField } from '@/components/PhoneField';
 import { Text } from '@/components/Text';
 import { Card, ErrorText, Heading, Muted, PrimaryButton } from '@/components/ui';
 import { api, ApiFailure } from '@/lib/api';
-import { errorKey } from '@/lib/errors';
+import { useErrorText } from '@/lib/errors';
 import { toE164 } from '@/lib/phone';
+import { setSignInPhone } from '@/lib/signInPhone';
 import { track } from '@/lib/track';
 import { colors, fonts } from '@/theme/tokens';
 
 export default function Phone() {
   const { t } = useTranslation();
   const router = useRouter();
+  const errorText = useErrorText();
   // Where to return after signing in, such as the family link this person came from.
   const { next } = useLocalSearchParams<{ next?: string }>();
   // "+919876543210": the country button starts at +91 in India, so people type just their 10 digits.
   const [number, setNumber] = useState('');
   const [busy, setBusy] = useState(false);
-  const [messageKey, setMessageKey] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   const phone = toE164(number);
   const valid = !!phone;
@@ -29,15 +31,18 @@ export default function Phone() {
   async function send() {
     if (!phone) return;
     setBusy(true);
-    setMessageKey(null);
+    setMessage(null);
     try {
       await api.post('/auth/otp/send', { phone });
       track('code_requested');
-      router.push({ pathname: '/otp', params: { phone, ...(next ? { next } : {}) } });
+      // In memory, not in the address: a phone number must not sit in the browser's history.
+      setSignInPhone(phone);
+      router.push({ pathname: '/otp', params: next ? { next } : {} });
     } catch (error) {
-      // "Check the number" only when the server refused the number. Too many tries and no connection say so.
-      if (error instanceof ApiFailure && error.status !== 429) setMessageKey('phone.sendFailed');
-      else setMessageKey(errorKey(error));
+      // "Check the number" only when the server refused the number itself. Too many tries, no connection and a
+      // problem on AYWO's side each say what they are, so nobody retypes a number that was right.
+      const badNumber = error instanceof ApiFailure && (error.code === 'phone_invalid' || error.code === 'bad_input');
+      setMessage(badNumber ? t('phone.sendFailed') : errorText(error));
     } finally {
       setBusy(false);
     }
@@ -52,7 +57,7 @@ export default function Phone() {
           value={number}
           onChangeText={(v) => {
             setNumber(v);
-            setMessageKey(null);
+            setMessage(null);
           }}
           placeholder={t('phone.placeholder')}
           autoComplete="tel"
@@ -60,7 +65,7 @@ export default function Phone() {
         <Card>
           <Text style={styles.note}>{t('phone.privacyNote')}</Text>
         </Card>
-        {messageKey ? <ErrorText>{t(messageKey)}</ErrorText> : null}
+        {message ? <ErrorText>{message}</ErrorText> : null}
       </View>
       <Text style={styles.terms}>
         <Trans

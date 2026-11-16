@@ -173,6 +173,17 @@ describe('T-TREE-02: half and step relations', () => {
     expect(labels.b.label).toBe('half-brother');
   });
 
+  it('an elder half-brother is still Anna in Tamil, not an English word', () => {
+    const ordered: KinGraph = {
+      ...graph,
+      persons: [person('pa', 'male'), person('wife1', 'female'), person('wife2', 'female'), person('a', 'male', 2), person('b', 'male', 1)],
+    };
+    const labels = labelTree(ordered, 'a', ta);
+    expect(labels.b.pathCode).toBe('Bh+');
+    expect(labels.b.label).toBe('Anna');
+    expect(labels.b.source).not.toBe('english');
+  });
+
   it('father\'s other wife is a step-mother, not a mother', () => {
     const labels = labelTree(graph, 'a', { languages: ['en'], terms: [] });
     expect(labels.wife2.pathCode).toBe('F.W~');

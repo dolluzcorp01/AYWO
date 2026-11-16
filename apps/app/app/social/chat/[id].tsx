@@ -3,10 +3,10 @@
 // chat can remove people from it.
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { useIsFocused, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { AppState, FlatList, Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { CameraIcon, CloseIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text, TextInput } from '@/components/Text';
@@ -25,6 +25,11 @@ import { VoicePlayer, VoiceRecorder } from '@/social/voice';
 import { colors, fonts, gradients, minTapSize } from '@/theme/tokens';
 
 const PAGE = 50;
+// Photo and voice links are signed for one hour. The chat is fetched again well inside that, and a link already on
+// screen is kept for a while so photos do not flicker and voice notes do not reload on every fetch.
+const MEDIA_REFETCH_MS = 20 * 60_000;
+const MEDIA_LINK_KEEP_MS = 30 * 60_000;
+const MEDIA_RETRY_GAP_MS = 30_000;
 type Pages = InfiniteData<ChatPage, string | null>;
 
 function placeMessage(old: Pages | undefined, message: Message): Pages | undefined {
@@ -60,12 +65,35 @@ export default function ChatRoom() {
   const [editing, setEditing] = useState<Message | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
-  // Kept until a send succeeds, so trying again after a dropped connection cannot post twice.
-  const clientId = useRef(newClientId());
+  // One id for each thing being sent, kept until that send succeeds: trying the same words or the same photo again after
+  // a dropped connection cannot post twice, and two different things sent close together never share an id (the server
+  // answers a repeated id with the first message, so sharing one would silently lose the second).
+  const lastTry = useRef<{ what: string; id: string } | null>(null);
+  const whatIsSent = (input: { body?: string; file?: PickedFile }) => (input.file ? `file:${input.file.uri}` : `text:${input.body ?? ''}`);
   const key = ['chat', id];
   const me = useQuery({ queryKey: ['social-me'], queryFn: () => api.get<{ id: string }>('/me') });
 
-  const markRead = useMutation({ mutationFn: () => api.rpc('chat_mark_read', { p_chat: id }) });
+  const myId = me.data?.id;
+
+  // "Read" means the person could see it: this chat is the screen in front, and AYWO is open.
+  const focused = useIsFocused();
+  const [appOpen, setAppOpen] = useState(AppState.currentState === 'active');
+  useEffect(() => {
+    const listener = AppState.addEventListener('change', (state) => setAppOpen(state === 'active'));
+    return () => listener.remove();
+  }, []);
+  const watching = focused && appOpen;
+  const watchingNow = useRef(watching);
+  watchingNow.current = watching;
+
+  const markRead = useMutation({
+    mutationFn: () => api.rpc('chat_mark_read', { p_chat: id }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ['chats'] });
+      // The count on Home and on the tab bar.
+      client.invalidateQueries({ queryKey: ['social-home'] });
+    },
+  });
   // People this person blocked, or who blocked them: their live messages are left out too, like the fetched ones.
   const hidden = useQuery({ queryKey: ['hidden-people'], queryFn: () => api.rpc<string[]>('social_hidden_people') });
   const members = useQuery({
@@ -78,7 +106,7 @@ export default function ChatRoom() {
       if (message.chat_id !== id) return;
       if (message.sender_id && hidden.data?.includes(message.sender_id)) return;
       client.setQueryData<Pages>(key, (old) => placeMessage(old, message));
-      markRead.mutate();
+      if (watchingNow.current) markRead.mutate();
     },
     () => client.invalidateQueries({ queryKey: key }),
   );
@@ -88,22 +116,47 @@ export default function ChatRoom() {
     initialPageParam: null as string | null,
     queryFn: ({ pageParam }) =>
       api.get<ChatPage>(`/chats/${id}/messages?limit=${PAGE}${pageParam ? `&before=${encodeURIComponent(pageParam)}` : ''}`),
-    getNextPageParam: (last) => (last.messages.length === PAGE ? last.messages[last.messages.length - 1].created_at : null),
-    refetchInterval: connected ? false : FETCH_WHEN_OFFLINE_MS,
+    // A live message is added to the first page, so a full page can hold more than PAGE: "older messages" must stay.
+    getNextPageParam: (last) => (last.messages.length >= PAGE ? last.messages[last.messages.length - 1].created_at : null),
+    // With the socket up nothing else fetches, and the signed photo and voice links would run out after an hour.
+    refetchInterval: connected ? MEDIA_REFETCH_MS : FETCH_WHEN_OFFLINE_MS,
   });
 
-  const messages = useMemo(() => chat.data?.pages.flatMap((page) => page.messages) ?? [], [chat.data]);
+  // Each message keeps the link it was first shown with until that link is getting old.
+  const mediaLinks = useRef(new Map<string, { url: string; at: number }>());
+  const lastMediaRetry = useRef(0);
+  const fetchedAt = chat.dataUpdatedAt;
+  const messages = useMemo(() => {
+    const all = chat.data?.pages.flatMap((page) => page.messages) ?? [];
+    const at = fetchedAt || Date.now();
+    return all.map((m) => {
+      if (!m.media_url) return m;
+      const kept = mediaLinks.current.get(m.id);
+      if (kept && at - kept.at < MEDIA_LINK_KEEP_MS) return kept.url === m.media_url ? m : { ...m, media_url: kept.url };
+      mediaLinks.current.set(m.id, { url: m.media_url, at });
+      return m;
+    });
+  }, [chat.data, fetchedAt]);
+  // A photo or voice note that will not load: most likely its link ran out. Get new links, but not in a loop.
+  function mediaFailed(messageId: string) {
+    mediaLinks.current.delete(messageId);
+    if (Date.now() - lastMediaRetry.current < MEDIA_RETRY_GAP_MS) return;
+    lastMediaRetry.current = Date.now();
+    void chat.refetch();
+  }
+
   const newestId = messages[0]?.id;
   useEffect(() => {
-    if (newestId) {
-      markRead.mutate(undefined, { onSuccess: () => client.invalidateQueries({ queryKey: ['chats'] }) });
-    }
-    // Only a new newest message should mark the chat read.
+    if (newestId && watching) markRead.mutate();
+    // A new newest message, or coming back to this chat, marks it read.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newestId]);
+  }, [newestId, watching]);
 
   const send = useMutation({
     mutationFn: async (input: { body?: string; file?: PickedFile; kind?: 'photo' | 'voice'; ms?: number }) => {
+      const what = whatIsSent(input);
+      if (lastTry.current?.what !== what) lastTry.current = { what, id: newClientId() };
+      const clientId = lastTry.current.id;
       const mediaPath = input.file ? await uploadFile('chat', input.file) : null;
       return api.post<Message>(`/chats/${id}/messages`, {
         body: input.body ?? null,
@@ -111,11 +164,11 @@ export default function ChatRoom() {
         media_kind: input.kind ?? null,
         media_ms: input.ms ?? null,
         reply_to: reply?.id ?? null,
-        client_id: clientId.current,
+        client_id: clientId,
       });
     },
     onSuccess: (message, input) => {
-      clientId.current = newClientId();
+      if (lastTry.current?.what === whatIsSent(input)) lastTry.current = null;
       client.setQueryData<Pages>(key, (old) => placeMessage(old, message));
       setReply(null);
       if (input.body) setText('');
@@ -163,8 +216,9 @@ export default function ChatRoom() {
   const first = chat.data?.pages[0];
   const title = first ? showName(first.chat.name) : t('social.chat.title');
   const subtitle = first?.chat.kind === 'group' ? t('social.chat.memberCount', { count: first.chat.members }) : undefined;
-  const other = members.data?.find((m) => m.profile_id !== me.data?.id);
-  const iMadeIt = !!members.data?.some((m) => m.creator && m.profile_id === me.data?.id);
+  // Until AYWO knows who is signed in, "the other person" could be the person themself: no Block until then.
+  const other = myId ? members.data?.find((m) => m.profile_id !== myId) : undefined;
+  const iMadeIt = !!myId && !!members.data?.some((m) => m.creator && m.profile_id === myId);
   const removeMember = useMutation({
     mutationFn: (profileId: string) => api.rpc('chat_remove_member', { p_chat: id, p_profile: profileId }),
     onSuccess: () => {
@@ -174,7 +228,7 @@ export default function ChatRoom() {
   });
 
   function renderMessage({ item }: { item: Message }) {
-    const mine = item.sender_id !== null && item.sender_id === me.data?.id;
+    const mine = item.sender_id !== null && item.sender_id === myId;
     if (item.deleted) {
       return (
         <View style={[styles.bubble, styles.theirs]}>
@@ -202,9 +256,9 @@ export default function ChatRoom() {
           </View>
         ) : null}
         {item.media_kind === 'photo' && item.media_url ? (
-          <Image source={{ uri: item.media_url }} style={styles.photo} accessibilityLabel={t('social.chat.photo')} />
+          <Image source={{ uri: item.media_url }} style={styles.photo} accessibilityLabel={t('social.chat.photo')} onError={() => mediaFailed(item.id)} />
         ) : null}
-        {item.media_kind === 'voice' && item.media_url ? <VoicePlayer url={item.media_url} ms={item.media_ms} onDark={mine} /> : null}
+        {item.media_kind === 'voice' && item.media_url ? <VoicePlayer url={item.media_url} ms={item.media_ms} onDark={mine} onStale={() => mediaFailed(item.id)} /> : null}
         {item.body ? <Text style={[styles.body, mine && styles.onMine]}>{item.body}</Text> : null}
         <Text style={[styles.time, mine && styles.onMine]}>{item.edited ? `${ago(item.created_at)} · ${t('social.edited')}` : ago(item.created_at)}</Text>
       </Pressable>
@@ -225,6 +279,9 @@ export default function ChatRoom() {
             {first.chat.kind === 'group' ? <TextButton label={t('social.chat.leave')} danger onPress={() => setLeaving(true)} /> : null}
           </View>
         ) : null}
+        {/* Whose message is whose depends on knowing who is signed in: nothing is drawn on a guess. */}
+        <Gate query={me}>
+          {() => (
         <Gate query={chat as never} plusMessage={t('social.chat.plusBody')}>
           {() => (
             <FlatList
@@ -247,10 +304,13 @@ export default function ChatRoom() {
             />
           )}
         </Gate>
+          )}
+        </Gate>
 
         {!connected ? <Note>{t('social.chat.reconnecting')}</Note> : null}
         {micDenied ? <Note>{t('social.chat.micDenied')}</Note> : null}
         <ActionError error={send.error} />
+        <ActionError error={remove.error} />
 
         {editing ? (
           <View style={styles.replying}>
@@ -343,7 +403,7 @@ export default function ChatRoom() {
         }}
         onCancel={() => setChosen(null)}
       >
-        {chosen && chosen.sender_id === me.data?.id && !chosen.media_kind ? (
+        {chosen && chosen.sender_id === myId && !chosen.media_kind ? (
           <TextButton
             label={t('social.edit')}
             onPress={() => {
@@ -354,7 +414,7 @@ export default function ChatRoom() {
             }}
           />
         ) : null}
-        {chosen && chosen.sender_id === me.data?.id ? (
+        {chosen && chosen.sender_id === myId ? (
           <TextButton
             label={t('social.delete')}
             danger
@@ -364,7 +424,7 @@ export default function ChatRoom() {
             }}
           />
         ) : null}
-        {chosen && chosen.sender_id !== me.data?.id ? (
+        {chosen && chosen.sender_id !== myId ? (
           <TextButton
             label={t('ops.report.short')}
             onPress={() => {
@@ -429,11 +489,17 @@ export default function ChatRoom() {
         {(members.data ?? []).map((m) => (
           <View key={m.profile_id} style={styles.member}>
             <Text style={styles.memberName}>{showName(m.name)}{m.creator ? ` · ${t('ops.chat.madeIt')}` : ''}</Text>
-            {iMadeIt && m.profile_id !== me.data?.id ? (
+            {iMadeIt && m.profile_id !== myId ? (
               <TextButton label={t('ops.chat.remove')} danger disabled={removeMember.isPending} onPress={() => removeMember.mutate(m.profile_id)} />
             ) : null}
           </View>
         ))}
+        {members.isError ? (
+          <>
+            <ActionError error={members.error} />
+            <TextButton label={t('social.chat.tryAgain')} onPress={() => void members.refetch()} />
+          </>
+        ) : null}
         <ActionError error={removeMember.error} />
       </ConfirmDialog>
     </Screen>

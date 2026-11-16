@@ -1,13 +1,13 @@
 // One queue for everything staff must act on: abuse reports, help tickets, orders to print, takedowns, word reports.
 // Each item has an owner, a status, a priority and a deadline. Opening one shows its history and internal notes.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { WorkDetail, WorkItem, WorkKind, WorkPage, WorkPriority, WorkStatus } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, DataTable, DialogFrame, Field, FilterChips, formatDate, Message, Pager, Pill, QueryState, SecondaryButton, useAction, usePagedList } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, CloseGuard, DataTable, DialogFrame, Field, FilterChips, formatDate, Message, Missing, Pager, Pill, QueryState, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
 
@@ -107,23 +107,20 @@ export default function AdminWork() {
 function WorkDialog({ id, onClose }: { id: string; onClose: () => void }) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const client = useQueryClient();
+  const refreshAfter = useRefreshAfter();
   const detail = useQuery({ queryKey: ['admin', 'work', 'detail', id], queryFn: () => api.get<WorkDetail>(`/admin/work/${id}`) });
   const [note, setNote] = useState('');
   const action = useAction();
 
   async function change(body: Record<string, unknown>) {
     const ok = await action.run(() => api.patch(`/admin/work/${id}`, body));
-    if (ok) {
-      await client.invalidateQueries({ queryKey: ['admin', 'work'] });
-      await client.invalidateQueries({ queryKey: ['admin', 'me'] });
-    }
+    if (ok) await refreshAfter('work', 'tickets');
   }
   async function addNote() {
     const ok = await action.run(() => api.post(`/admin/work/${id}/notes`, { body: note }));
     if (ok) {
       setNote('');
-      await client.invalidateQueries({ queryKey: ['admin', 'work', 'detail', id] });
+      await refreshAfter('work');
     }
   }
 
@@ -155,8 +152,9 @@ function WorkDialog({ id, onClose }: { id: string; onClose: () => void }) {
             />
             <Actions>
               <SecondaryButton label={t('admin.work.plusDay')} onPress={() => change({ due_at: new Date(Math.max(Date.now(), Date.parse(item.due_at)) + 86_400_000).toISOString() })} />
-              <SecondaryButton label={t('admin.work.goTo')} onPress={() => { onClose(); router.navigate(SOURCE[item.kind]); }} />
+              <SecondaryButton label={t('admin.work.goTo')} disabled={!!note.trim()} onPress={() => { onClose(); router.navigate(SOURCE[item.kind]); }} />
             </Actions>
+            <Missing reasons={[!!note.trim() && t('admin.work.noteFirst')]} />
             <Text style={adminStyles.fieldLabel}>{t('admin.work.history')}</Text>
             {item.history.length === 0 ? <Text style={adminStyles.cellMuted}>{t('admin.work.noHistory')}</Text> : null}
             {item.history.map((h) => (
@@ -172,12 +170,11 @@ function WorkDialog({ id, onClose }: { id: string; onClose: () => void }) {
             <Actions>
               <SecondaryButton label={t('admin.work.addNote')} disabled={!note.trim() || action.busy} onPress={addNote} />
             </Actions>
+            <Missing reasons={[!note.trim() && t('admin.work.needNote')]} />
           </View>
         )}
       </QueryState>
-      <Actions>
-        <SecondaryButton label={t('admin.work.close')} onPress={onClose} />
-      </Actions>
+      <CloseGuard dirty={!!note.trim()} onClose={onClose} />
     </DialogFrame>
   );
 }

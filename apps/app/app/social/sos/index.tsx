@@ -1,18 +1,18 @@
 // P5 SOS, free. Hold for 2 seconds and it starts at once: every contact with AYWO hears an alarm, the others get a text,
 // and live location begins. Only then are the choices shown: call the first contact, call the emergency number, or stop.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { openDoNotDisturbAccess } from '@/pay/registerPush';
 import { Text } from '@/components/Text';
-import { Card, ConfirmDialog, ErrorText, Pills, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
+import { Card, ConfirmDialog, ErrorText, Loading, Pills, PrimaryButton, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorCode } from '@/lib/errors';
 import { callNow, dialEmergency } from '@/social/call';
 import { emergencyNumber } from '@/social/emergency';
-import { ActionError, Gate, Note, Page, useName } from '@/social/parts';
+import { ActionError, Note, Page, useName } from '@/social/parts';
 import {
   locationPermissionNow,
   prepareLocationPermission,
@@ -21,12 +21,23 @@ import {
   startSosTracking,
   stopSosTracking,
 } from '@/social/sosTask';
+import { takeSosStart } from '@/social/sosStart';
 import type { SosActive, SosContact, SosStart } from '@/social/types';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 
 const HOLD_MS = 2_000;
+// A weak network must not leave the person looking at "Alerting your contacts" for ever.
+const START_TIMEOUT_MS = 20_000;
+const PLACE_WAIT_MS = 1_500;
+// While an SOS runs the server is asked again now and then, and more often once the time is up, so the screen goes
+// back to normal by itself.
+const CHECK_MS = 30_000;
+const CHECK_AT_END_MS = 5_000;
+const RESUME_AGAIN_MS = 15_000;
 const DURATIONS = ['30', '60', '120', '240'] as const;
 type Duration = (typeof DURATIONS)[number];
+
+class StartTimeout extends Error {}
 
 function EmergencyButton() {
   const { t } = useTranslation();
@@ -39,13 +50,16 @@ function EmergencyButton() {
   );
 }
 
-function Running({ active, callPhone, tracking, alerted, smsFailed, onStopped }: {
+function Running({ active, callPhone, tracking, locationWaiting, alerted, smsFailed, onStopped, onTimeUp, onTryLocation }: {
   active: SosActive;
   callPhone: string | null;
   tracking: string | null;
+  locationWaiting: boolean;
   alerted: { apps: number; texts: number } | null;
   smsFailed: number;
   onStopped: () => void;
+  onTimeUp: () => void;
+  onTryLocation: () => void;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -55,7 +69,14 @@ function Running({ active, callPhone, tracking, alerted, smsFailed, onStopped }:
     const tick = setInterval(() => setNow(Date.now()), 1_000);
     return () => clearInterval(tick);
   }, []);
-  const minutesLeft = Math.max(Math.ceil((new Date(active.ends_at).getTime() - now) / 60_000), 0);
+  const msLeft = new Date(active.ends_at).getTime() - now;
+  const minutesLeft = Math.max(Math.ceil(msLeft / 60_000), 0);
+  const timeUp = msLeft <= 0;
+  useEffect(() => {
+    if (timeUp) onTimeUp();
+    // Only the moment the time runs out matters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeUp]);
 
   const stop = useMutation({
     mutationFn: async () => {
@@ -71,9 +92,15 @@ function Running({ active, callPhone, tracking, alerted, smsFailed, onStopped }:
       <View style={styles.runningPanel} accessibilityRole="alert">
         <Text style={styles.runningTitle}>{t('social.sos.running')}</Text>
         {alerted ? <Text style={styles.runningText}>{t('social.sos.alerted', { apps: alerted.apps, texts: alerted.texts })}</Text> : null}
-        <Text style={styles.runningText}>{t('social.sos.minutesLeft', { count: minutesLeft })}</Text>
+        <Text style={styles.runningText}>{timeUp ? t('social.sos.timeUp') : t('social.sos.minutesLeft', { count: minutesLeft })}</Text>
       </View>
-      {tracking === 'none' ? <ErrorText>{t('social.sos.noLocation')}</ErrorText> : null}
+      {tracking === 'none' ? (
+        <>
+          <ErrorText>{t('social.sos.noLocation')}</ErrorText>
+          <SecondaryButton label={t('social.sos.tryLocation')} onPress={onTryLocation} />
+        </>
+      ) : null}
+      {tracking === null && locationWaiting ? <ErrorText>{t('social.sos.locationWaiting')}</ErrorText> : null}
       {tracking === 'foreground' ? <Note>{t('social.sos.keepOpen')}</Note> : null}
       {smsFailed > 0 ? <ErrorText>{t('social.sos.smsFailed', { count: smsFailed })}</ErrorText> : null}
       {callPhone ? <SecondaryButton label={t('social.sos.callFirst')} onPress={() => void callNow(callPhone)} /> : null}
@@ -82,7 +109,12 @@ function Running({ active, callPhone, tracking, alerted, smsFailed, onStopped }:
       <Pressable accessibilityRole="button" onPress={() => setStopping(true)} style={styles.stop}>
         <Text style={styles.stopText}>{t('social.sos.stop')}</Text>
       </Pressable>
-      <ActionError error={stop.error} />
+      {stop.isError ? (
+        <>
+          <ActionError error={stop.error} />
+          <Note>{t('social.sos.stopFailed')}</Note>
+        </>
+      ) : null}
       <ConfirmDialog
         visible={stopping}
         title={t('social.sos.stopTitle')}
@@ -99,8 +131,10 @@ function Running({ active, callPhone, tracking, alerted, smsFailed, onStopped }:
 export default function SosScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  // Held for 2 seconds on Home: start at once, without a second hold here.
-  const { start: startNow } = useLocalSearchParams<{ start?: string }>();
+  // Held for 2 seconds on Home: start at once, without a second hold here. Asked once, when the screen opens; a reload,
+  // the back button or a link can never start an SOS.
+  const startNow = useRef<boolean | null>(null);
+  if (startNow.current === null) startNow.current = takeSosStart();
   const autoStarted = useRef(false);
   const client = useQueryClient();
   const showName = useName();
@@ -109,52 +143,159 @@ export default function SosScreen() {
   const [alerted, setAlerted] = useState<{ apps: number; texts: number } | null>(null);
   const [callPhone, setCallPhone] = useState<string | null>(null);
   const [tracking, setTracking] = useState<string | null>(null);
+  const [resumeFailed, setResumeFailed] = useState(false);
+  const [resumeTry, setResumeTry] = useState(0);
   const [smsFailed, setSmsFailed] = useState(0);
   const [permission, setPermission] = useState<string | null>(null);
+  const [needContacts, setNeedContacts] = useState(false);
+  const [confirmStart, setConfirmStart] = useState(false);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const contacts = useQuery({ queryKey: ['sos-contacts'], queryFn: () => api.rpc<SosContact[]>('sos_contacts_list') });
-  const active = useQuery({ queryKey: ['sos-active'], queryFn: () => api.rpc<SosActive | null>('sos_active') });
+  const active = useQuery({
+    queryKey: ['sos-active'],
+    queryFn: () => api.rpc<SosActive | null>('sos_active'),
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (!data) return false;
+      return new Date(data.ends_at).getTime() <= Date.now() ? CHECK_AT_END_MS : CHECK_MS;
+    },
+  });
 
   useEffect(() => {
     void locationPermissionNow().then(setPermission);
   }, []);
 
-  // Opened again during an SOS, perhaps after the app was closed: carry on sending location.
+  // Leaving the screen in the middle of a hold must not start an SOS two seconds later.
+  useEffect(
+    () => () => {
+      if (holdTimer.current) clearTimeout(holdTimer.current);
+    },
+    [],
+  );
+
+  // Opened again during an SOS, perhaps after the app was closed or on another phone: carry on sending location.
+  // When the server cannot be reached for that, it says so and keeps trying.
   const activeId = active.data?.id;
   useEffect(() => {
-    if (activeId && tracking === null) void resumeSosTracking(activeId).then(setTracking);
-  }, [activeId, tracking]);
+    if (!activeId || tracking !== null) return undefined;
+    let live = true;
+    let again: ReturnType<typeof setTimeout> | undefined;
+    resumeSosTracking(activeId).then(
+      (how) => {
+        if (!live) return;
+        setResumeFailed(false);
+        setTracking(how);
+      },
+      () => {
+        if (!live) return;
+        setResumeFailed(true);
+        again = setTimeout(() => setResumeTry((n) => n + 1), RESUME_AGAIN_MS);
+      },
+    );
+    return () => {
+      live = false;
+      if (again) clearTimeout(again);
+    };
+  }, [activeId, tracking, resumeTry]);
+
+  // The server says no SOS of this person is on (stopped here, stopped on another phone, or the time ran out): the
+  // screen goes back to normal, and this phone stops sending location.
+  // Only an answer fetched since this screen opened counts: an old remembered answer must not turn location off.
+  const noneActive = active.data === null && active.isFetchedAfterMount;
+  function forgetRun() {
+    setTracking(null);
+    setResumeFailed(false);
+    setCallPhone(null);
+    setAlerted(null);
+    setSmsFailed(0);
+  }
+  useEffect(() => {
+    if (!noneActive) return;
+    forgetRun();
+    void stopSosTracking().catch(() => undefined);
+  }, [noneActive]);
+  const clearStartError = useRef<() => void>(() => undefined);
+
+  function showStarted(started: SosStart) {
+    setNeedContacts(false);
+    setCallPhone(started.call_phone);
+    setSmsFailed(started.sms_failed);
+    setAlerted({ apps: started.app_alarms, texts: started.sms_sent });
+    // The reply itself is proof that an SOS is on. If asking the server again fails, Stop must still be on screen.
+    const on: SosActive = { id: started.id, started_at: new Date().toISOString(), ends_at: started.ends_at, last_at: null };
+    client.setQueryData<SosActive | null>(['sos-active'], () => on);
+    void client.invalidateQueries({ queryKey: ['sos-active'] });
+  }
 
   const start = useMutation({
     mutationFn: async () => {
-      const place = await quickPlace();
-      return api.post<SosStart>('/sos/start', { minutes: Number(duration), lat: place?.lat ?? null, lng: place?.lng ?? null });
+      const place = await Promise.race([
+        quickPlace().catch(() => null),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), PLACE_WAIT_MS)),
+      ]);
+      const request = api.post<SosStart>('/sos/start', { minutes: Number(duration), lat: place?.lat ?? null, lng: place?.lng ?? null });
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const tooLong = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new StartTimeout()), START_TIMEOUT_MS);
+      });
+      try {
+        return await Promise.race([request, tooLong]);
+      } catch (error) {
+        if (error instanceof StartTimeout) {
+          // The reply may still arrive after the wait ran out: then the SOS is on, and the screen must show it.
+          // Location starts through the resume step, with a new key from the server.
+          request.then(
+            (started) => {
+              clearStartError.current();
+              showStarted(started);
+            },
+            () => undefined,
+          );
+          void client.invalidateQueries({ queryKey: ['sos-active'] });
+        }
+        throw error;
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
     },
     onSuccess: (started) => {
-      setCallPhone(started.call_phone);
-      setSmsFailed(started.sms_failed);
-      setAlerted({ apps: started.app_alarms, texts: started.sms_sent });
-      client.invalidateQueries({ queryKey: ['sos-active'] });
+      showStarted(started);
       startSosTracking({ id: started.id, writeToken: started.write_token, endsAt: started.ends_at })
         .then(setTracking)
         .catch(() => setTracking('none'));
     },
     onError: (error) => {
-      if (errorCode(error) === 'sos_already_active') client.invalidateQueries({ queryKey: ['sos-active'] });
+      if (errorCode(error) === 'sos_already_active') void client.invalidateQueries({ queryKey: ['sos-active'] });
     },
   });
 
+  clearStartError.current = start.reset;
+
+  const list = contacts.data ?? [];
+  // Known to be empty. When the list could not be loaded the hold still works: the server has the real list.
+  const noContacts = contacts.data !== undefined && contacts.data.length === 0;
+  const running = active.data;
+  const activeKnown = active.data !== undefined || active.isError;
+
   useEffect(() => {
-    if (startNow !== '1' || autoStarted.current || !contacts.data || active.data === undefined) return;
+    if (!startNow.current || autoStarted.current) return;
+    if (!activeKnown || (!contacts.data && !contacts.isError)) return;
     autoStarted.current = true;
-    if (!active.data && contacts.data.length > 0) start.mutate();
+    if (active.data) return;
+    if (noContacts) setNeedContacts(true);
+    else start.mutate();
     // start is stable for this screen; only the answers arriving matter.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startNow, contacts.data, active.data]);
+  }, [contacts.data, contacts.isError, active.data, activeKnown]);
 
   function pressIn() {
+    if (noContacts) {
+      setNeedContacts(true);
+      return;
+    }
     setHolding(true);
+    if (holdTimer.current) clearTimeout(holdTimer.current);
     holdTimer.current = setTimeout(() => {
       setHolding(false);
       start.mutate();
@@ -166,106 +307,148 @@ export default function SosScreen() {
     if (holdTimer.current) clearTimeout(holdTimer.current);
   }
 
-  const list = contacts.data ?? [];
-  const running = active.data;
+  // A screen reader cannot hold a button, so its one tap asks first. An SOS never starts from a single tap.
+  function askToStart() {
+    if (noContacts) setNeedContacts(true);
+    else setConfirmStart(true);
+  }
 
   return (
     <Page title={t('social.sos.title')} subtitle={t('social.sos.subtitle')}>
-      <Gate query={active}>
-        {() =>
-          running ? (
-            <Running
-              active={running}
-              callPhone={callPhone ?? list[0]?.phone ?? null}
-              tracking={tracking}
-              alerted={alerted}
-              smsFailed={smsFailed}
-              onStopped={() => {
-                setTracking(null);
-                setCallPhone(null);
-                setAlerted(null);
-                setSmsFailed(0);
-                client.invalidateQueries({ queryKey: ['sos-active'] });
-              }}
-            />
-          ) : (
+      {!activeKnown ? (
+        <>
+          <Loading label={t('social.loading')} />
+          <EmergencyButton />
+        </>
+      ) : running ? (
+        <Running
+          active={running}
+          callPhone={callPhone ?? list[0]?.phone ?? null}
+          tracking={tracking}
+          locationWaiting={resumeFailed}
+          alerted={alerted}
+          smsFailed={smsFailed}
+          onTimeUp={() => void client.invalidateQueries({ queryKey: ['sos-active'] })}
+          onTryLocation={() => setTracking(null)}
+          onStopped={() => {
+            forgetRun();
+            client.setQueryData<SosActive | null>(['sos-active'], () => null);
+            void client.invalidateQueries({ queryKey: ['sos-active'] });
+          }}
+        />
+      ) : (
+        <>
+          {active.isError && active.data === undefined ? (
             <>
-              {start.isPending ? (
-                <View style={styles.countdown}>
-                  <Text style={styles.runningTitle}>{t('social.sos.sending')}</Text>
-                </View>
-              ) : (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t('social.sos.holdLabel')}
-                  accessibilityHint={t('social.sos.holdHint')}
-                  disabled={list.length === 0}
-                  accessibilityActions={[{ name: 'activate' }]}
-                  onAccessibilityAction={() => start.mutate()}
-                  onPressIn={pressIn}
-                  onPressOut={pressOut}
-                  style={[styles.hold, holding && styles.holdOn, list.length === 0 && styles.holdOff]}
-                >
-                  <Text style={styles.holdMark}>{t('social.sos.mark')}</Text>
-                  <Text style={styles.runningText}>{holding ? t('social.sos.keepHolding') : t('social.sos.holdHint')}</Text>
-                </Pressable>
-              )}
+              <ErrorText>{t('social.sos.cannotCheck')}</ErrorText>
+              <TextButton label={t('social.sos.checkAgain')} disabled={active.isFetching} onPress={() => void active.refetch()} />
+            </>
+          ) : null}
 
-              {start.isError ? (
+          {start.isPending ? (
+            <View style={styles.countdown} accessibilityRole="alert">
+              <Text style={styles.runningTitle}>{t('social.sos.sending')}</Text>
+            </View>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('social.sos.holdLabel')}
+              accessibilityHint={noContacts ? t('social.sos.noContacts') : t('social.sos.holdHint')}
+              accessibilityActions={[{ name: 'activate' }]}
+              onAccessibilityAction={askToStart}
+              onPressIn={pressIn}
+              onPressOut={pressOut}
+              style={[styles.hold, holding && styles.holdOn, noContacts && styles.holdOff]}
+            >
+              <Text style={styles.holdMark}>{t('social.sos.mark')}</Text>
+              <Text style={styles.runningText}>{holding ? t('social.sos.keepHolding') : t('social.sos.holdHint')}</Text>
+            </Pressable>
+          )}
+
+          {noContacts && needContacts ? (
+            <>
+              <ErrorText>{t('social.sos.noContacts')}</ErrorText>
+              <PrimaryButton label={t('social.sos.chooseContacts')} onPress={() => router.push('/social/sos/contacts')} />
+            </>
+          ) : null}
+
+          {start.isError ? (
+            <>
+              {start.error instanceof StartTimeout ? (
+                <ErrorText>{t('social.sos.startTimeout')}</ErrorText>
+              ) : (
                 <>
                   <ActionError error={start.error} />
-                  <SecondaryButton label={t('social.sos.tryAgain')} onPress={() => start.mutate()} />
+                  <Note>{t('social.sos.startFailed')}</Note>
                 </>
-              ) : null}
-
-              <EmergencyButton />
-
-              <Card style={styles.block}>
-                <SectionTitle>{t('social.sos.contacts')}</SectionTitle>
-                <ActionError error={contacts.error} />
-                {list.length === 0 && !contacts.isError ? <Note>{t('social.sos.noContacts')}</Note> : null}
-                {list.map((c, i) => (
-                  <Text key={c.id} style={styles.contact}>
-                    {i === 0 ? t('social.sos.firstContact', { name: showName(c.name || c.phone) }) : showName(c.name || c.phone)}
-                  </Text>
-                ))}
-                <TextButton label={t('social.sos.chooseContacts')} onPress={() => router.push('/social/sos/contacts')} />
-              </Card>
-
-              <Card style={styles.block}>
-                <SectionTitle>{t('ops.card.title')}</SectionTitle>
-                <Note>{t('ops.card.sosNote')}</Note>
-                <TextButton label={t('ops.card.open')} onPress={() => router.push('/social/sos/card')} />
-              </Card>
-
-              <Card style={styles.block}>
-                <SectionTitle>{t('social.sos.shareFor')}</SectionTitle>
-                <Pills
-                  options={DURATIONS.map((d) => ({ value: d, label: t('social.sos.minutes', { count: Number(d) }) }))}
-                  value={duration}
-                  onChange={setDuration}
-                />
-              </Card>
-
-              {Platform.OS === 'android' ? (
-                <Card style={styles.block}>
-                  <SectionTitle>{t('social.sos.silentTitle')}</SectionTitle>
-                  <Note>{t('social.sos.silentBody')}</Note>
-                  <TextButton label={t('social.sos.silentAction')} onPress={() => void openDoNotDisturbAccess()} />
-                </Card>
-              ) : null}
-
-              {permission !== 'always' && Platform.OS !== 'web' ? (
-                <Card style={styles.block}>
-                  <SectionTitle>{t('social.sos.prepareTitle')}</SectionTitle>
-                  <Note>{t('social.sos.prepareBody')}</Note>
-                  <TextButton label={t('social.sos.prepareAction')} onPress={() => void prepareLocationPermission().then(setPermission)} />
-                </Card>
-              ) : null}
+              )}
+              <SecondaryButton label={t('social.sos.tryAgain')} onPress={() => start.mutate()} />
             </>
-          )
-        }
-      </Gate>
+          ) : null}
+
+          <EmergencyButton />
+
+          <Card style={styles.block}>
+            <SectionTitle>{t('social.sos.contacts')}</SectionTitle>
+            {contacts.isError ? (
+              <>
+                <ActionError error={contacts.error} />
+                <TextButton label={t('social.sos.tryAgain')} disabled={contacts.isFetching} onPress={() => void contacts.refetch()} />
+              </>
+            ) : null}
+            {noContacts ? <Note>{t('social.sos.noContacts')}</Note> : null}
+            {list.map((c, i) => (
+              <Text key={c.id} style={styles.contact}>
+                {i === 0 ? t('social.sos.firstContact', { name: showName(c.name || c.phone) }) : showName(c.name || c.phone)}
+              </Text>
+            ))}
+            <TextButton label={t('social.sos.chooseContacts')} onPress={() => router.push('/social/sos/contacts')} />
+          </Card>
+
+          <Card style={styles.block}>
+            <SectionTitle>{t('ops.card.title')}</SectionTitle>
+            <Note>{t('ops.card.sosNote')}</Note>
+            <TextButton label={t('ops.card.open')} onPress={() => router.push('/social/sos/card')} />
+          </Card>
+
+          <Card style={styles.block}>
+            <SectionTitle>{t('social.sos.shareFor')}</SectionTitle>
+            <Pills
+              options={DURATIONS.map((d) => ({ value: d, label: t('social.sos.minutes', { count: Number(d) }) }))}
+              value={duration}
+              onChange={setDuration}
+            />
+          </Card>
+
+          {Platform.OS === 'android' ? (
+            <Card style={styles.block}>
+              <SectionTitle>{t('social.sos.silentTitle')}</SectionTitle>
+              <Note>{t('social.sos.silentBody')}</Note>
+              <TextButton label={t('social.sos.silentAction')} onPress={() => void openDoNotDisturbAccess()} />
+            </Card>
+          ) : null}
+
+          {permission !== 'always' && Platform.OS !== 'web' ? (
+            <Card style={styles.block}>
+              <SectionTitle>{t('social.sos.prepareTitle')}</SectionTitle>
+              <Note>{t('social.sos.prepareBody')}</Note>
+              <TextButton label={t('social.sos.prepareAction')} onPress={() => void prepareLocationPermission().then(setPermission)} />
+            </Card>
+          ) : null}
+        </>
+      )}
+      <ConfirmDialog
+        visible={confirmStart}
+        title={t('social.sos.confirmStartTitle')}
+        message={t('social.sos.confirmStartBody')}
+        confirmLabel={t('social.sos.confirmStart')}
+        danger
+        onConfirm={() => {
+          setConfirmStart(false);
+          if (!running && !start.isPending) start.mutate();
+        }}
+        onCancel={() => setConfirmStart(false)}
+      />
     </Page>
   );
 }

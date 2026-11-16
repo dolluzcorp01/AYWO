@@ -31,11 +31,16 @@ export default function SosWatch() {
     queryFn: () => api.rpc<SosView>('sos_view', { p_event: id }),
     refetchInterval: (query) => (query.state.data && !query.state.data.active ? false : REFRESH_MS),
   });
-  useSosAlarm(!seen && view.data?.active !== false);
+  // Rings for an SOS that is on, and while the first answer is still on its way. It does not ring when the SOS could
+  // not be loaded (no connection, or not one of this person's), and stops when the SOS ends.
+  const ringing = !seen && (view.data ? view.data.active : !view.isError);
+  useSosAlarm(ringing);
   const card = useQuery({ queryKey: ['sos-card', id], queryFn: () => api.rpc<EmergencyCard | null>('sos_emergency_card', { p_event: id }) });
 
   return (
     <Page title={t('social.sos.watchTitle')}>
+      {/* Outside the loading and error states: the alarm can always be silenced. */}
+      {ringing ? <PrimaryButton label={t('social.sos.seenIt')} onPress={() => setSeen(true)} /> : null}
       <Gate query={view}>
         {(data) => (
           <>
@@ -45,7 +50,6 @@ export default function SosWatch() {
               </Text>
               {data.last ? <Text style={styles.text}>{t('social.sos.lastPlace', { when: when(data.last.at) })}</Text> : null}
             </View>
-            {!seen && data.active ? <PrimaryButton label={t('social.sos.seenIt')} onPress={() => setSeen(true)} /> : null}
             {data.last ? (
               <PrimaryButton
                 label={t('social.sos.openMap')}
@@ -65,12 +69,13 @@ export default function SosWatch() {
                 {card.data.note ? <Text style={styles.fact}>{card.data.note}</Text> : null}
               </Card>
             ) : null}
-            <SecondaryButton label={t('social.sos.callEmergency', { number })} onPress={() => void dialEmergency(number)} />
-            <Note>{t('social.sos.notEmergency')}</Note>
             <Note>{t('social.sos.deletedAfter')}</Note>
           </>
         )}
       </Gate>
+      {/* Always there, also when the SOS could not be loaded. */}
+      <SecondaryButton label={t('social.sos.callEmergency', { number })} onPress={() => void dialEmergency(number)} />
+      <Note>{t('social.sos.notEmergency')}</Note>
     </Page>
   );
 }

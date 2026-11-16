@@ -24,6 +24,11 @@ export function toHttpError(e: unknown): { status: number; code: string } | null
   if (err.validation) return { status: 422, code: 'bad_input' };
   if (err.statusCode === 429) return { status: 429, code: 'too_many_requests' };
   if (typeof err.code !== 'string') return null;
+  // Fastify's own refusals of a request (broken or empty JSON, a body that is too large, an unknown content type).
+  // These are the sender's mistake: answer 4xx, and keep them out of the server-error count that emails an alert.
+  if (err.code.startsWith('FST_ERR_') && typeof err.statusCode === 'number' && err.statusCode >= 400 && err.statusCode < 500) {
+    return { status: err.statusCode, code: 'bad_input' };
+  }
   const custom = err.code.match(/^PT(\d{3})$/);
   if (custom) return { status: Number(custom[1]), code: String(err.message) };
   if (err.code === '42501') return { status: 403, code: 'not_allowed' };

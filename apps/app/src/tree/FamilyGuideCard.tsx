@@ -36,7 +36,7 @@ export function FamilyGuideCard({ treeId, tree, me, full }: { treeId: string; tr
               key={s.step}
               accessibilityRole="button"
               accessibilityLabel={t(`guide.steps.${s.step}.title`)}
-              onPress={() => router.push(stepRoute(treeId, me, s))}
+              onPress={() => router.push(stepRoute(treeId, me, s, 'here'))}
               style={styles.chip}
             >
               <PlusIcon color={colors.logoIndigo} size={16} width={2.4} />

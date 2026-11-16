@@ -8,7 +8,7 @@ import { StyleSheet, View } from 'react-native';
 import { PageLoader } from '@/components/Loaders';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { ErrorText, Heading, Muted, PrimaryButton, SecondaryButton, TextButton } from '@/components/ui';
+import { Heading, LoadFailed, Muted, PrimaryButton, SecondaryButton, TextButton } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
 import { FAMILY_STEPS, familyGaps, stepRoute } from '@/tree/familyGaps';
 import type { FamilyStep } from '@/tree/familyGaps';
@@ -24,24 +24,36 @@ export default function FamilyGuide() {
   const [skipped, setSkipped] = useState<Set<FamilyStep>>(new Set());
 
   const openTree = () => router.replace({ pathname: '/tree/[id]', params: { id: treeId } });
-  const me = tree.data?.viewer_person_id ?? null;
+  // The card must really be in the tree that came back: a card that has since been removed is no place to add from.
+  const mine = tree.data?.viewer_person_id ?? null;
+  const me = mine && tree.data?.nodes.some((n) => n.id === mine) ? mine : null;
 
   if (tree.isError) {
     return (
       <Screen>
-        <View style={styles.centre}>
-          <ErrorText>{errorText(tree.error)}</ErrorText>
-          <SecondaryButton label={t('guide.openTree')} onPress={openTree} />
-        </View>
+        <LoadFailed message={errorText(tree.error)} onRetry={() => tree.refetch()} />
+        <SecondaryButton label={t('guide.openTree')} onPress={openTree} />
       </Screen>
     );
   }
-  if (!tree.data || !me) {
+  if (!tree.data) {
     return (
       <Screen>
         <View style={styles.centre}>
           <PageLoader label={t('tree.loading')} />
         </View>
+      </Screen>
+    );
+  }
+  // The tree is here, but this person has no card of their own in it (looking at a relative's tree, say).
+  // The guide adds family around "me", so there is nothing to ask: say so and give the way to the tree.
+  if (!me) {
+    return (
+      <Screen>
+        <View style={styles.centre}>
+          <Text accessibilityRole="alert" style={styles.note}>{t('guide.notInTree')}</Text>
+        </View>
+        <PrimaryButton label={t('guide.openTree')} onPress={openTree} />
       </Screen>
     );
   }
@@ -91,6 +103,7 @@ export default function FamilyGuide() {
 
 const styles = StyleSheet.create({
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 8 },
+  note: { color: colors.text, fontFamily: fonts.semibold, fontSize: 16, lineHeight: 24, textAlign: 'center' },
   celebrate: { fontSize: 56 },
   top: { flex: 1, gap: 12, paddingTop: 24 },
   headRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },

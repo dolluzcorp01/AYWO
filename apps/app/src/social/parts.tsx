@@ -109,9 +109,12 @@ export function useWhen() {
   const { i18n } = useTranslation();
   return (iso: string | null | undefined, dateOnly?: boolean) => {
     if (!iso) return '';
-    const value = new Date(iso);
+    // A date with no time ('2026-11-02') is that day wherever the reader is. new Date() would read it as midnight in
+    // London, which is still the day before in the Americas.
+    const day = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const value = day ? new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3])) : new Date(iso);
     if (Number.isNaN(value.getTime())) return '';
-    return dateOnly
+    return dateOnly || day
       ? value.toLocaleDateString(i18n.language)
       : value.toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short' });
   };

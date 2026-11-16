@@ -88,7 +88,23 @@
         "razorpay": "Billed by Razorpay",
         "stripe": "Billed by Stripe"
       },
-      "unnamed": "Family member"
+      "unnamed": "Family member",
+      "cancelAskedTrial": "Ending your free months. This page updates by itself in a moment.",
+      "cancelDone": "Cancelled. You will not be charged again. Plus stays on for your family until {{date}}.",
+      "cancelDoneTrial": "Your free months have ended and nothing was charged. Plus is now off for the family."
+    },
+    "pendingWhy": "We are still waiting to hear from the payment service. So that you cannot pay twice by mistake, buying is paused on this phone or browser for 30 minutes. You can leave this page; it carries on checking when you come back.",
+    "checkAgain": "Check again now",
+    "pendingHelp": "Paid, and still nothing? Ask for help",
+    "bonus": {
+      "title": "You have AYWO Plus, free until {{date}}",
+      "short": "Plus is on · free until {{date}}",
+      "why": "These are free Plus days from AYWO, for example for inviting family or as a gift from our support team.",
+      "noBuy": "You cannot buy a plan while your free days are running, so you never pay for days you already have. Come back after {{date}} to choose a plan.",
+      "noFamily": "Free days are for you alone. A family plan for 6 people can be bought after {{date}}."
+    },
+    "push": {
+      "sosChannel": "Family SOS alarms"
     }
   },
   "errors": {

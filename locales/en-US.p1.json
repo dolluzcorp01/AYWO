@@ -28,12 +28,12 @@
     "steps": {
       "mother": {
         "title": "Who is your mother?",
-        "help": "Add her name. A year of birth is enough.",
+        "help": "Add your mother's name. A year of birth is enough.",
         "add": "Add my mother"
       },
       "father": {
         "title": "Who is your father?",
-        "help": "Add his name. A year of birth is enough.",
+        "help": "Add your father's name. A year of birth is enough.",
         "add": "Add my father"
       },
       "partner": {
@@ -52,7 +52,8 @@
     "doneTitle": "Your family is growing",
     "doneBody_one": "{{count}} person in your tree. Share it so family can add more.",
     "doneBody_other": "{{count}} people in your tree. Share it so family can add more.",
-    "openTree": "Open the tree"
+    "openTree": "Open the tree",
+    "notInTree": "You don't have a card of your own in this tree yet, so there is no close family to add from here. Open the tree to look around."
   },
   "errors": {
     "account_blocked": "This account has been blocked. Please contact AYWO support.",
@@ -256,7 +257,8 @@
     "invite": "Invite",
     "comment": "Comment",
     "history": "History",
-    "edit": "Edit"
+    "edit": "Edit",
+    "openFailed": "That didn't open on this device. Check that the app for it is installed."
   },
   "add": {
     "title": "Add a relative",
@@ -307,7 +309,7 @@
     "born": "Born (year is fine)",
     "bornPlaceholder": "e.g. 1968",
     "died": "Passed away (year is fine)",
-    "badDate": "Type a year like 1968, or a full date like 21/03/1968.",
+    "badDate": "Type a year like 1968, a month like 03/1968, or a full date like 21/03/1968.",
     "childNumber": "Child number",
     "notSet": "Not set",
     "earlier": "Earlier in the family",
@@ -325,7 +327,7 @@
     "addToTree": "Add to the tree",
     "loadLatest": "Load the latest",
     "sentForApproval": "Thank you. This has gone to the tree's Creator to approve.",
-    "addRequested": "Sent to the tree's Creator to approve.",
+    "addRequested": "Sent to the tree's Creator to approve. Phone numbers and a photo can be added once the person is in the tree.",
     "partlySaved": "Added, but the photo or contacts didn't save. Try again from their card.",
     "remove": "Remove from the tree",
     "removeTitle": "Remove {{name}}?",
@@ -369,6 +371,7 @@
     "whatsapp": "Send on WhatsApp",
     "copy": "Copy link",
     "copied": "Link copied",
+    "copyFailed": "The link couldn't be copied here. Try Send on WhatsApp instead.",
     "moreWays": "More ways to share",
     "haveAccess": "Who has access",
     "anyoneWithLink": "Anyone with the link",
@@ -399,6 +402,9 @@
     "compare": "Compare",
     "acceptEdited": "Accept with this name",
     "wrongMatch": "Wrong match? Undo",
+    "wrongMatchTitle": "Undo this match?",
+    "wrongMatchHelp": "The person who joined will no longer be linked to this card in the tree, and will lose what the card let them see. They can be matched again later.",
+    "wrongMatchConfirm": "Yes, undo the match",
     "state": {
       "approved": "Approved.",
       "applied": "Done.",
@@ -454,6 +460,8 @@
     "empty": "No changes yet.",
     "undo": "Undo",
     "undoAll": "Undo all",
+    "undoTitle": "Undo this change?",
+    "undoHelp": "The tree goes back to how it was before this change. You can see it in History afterwards.",
     "undone": "Undone",
     "promise": "Undo restores exactly what was there. Nothing is ever lost.",
     "aywo": "AYWO",
@@ -873,6 +881,8 @@
     "removePartnerMessage": "{{a}} and {{b}} will no longer be shown as partners. Both stay in the tree, and their children keep both parents.",
     "suggest": "Is {{parent}} also {{child}}'s parent?",
     "suggestYes": "Yes, link",
+    "sentForApproval": "Sent to the tree's Creator to approve.",
+    "notAllowed": "You can't change or remove this link yourself. Ask the tree's Creator to do it.",
     "kind": {
       "birth": "By birth",
       "adopted": "Adopted",

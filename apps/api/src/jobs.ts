@@ -23,7 +23,38 @@ async function record(name: string, ok: boolean, error?: string): Promise<number
   return asServer(async (db) => (await db.query(`select job_record($1, $2, $3) as n`, [name, ok, error ?? null])).rows[0].n as number);
 }
 
+// Each running job holds one database connection for its lock while its own work asks the same pool for more.
+// Twenty or so jobs come due together on every hour. If they all ran at once, each could take its lock connection and
+// then wait for a second one that no job would ever give back, and every request to the API would wait with them.
+// So only a few run at a time; the rest wait their turn here, holding nothing.
+const AT_ONCE = 4;
+let running = 0;
+const waiting: (() => void)[] = [];
+
+async function takeTurn(): Promise<void> {
+  if (running < AT_ONCE) {
+    running += 1;
+    return;
+  }
+  await new Promise<void>((go) => waiting.push(go));
+}
+
+function endTurn(): void {
+  const next = waiting.shift();
+  if (next) next();
+  else running -= 1;
+}
+
 export async function runJob(job: Job, log: FastifyBaseLogger): Promise<void> {
+  await takeTurn();
+  try {
+    await runJobNow(job, log);
+  } finally {
+    endTurn();
+  }
+}
+
+async function runJobNow(job: Job, log: FastifyBaseLogger): Promise<void> {
   try {
     const ran = await asServer(async (db) => {
       const { rows } = await db.query(`select pg_try_advisory_xact_lock($1, hashtext($2)) as ok`, [JOB_LOCK, job.name]);

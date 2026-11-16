@@ -91,7 +91,8 @@
       "leaveMessage": "You will stop getting its messages. Someone in the chat can add you again.",
       "messageChoices": "Message",
       "reply": "Reply",
-      "chatName": "Chat name"
+      "chatName": "Chat name",
+      "tryAgain": "Try again"
     },
     "memories": {
       "title": "Memories",
@@ -164,7 +165,9 @@
       "deleteMessage": "Everyone in it loses the group and its chat. This cannot be undone.",
       "removeTitle": "Remove {{name}}?",
       "removeMessage": "They leave the group. You can add them again later.",
-      "removeYes": "Remove"
+      "removeYes": "Remove",
+      "starterCannotLeave": "You started this group, so you cannot leave it: nobody else could look after it. You can remove people, or delete the group.",
+      "newLinkDone": "A new link is ready. The old link no longer works."
     },
     "invites": {
       "title": "Invites",
@@ -235,7 +238,10 @@
       "tapToUninvite": "Tap to remove",
       "uninvite": "Remove",
       "uninviteTitle": "Remove {{name}} from this invite?",
-      "uninviteMessage": "They will no longer see it. You can invite them again."
+      "uninviteMessage": "They will no longer see it. You can invite them again.",
+      "saveGuests": "Save the number",
+      "guestsAnswerFirst": "Choose Yes, Maybe or No above: the number is saved with your answer.",
+      "guestsSaved": "Saved. The host can see the new number."
     },
     "pop": {
       "new": "New Pop Party",
@@ -356,7 +362,18 @@
       "seenIt": "I've seen it. Stop the alarm",
       "silentTitle": "Let family SOS ring on silent",
       "silentBody": "Let an SOS from family ring through Do Not Disturb.",
-      "silentAction": "Allow in phone settings"
+      "silentAction": "Allow in phone settings",
+      "timeUp": "Time is up. Location sharing is ending.",
+      "tryLocation": "Try turning location on again",
+      "locationWaiting": "Your location is not being sent yet: AYWO could not reach the server. It keeps trying. Your SOS is still on.",
+      "stopFailed": "The SOS is still on. Check your connection and press Stop again.",
+      "cannotCheck": "AYWO could not check whether an SOS is already on. You can still start one.",
+      "checkAgain": "Check again",
+      "startTimeout": "This is taking too long, and your contacts may not have been alerted. Try again, or call the emergency number below.",
+      "startFailed": "Your contacts were not alerted. Try again, or call the emergency number below.",
+      "confirmStartTitle": "Start SOS now?",
+      "confirmStartBody": "Your SOS contacts hear an alarm or get a text, and can see your location.",
+      "confirmStart": "Start SOS"
     },
     "missing": {
       "who": "Choose who can see this.",

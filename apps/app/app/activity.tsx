@@ -9,7 +9,7 @@ import { CheckIcon, RingsIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { TAB_BAR_SPACE, TabBar } from '@/components/TabBar';
 import { Text } from '@/components/Text';
-import { Card, EmptyState, ErrorText, Field, Heading, Loading, LoadFailed, NeonPanel, SmallButton, TextButton } from '@/components/ui';
+import { Card, ConfirmDialog, EmptyState, ErrorText, Field, Heading, Loading, LoadFailed, NeonPanel, SmallButton, TextButton } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
 import { useTimeAgo } from '@/lib/time';
 import { useActivityText } from '@/tree/activityText';
@@ -207,16 +207,30 @@ function ClaimRow({ item }: { item: ClaimItem }) {
   const timeAgo = useTimeAgo();
   const errorText = useErrorText();
   const undo = useUndoClaim();
+  // Un-joining someone takes their place in the tree away from them: never on one stray tap.
+  const [asking, setAsking] = useState(false);
   return (
     <>
       <Plain text={textFor(item)} when={timeAgo(item.at)}>
         {item.person_id ? (
-          <Pressable accessibilityRole="button" disabled={undo.isPending} onPress={() => undo.mutate(item.person_id as string)} style={styles.undo}>
+          <Pressable accessibilityRole="button" disabled={undo.isPending} onPress={() => setAsking(true)} style={styles.undo}>
             <Text style={styles.undoText}>{t('activity.wrongMatch')}</Text>
           </Pressable>
         ) : null}
       </Plain>
       {undo.isError ? <ErrorText>{errorText(undo.error)}</ErrorText> : null}
+      <ConfirmDialog
+        visible={asking}
+        title={t('activity.wrongMatchTitle')}
+        message={t('activity.wrongMatchHelp')}
+        confirmLabel={t('activity.wrongMatchConfirm')}
+        danger
+        busy={undo.isPending}
+        onCancel={() => setAsking(false)}
+        onConfirm={() => {
+          if (item.person_id) undo.mutate(item.person_id, { onSettled: () => setAsking(false) });
+        }}
+      />
     </>
   );
 }
@@ -227,17 +241,30 @@ function ChangeRow({ item }: { item: ChangeItem }) {
   const timeAgo = useTimeAgo();
   const errorText = useErrorText();
   const revert = useRevert(item.tree_id);
+  const [asking, setAsking] = useState(false);
+  const undoLabel = item.rows > 1 ? t('history.undoAll') : t('history.undo');
   return (
     <>
       <Plain text={textFor(item)} when={timeAgo(item.at)}>
         {item.reverted ? <Text style={styles.when}>{t('history.undone')}</Text> : null}
         {item.can_revert ? (
-          <Pressable accessibilityRole="button" disabled={revert.isPending} onPress={() => revert.mutate({ batch_id: item.batch_id })} style={styles.undo}>
-            <Text style={styles.undoText}>{item.rows > 1 ? t('history.undoAll') : t('history.undo')}</Text>
+          <Pressable accessibilityRole="button" disabled={revert.isPending} onPress={() => setAsking(true)} style={styles.undo}>
+            <Text style={styles.undoText}>{undoLabel}</Text>
           </Pressable>
         ) : null}
       </Plain>
       {revert.isError ? <ErrorText>{errorText(revert.error)}</ErrorText> : null}
+      <ConfirmDialog
+        visible={asking}
+        title={t('history.undoTitle')}
+        message={`${textFor(item)}
+
+${t('history.undoHelp')}`}
+        confirmLabel={undoLabel}
+        busy={revert.isPending}
+        onCancel={() => setAsking(false)}
+        onConfirm={() => revert.mutate({ batch_id: item.batch_id }, { onSettled: () => setAsking(false) })}
+      />
     </>
   );
 }
@@ -246,7 +273,7 @@ const styles = StyleSheet.create({
   about: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
   header: { paddingHorizontal: 16, paddingTop: 8, gap: 10 },
   tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
-  tab: { minHeight: minTapSize - 4, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1, borderColor: colors.cardBorder, backgroundColor: colors.card, justifyContent: 'center' },
+  tab: { minHeight: minTapSize, paddingHorizontal: 14, borderRadius: 20, borderWidth: 1, borderColor: colors.cardBorder, backgroundColor: colors.card, justifyContent: 'center' },
   tabOn: { backgroundColor: colors.logoIndigo, borderColor: colors.logoIndigo },
   tabText: { color: colors.text, fontFamily: fonts.bold, fontSize: 13 },
   tabTextOn: { color: colors.white },
@@ -264,7 +291,7 @@ const styles = StyleSheet.create({
   plain: { flexDirection: 'row', gap: 12, paddingHorizontal: 4, alignItems: 'flex-start' },
   tick: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.whatsapp, alignItems: 'center', justifyContent: 'center' },
   whenRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
-  undo: { minHeight: minTapSize, justifyContent: 'center' },
+  undo: { minHeight: minTapSize, minWidth: minTapSize, justifyContent: 'center' },
   undoText: { color: colors.relation, fontFamily: fonts.bold, fontSize: 12, textDecorationLine: 'underline' },
   scrim: { flex: 1, backgroundColor: colors.scrim, alignItems: 'center', justifyContent: 'center', padding: 24 },
   dialog: { alignSelf: 'stretch', backgroundColor: colors.background, borderRadius: 24, padding: 20, gap: 8 },

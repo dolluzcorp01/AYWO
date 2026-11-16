@@ -99,6 +99,7 @@ export default function Home() {
               <InviteRow tree={main} />
               <QuickActions />
               <HomeOfferCards />
+              <OtherTrees trees={others} />
               <TextButton label={t('home.anotherTree')} onPress={() => router.push('/start')} />
             </View>
           </View>
@@ -123,28 +124,38 @@ export default function Home() {
         <HomeOfferCards />
         <OnThisDayCard />
         <LatestMemory />
-        {others.length > 0 ? (
-          <>
-            <Text accessibilityRole="header" style={styles.section}>{t('home.otherTrees')}</Text>
-            <Card style={styles.list}>
-              {others.map((tree, i) => (
-                <Pressable
-                  key={tree.id}
-                  accessibilityRole="button"
-                  onPress={() => router.push({ pathname: '/tree/[id]', params: { id: tree.id } })}
-                  style={[styles.row, i === others.length - 1 && styles.rowLast]}
-                >
-                  <Text style={styles.rowTitle}>{tree.name}</Text>
-                  <Text style={styles.rowMeta}>{t('home.peopleCount', { count: tree.people })}</Text>
-                </Pressable>
-              ))}
-            </Card>
-          </>
-        ) : null}
+        <OtherTrees trees={others} />
         <TextButton label={t('home.anotherTree')} onPress={() => router.push('/start')} />
       </ScrollView>
       <TabBar active="home" treeId={main.id} />
     </Screen>
+  );
+}
+
+/** Every other tree this person has or was given: on the phone and on a computer alike. */
+function OtherTrees({ trees }: { trees: TreeRow[] }) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  if (trees.length === 0) return null;
+  return (
+    <>
+      <Text accessibilityRole="header" style={styles.section}>{t('home.otherTrees')}</Text>
+      <Card style={styles.list}>
+        {trees.map((tree, i) => (
+          <Pressable
+            key={tree.id}
+            accessibilityRole="button"
+            accessibilityLabel={`${tree.name}, ${t('home.peopleCount', { count: tree.people })}`}
+            onPress={() => router.push({ pathname: '/tree/[id]', params: { id: tree.id } })}
+            style={[styles.row, i === trees.length - 1 && styles.rowLast]}
+          >
+            <Text style={styles.rowTitle}>{tree.name}</Text>
+            <Text style={styles.rowMeta}>{t('home.peopleCount', { count: tree.people })}</Text>
+            <ChevronIcon color={colors.muted} size={18} />
+          </Pressable>
+        ))}
+      </Card>
+    </>
   );
 }
 

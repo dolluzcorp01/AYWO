@@ -1,5 +1,5 @@
 // Shared pieces of the admin panel: page frame, table, search, paging, dialogs. Web only, using the frozen tokens.
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -23,6 +23,30 @@ export function useErrorText() {
   const { t } = useTranslation();
   return (error: unknown): string =>
     error instanceof ApiFailure ? t(error.messageKey, { defaultValue: t('admin.common.failed') }) : t('admin.common.failed');
+}
+
+/** The 12-hour second-step proof ran out, or the second step was reset. The layout then asks for the code again. */
+export function isTwoStepFailure(error: unknown): boolean {
+  return error instanceof ApiFailure && (error.code === 'admin_two_step_required' || error.code === 'admin_two_step_setup');
+}
+
+/** After a failed action: when the reason is the second step, wake the layout so it asks for the code over the page. */
+function useTwoStepWatch() {
+  const client = useQueryClient();
+  return (error: unknown) => {
+    if (isTwoStepFailure(error)) void client.invalidateQueries({ queryKey: ['admin', 'me'] });
+  };
+}
+
+/**
+ * Reloads what an action changed: the named lists, and always the work badge in the menu and the dashboard counts.
+ * useRefreshAfter()('orders', 'work') reloads ['admin', 'orders'], ['admin', 'work'], ['admin', 'me'], ['admin', 'dashboard'].
+ */
+export function useRefreshAfter() {
+  const client = useQueryClient();
+  return async (...lists: string[]): Promise<void> => {
+    await Promise.all([...new Set([...lists, 'me', 'dashboard'])].map((list) => client.invalidateQueries({ queryKey: ['admin', list] })));
+  };
 }
 
 /** The frame of every screen. Refuses the screen when the person lacks the permission, even at a typed-in address. */
@@ -61,11 +85,47 @@ export function Section({ title, children }: { title: string; children: ReactNod
   );
 }
 
-export function Message({ text, alert }: { text: string; alert?: boolean }) {
+export function Message({ text, alert, good }: { text: string; alert?: boolean; good?: boolean }) {
   return (
-    <Text accessibilityRole={alert ? 'alert' : undefined} style={alert ? styles.alertText : styles.message}>
+    <Text
+      accessibilityRole={alert ? 'alert' : undefined}
+      accessibilityLiveRegion={alert ? undefined : 'polite'}
+      style={alert ? styles.alertText : good ? styles.goodText : styles.message}
+    >
       {text}
     </Text>
+  );
+}
+
+/** Under a button that is switched off: the first thing still missing. Pass each reason, or false when it is met. */
+export function Missing({ reasons }: { reasons: (string | false | null | undefined)[] }) {
+  const first = reasons.find((reason): reason is string => !!reason);
+  return first ? (
+    <Text accessibilityLiveRegion="polite" style={styles.missing}>
+      {first}
+    </Text>
+  ) : null;
+}
+
+/** The Close button of a dialog with a text box. With unsent text it asks first, so a half-written answer is not lost. */
+export function CloseGuard({ dirty, onClose }: { dirty: boolean; onClose: () => void }) {
+  const { t } = useTranslation();
+  const [asking, setAsking] = useState(false);
+  if (asking && dirty) {
+    return (
+      <View style={styles.guard}>
+        <Message text={t('admin.common.unsentText')} alert />
+        <View style={styles.actions}>
+          <SecondaryButton label={t('admin.common.keepWriting')} onPress={() => setAsking(false)} />
+          <SecondaryButton label={t('admin.common.discardClose')} danger onPress={onClose} />
+        </View>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.actions}>
+      <SecondaryButton label={t('admin.work.close')} onPress={() => (dirty ? setAsking(true) : onClose())} />
+    </View>
   );
 }
 
@@ -318,15 +378,20 @@ export function FormDialog({
   text,
   fields = [],
   confirmLabel,
+  cancelLabel,
   danger,
   onCancel,
   onConfirm,
+  children,
 }: {
   title: string;
   text?: string;
   fields?: DialogField[];
   confirmLabel: string;
+  cancelLabel?: string;
   danger?: boolean;
+  /** Extra warnings, shown above the fields. */
+  children?: ReactNode;
   onCancel: () => void;
   onConfirm: (values: Record<string, string>) => Promise<unknown>;
 }) {
@@ -337,7 +402,9 @@ export function FormDialog({
   );
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
-  const ready = fields.every((field) => (values[field.name] ?? '').trim().length >= (field.minLength ?? 0));
+  const watchTwoStep = useTwoStepWatch();
+  const short = fields.find((field) => (values[field.name] ?? '').trim().length < (field.minLength ?? 0));
+  const ready = !short;
 
   async function confirm() {
     setBusy(true);
@@ -346,12 +413,14 @@ export function FormDialog({
       await onConfirm(Object.fromEntries(Object.entries(values).map(([name, value]) => [name, value.trim()])));
     } catch (error) {
       setFailure(errorText(error));
+      watchTwoStep(error);
       setBusy(false);
     }
   }
 
   return (
     <DialogFrame title={title} text={text}>
+      {children}
       {fields.map((field) => (
         <View key={field.name} style={styles.field}>
           <Text style={styles.fieldLabel}>{field.label}</Text>
@@ -366,8 +435,9 @@ export function FormDialog({
         </View>
       ))}
       {failure ? <Message text={failure} alert /> : null}
+      <Missing reasons={[short ? t('admin.common.needsText', { field: short.label, count: short.minLength ?? 1 }) : null]} />
       <View style={styles.dialogActions}>
-        <SecondaryButton label={t('admin.common.cancel')} onPress={onCancel} disabled={busy} />
+        <SecondaryButton label={cancelLabel ?? t('admin.common.cancel')} onPress={onCancel} disabled={busy} />
         <SecondaryButton label={confirmLabel} onPress={confirm} disabled={busy || !ready} danger={danger} />
       </View>
     </DialogFrame>
@@ -383,6 +453,7 @@ export function Field({
   placeholder,
   maxLength,
   help,
+  error,
 }: {
   label: string;
   value: string;
@@ -391,6 +462,8 @@ export function Field({
   placeholder?: string;
   maxLength?: number;
   help?: string;
+  /** What is wrong with what was typed, shown in red under the box. */
+  error?: string | null;
 }) {
   return (
     <View style={styles.field}>
@@ -404,9 +477,11 @@ export function Field({
         placeholder={placeholder}
         placeholderTextColor={colors.muted}
         accessibilityLabel={label}
-        style={[styles.input, multiline && styles.inputTall]}
+        aria-invalid={error ? true : undefined}
+        style={[styles.input, multiline && styles.inputTall, !!error && styles.inputBad]}
       />
       {help ? <Text style={styles.cellMuted}>{help}</Text> : null}
+      {error ? <Message text={error} alert /> : null}
     </View>
   );
 }
@@ -479,6 +554,7 @@ export function useAction() {
   const errorText = useErrorText();
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  const watchTwoStep = useTwoStepWatch();
   async function run(work: () => Promise<unknown>): Promise<boolean> {
     setBusy(true);
     setFailure(null);
@@ -488,6 +564,7 @@ export function useAction() {
       return true;
     } catch (error) {
       setFailure(errorText(error));
+      watchTwoStep(error);
       setBusy(false);
       return false;
     }
@@ -531,6 +608,10 @@ const styles = StyleSheet.create({
   state: { alignItems: 'center', gap: 12, paddingVertical: 40 },
   message: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 15, textAlign: 'center' },
   alertText: { color: colors.alert, fontFamily: fonts.bold, fontSize: 14 },
+  goodText: { color: colors.good, fontFamily: fonts.bold, fontSize: 14 },
+  missing: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 13 },
+  guard: { gap: 8 },
+  inputBad: { borderColor: colors.alert },
   tableScroll: { flexGrow: 1 },
   table: {
     flex: 1,

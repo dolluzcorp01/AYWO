@@ -13,14 +13,21 @@
       "save": "Save",
       "previous": "Previous",
       "next": "Next",
-      "pageOf": "Page {{page}} of {{pages}}, {{total}} in all"
+      "pageOf": "Page {{page}} of {{pages}}, {{total}} in all",
+      "unsentText": "You have text that isn't sent yet. Closing now throws it away.",
+      "keepWriting": "Keep writing",
+      "discardClose": "Throw it away and close",
+      "needsText_one": "Still needed: {{field}}, at least {{count}} character.",
+      "needsText_other": "Still needed: {{field}}, at least {{count}} characters.",
+      "moreThan": "{{max}}+"
     },
     "gate": {
       "webOnly": "The admin panel opens only on the web.",
       "signIn": "Sign in to open the admin panel.",
       "signInButton": "Sign in",
       "notStaff": "This area is only for AYWO staff.",
-      "goHome": "Go to Home"
+      "goHome": "Go to Home",
+      "checkFailed": "We couldn't check your staff sign-in just now, probably a connection problem. This page and anything you typed are kept."
     },
     "roles": {
       "aywo_admin": "AYWO Admin",
@@ -181,7 +188,9 @@
       "correctedWord": "Corrected word, in Latin letters",
       "correctedNative": "Corrected word, in its own script",
       "dismissTitle": "Dismiss this report about \"{{word}}\"?",
-      "dismissText": "The word stays as it is."
+      "dismissText": "The word stays as it is.",
+      "takeBackTitle": "Take \"{{word}}\" back out of the dictionary?",
+      "takeBackText": "It was approved, and people see it now. Taking it back removes it from the dictionary for everyone. You can approve it again from the Rejected list."
     },
     "takedowns": {
       "title": "Takedown requests",
@@ -287,7 +296,25 @@
       "roleName": "Role name",
       "deleteRole": "Delete role",
       "roleChangesAll_one": "{{count}} person has this role. Changes apply to them at once.",
-      "roleChangesAll_other": "{{count}} people have this role. Changes apply to them at once."
+      "roleChangesAll_other": "{{count}} people have this role. Changes apply to them at once.",
+      "cancelInviteTitle": "Cancel the invite for {{phone}}?",
+      "cancelInviteText": "This number will not become staff when it signs in. You can add it again later.",
+      "keepInvite": "Keep the invite",
+      "needPhone": "Type the full phone number with its country code.",
+      "needPermission": "Tick at least one permission, or choose a team role.",
+      "promoteTitle": "Make {{name}} an AYWO Admin?",
+      "promoteText": "{{name}} will be able to do everything in this panel: add and remove staff and other AYWO Admins, change anyone's permissions, read the audit log, block accounts, refund orders, change app settings, and send notices to every member.",
+      "promoteWarn": "Give this only to someone who runs AYWO with you. Another AYWO Admin can take it away later.",
+      "promoteBack": "No, go back",
+      "promoteConfirm": "Yes, make AYWO Admin",
+      "needRoleName": "Type a role name of at least 2 letters.",
+      "needRolePermission": "Tick at least one permission for this role.",
+      "deleteRoleTitle": "Delete the role {{name}}?",
+      "deleteRoleText": "Nobody has this role now. Once deleted it can't be brought back; you would have to make it again.",
+      "deleteRoleBlocked": "This role can be deleted only when nobody has it. Move its people to another role first.",
+      "roleConfirmTitle": "Change what {{name}} can do?",
+      "roleGains": "They gain: {{list}}",
+      "roleLoses": "They lose: {{list}}"
     },
     "audit": {
       "title": "Audit log",
@@ -390,7 +417,9 @@
       "keyLabel": "Setup key",
       "openApp": "Open in authenticator app",
       "step2": "2. Type the 6-digit code the app shows:",
-      "turnOn": "Turn on"
+      "turnOn": "Turn on",
+      "againText": "Your 12-hour staff sign-in has ended. Type a new 6-digit code from your authenticator app to carry on. The page underneath, and anything you typed on it, is still there.",
+      "needsCode": "Type all 6 digits of the code."
     },
     "work": {
       "title": "Work queue",
@@ -439,7 +468,9 @@
       "note": "Internal note",
       "noteHelp": "Staff only. The person never sees this.",
       "addNote": "Add note",
-      "close": "Close"
+      "close": "Close",
+      "noteFirst": "Add your note, or clear it, before leaving this item.",
+      "needNote": "Write a note to add it."
     },
     "reports": {
       "title": "Abuse reports",
@@ -498,7 +529,8 @@
       "replyHelp": "The person gets a notification and reads it in the app.",
       "send": "Send",
       "sendClose": "Send and close",
-      "isClosed": "This ticket is closed. A reply from the person opens it again."
+      "isClosed": "This ticket is closed. A reply from the person opens it again.",
+      "needReply": "Write your answer first."
     },
     "orders": {
       "title": "Orders",
@@ -531,7 +563,7 @@
       "search": "Order id, tracking number or buyer id",
       "empty": "No orders here.",
       "cancelTitle": "Cancel this order?",
-      "cancelText": "The buyer is told. Refund the payment too if it was paid.",
+      "cancelText": "The buyer gets a notification that the order is cancelled.",
       "refundTitle": "Refund {{amount}}?",
       "refundText": "The money goes back through Razorpay or Stripe to the way the buyer paid. This can't be undone.",
       "buyerTold": "The buyer gets a notification.",
@@ -548,7 +580,21 @@
       "quantity": "Quantity",
       "design": "Design",
       "noAddress": "This order has no shipping address.",
-      "showAddress": "Show address"
+      "showAddress": "Show address",
+      "notRefunded": "Paid, not refunded",
+      "stepDone": "Saved. The order is now: {{step}}. The buyer has been told.",
+      "keepOrder": "Keep the order",
+      "cancelNoRefund": "Cancelling does not give the money back. The buyer paid {{amount}}, and it stays paid until someone refunds it.",
+      "cancelThenRefund": "After you cancel, you will be asked whether to refund it straight away.",
+      "cancelRefundElsewhere": "This payment can't be refunded from here. After you cancel, refund it at the payment provider.",
+      "cancelNeedsPayments": "You don't have the Payments permission, so you can't refund. After you cancel, ask someone who has it to refund this order. It stays in the Cancelled list marked \"Paid, not refunded\".",
+      "cancelDoneNoRefund": "The order is cancelled and the buyer has been told. It has not been refunded: find it under Cancelled, marked \"Paid, not refunded\".",
+      "refundAfterCancelText": "The order is cancelled, but the buyer has not got the money back yet. Refund it now? The money goes back through Razorpay or Stripe to the way the buyer paid. This can't be undone.",
+      "refundLater": "Not now",
+      "refundDone": "Refunded {{amount}}. The buyer has been told.",
+      "needTracking": "Type the tracking number to mark it shipped.",
+      "trackingUrlBad": "The tracking link must start with https://",
+      "carrierExample": "For example India Post"
     },
     "offers": {
       "title": "Offers",
@@ -651,7 +697,51 @@
       "noMessages": "No messages sent yet.",
       "sendTitle_one": "Send to {{count}} person?",
       "sendTitle_other": "Send to {{count}} people?",
-      "sendText": "It can't be taken back. Your reason goes in the audit log."
+      "sendText": "It can't be taken back. Your reason goes in the audit log.",
+      "dateMissing": "Type the start day.",
+      "dateBad": "This isn't a real day. Type year-month-day, like {{example}}.",
+      "endBeforeStart": "The end day is before the start day.",
+      "dateHelp": "Starts at the beginning of this day, India time.",
+      "endHelp": "Runs until the end of this day, India time. Leave empty for no end.",
+      "percentBad": "The percentage must be a whole number from 1 to 90.",
+      "amountBad": "The amount must be more than 0.",
+      "perUserBad": "Uses per person must be from 1 to 100.",
+      "needCode": "Type a code of at least 4 letters or numbers.",
+      "needTitle": "Type a title of at least 3 letters.",
+      "needValue": "Type how much the coupon takes off.",
+      "needProduct": "Tick at least one thing the coupon works on.",
+      "reviewCouponTitle": "Save coupon {{code}}?",
+      "reviewCouponText": "This coupon is switched on, so it takes money off real orders. Please check it once more.",
+      "warnNoEnd": "No end day: this coupon keeps working until someone switches it off.",
+      "warnEnded": "The end day has already passed, so this will not show or work.",
+      "warnNoLimit": "No limit on total uses: any number of orders can use it.",
+      "warnBigPercent": "{{percent}}% off is a large discount. Make sure this is what you mean.",
+      "backToEdit": "Go back",
+      "confirmSave": "Yes, save",
+      "checkAndSave": "Check and save",
+      "currencies": {
+        "INR": "Rupees (INR)",
+        "USD": "US dollars (USD)"
+      },
+      "languages": {
+        "en": "English",
+        "ta": "Tamil"
+      },
+      "keepLanguages": "As now: {{list}}",
+      "needBannerText": "Type the banner text, at least 3 letters.",
+      "needPlacement": "Tick at least one place for the banner to show.",
+      "reviewBannerTitle": "Save this banner?",
+      "reviewBannerText": "This banner is switched on, so the people below see it as soon as it starts. Please check it once more.",
+      "warnBannerNoEnd": "No end day: this banner keeps showing until someone switches it off.",
+      "needHeading": "Type a heading of at least 3 letters.",
+      "needMessage": "Type a message of at least 5 letters.",
+      "opensBad": "This must be an app page that starts with /, for example /offers.",
+      "needCount": "Send stays off until we can count who will get this. Press Try again above.",
+      "counting": "Counting who will get this…",
+      "nobodyToSend": "Nobody in this group has switched on offers, so there is no one to send to. Choose a wider group.",
+      "countFailed": "We couldn't count who will get this. {{why}}",
+      "sentDone_one": "Sent to {{count}} person.",
+      "sentDone_other": "Sent to {{count}} people."
     },
     "analytics": {
       "title": "Analytics",
@@ -743,7 +833,17 @@
       "healthHelp": "Crashes the apps reported. Numbers, emails and ids are removed before saving. Kept 30 days.",
       "noCrashes": "No crashes reported.",
       "crashTotal_one": "{{count}} crash reported.",
-      "crashTotal_other": "{{count}} crashes reported."
+      "crashTotal_other": "{{count}} crashes reported.",
+      "missingRow": "This setting is missing on the server, so it can't be saved from here. Please tell the technical team.",
+      "saved": "Saved. The apps pick it up within a minute.",
+      "versionBad": "Type a version as three numbers with dots, like 1.4.0.",
+      "support": "Support contact",
+      "supportHelp": "The email address and hours people see on the Contact and Help pages.",
+      "supportEmail": "Support email",
+      "supportHours": "Support hours",
+      "supportHoursExample": "For example Monday to Saturday, 10 am to 6 pm India time",
+      "supportEmailBad": "Type a full email address, like help@example.com.",
+      "supportHoursBad": "Type the hours when support answers."
     },
     "user360": {
       "title": "Account",
@@ -801,7 +901,16 @@
         "end": "Every phone and browser is signed out. The account stays open.",
         "plus": "Added on top of any free days they already have. They get a notification."
       },
-      "days": "Days (1 to 365)"
+      "days": "Days (1 to 365)",
+      "reloadFailed": "Your change may be saved, but this page couldn't be reloaded, so it may show old details. {{why}}",
+      "staffLocked": "This is a staff account. Only an AYWO Admin can block it or sign it out everywhere.",
+      "done": {
+        "block": "{{name}} is blocked.",
+        "unblock": "{{name}} is unblocked.",
+        "end": "{{name}} is signed out everywhere.",
+        "plus": "Free Plus days added for {{name}}."
+      },
+      "daysBad": "Days must be a whole number from 1 to 365."
     },
     "funnel": {
       "title": "Step by step: devices that first opened the app in the last {{count}} days",

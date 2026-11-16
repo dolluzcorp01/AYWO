@@ -1,9 +1,8 @@
 // S-20 Takedown requests from people added to a tree by others.
-import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { Actions, AdminPage, adminStyles, DataTable, FilterChips, FormDialog, formatDate, Pager, QueryState, SecondaryButton, usePagedList } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, DataTable, FilterChips, FormDialog, formatDate, Pager, QueryState, SecondaryButton, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column, DialogField } from '@/admin/ui';
 import type { TakedownRow } from '@/admin/types';
 import { api } from '@/lib/api';
@@ -12,7 +11,7 @@ type Status = TakedownRow['status'];
 
 export default function AdminTakedowns() {
   const { t, i18n } = useTranslation();
-  const client = useQueryClient();
+  const refreshAfter = useRefreshAfter();
   const [status, setStatus] = useState<Status>('open');
   const [acting, setActing] = useState<{ item: TakedownRow; decision: 'remove' | 'dismiss' } | null>(null);
   const { query, page, setPage } = usePagedList<TakedownRow>(['admin', 'takedowns'], '/admin/takedowns', { status });
@@ -99,9 +98,8 @@ export default function AdminTakedowns() {
               note,
               ...(person_id ? { person_id } : {}),
             });
-            await client.invalidateQueries({ queryKey: ['admin', 'takedowns'] });
-            await client.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
             setActing(null);
+            await refreshAfter('takedowns', 'work', 'trees');
           }}
         />
       ) : null}

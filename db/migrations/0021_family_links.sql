@@ -1,6 +1,6 @@
 -- PR 23. Family links you can fix.
--- 1. Adding someone already in the tree adds only the links that are missing. Before, adding Sathana as
---    Ezhilarasi's child (with Veeraiyan) failed with 'already on the list' because she was already his child.
+-- 1. Adding someone already in the tree adds only the links that are missing. Before, adding Divya as
+--    Lakshmi's child (with Murugan) failed with 'already on the list' because she was already his child.
 --    Same care for parent, partner and brother or sister: never a link twice, clear answers when it cannot be.
 -- 2. New: change how a parent is linked (by birth, adopted, step, foster), remove a wrong link, change or remove
 --    a partner link. Before, the only fix was deleting the person.
@@ -82,8 +82,8 @@ begin
         partner := case when u.partner1_id = p_anchor then u.partner2_id else u.partner1_id end;
       end if;
     end if;
-    -- Someone already in the tree may already be linked to one of the two parents (Sathana is already
-    -- Veeraiyan's child when she is added as Ezhilarasi's): only the missing link is added, and an existing one
+    -- Someone already in the tree may already be linked to one of the two parents (Divya is already
+    -- Murugan's child when she is added as Lakshmi's): only the missing link is added, and an existing one
     -- is put under the couple. Nothing is ever linked twice.
     if exists (select 1 from parent_child where parent_id = p_anchor and child_id = other) then
       update parent_child set union_id = p_union

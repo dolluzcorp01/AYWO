@@ -9,7 +9,8 @@ import { Avatar } from '@/components/Avatar';
 import { LanguagePicker } from '@/components/LanguagePicker';
 import { Text } from '@/components/Text';
 import { Checkbox, ErrorText, Field, PrimaryButton, TextButton } from '@/components/ui';
-import { englishFor, firstScreenLanguages, moreLanguageCount } from '@/i18n/languages';
+import { isTranslated } from '@/i18n';
+import { englishFor, firstScreenLanguages, languageOfCode, moreLanguageCount } from '@/i18n/languages';
 import type { Language } from '@/i18n/languages';
 import { LegalLinks } from '@/legal/LegalLinks';
 import { setLanguage, setLargeText, setSimpleMode, useLargeText, useSimpleMode } from '@/lib/prefs';
@@ -88,6 +89,12 @@ export default function Welcome() {
             <Text style={[styles.chipText, styles.more]}>{t('language.more', { count: moreLanguageCount })}</Text>
           </Pressable>
         </View>
+        {/* A language whose screens are not translated yet: say so, or the tap looks as if it did nothing. */}
+        {isTranslated(i18n.language) ? null : (
+          <Text style={styles.languageNote} accessibilityLiveRegion="polite">
+            {t('languagePick.chosenNote', { language: languageOfCode(i18n.language)?.native ?? i18n.language })}
+          </Text>
+        )}
         <Checkbox label={t('settings.largeText')} on={large} onChange={setLargeText} />
         <Checkbox label={t('settings.simpleMode')} help={t('settings.simpleModeHelp')} on={simple} onChange={setSimpleMode} />
         <View style={styles.spacer} />
@@ -159,6 +166,7 @@ const styles = StyleSheet.create({
   chipText: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15 },
   chipTextOn: { color: colors.white },
   more: { color: colors.relation },
+  languageNote: { color: colors.muted, fontFamily: fonts.medium, fontSize: 13, lineHeight: 19 },
   spacer: { flex: 1, minHeight: 12 },
   takedown: { alignSelf: 'center', minHeight: minTapSize, justifyContent: 'center' },
   takedownText: { color: colors.muted, fontFamily: fonts.medium, fontSize: 12, textDecorationLine: 'underline' },

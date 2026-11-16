@@ -31,8 +31,13 @@ async function deliverGedcom(text: string, name: string): Promise<void> {
     const link = globalThis.document.createElement('a');
     link.href = url;
     link.download = name;
+    link.style.display = 'none';
+    // In the page while it is clicked (some browsers ignore a link that is not), and the file kept alive for a
+    // while afterwards: Safari starts the download late, and freeing the file at once can cancel it.
+    globalThis.document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(url);
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
     return;
   }
   // Loaded here because the file system module exists only in the apps.
@@ -95,6 +100,7 @@ export default function ExportScreen() {
   if (trees.isError) {
     return (
       <Screen>
+        <TopBar title={t('export.title')} onBack={() => goBack(router)} />
         <LoadFailed message={errorText(trees.error)} onRetry={() => trees.refetch()} />
       </Screen>
     );

@@ -10,6 +10,7 @@ import { LogoMark } from '@/components/Loaders';
 import { Text } from '@/components/Text';
 import { PrimaryButton, SecondaryButton } from '@/components/ui';
 import { API_URL, deviceStore } from '@/lib/api';
+import { timedFetch } from '@/lib/timedFetch';
 import { colors, fonts, radius } from '@/theme/tokens';
 
 export interface AppConfig {
@@ -27,12 +28,36 @@ const STORE_LINKS = {
 };
 const SEEN_WHATS_NEW = 'aywo.whatsNewSeen';
 
+/**
+ * The store page to open, or null while the link is still a placeholder (the iOS id is only known once the app is
+ * listed). A button that opens nothing is worse than none, so the update screens then say how to update by hand.
+ */
+export function storeLink(platform: 'ios' | 'android', links: Record<'ios' | 'android', string> = STORE_LINKS): string | null {
+  const link = links[platform];
+  return /idX+$|XXX/i.test(link) ? null : link;
+}
+
+/** The Update button, or plain instructions when there is no working link or the store would not open. */
+function UpdateAction({ platform }: { platform: 'ios' | 'android' }) {
+  const { t } = useTranslation();
+  const link = storeLink(platform);
+  const [failed, setFailed] = useState(false);
+  const how = <Text style={styles.text}>{t(platform === 'ios' ? 'ops.update.howIos' : 'ops.update.howAndroid')}</Text>;
+  if (!link) return how;
+  return (
+    <>
+      <PrimaryButton label={t('ops.update.button')} onPress={() => void Linking.openURL(link).catch(() => setFailed(true))} />
+      {failed ? how : null}
+    </>
+  );
+}
+
 /** Public, so a plain fetch: it must work signed out and must never trigger a session refresh. */
 export function useAppConfig() {
   return useQuery({
     queryKey: ['app-config'],
     queryFn: async () => {
-      const response = await fetch(`${API_URL}/config`);
+      const response = await timedFetch(`${API_URL}/config`);
       if (!response.ok) throw new Error('config');
       return (await response.json()) as AppConfig;
     },
@@ -97,7 +122,7 @@ export function AppGate({ children, staffArea }: { children: ReactNode; staffAre
       <Blocker
         title={t('ops.update.mustTitle')}
         text={t('ops.update.mustText')}
-        action={<PrimaryButton label={t('ops.update.button')} onPress={() => void Linking.openURL(STORE_LINKS[platform])} />}
+        action={<UpdateAction platform={platform} />}
       />
     );
   }
@@ -113,7 +138,7 @@ export function AppGate({ children, staffArea }: { children: ReactNode; staffAre
             <View style={styles.card}>
               <Text accessibilityRole="header" style={styles.title}>{t('ops.update.mayTitle')}</Text>
               <Text style={styles.text}>{t('ops.update.mayText')}</Text>
-              <PrimaryButton label={t('ops.update.button')} onPress={() => void Linking.openURL(STORE_LINKS[platform])} />
+              <UpdateAction platform={platform} />
               <SecondaryButton label={t('ops.update.later')} onPress={() => setLaterUpdate(true)} />
             </View>
           </View>
@@ -157,7 +182,7 @@ function WhatsNew({ config }: { config: AppConfig | undefined }) {
 
 const styles = StyleSheet.create({
   blocker: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.background },
-  scrim: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: 'rgba(29,26,58,0.45)' },
+  scrim: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.scrim },
   card: { width: '100%', maxWidth: 420, gap: 14, padding: 26, borderRadius: radius.hero, backgroundColor: colors.card, alignItems: 'stretch' },
   title: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 24, letterSpacing: -0.5, textAlign: 'center' },
   text: { color: colors.muted, fontFamily: fonts.medium, fontSize: 15, lineHeight: 22, textAlign: 'center' },

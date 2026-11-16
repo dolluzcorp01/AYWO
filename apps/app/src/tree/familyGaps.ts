@@ -54,8 +54,12 @@ export function familyGaps(tree: Tree, me: string): StepTarget[] {
   ];
 }
 
-/** The add form for one step: a new person beside `me`, or the placeholder parent to name. */
-export function stepRoute(treeId: string, me: string, target: StepTarget, back?: 'guide') {
+/**
+ * The add form for one step: a new person beside `me`, or the placeholder parent to name.
+ * `back` tells the form where to return after saving: 'guide' for the family guide, 'here' for the screen the
+ * button sits on (the "Add your family" card on the tree or on Home). The form never has to guess.
+ */
+export function stepRoute(treeId: string, me: string, target: StepTarget, back?: 'guide' | 'here') {
   const extra = { ...(target.gender ? { gender: target.gender } : {}), ...(back ? { back } : {}) };
   if (target.personId) return { pathname: '/person-details' as const, params: { treeId, personId: target.personId, ...extra } };
   return {

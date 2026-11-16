@@ -87,7 +87,7 @@ const cousinMarriage: TreeGraph = {
   ],
 };
 
-// Pavithran's family: his mother married in from her own family (her parents are in the tree too).
+// Arun's family: his mother married in from her own family (her parents are in the tree too).
 const marriedIn: TreeGraph = {
   persons: people('papa', 'vadivelu', 'narasiman', 'kaveri', 'veeraiyan', 'ezhilarasi', 'sathana', 'pavithran'),
   unions: [

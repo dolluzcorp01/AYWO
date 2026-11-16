@@ -159,7 +159,7 @@ export interface AuditRow {
   target_id: string | null;
   target_name?: string | null;
   reason: string | null;
-  details: Record<string, unknown>;
+  details: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -383,7 +383,8 @@ export interface AppHealth {
 }
 
 export type ConfigKey = 'min_version' | 'latest_version' | 'maintenance' | 'features' | 'whats_new' | 'support';
-export type AdminConfig = Record<ConfigKey, { value: Record<string, unknown>; updated_at: string; updated_by_name: string | null }>;
+/** A key is absent when its row is missing on the server, so every reader must allow for that. */
+export type AdminConfig = Partial<Record<ConfigKey, { value: Record<string, unknown>; updated_at: string; updated_by_name: string | null }>>;
 
 export interface UserDetail {
   id: string;

@@ -18,11 +18,13 @@ import { OfflineBar } from '@/components/OfflineBar';
 import { BackIcon, ContactIcon, LockIcon } from '@/components/ContactIcon';
 import { CommentIcon, HistoryIcon, PencilIcon, PlusIcon, ShareIcon } from '@/components/Icons';
 import { Text } from '@/components/Text';
+import { showToast } from '@/components/Toast';
 import { Card, ErrorText, PrimaryButton } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
 import { canComment, canSeeHistory, canShare } from '@/tree/roles';
 import { useAskForContacts, usePersonCard } from '@/tree/useCard';
 import { FamilyLinks } from '@/tree/FamilyLinks';
+import { shownFirstName, shownName } from '@/tree/personName';
 import { useTreeView } from '@/tree/useTreeView';
 import type { TreeMode } from '@/tree/useTreeView';
 import { colors, fonts, gradients, minTapSize } from '@/theme/tokens';
@@ -51,10 +53,22 @@ export default function PersonCard() {
     [data, personId],
   );
 
-  if (tree.isError || card.isError) {
+  // A person who has left the tree also fails to load their card: that is "no longer in the tree", not an error to retry.
+  const gone = !!data && !node;
+  if (tree.isError || (card.isError && !gone)) {
     return (
       <View style={styles.centre}>
         <Text style={styles.message}>{errorText(tree.error ?? card.error)}</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            if (tree.isError) void tree.refetch();
+            if (card.isError) void card.refetch();
+          }}
+          style={styles.textButton}
+        >
+          <Text style={styles.link}>{t('tree.tryAgain')}</Text>
+        </Pressable>
         <Pressable accessibilityRole="button" onPress={() => goBack(router)} style={styles.textButton}>
           <Text style={styles.link}>{t('card.goBack')}</Text>
         </Pressable>
@@ -65,6 +79,10 @@ export default function PersonCard() {
     return (
       <View style={styles.centre}>
         <Text style={styles.message}>{t('errors.person_not_found')}</Text>
+        {/* In place of this card, so Back from the tree never comes here again. */}
+        <Pressable accessibilityRole="button" onPress={() => router.dismissTo({ pathname: '/tree/[id]', params: { id: treeId } })} style={styles.textButton}>
+          <Text style={styles.link}>{t('guide.openTree')}</Text>
+        </Pressable>
         <Pressable accessibilityRole="button" onPress={() => goBack(router)} style={styles.textButton}>
           <Text style={styles.link}>{t('card.goBack')}</Text>
         </Pressable>
@@ -85,8 +103,9 @@ export default function PersonCard() {
   const native = label?.native;
   const pathWords = t('kin', { returnObjects: true }) as unknown as PathWords;
   const isMe = personId === data.viewer_person_id;
-  const seenBy = mode === 'see_as' ? data.nodes.find((n) => n.id === data.viewer_person_id)?.name : undefined;
-  const firstName = node.name.split(' ')[0];
+  const seer = mode === 'see_as' ? data.nodes.find((n) => n.id === data.viewer_person_id) : undefined;
+  const seenBy = seer ? shownName(t, seer.name, seer.nameUnknown) : undefined;
+  const firstName = shownFirstName(t, node.name, node.nameUnknown);
 
   const actions = contactActions(card.data.contacts);
   const locked = card.data.access === 'ask' || card.data.access === 'plus';
@@ -144,14 +163,14 @@ export default function PersonCard() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('card.edit')}
-              onPress={() => router.push({ pathname: '/person-details', params: { treeId, personId } })}
+              onPress={() => router.push({ pathname: '/person-details', params: { treeId, personId, from: 'card' } })}
               style={styles.round}
             >
               <PencilIcon color={colors.white} />
             </Pressable>
           </View>
           <Avatar personId={node.id} size={108} photoUrl={node.photoUrl} nameUnknown={node.nameUnknown} ring />
-          <Text style={styles.name}>{node.nameUnknown ? t('tree.nameNotKnown') : node.name}</Text>
+          <Text style={styles.name}>{shownName(t, node.name, node.nameUnknown)}</Text>
           {isMe && !seenBy ? <Text style={styles.you}>{t('tree.you')}</Text> : null}
           {word ? (
             <Pressable
@@ -223,7 +242,7 @@ export default function PersonCard() {
                   const person = data.nodes.find((n) => n.id === id);
                   if (!person) return null;
                   const other = relationText(data.labels[id]);
-                  const shown = person.nameUnknown ? t('tree.nameNotKnown') : person.name;
+                  const shown = shownName(t, person.name, person.nameUnknown);
                   return (
                     <Pressable key={id} accessibilityRole="button" onPress={() => openPerson(id)} style={styles.chip}>
                       <Avatar personId={id} size={34} photoUrl={person.photoUrl} nameUnknown={person.nameUnknown} />
@@ -254,7 +273,11 @@ export default function PersonCard() {
 }
 
 function OpenAction({ kind, label, url }: { kind: ContactKind; label: string; url: string }) {
-  const open = () => Linking.openURL(url);
+  const { t } = useTranslation();
+  // No dialler, no WhatsApp, no mail app: say so, rather than a button that does nothing.
+  const open = () => {
+    Linking.openURL(url).catch(() => showToast('error', t('card.openFailed')));
+  };
   if (kind === 'email') {
     return (
       <Pressable accessibilityRole="link" onPress={open} style={[styles.action, styles.emailAction]}>

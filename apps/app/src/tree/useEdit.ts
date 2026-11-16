@@ -1,6 +1,7 @@
 // Changing the tree, and everything around it: E1, E2, E3, E4, E5, E6, comments and the word screen.
 // Paths and shapes follow docs/BUILD-CONTRACT.md. These hooks are the one place to touch if an answer's shape moves.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 import { api, ApiFailure } from '@/lib/api';
 import { track } from '@/lib/track';
 
@@ -37,13 +38,24 @@ export interface AddRelativeArgs {
   p_also_children?: string[];
 }
 
+/**
+ * Birthdays, wedding days and remembrance days come from the tree, so every change to the tree may change them.
+ * The calendar keeps its answer for a while; without this a date just added would not show there for minutes.
+ */
+export function refreshFamilyDates(client: QueryClient): void {
+  void client.invalidateQueries({ queryKey: ['calendar'] });
+  void client.invalidateQueries({ queryKey: ['family-dates'] });
+}
+
 function useTreeRefresh(treeId: string) {
   const client = useQueryClient();
-  return () =>
-    Promise.all([
+  return () => {
+    refreshFamilyDates(client);
+    return Promise.all([
       client.invalidateQueries({ queryKey: ['tree-view', treeId] }),
       client.invalidateQueries({ queryKey: ['trees'] }),
     ]);
+  };
 }
 
 export type AddAnswer = { status: 'saved'; person_id: string; union_id: string | null } | { status: 'requested' };
@@ -295,6 +307,7 @@ export function useDecideRequest() {
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['activity'] });
       client.invalidateQueries({ queryKey: ['tree-view'] });
+      refreshFamilyDates(client);
     },
   });
 }
@@ -306,6 +319,7 @@ export function useUndoClaim() {
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['activity'] });
       client.invalidateQueries({ queryKey: ['tree-view'] });
+      refreshFamilyDates(client);
     },
   });
 }
@@ -341,6 +355,9 @@ export function useRevert(treeId: string) {
       client.invalidateQueries({ queryKey: ['history', treeId] });
       client.invalidateQueries({ queryKey: ['tree-view', treeId] });
       client.invalidateQueries({ queryKey: ['trees'] });
+      // The Changes tab in Activity lists this change with an Undo button: it must show as undone straight away.
+      client.invalidateQueries({ queryKey: ['activity'] });
+      refreshFamilyDates(client);
     },
   });
 }
@@ -379,7 +396,10 @@ export function useApplyMerge(requestId: string) {
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['activity'] });
       client.invalidateQueries({ queryKey: ['tree-view'] });
+      refreshFamilyDates(client);
       client.invalidateQueries({ queryKey: ['trees'] });
+      // The compare screen itself: opened again, it must say "already decided", not offer the same merge.
+      client.invalidateQueries({ queryKey: ['merge', requestId] });
     },
   });
 }

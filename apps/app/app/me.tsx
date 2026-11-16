@@ -22,7 +22,7 @@ import type { MyExtras } from '@/ops/types';
 import { useErrorText } from '@/lib/errors';
 import { logOut } from '@/lib/logout';
 import { setLanguage, setLargeText, setSimpleMode, useLargeText, useSimpleMode } from '@/lib/prefs';
-import { FAMILY_PLAN_MAX, usePlan } from '@/pay/usePlan';
+import { FAMILY_PLAN_MAX, hasPlusNow, onBonusOnly, usePlan } from '@/pay/usePlan';
 import { SosButton } from '@/social/SosButton';
 import { canShare } from '@/tree/roles';
 import { treeMembersQuery, useNotificationPrefs } from '@/tree/useEdit';
@@ -92,7 +92,12 @@ export default function MeScreen() {
 
   const memberCount = plan.data?.members.length;
   const allOn = (prefs.data ?? []).every((p) => p.push || p.email || p.sms);
-  const planOn = plan.data?.plus ?? me.data.plus;
+  // Free Plus days (referrals, support) count as Plus too; GET /plan reports them apart from a paid plan.
+  const planOn = plan.data ? hasPlusNow(plan.data) : me.data.plus;
+  const bonusOnly = !!plan.data && onBonusOnly(plan.data);
+  const bonusDate = plan.data?.bonus_until
+    ? new Date(plan.data.bonus_until).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })
+    : '';
   // One tree: who it is. Several: how many have someone. Nothing until the answers are in.
   const successorsKnown = successors.length > 0 && successors.every((q) => q.data);
   const successorValue = !successorsKnown
@@ -117,12 +122,14 @@ export default function MeScreen() {
 
         <DeleteBanner />
 
-        <Pressable accessibilityRole="button" onPress={() => router.push(planOn ? '/family-plan' : '/plus')}>
+        <Pressable accessibilityRole="button" onPress={() => router.push(planOn && !bonusOnly ? '/family-plan' : '/plus')}>
           <NeonPanel style={styles.plus}>
             <View style={styles.plusText}>
               <Text style={styles.plusEyebrow}>{t('me.plus')}</Text>
               <Text style={styles.plusTitle}>
-                {planOn
+                {bonusOnly
+                  ? t('pay.bonus.short', { date: bonusDate })
+                  : planOn
                   ? memberCount !== undefined
                     ? t('me.familyPlan', { count: memberCount, size: FAMILY_PLAN_MAX })
                     : t('me.plusOn')

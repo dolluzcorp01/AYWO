@@ -21,7 +21,8 @@
     "verify": "Verify",
     "resend": "Send the code again",
     "resendIn": "Resend code in {{seconds}} seconds",
-    "wrongCode": "That code didn't work. Try again."
+    "wrongCode": "That code didn't work. Try again.",
+    "changeNumber": "Wrong number? Change it"
   },
   "home": {
     "noTrees": "No family tree yet."
@@ -137,5 +138,11 @@
     "backToApp": "Back to AYWO",
     "signOutTitle": "Sign out?",
     "signOutMessage": "You can sign in again any time with your phone number."
+  },
+  "languagePick": {
+    "note": "AYWO's screens are in English and Tamil for now. In any other language, family words such as uncle and aunt show in that language, and the screens stay in English until that language is ready.",
+    "full": "Ready",
+    "wordsOnly": "Family words only",
+    "chosenNote": "{{language}} is chosen. Family words such as uncle and aunt will show in {{language}}. The screens stay in English until {{language}} is ready."
   }
 }

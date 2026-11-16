@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { checkNow, useLastSync, useOffline } from '@/lib/offline';
-import { colors, fonts, radius } from '@/theme/tokens';
+import { colors, fonts, minTapSize, radius } from '@/theme/tokens';
 
 /** inset: for screens without the usual page padding. */
 export function OfflineBar({ inset }: { inset?: boolean }) {
@@ -59,6 +59,6 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 1 },
   title: { color: colors.white, fontFamily: fonts.bold, fontSize: 14 },
   help: { color: colors.textOnDark, fontFamily: fonts.medium, fontSize: 12 },
-  button: { minHeight: 36, paddingHorizontal: 12, borderRadius: radius.button, backgroundColor: colors.white, justifyContent: 'center' },
+  button: { minHeight: minTapSize, minWidth: minTapSize, paddingHorizontal: 12, borderRadius: radius.button, backgroundColor: colors.white, justifyContent: 'center' },
   buttonText: { color: colors.text, fontFamily: fonts.bold, fontSize: 13 },
 });

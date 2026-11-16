@@ -20,6 +20,15 @@ export const pool = new pg.Pool({
   connectionString: config.DATABASE_URL,
   ssl: databaseSsl(),
   max: 20,
+  // When every connection is busy, a request waits this long and then fails with an error people can retry,
+  // instead of hanging for ever.
+  connectionTimeoutMillis: 10_000,
+});
+
+// A connection resting in the pool can be dropped by the database (a restart, a failover, maintenance). Without a
+// listener Node treats that as an unhandled 'error' event and stops the whole server. The pool replaces it by itself.
+pool.on('error', (error) => {
+  console.error('database connection dropped while idle:', error.message);
 });
 
 /**
