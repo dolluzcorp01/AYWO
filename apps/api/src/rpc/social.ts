@@ -24,6 +24,7 @@ export const socialRpc: RpcList = {
   chat_leave: { args: ['p_chat'] },
   chat_list: { args: [] },
   chat_members_list: { args: ['p_chat'] },
+  profile_number: { args: ['p_profile'] },
   chat_mark_read: { args: ['p_chat'] },
   message_delete: { args: ['p_message'] },
   message_update: { args: ['p_message', 'p_body'] },

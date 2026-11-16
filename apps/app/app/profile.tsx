@@ -15,6 +15,7 @@ import { safeNext, useMe, useUpdateMe } from '@/lib/account';
 import { uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
+import { showPhone } from '@/lib/phone';
 import { pickPhoto } from '@/lib/pick';
 import { track } from '@/lib/track';
 import { colors, fonts, gradients } from '@/theme/tokens';
@@ -98,6 +99,13 @@ export default function Profile() {
 
         <Field label={t('profile.yourName')} value={name} onChangeText={setName} autoComplete="name" style={styles.nameInput} />
 
+        {me.data?.login_phone ? (
+          <View style={styles.numberBlock}>
+            <Field label={t('profile.mobile')} value={showPhone(me.data.login_phone)} editable={false} style={styles.numberInput} />
+            <Muted>{t('profile.mobileHelp')}</Muted>
+          </View>
+        ) : null}
+
         {editing || params.name ? null : (
           <Card>
             <Text style={styles.note}>{t('profile.lookedNote')}</Text>
@@ -131,6 +139,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   centred: { alignItems: 'center' },
+  numberBlock: { gap: 6 },
+  numberInput: { backgroundColor: colors.background, color: colors.muted },
   nameInput: { borderWidth: 2, borderColor: colors.logoPurple, fontFamily: fonts.bold },
   note: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
 });

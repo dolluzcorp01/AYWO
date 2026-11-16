@@ -129,6 +129,8 @@
     "openLink": "Open"
   },
   "profile": {
+    "mobile": "Mobile number",
+    "mobileHelp": "You sign in with this number.",
     "lastStep": "Last step",
     "title": "How should your family see you?",
     "addPhoto": "Choose a photo",
@@ -253,6 +255,12 @@
     "empty": "No one in this tree yet."
   },
   "card": {
+    "numberMobile": "Mobile",
+    "numberWhatsapp": "WhatsApp",
+    "numberEmail": "Email",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyLabel": "Copy {{what}}",
     "addRelative": "Add relative",
     "invite": "Invite",
     "comment": "Comment",
@@ -527,6 +535,7 @@
     "pictureLivingNote": "Living people show name only."
   },
   "me": {
+    "signedInWith": "Signed in with {{number}}",
     "creatorOf_one": "Creator of {{count}} family tree",
     "creatorOf_other": "Creator of {{count}} family trees",
     "edit": "Edit",

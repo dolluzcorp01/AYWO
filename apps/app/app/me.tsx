@@ -21,6 +21,7 @@ import { useFeature } from '@/ops/appConfig';
 import type { MyExtras } from '@/ops/types';
 import { useErrorText } from '@/lib/errors';
 import { logOut } from '@/lib/logout';
+import { showPhone } from '@/lib/phone';
 import { setLanguage, setLargeText, setSimpleMode, useLargeText, useSimpleMode } from '@/lib/prefs';
 import { FAMILY_PLAN_MAX, hasPlusNow, onBonusOnly, usePlan } from '@/pay/usePlan';
 import { SosButton } from '@/social/SosButton';
@@ -113,6 +114,7 @@ export default function MeScreen() {
           <Avatar personId={own?.id ?? me.data.id} size={62} photoUrl={me.data.photo_url ?? own?.photoUrl} ring />
           <View style={styles.whoText}>
             <Text accessibilityRole="header" style={styles.name}>{me.data.display_name}</Text>
+            {me.data.login_phone ? <Text style={styles.sub} selectable>{t('me.signedInWith', { number: showPhone(me.data.login_phone) })}</Text> : null}
             {created.length > 0 ? <Text style={styles.sub}>{t('me.creatorOf', { count: created.length })}</Text> : null}
           </View>
           <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/profile', params: { edit: '1' } })} style={styles.edit}>
