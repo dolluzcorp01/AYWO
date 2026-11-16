@@ -1,22 +1,27 @@
 // Crash reports, sent to AYWO's own server only (admin App health). No outside company gets them.
 // The server removes numbers, emails and ids before saving. At most a few per session, so a loop cannot flood it.
+import { router } from 'expo-router';
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { LogoMark } from '@/components/Loaders';
 import { Text } from '@/components/Text';
-import { PrimaryButton } from '@/components/ui';
+import { PrimaryButton, SecondaryButton } from '@/components/ui';
 import i18n from '@/i18n';
+import { restartApp } from '@/i18n/rtl';
 import { accessToken, API_URL } from '@/lib/api';
+import { QUICK_TIMEOUT_MS, timedFetch } from '@/lib/timedFetch';
 import { colors, fonts } from '@/theme/tokens';
 import { appVersion } from './appConfig';
+import { safeRoute } from './crashRoute';
 
 const MAX_PER_SESSION = 8;
 let sent = 0;
 let currentRoute = '';
 
+/** Kept without its secret parts (share, invite and group-join tokens), so a report can never carry one. */
 export function setCrashRoute(route: string): void {
-  currentRoute = route;
+  currentRoute = safeRoute(route);
 }
 
 export async function reportCrash(error: unknown): Promise<void> {
@@ -26,17 +31,21 @@ export async function reportCrash(error: unknown): Promise<void> {
   const e = error instanceof Error ? error : new Error(String(error));
   try {
     const token = await accessToken();
-    await fetch(`${API_URL}/client-errors`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({
-        platform: Platform.OS === 'ios' || Platform.OS === 'android' ? Platform.OS : 'web',
-        app_version: appVersion(),
-        route: currentRoute.slice(0, 200),
-        message: `${e.name}: ${e.message}`.slice(0, 2000),
-        stack: e.stack?.slice(0, 8000),
-      }),
-    });
+    await timedFetch(
+      `${API_URL}/client-errors`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          platform: Platform.OS === 'ios' || Platform.OS === 'android' ? Platform.OS : 'web',
+          app_version: appVersion(),
+          route: currentRoute,
+          message: `${e.name}: ${e.message}`.slice(0, 2000),
+          stack: e.stack?.slice(0, 8000),
+        }),
+      },
+      QUICK_TIMEOUT_MS,
+    );
   } catch {
     // Reporting must never cause a second failure.
   }
@@ -61,17 +70,45 @@ export function installCrashReporter(): void {
   }
 }
 
-/** A screen that crashed shows a calm message with a way out, instead of a blank screen. */
-export class CrashBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
+/**
+ * A screen that crashed shows a calm message with a way out, instead of a blank screen.
+ * A screen that crashes every time would crash again on "try again", so there are always two more ways out:
+ * Home, and starting AYWO afresh. On the web both are real page loads, which cannot loop.
+ */
+export class CrashBoundary extends Component<{ children: ReactNode }, { failed: boolean; times: number; restartFailed: boolean }> {
+  state = { failed: false, times: 0, restartFailed: false };
 
   static getDerivedStateFromError() {
     return { failed: true };
   }
 
   componentDidCatch(error: Error, _info: ErrorInfo) {
+    this.setState((old) => ({ times: old.times + 1 }));
     void reportCrash(error);
   }
+
+  goHome = () => {
+    if (Platform.OS === 'web') {
+      globalThis.location?.assign('/home');
+      return;
+    }
+    // Leave the broken screen first, then show the app again.
+    try {
+      router.replace('/home');
+    } catch {
+      // No navigator to ask: Restart below still works.
+    }
+    this.setState({ failed: false });
+  };
+
+  restart = () => {
+    if (Platform.OS === 'web') {
+      globalThis.location?.reload();
+      return;
+    }
+    this.setState({ restartFailed: false });
+    restartApp().catch(() => this.setState({ restartFailed: true }));
+  };
 
   render() {
     if (!this.state.failed) return this.props.children;
@@ -80,13 +117,12 @@ export class CrashBoundary extends Component<{ children: ReactNode }, { failed: 
         <LogoMark size={64} />
         <Text accessibilityRole="header" style={styles.title}>{i18n.t('ops.crash.title')}</Text>
         <Text style={styles.text}>{i18n.t('ops.crash.text')}</Text>
-        <PrimaryButton
-          label={i18n.t('ops.crash.again')}
-          onPress={() => {
-            this.setState({ failed: false });
-            if (Platform.OS === 'web') globalThis.location?.assign('/home');
-          }}
-        />
+        {this.state.times > 1 ? <Text style={styles.text}>{i18n.t('ops.crash.stuck')}</Text> : null}
+        <View style={styles.actions}>
+          <PrimaryButton label={i18n.t('ops.crash.again')} onPress={this.goHome} />
+          <SecondaryButton label={i18n.t(Platform.OS === 'web' ? 'ops.crash.reload' : 'ops.crash.restart')} onPress={this.restart} />
+        </View>
+        {this.state.restartFailed ? <Text style={styles.text}>{i18n.t('ops.crash.restartFailed')}</Text> : null}
       </View>
     );
   }
@@ -96,4 +132,5 @@ const styles = StyleSheet.create({
   page: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, padding: 28, backgroundColor: colors.background },
   title: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 24, textAlign: 'center' },
   text: { color: colors.muted, fontFamily: fonts.medium, fontSize: 15, lineHeight: 22, textAlign: 'center', maxWidth: 380 },
+  actions: { alignSelf: 'stretch', gap: 10, maxWidth: 380, width: '100%' },
 });

@@ -1,8 +1,14 @@
 // S-16 Family plan (wireframe F4). The database decides everything here: up to 6 including the payer.
+//
+// Cancelling a Razorpay plan. Free months end at once, and Razorpay's webhook changes the plan within seconds, so the
+// screen keeps asking until it does. A paid plan is cancelled "at the end of the period", and Razorpay sends nothing
+// until that day, so the server goes on saying "renews". This device remembers that the cancellation was accepted
+// (for this exact period) and shows "Ends on" instead. NEEDS A SERVER CHANGE to be right on other devices too:
+// POST /pay/razorpay/cancel should set will_renew = false itself.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { PageLoader, Spinner } from '@/components/Loaders';
@@ -12,13 +18,19 @@ import { Avatar } from '@/components/Avatar';
 import { BackIcon } from '@/components/ContactIcon';
 import { Text, TextInput } from '@/components/Text';
 import { NeonPanel, PrimaryButton } from '@/components/ui';
-import { api } from '@/lib/api';
-import { FAMILY_PLAN_MAX, PLAN_KEY, payErrorText, usePlan } from '@/pay/usePlan';
+import { api, deviceStore } from '@/lib/api';
+import { FAMILY_PLAN_MAX, onBonusOnly, PLAN_KEY, payErrorText, usePlan } from '@/pay/usePlan';
 import type { PlanInfo, PlanMember } from '@/pay/usePlan';
 import { colors, fonts, gradients, minTapSize } from '@/theme/tokens';
 
 const APPLE_SUBSCRIPTIONS = 'https://apps.apple.com/account/subscriptions';
 const GOOGLE_SUBSCRIPTIONS = 'https://play.google.com/store/account/subscriptions';
+const CANCEL_MARK = 'aywo.planCancelled';
+
+interface CancelMark {
+  profile: string;
+  renews_at: string | null;
+}
 
 interface TreeRow {
   id: string;
@@ -33,6 +45,15 @@ export default function FamilyPlan() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  // After asking to cancel, the plan changes only when Razorpay's webhook arrives: keep asking for a while.
+  const [trialCancelSent, setTrialCancelSent] = useState(false);
+  const [cancelMark, setCancelMark] = useState<CancelMark | null>(null);
+  useEffect(() => {
+    void deviceStore
+      .get(CANCEL_MARK)
+      .then((saved) => (saved ? setCancelMark(JSON.parse(saved) as CancelMark) : undefined))
+      .catch(() => undefined);
+  }, []);
   const plan = usePlan();
   const [adding, setAdding] = useState(false);
   const [confirming, setConfirming] = useState<string | null>(null);
@@ -58,8 +79,16 @@ export default function FamilyPlan() {
         const { url } = await api.post<{ url: string }>('/pay/stripe/portal');
         await Linking.openURL(url);
       } else if (store === 'razorpay') {
+        const before = plan.data;
         await api.post('/pay/razorpay/cancel');
-        setNote(t('pay.family.cancelAsked'));
+        if (before?.status === 'trial') {
+          setTrialCancelSent(true);
+        } else if (before) {
+          const mark = { profile: before.profile_id, renews_at: before.renews_at };
+          setCancelMark(mark);
+          await deviceStore.set(CANCEL_MARK, JSON.stringify(mark)).catch(() => undefined);
+        }
+        await refresh();
       }
     },
     onMutate: () => {
@@ -69,6 +98,26 @@ export default function FamilyPlan() {
     onError: (e) => setProblem(payErrorText(t, e)),
     onSettled: () => setCancelAsked(false),
   });
+
+  // Free months: the cancellation has landed once the plan is no longer in its free months.
+  const planNow = plan.data;
+  const cancelPending = trialCancelSent && planNow?.status === 'trial';
+  // Paid: accepted for this very period (a later period means the person subscribed again).
+  const cancelledHere =
+    !!cancelMark && !!planNow && planNow.store === 'razorpay' && planNow.status !== 'trial' &&
+    cancelMark.profile === planNow.profile_id && cancelMark.renews_at === planNow.renews_at;
+  const refetchPlan = plan.refetch;
+  useEffect(() => {
+    if (!cancelPending) return;
+    void refetchPlan();
+    const every = setInterval(() => void refetchPlan(), 3000);
+    // Webhooks are usually seconds away. After two minutes stop asking; the note stays and says what to do.
+    const stop = setTimeout(() => clearInterval(every), 120_000);
+    return () => {
+      clearInterval(every);
+      clearTimeout(stop);
+    };
+  }, [cancelPending, refetchPlan]);
 
   function back() {
     if (router.canGoBack()) router.back();
@@ -110,6 +159,26 @@ export default function FamilyPlan() {
   }
 
   // Nothing yet, or a plan that has ended: the way forward is the plans screen.
+  const dateText = (value: string | null) =>
+    value ? new Date(value).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+
+  // Free Plus days with no plan behind them: Plus is on, but there is no family plan to manage.
+  if (onBonusOnly(data)) {
+    return (
+      <View style={[styles.page, styles.pad, { paddingTop: insets.top + 12 }]}>
+        {header}
+        <NeonPanel style={styles.panel}>
+          <Text style={styles.kicker}>{t('pay.kicker')}</Text>
+          <Text style={styles.panelTitle}>{t('pay.bonus.title', { date: dateText(data.bonus_until) })}</Text>
+          <Text style={styles.panelSub}>{t('pay.bonus.why')}</Text>
+        </NeonPanel>
+        <Text style={styles.note}>{t('pay.bonus.noFamily', { date: dateText(data.bonus_until) })}</Text>
+        {trialCancelSent ? <Text style={styles.note} accessibilityLiveRegion="polite">{t('pay.family.cancelDoneTrial')}</Text> : null}
+      </View>
+    );
+  }
+
+  // Nothing yet, or a plan that has ended: the way forward is the plans screen.
   if (!data.plus) {
     return (
       <View style={[styles.page, styles.pad, { paddingTop: insets.top + 12 }]}>
@@ -119,14 +188,13 @@ export default function FamilyPlan() {
           <Text style={styles.panelTitle}>{data.status ? t('pay.family.ended') : t('pay.family.none')}</Text>
           <Text style={styles.panelSub}>{t('pay.alwaysFree')}</Text>
         </NeonPanel>
+        {trialCancelSent ? <Text style={styles.note} accessibilityLiveRegion="polite">{t('pay.family.cancelDoneTrial')}</Text> : null}
         <PrimaryButton label={t('pay.family.seePlans')} onPress={() => router.push('/plus')} />
       </View>
     );
   }
 
-  const dateText = (value: string | null) =>
-    value ? new Date(value).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-
+  const willRenew = data.will_renew && !cancelledHere;
   const used = data.members.length;
   const left = Math.max(0, FAMILY_PLAN_MAX - used);
   const yearly = data.product_id === 'aywo_plus_yearly';
@@ -138,11 +206,11 @@ export default function FamilyPlan() {
       ? t('pay.family.freeUntil', { date: dateText(data.trial_ends_at) })
       : data.status === 'grace'
         ? t('pay.family.paymentProblem')
-        : data.will_renew
+        : willRenew
           ? t('pay.family.renewsOn', { date: dateText(data.renews_at) })
           : t('pay.family.endsOn', { date: dateText(data.renews_at) });
   const places = t('pay.family.places', { used, max: FAMILY_PLAN_MAX });
-  const subline = data.status === 'trial' && data.will_renew ? `${t(yearly ? 'pay.family.thenYearly' : 'pay.family.thenMonthly', { price })} · ${places}` : places;
+  const subline = data.status === 'trial' && willRenew ? `${t(yearly ? 'pay.family.thenYearly' : 'pay.family.thenMonthly', { price })} · ${places}` : places;
 
   return (
     <View style={styles.page}>
@@ -188,12 +256,20 @@ export default function FamilyPlan() {
 
         {problem ? <Text style={styles.problem} accessibilityLiveRegion="polite">{problem}</Text> : null}
         {note ? <Text style={styles.note} accessibilityLiveRegion="polite">{note}</Text> : null}
+        {cancelPending ? (
+          <Text style={styles.note} accessibilityLiveRegion="polite">{t('pay.family.cancelAskedTrial')}</Text>
+        ) : null}
+        {cancelledHere && data.is_payer ? (
+          <Text style={styles.note} accessibilityLiveRegion="polite">
+            {t('pay.family.cancelDone', { date: dateText(data.renews_at) })}
+          </Text>
+        ) : null}
 
         <View style={styles.footer}>
           <Pressable accessibilityRole="link" onPress={() => router.push('/plus')} style={styles.textButton}>
             <Text style={styles.footerLink}>{t('pay.family.seePlans')}</Text>
           </Pressable>
-          {data.is_payer && data.store ? (
+          {data.is_payer && data.store === 'razorpay' && (!willRenew || cancelPending) ? null : data.is_payer && data.store ? (
             data.store === 'razorpay' && cancelAsked ? (
               <View style={styles.confirmRow}>
                 <Text style={styles.note}>{data.status === 'trial' ? t('pay.family.cancelTrialConfirm') : t('pay.family.cancelConfirm')}</Text>

@@ -2,7 +2,7 @@
 // by the server too. Payment happens on Razorpay's or Stripe's own page; card details never reach AYWO.
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { PhoneField } from '@/components/PhoneField';
@@ -33,7 +33,9 @@ export default function Shop() {
   const [address, setAddress] = useState<ShippingAddress>({ ...EMPTY, name: me.data?.display_name ?? '' });
   const [code, setCode] = useState((params.coupon ?? '').toUpperCase());
   const [quote, setQuote] = useState<CouponQuote | null>(null);
-  const [state, setState] = useState<'idle' | 'started' | 'cancelled'>('idle');
+  // 'unconfirmed': the payment page was closed and the server has seen no payment (see pay/order.ts).
+  const [state, setState] = useState<'idle' | 'started' | 'cancelled' | 'unconfirmed'>('idle');
+  const orderId = useRef<string | null>(null);
   // The account loads after the first render; its name fills an empty name box once.
   const myName = me.data?.display_name;
   useEffect(() => {
@@ -63,9 +65,15 @@ export default function Shop() {
           coupon: quote ? quote.code : undefined,
         },
         { description: t(`ops.shop.products.${product}`), methodLabel: t('ops.shop.pay') },
+        { onOrder: (id) => { orderId.current = id; } },
       ),
-    // 'bought' only comes from an in-app store purchase; it ends the same way as a started order.
-    onSuccess: (result) => setState(result === 'bought' ? 'started' : result),
+    onMutate: () => setState('idle'),
+    onSuccess: (result) => {
+      // The server already shows it as paid: straight to My orders, which says so.
+      if (result === 'paid') router.replace({ pathname: '/orders', params: { paid: '1', ...(orderId.current ? { order: orderId.current } : {}) } });
+      // 'bought' only comes from an in-app store purchase; it ends the same way as a started order.
+      else setState(result === 'bought' ? 'started' : result);
+    },
   });
 
   const needsAddress = !!products.data?.needs_address;
@@ -83,11 +91,27 @@ export default function Shop() {
         <Card style={styles.block}>
           <SectionTitle>{t('ops.shop.thanksTitle')}</SectionTitle>
           <Note>{t('ops.shop.thanks')}</Note>
-          <PrimaryButton label={t('ops.orders.title')} onPress={() => router.replace('/orders')} />
+          <PrimaryButton
+            label={t('ops.orders.title')}
+            onPress={() => router.replace({ pathname: '/orders', params: { paid: '1', ...(orderId.current ? { order: orderId.current } : {}) } })}
+          />
         </Card>
       </Page>
     );
   }
+
+  // What is still needed before Pay works, said under the button instead of leaving it grey without a reason.
+  const missing = !price
+    ? null
+    : !tree
+      ? t('ops.shop.needTree')
+      : !needsAddress || addressOk
+        ? null
+        : pinBad
+          ? t('ops.shop.needPin')
+          : phoneBad
+            ? t('ops.shop.needPhone')
+            : t('ops.shop.needAddress');
 
   return (
     <Page title={t('ops.shop.title')} subtitle={t('ops.shop.subtitle')}>
@@ -132,7 +156,7 @@ export default function Shop() {
               <SectionTitle>{t('ops.shop.coupon')}</SectionTitle>
               <View style={styles.couponRow}>
                 <View style={styles.couponField}>
-                  <Field value={code} onChangeText={(v) => { setCode(v.toUpperCase().replace(/[^A-Z0-9]/g, '')); setQuote(null); }} maxLength={20} placeholder="FAMILY20" accessibilityLabel={t('ops.shop.coupon')} autoCapitalize="characters" />
+                  <Field value={code} onChangeText={(v) => { setCode(v.toUpperCase().replace(/[^A-Z0-9]/g, '')); setQuote(null); }} maxLength={20} placeholder={t('ops.shop.couponPlaceholder')} accessibilityLabel={t('ops.shop.coupon')} autoCapitalize="characters" />
                 </View>
                 <SmallButton label={t('ops.shop.apply')} disabled={code.length < 4 || check.isPending || !price} onPress={() => check.mutate()} />
               </View>
@@ -149,7 +173,21 @@ export default function Shop() {
             </View>
             <ActionError error={pay.error} />
             {state === 'cancelled' ? <Note>{t('ops.shop.cancelled')}</Note> : null}
-            <PrimaryButton label={t('ops.shop.pay')} disabled={!price || !tree || !addressOk || pay.isPending} onPress={() => pay.mutate()} />
+            {state === 'unconfirmed' ? (
+              <Card style={styles.block}>
+                <SectionTitle>{t('ops.shop.notPaidTitle')}</SectionTitle>
+                <View accessibilityLiveRegion="polite">
+                  <Note>{t('ops.shop.notPaid')}</Note>
+                </View>
+                <SmallButton kind="plain" label={t('ops.shop.seeOrders')} onPress={() => router.push('/orders')} />
+              </Card>
+            ) : null}
+            <PrimaryButton
+              label={pay.isPending ? t('ops.shop.paying') : state === 'unconfirmed' ? t('ops.shop.payAgain') : t('ops.shop.pay')}
+              disabled={!price || pay.isPending}
+              missing={pay.isPending ? null : missing}
+              onPress={() => pay.mutate()}
+            />
             <Note>{t('ops.shop.secure')}</Note>
           </>
         )}
@@ -162,7 +200,7 @@ const styles = StyleSheet.create({
   block: { gap: 10 },
   couponRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
   couponField: { flex: 1 },
-  good: { color: '#1F7A4D', fontFamily: fonts.bold, fontSize: 14 },
+  good: { color: colors.good, fontFamily: fonts.bold, fontSize: 14 },
   total: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 },
   totalLabel: { color: colors.text, fontFamily: fonts.bold, fontSize: 16 },
   totalRight: { alignItems: 'flex-end' },

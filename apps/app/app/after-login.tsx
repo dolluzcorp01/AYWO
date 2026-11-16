@@ -1,5 +1,6 @@
 // Decides where a person goes once signed in: 'Is this you?' when their number matched someone,
 // the profile step when the account has no name yet, otherwise Home (or the link they came from).
+import { useIsRestoring, useQueryClient } from '@tanstack/react-query';
 import type { Href } from 'expo-router';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -8,7 +9,7 @@ import { Screen } from '@/components/Screen';
 import { Loading, LoadFailed } from '@/components/ui';
 import { claimCandidates, safeNext } from '@/lib/account';
 import type { Me } from '@/lib/account';
-import { api, deviceStore } from '@/lib/api';
+import { api, ApiFailure, deviceStore } from '@/lib/api';
 import { errorCode, useErrorText } from '@/lib/errors';
 import { isLargeText, isSimpleMode, setLanguage, setLargeText, setSimpleMode } from '@/lib/prefs';
 import { registerForPush } from '@/pay/registerPush';
@@ -22,6 +23,7 @@ export default function AfterLogin() {
   const next = safeNext(params.next);
   const name = params.name;
   const [failure, setFailure] = useState<unknown>(null);
+  const client = useQueryClient();
 
   const decide = useCallback(async () => {
     setFailure(null);
@@ -67,15 +69,24 @@ export default function AfterLogin() {
         router.replace((next ?? '/home') as Href);
       }
     } catch (error) {
+      // No answer from AYWO at all (no signal), but this phone has the family saved from last time: open it.
+      // Home shows the saved copy with the "no connection" bar, instead of stopping at an error.
+      const saved = client.getQueryData<Me>(['me']);
+      if (!(error instanceof ApiFailure) && saved?.display_name) {
+        router.replace((next ?? '/home') as Href);
+        return;
+      }
       setFailure(error);
     }
-  }, [i18n.language, name, next, router]);
+  }, [client, i18n.language, name, next, router]);
 
+  // Waits until the saved copy on this phone has been read back, so the no-signal case above can find it.
+  const restoring = useIsRestoring();
   useEffect(() => {
-    decide();
+    if (!restoring) decide();
     // One decision per arrival; a language change must not send the person somewhere else.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [restoring]);
 
   return (
     <Screen>

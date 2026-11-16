@@ -71,4 +71,6 @@ export const socialRpc: RpcList = {
   sos_active: { args: [] },
   sos_incoming: { args: [] },
   sos_view: { args: ['p_event'] },
+  // A new location key for the caller's own running SOS, when the first one was lost (0024).
+  sos_resume: { args: ['p_event'] },
 };

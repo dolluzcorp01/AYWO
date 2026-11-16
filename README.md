@@ -103,7 +103,7 @@ The founder's laptop has no Node, so this was checked in a browser engine:
 - SOS: a family contact picked from the tree gets the alert but no automatic call, because handing over their number would leak it. A typed number gets the call.
 - Whether the outsider link should show photos of living children.
 - Whether comments on memories stay an AYWO Plus feature. They are Plus now.
-- Account deletion is immediate, with no grace period.
+- Account deletion waits 30 days: the person can sign in and keep the account until then (`0014_delete_grace.sql`).
 
 ## Not built
 

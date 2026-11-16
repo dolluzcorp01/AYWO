@@ -69,8 +69,13 @@ function SignInGate({ signedIn }: { signedIn: boolean }) {
   const segments = useSegments() as string[];
   const first = segments[0];
   const pathname = usePathname();
-  // A shared group link needs an account, and comes back here after sign-in.
-  const onJoinLink = first === 'social' && segments[1] === 'groups' && segments[2] === 'join';
+  // Links that open straight into the app (a group link, a relative's SOS, a help ticket, an offer) need an account,
+  // and come back here after sign-in. Without this the person signs in and lands on Home, with the link forgotten.
+  const onJoinLink =
+    (first === 'social' && segments[1] === 'groups' && segments[2] === 'join') ||
+    (first === 'social' && segments[1] === 'sos' && segments[2] === 'watch') ||
+    (first === 'help' && segments[1] !== undefined) ||
+    first === 'offers';
 
   useEffect(() => {
     const onWelcome = first === undefined || first === 'index';

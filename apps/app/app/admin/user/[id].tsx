@@ -1,28 +1,32 @@
 // One account, everything staff may see about it: plan, trees, orders, tickets, reports, devices and staff history.
 // Opening it needs a reason, which is recorded. Phone and email stay partly hidden; family details stay private.
-import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';
 import type { UserDetail } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, Facts, Field, formatDate, FormDialog, Message, money, Panel, Pill, SecondaryButton, useAction } from '@/admin/ui';
-import { api } from '@/lib/api';
+import { Actions, AdminPage, adminStyles, Facts, Field, formatDate, FormDialog, Message, Missing, money, Panel, Pill, SecondaryButton, useAction, useRefreshAfter } from '@/admin/ui';
+import { ApiFailure, api } from '@/lib/api';
 
 export default function AdminUser() {
   const { t, i18n } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const access = useAdminAccess();
-  const client = useQueryClient();
+  const refreshAfter = useRefreshAfter();
   const [reason, setReason] = useState('');
   const [user, setUser] = useState<UserDetail | null>(null);
   const [doing, setDoing] = useState<'block' | 'unblock' | 'end' | 'plus' | null>(null);
+  const [done, setDone] = useState<string | null>(null);
   const action = useAction();
+  // The server lets only an AYWO Admin block a staff account or sign it out, so the buttons are not offered to others.
+  const staffLocked = !!user?.staff_role && !access.can(['staff']);
 
   const open = () => action.run(async () => setUser(await api.post<UserDetail>(`/admin/users/${id}/view`, { reason: reason.trim() })));
-  const reload = () => action.run(async () => setUser(await api.post<UserDetail>(`/admin/users/${id}/view`, { reason: reason.trim() })));
+  // The server has no way to read an account without recording a view, so the reload after an action is a second
+  // audited view with the same reason.
+  const reload = open;
   const yesNo = (v: boolean) => (v ? t('admin.user360.yes') : t('admin.user360.no'));
 
   return (
@@ -38,28 +42,39 @@ export default function AdminUser() {
           <Actions>
             <SecondaryButton label={t('admin.user360.open')} disabled={reason.trim().length < 5 || action.busy} onPress={open} />
           </Actions>
+          <Missing reasons={[reason.trim().length < 5 && t('admin.common.needsText', { field: t('admin.common.reason'), count: 5 })]} />
         </Panel>
       ) : (
         <>
           <Actions>
             {user.blocked_at ? <Pill label={t('admin.users.blocked')} alert /> : null}
             {user.deleted ? <Pill label={t('admin.users.deleted')} alert /> : null}
-            {user.plus ? <Pill label="Plus" /> : null}
+            {user.plus ? <Pill label={t('admin.users.plus')} /> : null}
             {user.staff_role ? <Pill label={t(`admin.roles.${user.staff_role}`)} /> : null}
             {user.is_minor ? <Pill label={t('admin.user360.minor')} alert /> : null}
           </Actions>
+          {done ? <Message text={done} good /> : null}
+          {action.failure ? (
+            <>
+              <Message text={t('admin.user360.reloadFailed', { why: action.failure })} alert />
+              <Actions>
+                <SecondaryButton label={t('admin.common.tryAgain')} disabled={action.busy} onPress={reload} />
+              </Actions>
+            </>
+          ) : null}
+          {staffLocked && access.can(['users']) ? <Text style={adminStyles.cellMuted}>{t('admin.user360.staffLocked')}</Text> : null}
           <Panel
             title={t('admin.user360.account')}
             actions={
               <Actions>
-                {access.can(['users']) ? (
+                {access.can(['users']) && !staffLocked ? (
                   user.blocked_at ? (
                     <SecondaryButton label={t('admin.users.unblock')} onPress={() => setDoing('unblock')} />
                   ) : (
                     <SecondaryButton label={t('admin.users.block')} danger onPress={() => setDoing('block')} />
                   )
                 ) : null}
-                {access.can(['users']) ? <SecondaryButton label={t('admin.user360.endSessions')} onPress={() => setDoing('end')} /> : null}
+                {access.can(['users']) && !staffLocked ? <SecondaryButton label={t('admin.user360.endSessions')} onPress={() => setDoing('end')} /> : null}
                 {access.can(['payments', 'support']) ? <SecondaryButton label={t('admin.user360.givePlus')} onPress={() => setDoing('plus')} /> : null}
               </Actions>
             }
@@ -140,12 +155,17 @@ export default function AdminUser() {
           danger={doing === 'block'}
           onCancel={() => setDoing(null)}
           onConfirm={async ({ reason: why, days }) => {
+            setDone(null);
+            if (doing === 'plus' && !(Number.isInteger(Number(days)) && Number(days) >= 1 && Number(days) <= 365)) {
+              throw new ApiFailure(422, 'admin_days_bad', 'admin.user360.daysBad');
+            }
             if (doing === 'block') await api.post(`/admin/users/${user.id}/block`, { reason: why });
             if (doing === 'unblock') await api.post(`/admin/users/${user.id}/unblock`, { reason: why });
             if (doing === 'end') await api.post(`/admin/users/${user.id}/end-sessions`, { reason: why });
             if (doing === 'plus') await api.post(`/admin/users/${user.id}/give-plus`, { reason: why, days: Number(days) });
-            await client.invalidateQueries({ queryKey: ['admin', 'users'] });
+            setDone(t(`admin.user360.done.${doing}`, { name: user.display_name || t('admin.users.noName') }));
             setDoing(null);
+            await refreshAfter('users', 'staff');
             await reload();
           }}
         />

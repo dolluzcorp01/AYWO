@@ -1,7 +1,7 @@
 // "Family links" on a person's page: their parents, partners and children, each link changeable (by birth,
 // adopted, step, foster; married, divorced...) or removable, with buttons to add more. On top, a fix offered when
-// the tree looks half linked: Sathana has only her father, who is married to Ezhilarasi, so "Is Ezhilarasi also
-// Sathana's parent?". Nobody has to delete a person to fix a wrong link.
+// the tree looks half linked: Divya has only her father, who is married to Lakshmi, so "Is Lakshmi also
+// Divya's parent?". Nobody has to delete a person to fix a wrong link.
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -11,8 +11,10 @@ import { Avatar } from '@/components/Avatar';
 import { Text } from '@/components/Text';
 import { Card, ConfirmDialog, ErrorText, Pills, SmallButton } from '@/components/ui';
 import { api } from '@/lib/api';
-import { useErrorText } from '@/lib/errors';
+import { errorCode, useErrorText } from '@/lib/errors';
 import { linkSuggestions } from '@/tree/linkSuggestions';
+import { shownName } from '@/tree/personName';
+import { refreshFamilyDates, useAddRelative } from '@/tree/useEdit';
 import type { Relation } from '@/tree/useEdit';
 import type { TreeViewAnswer } from '@/tree/useTreeView';
 import { colors, fonts } from '@/theme/tokens';
@@ -30,13 +32,20 @@ export function FamilyLinks({ data, personId, treeId, onOpen }: { data: TreeView
   const [editing, setEditing] = useState<string | null>(null);
   const [removing, setRemoving] = useState<{ title: string; message: string; run: () => Promise<unknown> } | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  // Suggested links this person may not make directly: they went to the Creator, and say so in place of the button.
+  const [asked, setAsked] = useState<string[]>([]);
+  // The same add everyone else uses: saved directly, or sent to the Creator to approve for those who must ask.
+  const add = useAddRelative(treeId);
 
   const nameOf = (id: string) => {
     const n = data.nodes.find((x) => x.id === id);
-    return !n ? '' : n.nameUnknown ? t('tree.nameNotKnown') : n.name;
+    return !n ? '' : shownName(t, n.name, n.nameUnknown);
   };
-  const refresh = () =>
-    Promise.all([client.invalidateQueries({ queryKey: ['tree-view', treeId] }), client.invalidateQueries({ queryKey: ['trees'] })]);
+  const refresh = () => {
+    // A link changes who is married to whom and whose child is whose: the calendar reads the same family.
+    refreshFamilyDates(client);
+    return Promise.all([client.invalidateQueries({ queryKey: ['tree-view', treeId] }), client.invalidateQueries({ queryKey: ['trees'] })]);
+  };
   const run = useMutation({
     mutationFn: (job: () => Promise<unknown>) => job(),
     onMutate: () => setFailure(null),
@@ -44,7 +53,9 @@ export function FamilyLinks({ data, personId, treeId, onOpen }: { data: TreeView
       setEditing(null);
       await refresh();
     },
-    onError: (e) => setFailure(errorText(e)),
+    // Changing or removing a link is for those who may edit the whole tree directly. Anyone else is told who can,
+    // rather than a bare "not allowed".
+    onError: (e) => setFailure(errorCode(e) === 'not_allowed' ? t('links.notAllowed') : errorText(e)),
   });
 
   const parents = data.links.filter((l) => l.child_id === personId);
@@ -112,12 +123,21 @@ export function FamilyLinks({ data, personId, treeId, onOpen }: { data: TreeView
       {suggestions.map((s) => (
         <Card key={s.key} style={styles.suggest}>
           <Text style={styles.suggestText}>{t('links.suggest', { parent: nameOf(s.parentId), child: nameOf(s.childId) })}</Text>
-          <SmallButton
-            kind="yellow"
-            label={t('links.suggestYes')}
-            disabled={run.isPending}
-            onPress={() => run.mutate(() => api.rpc('add_relative', { p_anchor: s.childId, p_relation: 'parent', p_existing_person: s.parentId }))}
-          />
+          {asked.includes(s.key) ? (
+            <Text accessibilityRole="alert" style={styles.asked}>{t('links.sentForApproval')}</Text>
+          ) : (
+            <SmallButton
+              kind="yellow"
+              label={t('links.suggestYes')}
+              disabled={run.isPending}
+              onPress={() =>
+                run.mutate(async () => {
+                  const answer = await add.mutateAsync({ p_anchor: s.childId, p_relation: 'parent', p_existing_person: s.parentId });
+                  if (answer.status === 'requested') setAsked((now) => [...now, s.key]);
+                })
+              }
+            />
+          )}
         </Card>
       ))}
 
@@ -236,5 +256,6 @@ const styles = StyleSheet.create({
   sub: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 12 },
   none: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 13 },
   suggest: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.tint },
+  asked: { flexShrink: 1, maxWidth: '45%', color: colors.relation, fontFamily: fonts.bold, fontSize: 13, lineHeight: 18 },
   suggestText: { flex: 1, color: colors.text, fontFamily: fonts.bold, fontSize: 14, lineHeight: 20 },
 });

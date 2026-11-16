@@ -17,9 +17,13 @@ function setRestartNeeded(needed: boolean): void {
   listeners.forEach((listener) => listener());
 }
 
-/** Applies the language's direction. On Android and iOS a change waits for a restart, so this asks for one. */
-export function applyLayoutDirection(code: string): void {
-  const rtl = isRtlLocale(code);
+/**
+ * Applies the language's direction. On Android and iOS a change waits for a restart, so this asks for one.
+ * translated: whether the screens have words in this language. Without them every word is still English, and
+ * English mirrored right-to-left is only confusing, so the layout stays as it is.
+ */
+export function applyLayoutDirection(code: string, translated = true): void {
+  const rtl = translated && isRtlLocale(code);
   if (Platform.OS === 'web') {
     // React Native Web's own I18nManager does nothing. Flex rows and text follow the page's dir.
     const page = globalThis.document?.documentElement;

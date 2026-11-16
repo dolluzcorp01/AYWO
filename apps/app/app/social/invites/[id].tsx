@@ -39,7 +39,10 @@ export default function InviteDetail() {
   const client = useQueryClient();
   const when = useWhen();
   const showName = useName();
-  const [guests, setGuests] = useState('');
+  // Null until the person types: then the box shows the number already saved, and an answer keeps it.
+  const [guests, setGuests] = useState<string | null>(null);
+  const [guestsSaved, setGuestsSaved] = useState(false);
+  const me = useQuery({ queryKey: ['social-me'], queryFn: () => api.get<{ id: string }>('/me') });
   const [cancelling, setCancelling] = useState(false);
   const [canva, setCanva] = useState('');
   const [date, setDate] = useState('');
@@ -60,8 +63,21 @@ export default function InviteDetail() {
   };
 
   const rsvp = useMutation({
-    mutationFn: (answer: RsvpAnswer) => api.rpc('rsvp_set', { p_event: id, p_answer: answer, p_guests: Number(guests) || 0 }),
-    onSuccess: refresh,
+    mutationFn: async (input: { answer: RsvpAnswer; onlyGuests?: boolean }) => {
+      let count = Math.max(Number(guests) || 0, 0);
+      if (guests === null) {
+        // Not typed in: keep the number saved before, so changing Yes to Maybe never wipes it.
+        const myId = me.data?.id ?? (await api.get<{ id: string }>('/me')).id;
+        count = event.data?.people.find((p) => p.profile_id === myId)?.guests ?? 0;
+      }
+      await api.rpc('rsvp_set', { p_event: id, p_answer: input.answer, p_guests: count });
+    },
+    onMutate: () => setGuestsSaved(false),
+    onSuccess: (_done, input) => {
+      setGuests(null);
+      setGuestsSaved(!!input.onlyGuests);
+      refresh();
+    },
   });
   const vote = useMutation({
     mutationFn: (input: { poll: string; option: string }) => api.rpc('poll_vote', { p_poll: input.poll, p_option: input.option }),
@@ -80,8 +96,9 @@ export default function InviteDetail() {
         p_event: id,
         p_title: d.title.trim(),
         p_starts_at: parseDateTime(d.date, d.time)?.toISOString() ?? null,
-        p_place: d.place.trim() || null,
-        p_note: d.note.trim() || null,
+        // An empty box clears the place or the note. (Null would mean "leave it as it was".)
+        p_place: d.place.trim(),
+        p_note: d.note.trim(),
       }),
     onSuccess: () => {
       setDetails(null);
@@ -143,6 +160,9 @@ export default function InviteDetail() {
             .filter(Boolean)
             .join('\n');
           const isPop = e.kind === 'pop_party';
+          const savedGuests = e.people.find((p) => p.profile_id === me.data?.id)?.guests ?? 0;
+          const guestsText = guests ?? (savedGuests > 0 ? String(savedGuests) : '');
+          const guestsChanged = guests !== null && (Number(guests) || 0) !== savedGuests;
           return (
             <>
               <InviteCard
@@ -165,9 +185,32 @@ export default function InviteDetail() {
                   <Pills
                     options={(['yes', 'maybe', 'no'] as RsvpAnswer[]).map((a) => ({ value: a, label: t(`social.invites.answers.${a}`) }))}
                     value={e.my_answer}
-                    onChange={(a) => rsvp.mutate(a)}
+                    onChange={(a) => rsvp.mutate({ answer: a })}
                   />
-                  <Field label={t('social.invites.guests')} value={guests} onChangeText={setGuests} keyboardType="number-pad" maxLength={2} />
+                  <Field
+                    label={t('social.invites.guests')}
+                    value={guestsText}
+                    onChangeText={(v) => {
+                      setGuests(v.replace(/[^0-9]/g, ''));
+                      setGuestsSaved(false);
+                    }}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                  />
+                  {/* The number has its own Save: someone who already answered can change only how many are coming. */}
+                  {e.my_answer ? (
+                    <View style={styles.start}>
+                      <SmallButton
+                        label={t('social.invites.saveGuests')}
+                        kind="plain"
+                        disabled={!guestsChanged || rsvp.isPending}
+                        onPress={() => e.my_answer && rsvp.mutate({ answer: e.my_answer, onlyGuests: true })}
+                      />
+                    </View>
+                  ) : guests ? (
+                    <Note>{t('social.invites.guestsAnswerFirst')}</Note>
+                  ) : null}
+                  {guestsSaved ? <Note>{t('social.invites.guestsSaved')}</Note> : null}
                   <ActionError error={rsvp.error} />
                 </Card>
               ) : null}
@@ -268,6 +311,7 @@ export default function InviteDetail() {
             <Field label={t('social.invites.titleField')} value={details.title} onChangeText={(v) => setDetails({ ...details, title: v })} maxLength={120} />
             <Field label={t('social.dateLabel')} value={details.date} onChangeText={(v) => setDetails({ ...details, date: v })} placeholder={t('social.datePlaceholder')} autoCapitalize="none" />
             <Field label={t('social.timeLabel')} value={details.time} onChangeText={(v) => setDetails({ ...details, time: v })} placeholder={t('social.timePlaceholder')} autoCapitalize="none" />
+            {!details.title.trim() ? <Note>{t('social.missing.title')}</Note> : null}
             {!parseDateTime(details.date, details.time) ? <Note>{t('social.missing.when')}</Note> : null}
             <Field label={t('social.invites.place')} value={details.place} onChangeText={(v) => setDetails({ ...details, place: v })} maxLength={200} />
             <Field label={t('social.invites.note')} value={details.note} onChangeText={(v) => setDetails({ ...details, note: v })} multiline maxLength={1000} />
@@ -298,6 +342,7 @@ export default function InviteDetail() {
         onConfirm={() => cancel.mutate()}
         onCancel={() => setCancelling(false)}
       />
+      <ActionError error={cancel.error} />
     </Page>
   );
 }
@@ -305,5 +350,6 @@ export default function InviteDetail() {
 const styles = StyleSheet.create({
   card: { gap: 10 },
   premium: { gap: 8 },
+  start: { alignSelf: 'flex-start' },
   warning: { color: colors.alert, fontFamily: fonts.bold, fontSize: 15 },
 });

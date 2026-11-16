@@ -213,6 +213,12 @@ export async function paymentRoutes(app: FastifyInstance): Promise<void> {
     await razorpay(`/subscriptions/${encodeURIComponent(plan.external_id)}/cancel`, {
       cancel_at_cycle_end: plan.status === 'trial' ? 0 : 1,
     });
+    // Razorpay sends nothing until the paid period ends, so without this the plan page went on saying "Renews on"
+    // after a cancel it had just accepted. Only this one flag is set here, and only after Razorpay agreed;
+    // the plan's status still changes through webhooks alone.
+    await asServer((db) =>
+      db.query(`update family_plans set will_renew = false where store = 'razorpay' and external_id = $1 and payer_id = $2`, [plan.external_id, userId]),
+    );
     return { ok: true };
   });
 
@@ -354,7 +360,7 @@ export async function paymentRoutes(app: FastifyInstance): Promise<void> {
           line_items: [
             {
               quantity: 1,
-              price_data: { currency: 'usd', unit_amount: amount, product_data: { name: quantity > 1 ? ` x ` : price.label } },
+              price_data: { currency: 'usd', unit_amount: amount, product_data: { name: quantity > 1 ? `${quantity} x ${price.label}` : price.label } },
             },
           ],
           client_reference_id: userId,
@@ -362,8 +368,9 @@ export async function paymentRoutes(app: FastifyInstance): Promise<void> {
           ...(physical ? { shipping_address_collection: { allowed_countries: [...STRIPE_SHIP_COUNTRIES] } } : {}),
           metadata: { order_id: orderId },
           payment_intent_data: { metadata: { order_id: orderId } },
-          success_url: `${config.WEB_URL}/plus?order=success`,
-          cancel_url: `${config.WEB_URL}/plus`,
+          // Back to where the order is shown, not the AYWO Plus page: the buyer wants to see that it went through.
+          success_url: `${config.WEB_URL}/orders?paid=1`,
+          cancel_url: `${config.WEB_URL}/shop`,
         }),
       );
       await saveExternal(session.id);

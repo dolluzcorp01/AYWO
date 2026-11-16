@@ -1,10 +1,9 @@
 // S-19 Dictionary review (LLD L5 no. 20): new words waiting for approval, and 'wrong word' reports.
 // Approved and rejected words can be looked at again and changed, so a wrong decision can be fixed.
-import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { Actions, AdminPage, adminStyles, DataTable, FilterChips, FormDialog, formatDate, Pager, QueryState, SecondaryButton, usePagedList } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, DataTable, FilterChips, FormDialog, formatDate, Pager, QueryState, SecondaryButton, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import type { KinTermRow, TermReportRow } from '@/admin/types';
 import { api } from '@/lib/api';
@@ -40,7 +39,7 @@ function WordCell({ term, native }: { term: string; native: string | null }) {
 
 function NewWords() {
   const { t, i18n } = useTranslation();
-  const client = useQueryClient();
+  const refreshAfter = useRefreshAfter();
   const [acting, setActing] = useState<{ term: KinTermRow; decision: 'approve' | 'reject' } | null>(null);
   const [status, setStatus] = useState<'pending' | 'verified' | 'rejected'>('pending');
   const { query, page, setPage } = usePagedList<KinTermRow>(['admin', 'kin-terms', status], '/admin/kin-terms', { status });
@@ -93,16 +92,15 @@ function NewWords() {
       </QueryState>
       {acting ? (
         <FormDialog
-          title={t(acting.decision === 'approve' ? 'admin.dictionary.approveTitle' : 'admin.dictionary.rejectTitle', { word: acting.term.term })}
-          text={t(acting.decision === 'approve' ? 'admin.dictionary.approveText' : 'admin.dictionary.rejectText')}
-          confirmLabel={t(acting.decision === 'approve' ? 'admin.dictionary.approve' : 'admin.dictionary.reject')}
+          title={t(acting.decision === 'approve' ? 'admin.dictionary.approveTitle' : status === 'verified' ? 'admin.dictionary.takeBackTitle' : 'admin.dictionary.rejectTitle', { word: acting.term.term })}
+          text={t(acting.decision === 'approve' ? 'admin.dictionary.approveText' : status === 'verified' ? 'admin.dictionary.takeBackText' : 'admin.dictionary.rejectText')}
+          confirmLabel={t(acting.decision === 'approve' ? 'admin.dictionary.approve' : status === 'verified' ? 'admin.dictionary.takeBack' : 'admin.dictionary.reject')}
           danger={acting.decision === 'reject'}
           onCancel={() => setActing(null)}
           onConfirm={async () => {
             await api.post('/admin/kin-review', { id: acting.term.id, decision: acting.decision });
-            await client.invalidateQueries({ queryKey: ['admin', 'kin-terms'] });
-            await client.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
             setActing(null);
+            await refreshAfter('kin-terms');
           }}
         />
       ) : null}
@@ -112,7 +110,7 @@ function NewWords() {
 
 function Reports() {
   const { t, i18n } = useTranslation();
-  const client = useQueryClient();
+  const refreshAfter = useRefreshAfter();
   const [acting, setActing] = useState<{ report: TermReportRow; decision: 'accept' | 'dismiss' } | null>(null);
   const { query, page, setPage } = usePagedList<TermReportRow>(['admin', 'term-reports'], '/admin/term-reports', { status: 'open' });
 
@@ -159,6 +157,7 @@ function Reports() {
               : []
           }
           confirmLabel={t(acting.decision === 'accept' ? 'admin.dictionary.accept' : 'admin.dictionary.dismiss')}
+          danger={acting.decision === 'accept'}
           onCancel={() => setActing(null)}
           onConfirm={async ({ term, term_native }) => {
             await api.post(`/admin/term-reports/${acting.report.id}/decide`, {
@@ -166,9 +165,9 @@ function Reports() {
               ...(term ? { term } : {}),
               ...(term_native ? { term_native } : {}),
             });
-            await client.invalidateQueries({ queryKey: ['admin', 'term-reports'] });
-            await client.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
             setActing(null);
+            // Accepting a report changes the word itself and closes the report's work item.
+            await refreshAfter('term-reports', 'kin-terms', 'work');
           }}
         />
       ) : null}

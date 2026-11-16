@@ -94,5 +94,5 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 10, marginTop: 6 },
   block: { gap: 8 },
   stat: { color: colors.text, fontFamily: fonts.bold, fontSize: 15 },
-  good: { color: '#1F7A4D', fontFamily: fonts.bold, fontSize: 15 },
+  good: { color: colors.good, fontFamily: fonts.bold, fontSize: 15 },
 });

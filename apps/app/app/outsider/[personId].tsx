@@ -7,7 +7,9 @@ import { Avatar } from '@/components/Avatar';
 import { BackIcon, ContactIcon } from '@/components/ContactIcon';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Muted, NeonPanel, TextButton } from '@/components/ui';
+import { Loading, LoadFailed, Muted, NeonPanel, TextButton } from '@/components/ui';
+import { useErrorText } from '@/lib/errors';
+import { shownName } from '@/tree/personName';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLinkView } from '@/tree/useLinkView';
 import { colors, fonts, gradients, minTapSize } from '@/theme/tokens';
@@ -20,22 +22,52 @@ export default function OutsiderCard() {
   const { personId, token } = useLocalSearchParams<{ personId: string; token: string }>();
   const { t } = useTranslation();
   const router = useRouter();
-  const { data } = useLinkView(token);
+  const errorText = useErrorText();
+  const view = useLinkView(token);
+  const data = view.data;
   const node = data?.mode === 'outsider' ? data.nodes.find((n) => n.id === personId) : undefined;
+
+  const back = (
+    <Pressable accessibilityRole="button" accessibilityLabel={t('card.goBack')} onPress={() => goBack(router)} style={styles.round}>
+      <BackIcon color={colors.text} />
+    </Pressable>
+  );
+
+  // A reloaded page, a slow connection, a link that has ended: say which, never a page with no name on it.
+  if (view.isError) {
+    return (
+      <Screen>
+        {back}
+        <LoadFailed message={errorText(view.error)} onRetry={() => view.refetch()} />
+      </Screen>
+    );
+  }
+  if (!data) {
+    return (
+      <Screen>
+        {back}
+        <Loading label={t('tree.loading')} />
+      </Screen>
+    );
+  }
+  if (!node || data.mode !== 'outsider') {
+    return (
+      <Screen>
+        {back}
+        <LoadFailed message={t('errors.person_not_found')} />
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
-      <Pressable accessibilityRole="button" accessibilityLabel={t('card.goBack')} onPress={() => goBack(router)} style={styles.round}>
-        <BackIcon color={colors.text} />
-      </Pressable>
+      {back}
 
-      {node && data?.mode === 'outsider' ? (
-        <View style={styles.who}>
-          <Avatar personId={node.id} size={120} photoUrl={node.photoUrl} nameUnknown={node.nameUnknown} />
-          <Text style={styles.name}>{node.nameUnknown ? t('tree.nameNotKnown') : node.name}</Text>
-          <Muted>{data.tree_name}</Muted>
-        </View>
-      ) : null}
+      <View style={styles.who}>
+        <Avatar personId={node.id} size={120} photoUrl={node.photoUrl} nameUnknown={node.nameUnknown} />
+        <Text style={styles.name}>{shownName(t, node.name, node.nameUnknown)}</Text>
+        <Muted>{data.tree_name}</Muted>
+      </View>
 
       <View style={styles.icons} accessibilityLabel={t('link.contactsPrivate')}>
         {KINDS.map((kind) => (

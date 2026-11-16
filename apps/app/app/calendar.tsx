@@ -16,6 +16,7 @@ import type { CalendarItem, CalendarKind } from '@/calendar/useCalendar';
 import { useErrorText } from '@/lib/errors';
 import { mainTree, useTrees } from '@/lib/account';
 import { goBack } from '@/lib/nav';
+import { shownName } from '@/tree/personName';
 import { PersonPicker } from '@/tree/PersonPicker';
 import { useTreeView } from '@/tree/useTreeView';
 import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
@@ -107,6 +108,7 @@ export default function Calendar() {
               {!isThisMonth ? (
                 <Pressable
                   accessibilityRole="button"
+                  hitSlop={12}
                   onPress={() => {
                     setMonth([new Date().getFullYear(), new Date().getMonth()]);
                     setPicked(null);
@@ -195,7 +197,7 @@ export default function Calendar() {
           {calendar.isError ? (
             <LoadFailed message={errorText(calendar.error)} onRetry={() => calendar.refetch()} />
           ) : !calendar.data ? (
-            <Loading />
+            <Loading label={t('tree.loading')} />
           ) : shown.length === 0 ? (
             <Text style={styles.nothing}>{picked ? t('calendar.nothingDay') : t('calendar.nothingMonth')}</Text>
           ) : (
@@ -289,15 +291,17 @@ function MonthChooser({ year, month0, lang, onPick }: { year: number; month0: nu
 function ItemRow({ item, onPress }: { item: CalendarItem; onPress: () => void }) {
   const { t, i18n } = useTranslation();
   const years = item.years ?? null;
-  let title = item.name;
+  // An event's name is its own title; a person's may be the stored 'Name unknown' marker.
+  const name = item.kind === 'event' ? item.name : shownName(t, item.name);
+  let title = name;
   let sub = '';
   if (item.kind === 'birthday') {
-    title = item.me ? t('calendar.yourBirthday') : t('calendar.birthdayOf', { name: item.name });
+    title = item.me ? t('calendar.yourBirthday') : t('calendar.birthdayOf', { name });
     sub = years ? t('calendar.turns', { count: years }) : t('calendar.kinds.birthday');
   } else if (item.kind === 'anniversary') {
     sub = years ? t('calendar.married', { count: years }) : t('calendar.kinds.anniversary');
   } else if (item.kind === 'remembrance') {
-    title = t('calendar.remembering', { name: item.name });
+    title = t('calendar.remembering', { name });
     sub = years ? t('calendar.yearsSince', { count: years }) : t('calendar.kinds.remembrance');
   } else {
     const time = item.starts_at ? new Date(item.starts_at).toLocaleTimeString(i18n.language, { hour: 'numeric', minute: '2-digit' }) : '';
@@ -326,14 +330,14 @@ const styles = StyleSheet.create({
   addBox: { gap: 8, marginTop: 6, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.cardBorder },
   addTitle: { color: colors.muted, fontFamily: fonts.bold, fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
   addHelp: { color: colors.muted, fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },
-  monthButton: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
+  monthButton: { minHeight: minTapSize, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 },
   monthButtonOn: { backgroundColor: colors.tint },
   caret: { transform: [{ rotate: '90deg' }] },
   caretOpen: { transform: [{ rotate: '-90deg' }] },
   chooser: { gap: 14, paddingVertical: 8 },
   yearRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  arrowSmall: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.tint },
-  yearChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: colors.cardBorder },
+  arrowSmall: { width: minTapSize, height: minTapSize, borderRadius: minTapSize / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.tint },
+  yearChip: { minHeight: minTapSize, minWidth: minTapSize, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: colors.cardBorder },
   monthGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   monthChip: { width: '31%', minHeight: minTapSize, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: colors.cardBorder },
   monthCurrent: { borderColor: colors.logoPurple, borderWidth: 2 },

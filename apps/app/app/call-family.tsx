@@ -8,6 +8,7 @@ import { Avatar } from '@/components/Avatar';
 import { ContactIcon } from '@/components/ContactIcon';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { showToast } from '@/components/Toast';
 import { EmptyState, LoadFailed, Loading, SecondaryButton, TopBar } from '@/components/ui';
 import { callList } from '@/elder/callList';
 import { mainTree, useTrees } from '@/lib/account';
@@ -35,7 +36,7 @@ export default function CallFamily() {
         {failed ? (
           <LoadFailed message={errorText(failed)} onRetry={() => (trees.error ? trees.refetch() : tree.refetch())} />
         ) : !tree.data ? (
-          <Loading />
+          <Loading label={t('tree.loading')} />
         ) : people.length === 0 ? (
           <>
             <EmptyState message={t('elder.callEmpty')} />
@@ -64,7 +65,9 @@ export default function CallFamily() {
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={t('elder.callName', { name: person.name })}
-                        onPress={() => void callNow(person.call!.replace(/^tel:/, ''))}
+                        onPress={() => {
+                          callNow(person.call!.replace(/^tel:/, '')).catch(() => showToast('error', t('card.openFailed')));
+                        }}
                         style={[styles.button, styles.call]}
                       >
                         <ContactIcon kind="mobile" color={colors.white} size={26} />
@@ -75,11 +78,14 @@ export default function CallFamily() {
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={t('elder.whatsappName', { name: person.name })}
-                        onPress={() => void Linking.openURL(person.whatsapp!)}
+                        // WhatsApp not on this phone: say so, rather than a big button that does nothing.
+                        onPress={() => {
+                          Linking.openURL(person.whatsapp!).catch(() => showToast('error', t('card.openFailed')));
+                        }}
                         style={[styles.button, styles.whatsapp]}
                       >
                         <ContactIcon kind="whatsapp" color={colors.white} size={26} />
-                        <Text style={styles.buttonText}>WhatsApp</Text>
+                        <Text style={styles.buttonText}>{t('card.whatsapp')}</Text>
                       </Pressable>
                     ) : null}
                   </View>

@@ -1,16 +1,17 @@
 // E6 / S-12 History: every change and who made it, for a tree or one person. Undo puts it back.
 // The server lists single rows; one action on the screen is one batch, so rows are gathered here.
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, EmptyState, ErrorText, Loading, LoadFailed, NeonPanel, SmallButton, TopBar } from '@/components/ui';
+import { Card, ConfirmDialog, EmptyState, ErrorText, Loading, LoadFailed, NeonPanel, SmallButton, TopBar } from '@/components/ui';
 import { useMe } from '@/lib/account';
 import { useErrorText } from '@/lib/errors';
 import { useTimeAgo } from '@/lib/time';
+import { shownName } from '@/tree/personName';
 import { useHistory, useRevert } from '@/tree/useEdit';
 import type { HistoryItem } from '@/tree/useEdit';
 import { colors, fonts } from '@/theme/tokens';
@@ -45,6 +46,8 @@ export default function HistoryScreen() {
   const history = useHistory(treeId, personId);
   const revert = useRevert(treeId);
   const batches = useMemo(() => batchesOf(history.data ?? []), [history.data]);
+  // The change about to be undone, shown back to the person before anything happens.
+  const [asking, setAsking] = useState<Batch | null>(null);
 
   function describe(batch: Batch): string {
     const first = batch.rows[0];
@@ -56,7 +59,8 @@ export default function HistoryScreen() {
     if (added.length > 1) return t(`history.${who}.addMany`, { name, count: added.length });
     const row = people[0];
     if (row) {
-      const person = row.after?.display_name ?? row.before?.display_name ?? t('activity.someone');
+      const stored = row.after?.display_name ?? row.before?.display_name;
+      const person = stored ? shownName(t, stored) : t('activity.someone');
       if (row.op === 'insert') return t(`history.${who}.add`, { name, person });
       if (row.op === 'delete' || (row.after?.deleted_at && !row.before?.deleted_at)) return t(`history.${who}.remove`, { name, person });
       return t(`history.${who}.change`, { name, person });
@@ -102,7 +106,7 @@ export default function HistoryScreen() {
                       label={whole ? t('history.undoAll') : t('history.undo')}
                       kind="dark"
                       disabled={revert.isPending}
-                      onPress={() => revert.mutate(whole ? { batch_id: item.id } : { history_id: item.rows[0].id })}
+                      onPress={() => setAsking(item)}
                     />
                   ) : null}
                 </Card>
@@ -114,6 +118,20 @@ export default function HistoryScreen() {
       <NeonPanel>
         <Text style={styles.promise}>{t('history.promise')}</Text>
       </NeonPanel>
+      <ConfirmDialog
+        visible={asking !== null}
+        title={t('history.undoTitle')}
+        message={asking ? `${describe(asking)}
+
+${t('history.undoHelp')}` : undefined}
+        confirmLabel={asking && asking.rows.length > 1 ? t('history.undoAll') : t('history.undo')}
+        busy={revert.isPending}
+        onCancel={() => setAsking(null)}
+        onConfirm={() => {
+          if (!asking) return;
+          revert.mutate(asking.rows.length > 1 ? { batch_id: asking.id } : { history_id: asking.rows[0].id }, { onSettled: () => setAsking(null) });
+        }}
+      />
     </Screen>
   );
 }

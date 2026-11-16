@@ -9,7 +9,8 @@ import { Avatar } from '@/components/Avatar';
 import { BackIcon } from '@/components/ContactIcon';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, ErrorText, Heading, Muted, NeonPanel, PrimaryButton } from '@/components/ui';
+import { Card, ErrorText, Heading, Muted, NeonPanel, PrimaryButton, TextButton } from '@/components/ui';
+import { shownFirstName, shownName } from '@/tree/personName';
 import { useSetElderYounger } from '@/tree/useCard';
 import { useTreeView } from '@/tree/useTreeView';
 import type { TreeMode } from '@/tree/useTreeView';
@@ -45,7 +46,10 @@ export default function WordConfirm() {
         {back}
         <View style={styles.centre}>
           {tree.isError ? (
-            <Text style={styles.message}>{t('tree.loadFailed')}</Text>
+            <>
+              <Text style={styles.message}>{t('tree.loadFailed')}</Text>
+              <TextButton label={t('tree.tryAgain')} onPress={() => tree.refetch()} />
+            </>
           ) : data ? (
             <Text style={styles.message}>{t('errors.person_not_found')}</Text>
           ) : (
@@ -82,8 +86,8 @@ export default function WordConfirm() {
   const isMeLink = about.linkId === data.viewer_person_id;
   const thanRelation = data.labels[about.linkId]?.label;
   const thanNode = data.nodes.find((n) => n.id === about.linkId);
-  const than = isMeLink ? t('word.you') : (thanRelation ?? thanNode?.name ?? '');
-  const person = node.name.split(' ')[0];
+  const than = isMeLink ? t('word.you') : (thanRelation ?? (thanNode ? shownName(t, thanNode.name, thanNode.nameUnknown) : ''));
+  const person = shownFirstName(t, node.name, node.nameUnknown);
   const options: { key: Choice; word: string; native?: string | null; help: string }[] = [
     { key: 'elder', word: words[0].term, native: words[0].native, help: t('word.olderThan', { than }) },
     { key: 'younger', word: words[1].term, native: words[1].native, help: t('word.youngerThan', { than }) },
@@ -107,8 +111,8 @@ export default function WordConfirm() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.top}>
           {back}
-          <Avatar personId={node.id} size={44} photoUrl={node.photoUrl} />
-          <Text style={styles.person}>{node.name}</Text>
+          <Avatar personId={node.id} size={44} photoUrl={node.photoUrl} nameUnknown={node.nameUnknown} />
+          <Text style={styles.person}>{shownName(t, node.name, node.nameUnknown)}</Text>
         </View>
         <Heading>{t('word.title', { name: person })}</Heading>
         <Muted>{t('word.explain', { than })}</Muted>
@@ -157,7 +161,7 @@ export default function WordConfirm() {
 
 const styles = StyleSheet.create({
   scroll: { gap: 14, paddingBottom: 16 },
-  centre: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  centre: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   message: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15, textAlign: 'center', lineHeight: 22 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   round: {

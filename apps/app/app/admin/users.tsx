@@ -1,11 +1,10 @@
 // Find accounts; open one account's full view; block and unblock. Phones and emails are masked by the server.
-import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';
-import { Actions, AdminPage, adminStyles, DataTable, FormDialog, formatDate, Pager, Pill, QueryState, SearchBox, SecondaryButton, usePagedList } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, DataTable, FormDialog, formatDate, Pager, Pill, QueryState, SearchBox, SecondaryButton, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import type { UserRow } from '@/admin/types';
 import { api } from '@/lib/api';
@@ -14,7 +13,7 @@ export default function AdminUsers() {
   const { t, i18n } = useTranslation();
   const access = useAdminAccess();
   const router = useRouter();
-  const client = useQueryClient();
+  const refreshAfter = useRefreshAfter();
   const [q, setQ] = useState('');
   const [acting, setActing] = useState<{ user: UserRow; action: 'block' | 'unblock' } | null>(null);
   const { query, page, setPage } = usePagedList<UserRow>(['admin', 'users'], '/admin/users', { q });
@@ -98,8 +97,9 @@ export default function AdminUsers() {
           onCancel={() => setActing(null)}
           onConfirm={async ({ reason }) => {
             await api.post(`/admin/users/${acting.user.id}/${acting.action}`, { reason });
-            await client.invalidateQueries({ queryKey: ['admin', 'users'] });
             setActing(null);
+            // A block also changes the dashboard's blocked count and, for a staff account, the Staff page.
+            await refreshAfter('users', 'staff');
           }}
         />
       ) : null}

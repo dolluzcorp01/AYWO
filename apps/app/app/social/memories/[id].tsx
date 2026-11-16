@@ -1,7 +1,7 @@
 // One memory: photos, who is in it, reactions, comments, and closing the thread. Anyone can report it or a comment.
 // The author can edit the words and date, remove or reorder photos and untag people; anyone can edit their comment.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -13,7 +13,7 @@ import { ReportDialog } from '@/ops/Report';
 import type { ReportTarget } from '@/ops/Report';
 import { pickPhotos } from '@/social/media';
 import { moveItem, PhotoStrip } from '@/social/PhotoStrip';
-import { ActionError, Gate, Note, Page, useName, useWhen } from '@/social/parts';
+import { ActionError, Gate, Note, Page, useGoBack, useName, useWhen } from '@/social/parts';
 import type { Post } from '@/social/types';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 
@@ -36,7 +36,7 @@ function Chip({ label, removeLabel, onRemove }: { label: string; removeLabel: st
 export default function MemoryDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
-  const router = useRouter();
+  const goBack = useGoBack();
   const client = useQueryClient();
   const when = useWhen();
   const ago = useTimeAgo();
@@ -121,8 +121,9 @@ export default function MemoryDetail() {
   const removePost = useMutation({
     mutationFn: () => api.rpc('post_delete', { p_post: id }),
     onSuccess: () => {
+      setConfirmDelete(false);
       client.invalidateQueries({ queryKey: ['posts'] });
-      router.back();
+      goBack();
     },
   });
 
@@ -323,6 +324,7 @@ export default function MemoryDetail() {
                 </View>
               </Card>
             ))}
+            <ActionError error={removeComment.error} />
 
             {data.closed ? (
               <Note>{t('social.memories.closedNote')}</Note>
@@ -349,6 +351,7 @@ export default function MemoryDetail() {
                   disabled={setClosed.isPending}
                   onPress={() => setClosed.mutate(!data.closed)}
                 />
+                <ActionError error={setClosed.error} />
                 <TextButton label={t('social.memories.delete')} danger onPress={() => setConfirmDelete(true)} />
               </>
             ) : (
@@ -378,7 +381,9 @@ export default function MemoryDetail() {
         busy={removePost.isPending}
         onConfirm={() => removePost.mutate()}
         onCancel={() => setConfirmDelete(false)}
-      />
+      >
+        <ActionError error={removePost.error} />
+      </ConfirmDialog>
       {reporting ? (
         <ReportDialog
           visible

@@ -1,12 +1,11 @@
 // Posters and books: print, ship with tracking, deliver. Refunds go back through Razorpay or Stripe.
 // The full shipping address opens only with a reason, which is recorded.
-import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';
 import type { Fulfilment, OrderAddress, OrderPage, OrderRow } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, DataTable, DialogFrame, Facts, Field, FilterChips, formatDate, FormDialog, Message, money, Pager, Pill, QueryState, SearchBox, SecondaryButton, useAction, usePagedList } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, DataTable, DialogFrame, Facts, Field, FilterChips, formatDate, FormDialog, Message, Missing, money, Pager, Pill, QueryState, SearchBox, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
 
@@ -15,20 +14,21 @@ const NEXT: Partial<Record<Fulfilment, Fulfilment>> = { queued: 'printing', prin
 export default function AdminOrders() {
   const { t, i18n } = useTranslation();
   const access = useAdminAccess();
-  const client = useQueryClient();
+  const refreshAfter = useRefreshAfter();
   const [step, setStep] = useState<Fulfilment | 'all'>('queued');
   const [q, setQ] = useState('');
   const [moving, setMoving] = useState<OrderRow | null>(null);
   const [address, setAddress] = useState<OrderRow | null>(null);
-  const [refunding, setRefunding] = useState<OrderRow | null>(null);
+  // afterCancel: the refund offered straight after a cancel, so a paid order is not left cancelled and unrefunded.
+  const [refunding, setRefunding] = useState<{ row: OrderRow; afterCancel: boolean } | null>(null);
+  const [done, setDone] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<OrderRow | null>(null);
   const { query, page, setPage } = usePagedList<OrderRow>(['admin', 'orders'], '/admin/orders', { fulfilment: step === 'all' ? undefined : step, q });
   const counts = (query.data as OrderPage | undefined)?.counts ?? {};
   const canShip = access.can(['orders']);
-  const refresh = async () => {
-    await client.invalidateQueries({ queryKey: ['admin', 'orders'] });
-    await client.invalidateQueries({ queryKey: ['admin', 'work'] });
-  };
+  const canRefund = access.can(['payments']);
+  // An order step or a refund also moves the work queue and its badge, the dashboard, and the Payments totals.
+  const refresh = () => refreshAfter('orders', 'work', 'payments');
 
   const columns: Column<OrderRow>[] = [
     {
@@ -61,6 +61,7 @@ export default function AdminOrders() {
       render: (row) => (
         <View style={{ gap: 4 }}>
           <Pill label={row.status === 'refunded' ? t('admin.payments.orderStatus.refunded') : t(`admin.orders.steps.${row.fulfilment}`)} alert={row.status === 'refunded'} />
+          {row.status === 'paid' && row.fulfilment === 'cancelled' ? <Pill label={t('admin.orders.notRefunded')} alert /> : null}
           {row.tracking_number ? <Text style={adminStyles.cellMuted}>{[row.carrier, row.tracking_number].filter(Boolean).join(' ')}</Text> : null}
         </View>
       ),
@@ -78,7 +79,7 @@ export default function AdminOrders() {
           {canShip && row.status === 'paid' && ['queued', 'printing', 'shipped'].includes(row.fulfilment) ? (
             <SecondaryButton label={t('admin.orders.cancel')} danger onPress={() => setCancelling(row)} />
           ) : null}
-          {access.can(['payments']) && row.can_refund ? <SecondaryButton label={t('admin.orders.refund')} danger onPress={() => setRefunding(row)} /> : null}
+          {canRefund && row.can_refund ? <SecondaryButton label={t('admin.orders.refund')} danger onPress={() => setRefunding({ row, afterCancel: false })} /> : null}
         </Actions>
       ),
     },
@@ -93,6 +94,7 @@ export default function AdminOrders() {
     <AdminPage title={t('admin.orders.title')} subtitle={t('admin.orders.subtitle')} gates={['orders', 'payments']}>
       <FilterChips value={step} onChange={setStep} options={[chip('queued'), chip('printing'), chip('shipped'), chip('delivered'), chip('cancelled'), chip('all')]} />
       <SearchBox placeholder={t('admin.orders.search')} onSearch={setQ} />
+      {done ? <Message text={done} good /> : null}
       <QueryState query={query} isEmpty={(data) => data.rows.length === 0} emptyText={t('admin.orders.empty')}>
         {(data) => (
           <>
@@ -101,34 +103,61 @@ export default function AdminOrders() {
           </>
         )}
       </QueryState>
-      {moving ? <StepDialog row={moving} to={NEXT[moving.fulfilment] as Fulfilment} onDone={refresh} onClose={() => setMoving(null)} /> : null}
+      {moving ? (
+        <StepDialog
+          row={moving}
+          to={NEXT[moving.fulfilment] as Fulfilment}
+          onDone={async () => {
+            setDone(t('admin.orders.stepDone', { step: t(`admin.orders.steps.${NEXT[moving.fulfilment]}`) }));
+            await refresh();
+          }}
+          onClose={() => setMoving(null)}
+        />
+      ) : null}
       {address ? <AddressDialog row={address} onClose={() => setAddress(null)} /> : null}
       {cancelling ? (
         <FormDialog
           title={t('admin.orders.cancelTitle')}
           text={t('admin.orders.cancelText')}
           confirmLabel={t('admin.orders.cancel')}
+          cancelLabel={t('admin.orders.keepOrder')}
           danger
           onCancel={() => setCancelling(null)}
           onConfirm={async () => {
+            // The server takes no reason for a cancel; the refund that follows asks for one.
             await api.post(`/admin/orders/${cancelling.id}/step`, { fulfilment: 'cancelled' });
-            await refresh();
+            const row = cancelling;
             setCancelling(null);
+            if (canRefund && row.can_refund) {
+              setDone(null);
+              setRefunding({ row, afterCancel: true });
+            } else {
+              setDone(t('admin.orders.cancelDoneNoRefund'));
+            }
+            await refresh();
           }}
-        />
+        >
+          <Message text={t('admin.orders.cancelNoRefund', { amount: money(cancelling.amount_minor, cancelling.currency, i18n.language) })} alert />
+          <Message text={canRefund && cancelling.can_refund ? t('admin.orders.cancelThenRefund') : canRefund ? t('admin.orders.cancelRefundElsewhere') : t('admin.orders.cancelNeedsPayments')} alert={!(canRefund && cancelling.can_refund)} />
+        </FormDialog>
       ) : null}
       {refunding ? (
         <FormDialog
-          title={t('admin.orders.refundTitle', { amount: money(refunding.amount_minor, refunding.currency, i18n.language) })}
-          text={t('admin.orders.refundText')}
+          title={t('admin.orders.refundTitle', { amount: money(refunding.row.amount_minor, refunding.row.currency, i18n.language) })}
+          text={refunding.afterCancel ? t('admin.orders.refundAfterCancelText') : t('admin.orders.refundText')}
           fields={[{ name: 'reason', label: t('admin.common.reason'), minLength: 5, multiline: true }]}
           confirmLabel={t('admin.orders.refund')}
+          cancelLabel={refunding.afterCancel ? t('admin.orders.refundLater') : undefined}
           danger
-          onCancel={() => setRefunding(null)}
-          onConfirm={async ({ reason }) => {
-            await api.post(`/admin/orders/${refunding.id}/refund`, { reason });
-            await refresh();
+          onCancel={() => {
+            if (refunding.afterCancel) setDone(t('admin.orders.cancelDoneNoRefund'));
             setRefunding(null);
+          }}
+          onConfirm={async ({ reason }) => {
+            await api.post(`/admin/orders/${refunding.row.id}/refund`, { reason });
+            setDone(t('admin.orders.refundDone', { amount: money(refunding.row.amount_minor, refunding.row.currency, i18n.language) }));
+            setRefunding(null);
+            await refresh();
           }}
         />
       ) : null}
@@ -143,6 +172,8 @@ function StepDialog({ row, to, onDone, onClose }: { row: OrderRow; to: Fulfilmen
   const [url, setUrl] = useState('');
   const action = useAction();
   const shipping = to === 'shipped';
+  const urlOk = !url.trim() || /^https:\/\/\S+$/.test(url.trim());
+  const missing = [shipping && !tracking.trim() && t('admin.orders.needTracking'), shipping && !urlOk && t('admin.orders.trackingUrlBad')];
 
   async function save() {
     const ok = await action.run(() =>
@@ -161,15 +192,16 @@ function StepDialog({ row, to, onDone, onClose }: { row: OrderRow; to: Fulfilmen
     <DialogFrame title={t(`admin.orders.moveTo.${to}`)} text={t('admin.orders.buyerTold')}>
       {shipping ? (
         <>
-          <Field label={t('admin.orders.carrier')} value={carrier} onChange={setCarrier} maxLength={60} placeholder="India Post" />
+          <Field label={t('admin.orders.carrier')} value={carrier} onChange={setCarrier} maxLength={60} placeholder={t('admin.orders.carrierExample')} />
           <Field label={t('admin.orders.tracking')} value={tracking} onChange={setTracking} maxLength={80} />
-          <Field label={t('admin.orders.trackingUrl')} value={url} onChange={setUrl} maxLength={300} placeholder="https://" />
+          <Field label={t('admin.orders.trackingUrl')} value={url} onChange={setUrl} maxLength={300} placeholder="https://" error={urlOk ? null : t('admin.orders.trackingUrlBad')} />
         </>
       ) : null}
       {action.failure ? <Message text={action.failure} alert /> : null}
+      <Missing reasons={missing} />
       <Actions>
         <SecondaryButton label={t('admin.common.cancel')} onPress={onClose} disabled={action.busy} />
-        <SecondaryButton label={t('admin.common.save')} onPress={save} disabled={action.busy || (shipping && !tracking.trim())} />
+        <SecondaryButton label={t(`admin.orders.moveTo.${to}`)} onPress={save} disabled={action.busy || missing.some(Boolean)} />
       </Actions>
     </DialogFrame>
   );
@@ -211,6 +243,7 @@ function AddressDialog({ row, onClose }: { row: OrderRow; onClose: () => void })
               onPress={() => action.run(async () => setData(await api.post<OrderAddress>(`/admin/orders/${row.id}/address`, { reason: reason.trim() })))}
             />
           </Actions>
+          <Missing reasons={[reason.trim().length < 5 && t('admin.common.needsText', { field: t('admin.common.reason'), count: 5 })]} />
         </>
       )}
       <Actions>

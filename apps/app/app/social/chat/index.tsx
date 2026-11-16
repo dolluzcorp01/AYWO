@@ -16,7 +16,12 @@ export default function ChatList() {
   const client = useQueryClient();
   const ago = useTimeAgo();
   const showName = useName();
-  const connected = useChatSocket(() => client.invalidateQueries({ queryKey: ['chats'] }));
+  // Fetched again on every new message, and whenever the live connection comes back: messages that arrived while it
+  // was down are not sent again, so the list would otherwise stay old.
+  const connected = useChatSocket(
+    () => client.invalidateQueries({ queryKey: ['chats'] }),
+    () => client.invalidateQueries({ queryKey: ['chats'] }),
+  );
   const chats = useQuery({
     queryKey: ['chats'],
     queryFn: () => api.rpc<ChatRow[]>('chat_list'),

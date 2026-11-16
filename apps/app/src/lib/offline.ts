@@ -4,6 +4,7 @@
 import { onlineManager } from '@tanstack/react-query';
 import { useSyncExternalStore } from 'react';
 import { AppState, Platform } from 'react-native';
+import { QUICK_TIMEOUT_MS, timedFetch } from '@/lib/timedFetch';
 
 const CHECK_EVERY_MS = 15_000;
 
@@ -76,7 +77,8 @@ export function markOnline() {
 export async function checkNow(): Promise<boolean> {
   if (!healthUrl) return false;
   try {
-    const response = await fetch(healthUrl, { cache: 'no-store' });
+    // With a time limit: on a stalled connection "Try now" must come back with an answer, not spin.
+    const response = await timedFetch(healthUrl, { cache: 'no-store' }, QUICK_TIMEOUT_MS);
     // Any answer means the server is reachable, even one that is not OK.
     markOnline();
     return response.ok;

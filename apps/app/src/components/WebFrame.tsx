@@ -22,30 +22,32 @@ export type FrameSection = 'app' | 'public' | 'admin';
 /** Screens whose content should use the whole width on a computer, rather than a reading column. */
 const WIDE_ROUTES = new Set(['home', 'tree', 'calendar']);
 
+/**
+ * In a browser the screens always sit at the same place in the tree: outer > middle > inner > children. Only the
+ * styles and the side menu change between the three shapes. It used to return three different trees, so going from a
+ * public page to an app page on a computer, or resizing the window past 560 or 1024 px, threw the whole navigator
+ * away and built it again: anything typed in a form and the way back were lost.
+ */
 export function WebFrame({ children, section = 'public', route }: { children: ReactNode; section?: FrameSection; route?: string }) {
   const { width } = useWindowDimensions();
-  const desktop = Platform.OS === 'web' && width >= DESKTOP_MIN;
-  if (Platform.OS !== 'web' || section === 'admin') return <>{children}</>;
-  if (section === 'app' && desktop) {
-    const wide = WIDE_ROUTES.has(route ?? '');
-    return (
-      <View style={styles.shell}>
-        <SideNav />
-        <View style={styles.main}>
-          <View style={[styles.content, { maxWidth: wide ? WIDE_WIDTH : READING_WIDTH }]}>{children}</View>
-        </View>
-      </View>
-    );
-  }
-  if (width <= WEB_COLUMN + 40) return <>{children}</>;
+  // The platform never changes while the app runs, so phones keep their untouched tree.
+  if (Platform.OS !== 'web') return <>{children}</>;
+  const shape: 'plain' | 'shell' | 'column' =
+    section === 'admin' ? 'plain' : section === 'app' && width >= DESKTOP_MIN ? 'shell' : width <= WEB_COLUMN + 40 ? 'plain' : 'column';
+  const wide = WIDE_ROUTES.has(route ?? '');
   return (
-    <View style={styles.outside}>
-      <View style={styles.column}>{children}</View>
+    <View style={shape === 'shell' ? styles.shell : shape === 'column' ? styles.outside : styles.plain}>
+      {shape === 'shell' ? <SideNav /> : null}
+      <View style={shape === 'shell' ? styles.main : shape === 'column' ? styles.column : styles.plain}>
+        <View style={shape === 'shell' ? [styles.content, { maxWidth: wide ? WIDE_WIDTH : READING_WIDTH }] : styles.plain}>{children}</View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // A wrapper that changes nothing: it fills its parent and lays its one child out the same way.
+  plain: { flex: 1 },
   shell: { flex: 1, flexDirection: 'row', backgroundColor: colors.background },
   main: { flex: 1, alignItems: 'center', minWidth: 0 },
   content: { flex: 1, width: '100%' },

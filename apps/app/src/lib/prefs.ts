@@ -1,7 +1,7 @@
 // Choices kept on this device: language, large text and Elder mode. Saved to the account too once signed in.
 import { useSyncExternalStore } from 'react';
 import { deviceStore } from '@/lib/api';
-import i18n, { ensureLocale } from '@/i18n';
+import i18n, { ensureLocale, isTranslated } from '@/i18n';
 import { applyLayoutDirection } from '@/i18n/rtl';
 import { largeTextScale } from '@/theme/tokens';
 
@@ -59,7 +59,7 @@ export function useTapSize(base: number): number {
 export async function setLanguage(code: string): Promise<void> {
   ensureLocale(code);
   await i18n.changeLanguage(code);
-  applyLayoutDirection(code);
+  applyLayoutDirection(code, isTranslated(code));
   await deviceStore.set(LANGUAGE, code);
 }
 
@@ -74,7 +74,7 @@ export async function loadPrefs(): Promise<void> {
     ensureLocale(language);
     await i18n.changeLanguage(language);
   }
-  applyLayoutDirection(i18n.language);
+  applyLayoutDirection(i18n.language, isTranslated(i18n.language));
   if (large === '1' || simple === '1') {
     largeText = large === '1' || simple === '1';
     simpleMode = simple === '1';

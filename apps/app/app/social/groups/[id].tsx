@@ -1,14 +1,14 @@
 // One friends group: the people, a join link to share, adding from the circle, leaving.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Share } from 'react-native';
 import { ConfirmDialog, Field, PrimaryButton, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { PeoplePicker } from '@/social/AudiencePicker';
-import { ActionError, Gate, Note, Page, Row, useName } from '@/social/parts';
+import { ActionError, Gate, Note, Page, Row, useGoBack, useName } from '@/social/parts';
 import type { GroupDetail } from '@/social/types';
 
 const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL;
@@ -21,7 +21,7 @@ function joinLink(token: string): string {
 export default function GroupScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
-  const router = useRouter();
+  const goBack = useGoBack();
   const client = useQueryClient();
   const showName = useName();
   const [adding, setAdding] = useState(false);
@@ -29,7 +29,12 @@ export default function GroupScreen() {
   const [leaving, setLeaving] = useState(false);
   const key = ['group', id];
   const group = useQuery({ queryKey: key, queryFn: () => api.rpc<GroupDetail>('group_detail', { p_group: id }) });
-  const refresh = () => client.invalidateQueries({ queryKey: key });
+  // The list of groups shows the name and how many people: it changes with this screen.
+  const refresh = () => {
+    client.invalidateQueries({ queryKey: key });
+    client.invalidateQueries({ queryKey: ['groups'] });
+    client.invalidateQueries({ queryKey: ['social-circles'] });
+  };
 
   const add = useMutation({
     mutationFn: () => api.rpc('group_add_members', { p_group: id, p_members: chosen }),
@@ -62,7 +67,7 @@ export default function GroupScreen() {
       setDeleting(false);
       client.invalidateQueries({ queryKey: ['groups'] });
       client.invalidateQueries({ queryKey: ['social-circles'] });
-      router.back();
+      goBack();
     },
   });
   const leave = useMutation({
@@ -71,9 +76,10 @@ export default function GroupScreen() {
       await api.rpc('group_remove_member', { p_group: id, p_profile: me.id });
     },
     onSuccess: () => {
+      setLeaving(false);
       client.invalidateQueries({ queryKey: ['groups'] });
       client.invalidateQueries({ queryKey: ['social-circles'] });
-      router.back();
+      goBack();
     },
   });
   const newLink = useMutation({ mutationFn: () => api.rpc<string>('group_new_link', { p_group: id }), onSuccess: refresh });
@@ -89,6 +95,8 @@ export default function GroupScreen() {
             />
             <Note>{t('social.groups.linkNote')}</Note>
             {data.is_mine ? <TextButton label={t('social.groups.newLink')} disabled={newLink.isPending} onPress={() => newLink.mutate()} /> : null}
+            <ActionError error={newLink.error} />
+            {newLink.isSuccess ? <Note>{t('social.groups.newLinkDone')}</Note> : null}
             <SectionTitle>{t('social.groups.people')}</SectionTitle>
             {data.members.map((m) => (
               <Row
@@ -98,7 +106,6 @@ export default function GroupScreen() {
                 onPress={data.is_mine && !m.started_it ? () => setRemoving({ id: m.profile_id, name: showName(m.name) }) : undefined}
               />
             ))}
-            <ActionError error={remove.error} />
             {adding ? (
               <>
                 <PeoplePicker chosen={chosen} onChange={setChosen} />
@@ -109,7 +116,13 @@ export default function GroupScreen() {
               <SecondaryButton label={t('social.groups.addPeople')} onPress={() => setAdding(true)} />
             )}
             {data.is_mine ? <TextButton label={t('social.groups.rename')} onPress={() => setRenaming(data.name)} /> : null}
-            <TextButton label={t('social.groups.leave')} danger onPress={() => setLeaving(true)} />
+            {/* The server does not hand a group on: if the person who started it left, nobody could rename it, remove
+                people or delete it. So that person removes others or deletes the group instead. */}
+            {data.is_mine ? (
+              <Note>{t('social.groups.starterCannotLeave')}</Note>
+            ) : (
+              <TextButton label={t('social.groups.leave')} danger onPress={() => setLeaving(true)} />
+            )}
             {data.is_mine ? <TextButton label={t('social.groups.delete')} danger onPress={() => setDeleting(true)} /> : null}
           </>
         )}
@@ -122,8 +135,9 @@ export default function GroupScreen() {
         busy={leave.isPending}
         onConfirm={() => leave.mutate()}
         onCancel={() => setLeaving(false)}
-      />
-      <ActionError error={leave.error} />
+      >
+        <ActionError error={leave.error} />
+      </ConfirmDialog>
       <ConfirmDialog
         visible={!!removing}
         title={t('social.groups.removeTitle', { name: removing?.name ?? '' })}
@@ -133,7 +147,9 @@ export default function GroupScreen() {
         busy={remove.isPending}
         onConfirm={() => removing && remove.mutate(removing.id)}
         onCancel={() => setRemoving(null)}
-      />
+      >
+        <ActionError error={remove.error} />
+      </ConfirmDialog>
       <ConfirmDialog
         visible={renaming !== null}
         title={t('social.groups.rename')}

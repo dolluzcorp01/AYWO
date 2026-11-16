@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { goBack } from '@/lib/nav';
 import { Avatar } from '@/components/Avatar';
 import { ContactsIcon, PlusIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
@@ -13,17 +12,17 @@ import { PhoneField } from '@/components/PhoneField';
 import { showToast } from '@/components/Toast';
 import { bestNumber, canPickContact, ContactsDenied, pickContact } from '@/lib/pickContact';
 import type { PickedContact } from '@/lib/pickContact';
-import { Card, Checkbox, ConfirmDialog, ErrorText, Field, Label, Loading, LoadFailed, Pills, PrimaryButton, SmallButton, TextButton, TopBar } from '@/components/ui';
+import { Card, Checkbox, ConfirmDialog, ErrorText, Field, Label, Loading, LoadFailed, Pills, PrimaryButton, SecondaryButton, SmallButton, TextButton, TopBar } from '@/components/ui';
 import { uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
-import { dateToText, normalizeContact, parseDateText } from '@/lib/contacts';
+import { dateFromBox, dateToText, normalizeContact, parseDateText } from '@/lib/contacts';
 import { errorCode, useErrorText } from '@/lib/errors';
 import { pickPhoto } from '@/lib/pick';
 import { track } from '@/lib/track';
 import { asName } from '@/voice/speech';
 import { useVoiceInput } from '@/voice/useVoiceInput';
 import { VoiceButton } from '@/voice/VoiceButton';
-import { deleteContact, deletePerson, savePerson, saveWeddingDate, setContact, useAddRelative, useContactsForEdit } from '@/tree/useEdit';
+import { deleteContact, deletePerson, refreshFamilyDates, savePerson, saveWeddingDate, setContact, useAddRelative, useContactsForEdit } from '@/tree/useEdit';
 import type { ContactKind, LinkKind, PersonFields, Relation } from '@/tree/useEdit';
 import { AlsoParentOf } from '@/tree/AlsoParentOf';
 import { alsoChildCandidates } from '@/tree/alsoChildren';
@@ -86,8 +85,13 @@ export default function PersonDetails() {
     linkKind?: LinkKind;
     /** Started from the family guide or quick-add: Mother and Father come with the gender already chosen. */
     gender?: 'male' | 'female';
-    /** 'guide': go back to the family guide after saving, not to the tree. */
-    back?: 'guide';
+    /**
+     * Where to go after saving. 'guide': back to the family guide. 'here': back to the screen underneath (the
+     * "Add your family" card on the tree or on Home). Left out: the add screen is underneath, so go to the tree.
+     */
+    back?: 'guide' | 'here';
+    /** 'card': opened from this person's own card, which is underneath. Removing the person must take it away too. */
+    from?: 'card';
     /** Adding a parent from the add screen: the brothers and sisters already ticked there, comma separated. */
     also?: string;
   }>();
@@ -181,14 +185,23 @@ export default function PersonDetails() {
     if (badField === 'whatsapp') setBadField(null);
   }
 
-  /** Past the add screen as well. A reloaded web page has neither behind it. */
+  const treeHref = { pathname: '/tree/[id]' as const, params: { id: treeId } };
+
+  /** One screen back. A reloaded web page has nothing behind it, so the tree (or the family guide) instead of a dead end. */
+  function leave() {
+    if (router.canGoBack()) router.back();
+    else if (params.back === 'guide') router.replace({ pathname: '/guide/[treeId]', params: { treeId } });
+    else router.replace(treeHref);
+  }
+
+  /**
+   * After adding someone. Each way in says where it came from: the guide and the "Add your family" card are right
+   * underneath, so one step back. Otherwise the add screen is underneath: back to the tree wherever it sits in
+   * the stack, taking the add screen away too. With no tree behind (a reloaded web page), this screen becomes the tree.
+   */
   function backToTree() {
-    if (params.back === 'guide') {
-      router.back();
-      return;
-    }
-    if (router.canDismiss()) router.dismiss(2);
-    else router.replace({ pathname: '/tree/[id]', params: { id: treeId } });
+    if (params.back === 'guide' || params.back === 'here') leave();
+    else router.dismissTo(treeHref);
   }
 
   // Speak the name instead of typing it. English names get capitals; Tamil script is left as it is.
@@ -221,16 +234,11 @@ export default function PersonDetails() {
   function fieldsFromForm(): { fields: PersonFields } | { problem: string; field: BadField } {
     const name = form.name.trim();
     if (!form.nameUnknown && !name) return { problem: t('details.nameNeeded'), field: 'name' };
-    let birth: { date: string; precision: string } | null = null;
-    if (form.born.trim()) {
-      birth = parseDateText(form.born);
-      if (!birth) return { problem: t('details.badDate'), field: 'born' };
-    }
-    let death: { date: string; precision: string } | null = null;
-    if (form.died.trim()) {
-      death = parseDateText(form.died);
-      if (!death) return { problem: t('details.badDate'), field: 'died' };
-    }
+    // A box left as it was opened saves the stored date untouched: "about 1950" stays "about", a month stays a month.
+    const birth = dateFromBox(form.born, node ? { date: node.birthDate, precision: node.birthPrecision } : null);
+    if (!birth) return { problem: t('details.badDate'), field: 'born' };
+    const death = dateFromBox(form.died, node ? { date: node.deathDate, precision: node.deathPrecision } : null);
+    if (!death) return { problem: t('details.badDate'), field: 'died' };
     return {
       fields: {
         // Stored as the plain marker the importer and add_relative also use; the screen shows 'Name not known'.
@@ -238,10 +246,10 @@ export default function PersonDetails() {
         name_unknown: form.nameUnknown,
         gender: form.gender,
         living: form.living,
-        birth_date: birth?.date ?? null,
-        birth_precision: birth?.precision ?? null,
-        death_date: form.living === 'deceased' ? (death?.date ?? null) : null,
-        death_precision: form.living === 'deceased' ? (death?.precision ?? null) : null,
+        birth_date: birth.date,
+        birth_precision: birth.precision,
+        death_date: form.living === 'deceased' ? death.date : null,
+        death_precision: form.living === 'deceased' ? death.precision : null,
         birth_place: form.birthPlace.trim() || null,
         death_place: form.living === 'deceased' ? form.deathPlace.trim() || null : null,
         birth_order: form.birthOrder,
@@ -261,7 +269,10 @@ export default function PersonDetails() {
         continue;
       }
       const parsed = parseDateText(text);
-      if (!parsed || parsed.precision !== 'exact' || parsed.date > new Date().toISOString().slice(0, 10)) return { problem: t('details.badWeddingDate') };
+      // Today on this phone, not in London: a wedding entered early in the morning in India is not "in the future".
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      if (!parsed || parsed.precision !== 'exact' || parsed.date > today) return { problem: t('details.badWeddingDate') };
       changes.push({ id, date: parsed.date });
     }
     return { changes };
@@ -320,6 +331,9 @@ export default function PersonDetails() {
           setBusy(false);
           return;
         }
+        // The card is saved from here on. If a number or the wedding date fails next, pressing Save again must send
+        // the new version, or it would be refused as "someone else changed this".
+        if (answer.version !== undefined) setLoadedVersion(answer.version);
         // Numbers never travel in a request, so they are saved only by those who may write directly.
         await saveContacts(personId, plan);
         for (const change of wedding.changes) {
@@ -328,12 +342,14 @@ export default function PersonDetails() {
         }
         await client.invalidateQueries({ queryKey: ['tree-view', treeId] });
         await client.invalidateQueries({ queryKey: ['person-card', personId] });
-        if (params.back === 'guide') router.back();
-        else goBack(router);
+        refreshFamilyDates(client);
+        leave();
         return;
       }
 
       if (!params.anchor || !params.relation) {
+        // Opened without saying whose relative this is (an old or hand-typed link): say so, never fail silently.
+        setFailure(t('errors.bad_input', { defaultValue: t('errors.server_error') }));
         setBusy(false);
         return;
       }
@@ -367,6 +383,7 @@ export default function PersonDetails() {
         return;
       }
       await client.invalidateQueries({ queryKey: ['tree-view', treeId] });
+      refreshFamilyDates(client);
       backToTree();
     } catch (error) {
       if (errorCode(error) === 'version_conflict') setClash(true);
@@ -388,7 +405,11 @@ export default function PersonDetails() {
       }
       await client.invalidateQueries({ queryKey: ['tree-view', treeId] });
       await client.invalidateQueries({ queryKey: ['trees'] });
-      router.replace({ pathname: '/tree/[id]', params: { id: treeId } });
+      refreshFamilyDates(client);
+      // The person's own card may be underneath, and it now says "no longer in the tree". Take it away first, then
+      // go to the tree: back to it when it is already open behind, in place of this screen when it is not.
+      if (params.from === 'card' && router.canDismiss()) router.dismiss(1);
+      router.dismissTo(treeHref);
     } catch (error) {
       setRemoving(false);
       if (errorCode(error) === 'version_conflict') setClash(true);
@@ -400,6 +421,7 @@ export default function PersonDetails() {
   if (tree.isError) {
     return (
       <Screen>
+        <TopBar title={editing ? t('details.editing') : t('details.newPerson')} onBack={leave} />
         <LoadFailed message={errorText(tree.error)} onRetry={() => tree.refetch()} />
       </Screen>
     );
@@ -407,8 +429,9 @@ export default function PersonDetails() {
   if (tree.data && editing && !node) {
     return (
       <Screen>
-        <TopBar title={t('details.editing')} onBack={() => goBack(router)} />
+        <TopBar title={t('details.editing')} onBack={leave} />
         <LoadFailed message={t('errors.person_not_found')} />
+        <SecondaryButton label={t('guide.openTree')} onPress={() => router.dismissTo(treeHref)} />
       </Screen>
     );
   }
@@ -454,7 +477,7 @@ export default function PersonDetails() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <TopBar title={title} subtitle={subtitle} onBack={() => goBack(router)} />
+        <TopBar title={title} subtitle={subtitle} onBack={leave} />
 
         <View style={styles.nameRow}>
           <Pressable accessibilityRole="button" accessibilityLabel={t('profile.addPhoto')} onPress={choosePhoto}>
@@ -621,7 +644,7 @@ export default function PersonDetails() {
         {notice ? (
           <Card style={styles.clash}>
             <Text style={styles.noticeText}>{notice}</Text>
-            <SmallButton label={t('common.done')} onPress={() => (editing ? goBack(router) : backToTree())} />
+            <SmallButton label={t('common.done')} onPress={() => (editing ? leave() : backToTree())} />
           </Card>
         ) : null}
 

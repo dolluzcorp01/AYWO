@@ -139,7 +139,7 @@ export default function EmergencyCardScreen() {
 
 const styles = StyleSheet.create({
   block: { gap: 10 },
-  good: { color: '#1F7A4D', fontFamily: fonts.bold, fontSize: 15 },
+  good: { color: colors.whatsapp, fontFamily: fonts.bold, fontSize: 15 },
   agreed: { color: colors.muted, fontFamily: fonts.medium, fontSize: 14 },
   warn: { color: colors.alert, fontFamily: fonts.bold, fontSize: 14 },
 });

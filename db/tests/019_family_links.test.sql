@@ -10,12 +10,12 @@ insert into trees (id, name, creator_id) values
   ('10000000-0000-0000-0000-0000000023a1', 'Links family', '00000000-0000-0000-0000-0000000023a1');
 insert into shares (tree_id, grantee_profile_id, role, edit_mode, scope_person_id, created_by) values
   ('10000000-0000-0000-0000-0000000023a1', '00000000-0000-0000-0000-0000000023a2', 'viewer', 'direct', null, '00000000-0000-0000-0000-0000000023a1');
--- Pavithran's case: Sathana has Veeraiyan only; Pavithran has Veeraiyan and Ezhilarasi (a couple).
+-- Arun's case: Divya has Murugan only; Arun has Murugan and Lakshmi (a couple).
 insert into persons (id, tree_id, display_name, created_by) values
-  ('20000000-0000-0000-0000-0000000023a1', '10000000-0000-0000-0000-0000000023a1', 'Pavithran', '00000000-0000-0000-0000-0000000023a1'),
-  ('20000000-0000-0000-0000-0000000023a2', '10000000-0000-0000-0000-0000000023a1', 'Veeraiyan', '00000000-0000-0000-0000-0000000023a1'),
-  ('20000000-0000-0000-0000-0000000023a3', '10000000-0000-0000-0000-0000000023a1', 'Ezhilarasi', '00000000-0000-0000-0000-0000000023a1'),
-  ('20000000-0000-0000-0000-0000000023a4', '10000000-0000-0000-0000-0000000023a1', 'Sathana', '00000000-0000-0000-0000-0000000023a1'),
+  ('20000000-0000-0000-0000-0000000023a1', '10000000-0000-0000-0000-0000000023a1', 'Arun', '00000000-0000-0000-0000-0000000023a1'),
+  ('20000000-0000-0000-0000-0000000023a2', '10000000-0000-0000-0000-0000000023a1', 'Murugan', '00000000-0000-0000-0000-0000000023a1'),
+  ('20000000-0000-0000-0000-0000000023a3', '10000000-0000-0000-0000-0000000023a1', 'Lakshmi', '00000000-0000-0000-0000-0000000023a1'),
+  ('20000000-0000-0000-0000-0000000023a4', '10000000-0000-0000-0000-0000000023a1', 'Divya', '00000000-0000-0000-0000-0000000023a1'),
   ('20000000-0000-0000-0000-0000000023a5', '10000000-0000-0000-0000-0000000023a1', 'Cousin', '00000000-0000-0000-0000-0000000023a1'),
   ('20000000-0000-0000-0000-0000000023a6', '10000000-0000-0000-0000-0000000023a1', 'Uncle', '00000000-0000-0000-0000-0000000023a1');
 insert into unions (id, tree_id, partner1_id, partner2_id, kind, status) values
@@ -41,11 +41,11 @@ grant execute on function parents_of(uuid) to authenticated;
 
 select test_login('00000000-0000-0000-0000-0000000023a1');
 
--- 1. The exact failure: Sathana (already Veeraiyan's child) added as Ezhilarasi's child with Veeraiyan.
+-- 1. The exact failure: Divya (already Murugan's child) added as Lakshmi's child with Murugan.
 select lives_ok($$ select add_relative('20000000-0000-0000-0000-0000000023a3', 'child', null,
   '20000000-0000-0000-0000-0000000023a4', '30000000-0000-0000-0000-0000000023a1') $$,
-  'adding Sathana as Ezhilarasi''s child (already Veeraiyan''s) works');
-select is(parents_of('20000000-0000-0000-0000-0000000023a4'), 'Ezhilarasi,Veeraiyan', 'Sathana now has both parents');
+  'adding Divya as Lakshmi''s child (already Murugan''s) works');
+select is(parents_of('20000000-0000-0000-0000-0000000023a4'), 'Lakshmi,Murugan', 'Divya now has both parents');
 select is((select count(distinct union_id)::int from parent_child where child_id = '20000000-0000-0000-0000-0000000023a4'), 1,
   'and sits under the couple');
 select is((select count(*)::int from parent_child where child_id = '20000000-0000-0000-0000-0000000023a4'), 2, 'no link twice');
@@ -62,7 +62,7 @@ select throws_ok($$ select add_relative('20000000-0000-0000-0000-0000000023a2', 
 -- 4. Yourself.
 select throws_ok($$ select add_relative('20000000-0000-0000-0000-0000000023a2', 'child', null, '20000000-0000-0000-0000-0000000023a2') $$,
   'PT422', 'same_person', 'a person cannot be linked to themselves');
--- 5. A loop: Veeraiyan as his own son's child.
+-- 5. A loop: Murugan as his own son's child.
 select throws_ok($$ select add_relative('20000000-0000-0000-0000-0000000023a1', 'child', null, '20000000-0000-0000-0000-0000000023a2') $$,
   'PT422', 'family_loop', 'a parent cannot become their child''s child');
 -- 6. Brother or sister: same parents already.
@@ -93,7 +93,7 @@ select throws_ok($$ select link_set_kind('20000000-0000-0000-0000-0000000023a6',
 -- 9. Remove a wrong link.
 select lives_ok($$ select link_remove('20000000-0000-0000-0000-0000000023a6', '20000000-0000-0000-0000-0000000023a4') $$,
   'a wrong parent link can be removed');
-select is(parents_of('20000000-0000-0000-0000-0000000023a4'), 'Ezhilarasi,Veeraiyan', 'Sathana keeps her real parents');
+select is(parents_of('20000000-0000-0000-0000-0000000023a4'), 'Lakshmi,Murugan', 'Divya keeps her real parents');
 select ok((select deleted_at is null from persons where id = '20000000-0000-0000-0000-0000000023a6'), 'the person stays in the tree');
 
 -- 10. Partner status and removal.
@@ -109,7 +109,7 @@ reset role;
 select test_login('00000000-0000-0000-0000-0000000023a1');
 select lives_ok($$ select union_remove('30000000-0000-0000-0000-0000000023a1') $$, 'a partner link can be removed');
 reset role;
-select is(parents_of('20000000-0000-0000-0000-0000000023a1'), 'Ezhilarasi,Veeraiyan', 'their son keeps both parents after it');
+select is(parents_of('20000000-0000-0000-0000-0000000023a1'), 'Lakshmi,Murugan', 'their son keeps both parents after it');
 
 select * from finish();
 rollback;

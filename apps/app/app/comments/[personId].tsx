@@ -9,6 +9,7 @@ import { Text } from '@/components/Text';
 import { Card, EmptyState, ErrorText, Field, Loading, LoadFailed, SmallButton, TopBar } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
 import { useTimeAgo } from '@/lib/time';
+import { shownName } from '@/tree/personName';
 import { useAddComment, useComments } from '@/tree/useEdit';
 import { useTreeView } from '@/tree/useTreeView';
 import { colors, fonts } from '@/theme/tokens';
@@ -36,7 +37,7 @@ export default function Comments() {
   return (
     <Screen>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <TopBar title={t('comments.title')} subtitle={node?.name} onBack={() => goBack(router)} />
+        <TopBar title={t('comments.title')} subtitle={node ? shownName(t, node.name, node.nameUnknown) : undefined} onBack={() => goBack(router)} />
         {comments.isError ? (
           <LoadFailed message={errorText(comments.error)} onRetry={() => comments.refetch()} />
         ) : !comments.data ? (

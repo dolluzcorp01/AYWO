@@ -6,7 +6,9 @@
       "button": "Update now",
       "mayTitle": "A new version is ready",
       "mayText": "Update for the latest fixes and features.",
-      "later": "Later"
+      "later": "Later",
+      "howIos": "To update: open the App Store, search for AYWO, and tap Update.",
+      "howAndroid": "To update: open the Play Store, search for AYWO, and tap Update."
     },
     "maintenance": {
       "title": "Back very soon",
@@ -19,7 +21,11 @@
     "crash": {
       "title": "Something went wrong",
       "text": "This screen stopped working. We've been told and will fix it. Your family's data is safe.",
-      "again": "Go to Home"
+      "again": "Go to Home",
+      "stuck": "Still not working? Go to Home, or start AYWO again with the second button.",
+      "reload": "Reload this page",
+      "restart": "Restart AYWO",
+      "restartFailed": "AYWO could not restart itself. Please close the app fully and open it again."
     },
     "sos": {
       "label": "SOS. Hold for 2 seconds to alert your family.",
@@ -139,7 +145,14 @@
       },
       "tracking": "{{carrier}} {{number}}",
       "track": "Track parcel",
-      "help": "Need help with an order?"
+      "help": "Need help with an order?",
+      "paidTitle": "Payment received",
+      "paidDone": "Thank you. Your order is below, and you will get a notification at each step.",
+      "paidWaiting": "Your payment is being confirmed. This usually takes a few seconds, and this page refreshes by itself.",
+      "paidSlow": "This is taking longer than usual. If you paid, your order will show here as soon as the payment service tells us. If you did not finish paying, nothing was charged and no order was made.",
+      "checkAgain": "Check again now",
+      "checking": "Checking…",
+      "trackFailed": "The tracking page could not open. Use the tracking number above on the courier's website."
     },
     "shop": {
       "title": "Order a poster or book",
@@ -172,7 +185,17 @@
       "cancelled": "Payment wasn't finished. Nothing was charged.",
       "secure": "Payment happens on Razorpay's or Stripe's own secure page. AYWO never sees your card or UPI details.",
       "thanksTitle": "Thank you",
-      "thanks": "Your payment is being confirmed. You'll get a notification at each step, and can follow it in My orders."
+      "thanks": "Your payment is being confirmed. You'll get a notification at each step, and can follow it in My orders.",
+      "couponPlaceholder": "Type your code",
+      "needTree": "Start a family tree first: the poster and book are printed from it.",
+      "needAddress": "Fill in the name, house and street, city and state to continue.",
+      "needPin": "The PIN code needs 6 digits.",
+      "needPhone": "Check the phone number for the courier.",
+      "paying": "Please wait…",
+      "payAgain": "Try paying again",
+      "notPaidTitle": "The payment was not completed",
+      "notPaid": "We have not received a payment for this order. If you closed the payment page without paying, nothing was charged and you can try again below. If you did pay, do not pay again: your order will show in My orders within a few minutes.",
+      "seeOrders": "See My orders"
     },
     "refer": {
       "title": "Invite and earn",

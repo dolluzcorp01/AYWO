@@ -2,7 +2,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Modal, Pressable, ScrollView, Share as NativeShare, StyleSheet, View } from 'react-native';
 import { relationText } from '@aywo/layout';
@@ -14,9 +14,11 @@ import { ChevronIcon } from '@/components/Icons';
 import { PhoneField } from '@/components/PhoneField';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { showToast } from '@/components/Toast';
 import { Card, ConfirmDialog, ErrorText, Loading, LoadFailed, Muted, NeonPanel, SectionTitle, SmallButton, Switch, TextButton, TopBar } from '@/components/ui';
 import { normalizeContact } from '@/lib/contacts';
 import { useErrorText } from '@/lib/errors';
+import { shownName } from '@/tree/personName';
 import { canShare } from '@/tree/roles';
 import { useCreateShare, useRevokeShare, useShares } from '@/tree/useEdit';
 import type { EditMode, ShareInput, ShareRole, ShareRow } from '@/tree/useEdit';
@@ -59,8 +61,14 @@ export default function ShareScreen() {
   const [phone, setPhone] = useState('');
   const [badPhone, setBadPhone] = useState(false);
   const [revoking, setRevoking] = useState<ShareRow | null>(null);
-  // One set of choices makes one link, however many times it is sent.
-  const [made, setMade] = useState<{ key: string; url: string } | null>(null);
+  // One set of choices makes one link, however many times it is sent. Kept where every send reads the latest:
+  // a send that falls back to another way must reuse the link it has just made, not make a second one.
+  const made = useRef<{ key: string; url: string } | null>(null);
+
+  // "Link copied" is only true for the link that was copied. Any change to the choices means a new link.
+  useEffect(() => {
+    setCopied(false);
+  }, [role, editMode, contactsVisible, branch, endIndex, phone]);
 
   if (tree.isError) {
     return (
@@ -73,6 +81,7 @@ export default function ShareScreen() {
   if (!tree.data) {
     return (
       <Screen>
+        <TopBar title={t('share.action')} onBack={() => goBack(router)} close />
         <Loading label={t('tree.loading')} />
       </Screen>
     );
@@ -80,7 +89,7 @@ export default function ShareScreen() {
 
   const data = tree.data;
   const person = personId ? data.nodes.find((n) => n.id === personId) : undefined;
-  const personName = person ? (person.nameUnknown ? t('tree.nameNotKnown') : person.name) : '';
+  const personName = person ? shownName(t, person.name, person.nameUnknown) : '';
 
   // A link alone only ever opens the names-and-photos view. Rights reach a person through their number,
   // or through the card they claim.
@@ -112,13 +121,13 @@ export default function ShareScreen() {
     if (!input) throw new Error('bad_phone');
     // The end date moves with the clock, so it is not part of what makes two links the same.
     const key = JSON.stringify({ ...input, expires_at: undefined, endIndex });
-    if (made?.key === key) return made.url;
+    if (made.current?.key === key) return made.current.url;
     const share = await create.mutateAsync(input);
-    setMade({ key, url: share.link_url });
+    made.current = { key, url: share.link_url };
     return share.link_url;
   }
 
-  // Personal when we can: "Pavithran added you to ... as their sister". A word the tree is still unsure of
+  // Personal when we can: "Arun added you to ... as their sister". A word the tree is still unsure of
   // ("Anna or Thambi?") is left out rather than guessed.
   const sharer = me.data?.display_name?.trim() || null;
   const said = person ? relationText(data.labels[person.id]) : null;
@@ -131,33 +140,55 @@ export default function ShareScreen() {
         ? t('share.messageFrom', { sharer, tree: data.tree.name, url })
         : t('share.message', { tree: data.tree.name, url });
 
-  async function sendWhatsApp() {
+  /** The link for the choices on screen, or null when it could not be made (the reason is already on screen). */
+  async function linkOrNull(): Promise<string | null> {
     try {
-      const url = await linkUrl();
+      return await linkUrl();
+    } catch {
+      // A failed create shows through create.error, a bad number under its box.
+      return null;
+    }
+  }
+
+  async function copyUrl(url: string) {
+    try {
+      await Clipboard.setStringAsync(url);
+      setCopied(true);
+      showToast('success', t('share.copied'));
+    } catch {
+      showToast('error', t('share.copyFailed'));
+    }
+  }
+
+  async function sendWhatsApp() {
+    const url = await linkOrNull();
+    if (!url) return;
+    try {
       await Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message(url))}`);
     } catch {
-      // A failed create shows through create.error, a bad number under its box. WhatsApp missing falls back to the phone's own share sheet.
-      if (made || create.isSuccess) await shareOther();
+      // WhatsApp is not on this phone: the phone's own share sheet, with the link already made.
+      await shareWith(url);
+    }
+  }
+
+  async function shareWith(url: string) {
+    try {
+      await NativeShare.share({ message: message(url) });
+    } catch (error) {
+      // Closing the sheet is a choice, not a problem. A browser with no share sheet gets the link copied instead,
+      // so the button never does nothing.
+      if ((error as { name?: string } | null)?.name !== 'AbortError') await copyUrl(url);
     }
   }
 
   async function shareOther() {
-    try {
-      const url = await linkUrl();
-      await NativeShare.share({ message: message(url) });
-    } catch {
-      // Closing the sheet, or a browser with no share sheet. The Copy link button is right there.
-    }
+    const url = await linkOrNull();
+    if (url) await shareWith(url);
   }
 
   async function copyLink() {
-    try {
-      const url = await linkUrl();
-      await Clipboard.setStringAsync(url);
-      setCopied(true);
-    } catch {
-      // create.error shows the reason.
-    }
+    const url = await linkOrNull();
+    if (url) await copyUrl(url);
   }
 
   const liveShares = (existing.data ?? []).filter((s) => !s.expired);
@@ -279,7 +310,7 @@ export default function ShareScreen() {
             {liveShares.map((s) => (
               <View key={s.id} style={styles.accessRow}>
                 <View style={styles.whoText}>
-                  <Text style={styles.rowTitle}>{s.grantee_name || s.grantee_person_name || s.waiting_phone || t('share.anyoneWithLink')}</Text>
+                  <Text style={styles.rowTitle}>{s.grantee_name || (s.grantee_person_name ? shownName(t, s.grantee_person_name) : '') || s.waiting_phone || t('share.anyoneWithLink')}</Text>
                   <Text style={styles.rowValueLeft}>{t(ROLES.find((r) => r.value === s.role)?.nameKey ?? 'share.view')}</Text>
                 </View>
                 <SmallButton label={t('share.revoke')} kind="plain" onPress={() => setRevoking(s)} />
@@ -349,7 +380,7 @@ const styles = StyleSheet.create({
   roleOnHelp: { color: colors.onNeon },
   modes: { flexDirection: 'row', gap: 4, backgroundColor: colors.tint, borderRadius: 16, padding: 4 },
   modeWrap: { flex: 1 },
-  mode: { minHeight: minTapSize - 4, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  mode: { minHeight: minTapSize, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   modeText: { color: colors.muted, fontFamily: fonts.bold, fontSize: 13 },
   modeTextOn: { color: colors.white, fontFamily: fonts.extrabold },
   row: {

@@ -1,5 +1,8 @@
 // S-15 AYWO Plus (wireframe F3). Apps: Google Play and Apple billing. Web: Razorpay in India, Stripe overseas.
 // Plus appears only when GET /plan says so, after the provider's signed webhook.
+// A purchase waiting for that webhook is remembered on the device (pay/pending.ts), so leaving and coming back
+// cannot lead to paying twice. Free Plus days (referrals, support) show as Plus with their end date, and nothing
+// is sold while they run: the server would refuse it on the web, and a store purchase would go through for nothing.
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -12,8 +15,9 @@ import Svg, { Path } from 'react-native-svg';
 import { Text } from '@/components/Text';
 import { PrimaryButton } from '@/components/ui';
 import { api } from '@/lib/api';
+import { clearPending, readPending, rememberPending } from '@/pay/pending';
 import { buyStorePlan, loadStorePackages, restoreStorePurchases, storeAvailable } from '@/pay/store';
-import { PLAN_KEY, PRODUCT_OF, payErrorText, usePlan } from '@/pay/usePlan';
+import { hasPlusNow, onBonusOnly, PLAN_KEY, PRODUCT_OF, payErrorText, usePlan } from '@/pay/usePlan';
 import type { PlanPeriod, WebMethod } from '@/pay/usePlan';
 import { applePayPossible, goToHostedPage, openRazorpay } from '@/pay/webCheckout';
 import { colors, fonts, gradients, minTapSize } from '@/theme/tokens';
@@ -28,14 +32,20 @@ const BENEFITS = [
 ];
 
 export default function Plus() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
-  const params = useLocalSearchParams<{ checkout?: string }>();
+  const params = useLocalSearchParams<{ checkout?: string; order?: string }>();
+  // Old links: a paid shop order used to come back here. It belongs in My orders, not in front of a Plus offer.
+  const shopReturn = params.order === 'success';
+  const paidReturn = params.checkout === 'success';
 
   // Stripe sends people back here with checkout=success.
-  const [waiting, setWaiting] = useState(params.checkout === 'success');
+  const [waiting, setWaiting] = useState(paidReturn);
+  // When the purchase being confirmed was made, and whether the device has been asked about one yet.
+  const [since, setSince] = useState<number | null>(null);
+  const [pendingChecked, setPendingChecked] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [period, setPeriod] = useState<PlanPeriod>('yearly');
   const [chosenMethod, setChosenMethod] = useState<WebMethod | null>(null);
@@ -52,16 +62,44 @@ export default function Plus() {
     enabled: storeAvailable && !!data,
   });
 
+  useEffect(() => {
+    if (shopReturn) router.replace({ pathname: '/orders', params: { paid: '1' } });
+  }, [shopReturn, router]);
+
+  const profileId = data?.profile_id;
   const nowPlus = !!data?.plus;
+  // A purchase made earlier and not confirmed yet: carry on waiting for it instead of offering to sell again.
+  useEffect(() => {
+    if (!profileId) return;
+    let live = true;
+    void (async () => {
+      if (nowPlus) {
+        await clearPending();
+      } else {
+        const saved = await readPending(profileId);
+        const at = saved ?? (paidReturn ? await rememberPending(profileId).catch(() => Date.now()) : null);
+        if (live && at !== null) {
+          setSince(at);
+          setWaiting(true);
+        }
+      }
+      if (live) setPendingChecked(true);
+    })();
+    return () => {
+      live = false;
+    };
+  }, [profileId, nowPlus, paidReturn]);
+
   useEffect(() => {
     if (waiting && nowPlus) router.replace('/family-plan');
   }, [waiting, nowPlus, router]);
 
   useEffect(() => {
     if (!waiting) return;
-    const timer = setTimeout(() => setTimedOut(true), CONFIRM_TIMEOUT_MS);
+    const left = Math.max(0, CONFIRM_TIMEOUT_MS - (Date.now() - (since ?? Date.now())));
+    const timer = setTimeout(() => setTimedOut(true), left);
     return () => clearTimeout(timer);
-  }, [waiting]);
+  }, [waiting, since]);
 
   function close() {
     if (router.canGoBack()) router.back();
@@ -78,7 +116,7 @@ export default function Plus() {
       </View>
     );
   }
-  if (!data) {
+  if (!data || !pendingChecked || shopReturn) {
     return (
       <View style={styles.centre}>
         <PageLoader label={t('pay.loading')} />
@@ -154,9 +192,16 @@ export default function Plus() {
 
   function startWaiting() {
     setTimedOut(false);
+    setSince(Date.now());
     setWaiting(true);
+    if (data) void rememberPending(data.profile_id).catch(() => undefined);
     queryClient.invalidateQueries({ queryKey: PLAN_KEY });
   }
+
+  const bonus = onBonusOnly(data);
+  const bonusDate = data.bonus_until
+    ? new Date(data.bonus_until).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })
+    : '';
 
   return (
     <View style={styles.page}>
@@ -191,11 +236,29 @@ export default function Plus() {
               <Text style={styles.sectionTitle}>{t('pay.alreadyPlus')}</Text>
               <PrimaryButton label={t('pay.seeFamilyPlan')} onPress={() => router.replace('/family-plan')} />
             </>
+          ) : bonus ? (
+            <>
+              <Text style={styles.sectionTitle}>{t('pay.bonus.title', { date: bonusDate })}</Text>
+              <Text style={styles.freeNote}>{t('pay.bonus.why')}</Text>
+              <Text style={styles.freeNote}>{t('pay.bonus.noBuy', { date: bonusDate })}</Text>
+              <PrimaryButton label={t('pay.close')} onPress={close} />
+            </>
           ) : waiting ? (
             <View style={styles.waiting} accessibilityLiveRegion="polite">
               {timedOut ? null : <Spinner />}
               <Text style={styles.sectionTitle}>{timedOut ? t('pay.confirmSlowTitle') : t('pay.confirming')}</Text>
-              {timedOut ? <Text style={styles.freeNote}>{t('pay.confirmSlow')}</Text> : null}
+              {timedOut ? (
+                <>
+                  <Text style={styles.freeNote}>{t('pay.confirmSlow')}</Text>
+                  <Text style={styles.freeNote}>{t('pay.pendingWhy')}</Text>
+                  <Pressable accessibilityRole="button" onPress={() => plan.refetch()} style={styles.textButton}>
+                    <Text style={styles.link}>{plan.isFetching ? t('pay.pleaseWait') : t('pay.checkAgain')}</Text>
+                  </Pressable>
+                  <Pressable accessibilityRole="link" onPress={() => router.push('/help')} style={styles.textButton}>
+                    <Text style={styles.link}>{t('pay.pendingHelp')}</Text>
+                  </Pressable>
+                </>
+              ) : null}
             </View>
           ) : (
             <>
@@ -224,7 +287,7 @@ export default function Plus() {
                     <Pressable
                       key={m}
                       accessibilityRole="radio"
-                      accessibilityState={{ selected: method === m }}
+                      accessibilityState={{ checked: method === m }}
                       onPress={() => setChosenMethod(m)}
                       style={[styles.methodChip, method === m && styles.methodChipOn]}
                     >
@@ -244,7 +307,7 @@ export default function Plus() {
             </>
           )}
 
-          {!isWeb && !data.plus ? (
+          {!isWeb && !hasPlusNow(data) && !waiting ? (
             <Pressable accessibilityRole="button" onPress={restore} disabled={busy} style={styles.textButton}>
               <Text style={styles.link}>{t('pay.restore')}</Text>
             </Pressable>
@@ -278,7 +341,7 @@ function PlanOption(props: {
   return (
     <Pressable
       accessibilityRole="radio"
-      accessibilityState={{ selected: props.selected }}
+      accessibilityState={{ checked: props.selected }}
       onPress={props.onPress}
       style={[styles.plan, props.selected && styles.planOn]}
     >

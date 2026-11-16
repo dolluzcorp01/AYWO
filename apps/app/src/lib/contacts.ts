@@ -8,28 +8,7 @@ export function normalizeContact(kind: 'mobile' | 'whatsapp' | 'email', value: s
   return toE164(text);
 }
 
-/** 'Born (year is fine)': 1968, 1968-03-21 or 21/03/1968. Null means the text could not be read as a date. */
-export function parseDateText(text: string): { date: string; precision: 'year' | 'exact' } | null {
-  const value = text.trim();
-  if (/^\d{4}$/.test(value)) return { date: `${value}-01-01`, precision: 'year' };
-  let match = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-  let parts: [string, string, string] | null = match ? [match[1], match[2], match[3]] : null;
-  if (!parts) {
-    match = value.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
-    if (match) parts = [match[3], match[2], match[1]];
-  }
-  if (!parts) return null;
-  const [year, month, day] = parts;
-  const m = Number(month);
-  const d = Number(day);
-  const check = new Date(Date.UTC(Number(year), m - 1, d));
-  if (check.getUTCMonth() !== m - 1 || check.getUTCDate() !== d) return null;
-  return { date: `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`, precision: 'exact' };
-}
-
-/** Back to what the box shows when editing. */
-export function dateToText(date: string | null | undefined, precision: string | null | undefined): string {
-  if (!date) return '';
-  const iso = date.slice(0, 10);
-  return precision === 'year' || precision === 'about' ? iso.slice(0, 4) : iso;
-}
+// The date boxes ('Born', 'Died'): year, month and year, or a full date, keeping how exact the stored date is.
+// The code is in @/tree/dateText, which imports nothing, so its tests run without a device.
+export { dateFromBox, dateToText, parseDateText } from '@/tree/dateText';
+export type { StoredDate, TypedPrecision } from '@/tree/dateText';

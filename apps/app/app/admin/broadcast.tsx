@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TextInput, View } from 'react-native';
-import { Actions, AdminPage, adminStyles, FormDialog, Message, SecondaryButton } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, FormDialog, Message, Missing, SecondaryButton } from '@/admin/ui';
 import { api } from '@/lib/api';
 
 const MIN_TITLE = 3;
@@ -29,10 +29,16 @@ export default function AdminBroadcast() {
         <Text style={adminStyles.fieldLabel}>{t('admin.broadcast.body')}</Text>
         <TextInput value={body} onChangeText={setBody} maxLength={MAX_BODY} multiline numberOfLines={5} accessibilityLabel={t('admin.broadcast.body')} style={adminStyles.input} />
       </View>
-      {sent !== null ? <Message text={t('admin.broadcast.sent', { count: sent })} /> : null}
+      {sent !== null ? <Message text={t('admin.broadcast.sent', { count: sent })} good /> : null}
       <Actions>
         <SecondaryButton label={t('admin.broadcast.send')} disabled={!ready} onPress={() => setAsking(true)} />
       </Actions>
+      <Missing
+        reasons={[
+          title.trim().length < MIN_TITLE && t('admin.common.needsText', { field: t('admin.broadcast.heading'), count: MIN_TITLE }),
+          body.trim().length < MIN_BODY && t('admin.common.needsText', { field: t('admin.broadcast.body'), count: MIN_BODY }),
+        ]}
+      />
       {asking ? (
         <FormDialog
           title={t('admin.broadcast.confirmTitle')}
@@ -42,8 +48,8 @@ export default function AdminBroadcast() {
           danger
           onCancel={() => setAsking(false)}
           onConfirm={async ({ reason }) => {
-            const answer = await api.post<{ recipients: number }>('/admin/broadcast', { title: title.trim(), body: body.trim(), reason });
-            setSent(answer.recipients);
+            const answer = await api.post<{ recipients?: number } | null>('/admin/broadcast', { title: title.trim(), body: body.trim(), reason });
+            setSent(answer?.recipients ?? 0);
             setTitle('');
             setBody('');
             setAsking(false);

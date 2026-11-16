@@ -1,32 +1,31 @@
 // AYWO Admin only: the team. Team roles are named sets of permissions ("Support", "Moderator"); give someone a role
 // and they get exactly its permissions, and changing the role changes everyone in it. People can be added before their
 // first sign-in: the invite waits for their number. Every staff member uses an authenticator app as a second step.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { PhoneField } from '@/components/PhoneField';
 import { toE164 } from '@/lib/phone';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { GRANTABLE } from '@/admin/types';
-import type { Grantable, StaffPage, StaffRole, StaffRow, TeamRole } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Field, FilterChips, FormDialog, formatDate, Message, Pager, Panel, Pill, QueryState, SecondaryButton, useAction, usePagedList } from '@/admin/ui';
+import type { Grantable, StaffInvite, StaffPage, StaffRole, StaffRow, TeamRole } from '@/admin/types';
+import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Field, FilterChips, FormDialog, formatDate, Message, Missing, Pager, Panel, Pill, QueryState, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
 
 export default function AdminStaff() {
   const { t, i18n } = useTranslation();
-  const client = useQueryClient();
+  const refreshAfter = useRefreshAfter();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<StaffRow | null>(null);
   const [removing, setRemoving] = useState<StaffRow | null>(null);
   const [resetting, setResetting] = useState<StaffRow | null>(null);
   const [role, setRole] = useState<TeamRole | 'new' | null>(null);
+  const [cancelling, setCancelling] = useState<StaffInvite | null>(null);
   const { query, page, setPage } = usePagedList<StaffRow>(['admin', 'staff'], '/admin/staff');
   const roles = useQuery({ queryKey: ['admin', 'roles'], queryFn: () => api.get<TeamRole[]>('/admin/roles') });
-  const refresh = async () => {
-    await client.invalidateQueries({ queryKey: ['admin', 'staff'] });
-    await client.invalidateQueries({ queryKey: ['admin', 'roles'] });
-  };
+  // Staff changes also move the dashboard's staff counts and the role pills on the Users page.
+  const refresh = () => refreshAfter('staff', 'roles', 'users');
   const invites = (query.data as StaffPage | undefined)?.invites ?? [];
 
   const columns: Column<StaffRow>[] = [
@@ -122,13 +121,7 @@ export default function AdminStaff() {
                 {inv.phone_masked} · {inv.team_role ?? t(`admin.roles.${inv.role}`)} ·{' '}
                 {inv.expired ? t('admin.staff.inviteExpired') : t('admin.staff.inviteUntil', { when: formatDate(inv.expires_at, i18n.language) })}
               </Text>
-              <SecondaryButton
-                label={t('admin.staff.cancelInvite')}
-                onPress={async () => {
-                  await api.del(`/admin/staff-invites/${inv.phone_key}`);
-                  await refresh();
-                }}
-              />
+              <SecondaryButton label={t('admin.staff.cancelInvite')} danger onPress={() => setCancelling(inv)} />
             </View>
           ))}
         </Panel>
@@ -144,6 +137,21 @@ export default function AdminStaff() {
       {adding ? <StaffDialog roles={roles.data ?? []} onDone={refresh} onClose={() => setAdding(false)} /> : null}
       {editing ? <StaffDialog row={editing} roles={roles.data ?? []} onDone={refresh} onClose={() => setEditing(null)} /> : null}
       {role ? <RoleDialog role={role === 'new' ? null : role} onDone={refresh} onClose={() => setRole(null)} /> : null}
+      {cancelling ? (
+        <FormDialog
+          title={t('admin.staff.cancelInviteTitle', { phone: cancelling.phone_masked })}
+          text={t('admin.staff.cancelInviteText')}
+          confirmLabel={t('admin.staff.cancelInvite')}
+          cancelLabel={t('admin.staff.keepInvite')}
+          danger
+          onCancel={() => setCancelling(null)}
+          onConfirm={async () => {
+            await api.del(`/admin/staff-invites/${cancelling.phone_key}`);
+            await refresh();
+            setCancelling(null);
+          }}
+        />
+      ) : null}
       {removing ? (
         <FormDialog
           title={t('admin.staff.removeTitle', { name: removing.display_name || t('admin.users.noName') })}
@@ -185,11 +193,19 @@ function StaffDialog({ row, roles, onDone, onClose }: { row?: StaffRow; roles: T
   const [team, setTeam] = useState<string>(row?.team_role_id ?? (row ? 'custom' : roles[0]?.id ?? 'custom'));
   const [granted, setGranted] = useState<Grantable[]>(row?.permissions ?? []);
   const [invited, setInvited] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const action = useAction();
 
   const e164 = toE164(phone);
   const phoneOk = !!row || !!e164;
-  const ready = phoneOk && (role === 'aywo_admin' || team !== 'custom' || granted.length > 0);
+  const missing = [
+    !phoneOk && t('admin.staff.needPhone'),
+    role === 'sub_admin' && team === 'custom' && granted.length === 0 && t('admin.staff.needPermission'),
+  ];
+  const ready = !missing.some(Boolean);
+  // Making someone an AYWO Admin hands over everything, so it is never one chip and Save.
+  const promoting = role === 'aywo_admin' && row?.role !== 'aywo_admin';
+  const who = row ? row.display_name || t('admin.users.noName') : phone.trim();
 
   async function save() {
     const body = {
@@ -208,6 +224,19 @@ function StaffDialog({ row, roles, onDone, onClose }: { row?: StaffRow; roles: T
     });
     if (ok && waitsForSignIn) setInvited(true);
     else if (ok) onClose();
+  }
+
+  if (confirming && !invited) {
+    return (
+      <DialogFrame title={t('admin.staff.promoteTitle', { name: who })} text={t('admin.staff.promoteText', { name: who })}>
+        <Message text={t('admin.staff.promoteWarn')} alert />
+        {action.failure ? <Message text={action.failure} alert /> : null}
+        <Actions>
+          <SecondaryButton label={t('admin.staff.promoteBack')} onPress={() => setConfirming(false)} disabled={action.busy} />
+          <SecondaryButton label={t('admin.staff.promoteConfirm')} danger onPress={save} disabled={action.busy} />
+        </Actions>
+      </DialogFrame>
+    );
   }
 
   if (invited) {
@@ -254,9 +283,10 @@ function StaffDialog({ row, roles, onDone, onClose }: { row?: StaffRow; roles: T
         <Text style={adminStyles.cellMuted}>{t('admin.staff.adminHelp')}</Text>
       )}
       {action.failure ? <Message text={action.failure} alert /> : null}
+      <Missing reasons={missing} />
       <Actions>
         <SecondaryButton label={t('admin.common.cancel')} onPress={onClose} disabled={action.busy} />
-        <SecondaryButton label={t('admin.common.save')} onPress={save} disabled={action.busy || !ready} />
+        <SecondaryButton label={t('admin.common.save')} onPress={promoting ? () => setConfirming(true) : save} disabled={action.busy || !ready} />
       </Actions>
     </DialogFrame>
   );
@@ -267,7 +297,17 @@ function RoleDialog({ role, onDone, onClose }: { role: TeamRole | null; onDone: 
   const [name, setName] = useState(role?.name ?? '');
   const [description, setDescription] = useState(role?.description ?? '');
   const [granted, setGranted] = useState<Grantable[]>(role?.permissions ?? []);
+  const [confirming, setConfirming] = useState<'save' | 'delete' | null>(null);
   const action = useAction();
+  const members = role?.members ?? 0;
+  const before = role?.permissions ?? [];
+  const added = granted.filter((p) => !before.includes(p));
+  const removed = before.filter((p) => !granted.includes(p));
+  // Only a change of permissions reaches the people in the role. A new name or description is an ordinary save.
+  const reGrants = members > 0 && (added.length > 0 || removed.length > 0);
+  const names = (list: Grantable[]) => list.map((p) => t(`admin.permissions.${p}`)).join(', ');
+  const missing = [name.trim().length < 2 && t('admin.staff.needRoleName'), granted.length === 0 && t('admin.staff.needRolePermission')];
+  const ready = !missing.some(Boolean);
 
   async function save() {
     const body = { name: name.trim(), description: description.trim() || undefined, permissions: granted };
@@ -286,6 +326,31 @@ function RoleDialog({ role, onDone, onClose }: { role: TeamRole | null; onDone: 
     }
   }
 
+  if (confirming === 'delete' && role) {
+    return (
+      <DialogFrame title={t('admin.staff.deleteRoleTitle', { name: role.name })} text={t('admin.staff.deleteRoleText')}>
+        {action.failure ? <Message text={action.failure} alert /> : null}
+        <Actions>
+          <SecondaryButton label={t('admin.offers.backToEdit')} onPress={() => setConfirming(null)} disabled={action.busy} />
+          <SecondaryButton label={t('admin.staff.deleteRole')} danger onPress={remove} disabled={action.busy} />
+        </Actions>
+      </DialogFrame>
+    );
+  }
+  if (confirming === 'save' && role) {
+    return (
+      <DialogFrame title={t('admin.staff.roleConfirmTitle', { name: role.name })} text={t('admin.staff.roleChangesAll', { count: members })}>
+        {added.length ? <Message text={t('admin.staff.roleGains', { list: names(added) })} alert /> : null}
+        {removed.length ? <Message text={t('admin.staff.roleLoses', { list: names(removed) })} alert /> : null}
+        {action.failure ? <Message text={action.failure} alert /> : null}
+        <Actions>
+          <SecondaryButton label={t('admin.offers.backToEdit')} onPress={() => setConfirming(null)} disabled={action.busy} />
+          <SecondaryButton label={t('admin.offers.confirmSave')} danger onPress={save} disabled={action.busy} />
+        </Actions>
+      </DialogFrame>
+    );
+  }
+
   return (
     <DialogFrame title={role ? t('admin.staff.editRole', { name: role.name }) : t('admin.staff.newRole')} text={role?.members ? t('admin.staff.roleChangesAll', { count: role.members }) : undefined}>
       <Field label={t('admin.staff.roleName')} value={name} onChange={setName} maxLength={40} />
@@ -299,10 +364,12 @@ function RoleDialog({ role, onDone, onClose }: { role: TeamRole | null; onDone: 
         />
       ))}
       {action.failure ? <Message text={action.failure} alert /> : null}
+      {role && members > 0 ? <Text style={adminStyles.cellMuted}>{t('admin.staff.deleteRoleBlocked')}</Text> : null}
+      <Missing reasons={missing} />
       <Actions>
-        {role && role.members === 0 ? <SecondaryButton label={t('admin.staff.deleteRole')} danger onPress={remove} disabled={action.busy} /> : null}
+        {role && members === 0 ? <SecondaryButton label={t('admin.staff.deleteRole')} danger onPress={() => setConfirming('delete')} disabled={action.busy} /> : null}
         <SecondaryButton label={t('admin.common.cancel')} onPress={onClose} disabled={action.busy} />
-        <SecondaryButton label={t('admin.common.save')} onPress={save} disabled={action.busy || name.trim().length < 2 || granted.length === 0} />
+        <SecondaryButton label={t('admin.common.save')} onPress={reGrants ? () => setConfirming('save') : save} disabled={action.busy || !ready} />
       </Actions>
     </DialogFrame>
   );

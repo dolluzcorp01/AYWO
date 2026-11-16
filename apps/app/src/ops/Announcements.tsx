@@ -25,8 +25,8 @@ export interface Banner {
 const TONES: Record<Banner['style'], { bg: string; fg: string }> = {
   offer: { bg: colors.logoIndigo, fg: colors.white },
   info: { bg: colors.tint, fg: colors.text },
-  celebration: { bg: '#FFF1E6', fg: colors.text },
-  warning: { bg: '#FDECEC', fg: colors.alert },
+  celebration: { bg: colors.celebrationTint, fg: colors.text },
+  warning: { bg: colors.alertTint, fg: colors.alert },
 };
 const SPEED = 40; // points a second: slow enough to read.
 

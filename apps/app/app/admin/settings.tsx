@@ -1,13 +1,14 @@
 // App settings that change the live apps without a new release: forced update, maintenance, feature switches,
 // what's new. Below them, crash reports from the apps.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';
 import type { AdminConfig, AppHealth, ConfigKey } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, Checkbox, DataTable, Field, FilterChips, formatDate, FormDialog, Message, Panel, Pill, QueryState, SecondaryButton } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, Checkbox, DataTable, Field, FilterChips, formatDate, FormDialog, Message, Panel, Pill, QueryState, SecondaryButton, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
+import type { ReactNode } from 'react';
 import { api } from '@/lib/api';
 
 export default function AdminSettings() {
@@ -31,23 +32,49 @@ export default function AdminSettings() {
   );
 }
 
+type Value = Record<string, unknown>;
+const VERSION = /^\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+
 function Controls() {
   const { t, i18n } = useTranslation();
-  const client = useQueryClient();
+  const refreshAfter = useRefreshAfter();
   const query = useQuery({ queryKey: ['admin', 'config'], queryFn: () => api.get<AdminConfig>('/admin/config') });
-  const [pending, setPending] = useState<{ key: ConfigKey; value: Record<string, unknown> } | null>(null);
+  const [pending, setPending] = useState<{ key: ConfigKey; value: Value } | null>(null);
+  const [saved, setSaved] = useState<ConfigKey | null>(null);
 
   return (
     <QueryState query={query}>
       {(config) => {
-        const updated = (key: ConfigKey) =>
-          t('admin.settings.updated', { when: formatDate(config[key].updated_at, i18n.language), name: config[key].updated_by_name ?? t('admin.settings.setup') });
+        // A setting whose row is missing on the server cannot be saved from here; say so instead of breaking the page.
+        const updated = (key: ConfigKey) => {
+          const row = config[key];
+          if (!row) return t('admin.settings.missingRow');
+          return t('admin.settings.updated', { when: formatDate(row.updated_at, i18n.language), name: row.updated_by_name ?? t('admin.settings.setup') });
+        };
+        const footer = (key: ConfigKey) => (
+          <>
+            <Text style={config[key] ? adminStyles.cellMuted : adminStyles.alertCell}>{updated(key)}</Text>
+            {saved === key ? <Message text={t('admin.settings.saved')} good /> : null}
+          </>
+        );
+        const ask = (key: ConfigKey) => (value: Value) => {
+          setSaved(null);
+          setPending({ key, value });
+        };
         return (
           <>
-            <VersionPanel config={config} onSave={(key, value) => setPending({ key, value })} updated={updated} />
-            <MaintenancePanel value={config.maintenance.value} onSave={(value) => setPending({ key: 'maintenance', value })} updated={updated('maintenance')} />
-            <FeaturesPanel value={config.features.value as Record<string, boolean>} onSave={(value) => setPending({ key: 'features', value })} updated={updated('features')} />
-            <WhatsNewPanel value={config.whats_new.value} onSave={(value) => setPending({ key: 'whats_new', value })} updated={updated('whats_new')} />
+            <VersionPanel
+              min={config.min_version?.value}
+              latest={config.latest_version?.value}
+              onSaveMin={config.min_version ? ask('min_version') : null}
+              onSaveLatest={config.latest_version ? ask('latest_version') : null}
+              minFooter={footer('min_version')}
+              latestFooter={footer('latest_version')}
+            />
+            <MaintenancePanel value={config.maintenance?.value ?? {}} onSave={config.maintenance ? ask('maintenance') : null} footer={footer('maintenance')} />
+            <FeaturesPanel value={(config.features?.value ?? {}) as Record<string, boolean>} onSave={config.features ? ask('features') : null} footer={footer('features')} />
+            <WhatsNewPanel value={config.whats_new?.value ?? {}} onSave={config.whats_new ? ask('whats_new') : null} footer={footer('whats_new')} />
+            <SupportPanel value={config.support?.value ?? {}} onSave={config.support ? ask('support') : null} footer={footer('support')} />
             {pending ? (
               <FormDialog
                 title={t('admin.settings.confirmTitle')}
@@ -58,8 +85,9 @@ function Controls() {
                 onCancel={() => setPending(null)}
                 onConfirm={async ({ reason }) => {
                   await api.patch(`/admin/config/${pending.key}`, { value: pending.value, reason });
-                  await client.invalidateQueries({ queryKey: ['admin', 'config'] });
+                  setSaved(pending.key);
                   setPending(null);
+                  await refreshAfter('config');
                 }}
               />
             ) : null}
@@ -70,39 +98,40 @@ function Controls() {
   );
 }
 
-function VersionPanel({ config, onSave, updated }: { config: AdminConfig; onSave: (key: ConfigKey, value: Record<string, unknown>) => void; updated: (key: ConfigKey) => string }) {
+type Save = ((value: Value) => void) | null;
+const text = (value: unknown) => (typeof value === 'string' ? value : '');
+
+function VersionPanel({ min, latest, onSaveMin, onSaveLatest, minFooter, latestFooter }: { min?: Value; latest?: Value; onSaveMin: Save; onSaveLatest: Save; minFooter: ReactNode; latestFooter: ReactNode }) {
   const { t } = useTranslation();
-  const min = config.min_version.value as { ios: string; android: string };
-  const latest = config.latest_version.value as { ios: string; android: string };
-  const [minIos, setMinIos] = useState(min.ios);
-  const [minAndroid, setMinAndroid] = useState(min.android);
-  const [latestIos, setLatestIos] = useState(latest.ios);
-  const [latestAndroid, setLatestAndroid] = useState(latest.android);
-  const ok = (v: string) => /^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(v.trim());
+  const [minIos, setMinIos] = useState(text(min?.ios));
+  const [minAndroid, setMinAndroid] = useState(text(min?.android));
+  const [latestIos, setLatestIos] = useState(text(latest?.ios));
+  const [latestAndroid, setLatestAndroid] = useState(text(latest?.android));
+  const bad = (v: string) => (VERSION.test(v.trim()) ? null : t('admin.settings.versionBad'));
   return (
     <Panel title={t('admin.settings.versions')}>
       <Text style={adminStyles.cellMuted}>{t('admin.settings.versionsHelp')}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-        <View style={{ flexBasis: 240, flexGrow: 1 }}><Field label={t('admin.settings.minIos')} value={minIos} onChange={setMinIos} maxLength={11} /></View>
-        <View style={{ flexBasis: 240, flexGrow: 1 }}><Field label={t('admin.settings.minAndroid')} value={minAndroid} onChange={setMinAndroid} maxLength={11} /></View>
+        <View style={{ flexBasis: 240, flexGrow: 1 }}><Field label={t('admin.settings.minIos')} value={minIos} onChange={setMinIos} maxLength={11} error={bad(minIos)} /></View>
+        <View style={{ flexBasis: 240, flexGrow: 1 }}><Field label={t('admin.settings.minAndroid')} value={minAndroid} onChange={setMinAndroid} maxLength={11} error={bad(minAndroid)} /></View>
       </View>
-      <Text style={adminStyles.cellMuted}>{updated('min_version')}</Text>
+      {minFooter}
       <Actions>
-        <SecondaryButton label={t('admin.settings.saveMin')} danger disabled={!ok(minIos) || !ok(minAndroid)} onPress={() => onSave('min_version', { ios: minIos.trim(), android: minAndroid.trim() })} />
+        <SecondaryButton label={t('admin.settings.saveMin')} danger disabled={!onSaveMin || !!bad(minIos) || !!bad(minAndroid)} onPress={() => onSaveMin?.({ ios: minIos.trim(), android: minAndroid.trim() })} />
       </Actions>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-        <View style={{ flexBasis: 240, flexGrow: 1 }}><Field label={t('admin.settings.latestIos')} value={latestIos} onChange={setLatestIos} maxLength={11} /></View>
-        <View style={{ flexBasis: 240, flexGrow: 1 }}><Field label={t('admin.settings.latestAndroid')} value={latestAndroid} onChange={setLatestAndroid} maxLength={11} /></View>
+        <View style={{ flexBasis: 240, flexGrow: 1 }}><Field label={t('admin.settings.latestIos')} value={latestIos} onChange={setLatestIos} maxLength={11} error={bad(latestIos)} /></View>
+        <View style={{ flexBasis: 240, flexGrow: 1 }}><Field label={t('admin.settings.latestAndroid')} value={latestAndroid} onChange={setLatestAndroid} maxLength={11} error={bad(latestAndroid)} /></View>
       </View>
-      <Text style={adminStyles.cellMuted}>{updated('latest_version')}</Text>
+      {latestFooter}
       <Actions>
-        <SecondaryButton label={t('admin.settings.saveLatest')} disabled={!ok(latestIos) || !ok(latestAndroid)} onPress={() => onSave('latest_version', { ios: latestIos.trim(), android: latestAndroid.trim() })} />
+        <SecondaryButton label={t('admin.settings.saveLatest')} disabled={!onSaveLatest || !!bad(latestIos) || !!bad(latestAndroid)} onPress={() => onSaveLatest?.({ ios: latestIos.trim(), android: latestAndroid.trim() })} />
       </Actions>
     </Panel>
   );
 }
 
-function MaintenancePanel({ value, onSave, updated }: { value: Record<string, unknown>; onSave: (v: Record<string, unknown>) => void; updated: string }) {
+function MaintenancePanel({ value, onSave, footer }: { value: Value; onSave: Save; footer: ReactNode }) {
   const { t } = useTranslation();
   const [on, setOn] = useState(Boolean(value.on));
   const [message, setMessage] = useState(String(value.message ?? ''));
@@ -111,15 +140,15 @@ function MaintenancePanel({ value, onSave, updated }: { value: Record<string, un
       <Text style={adminStyles.cellMuted}>{t('admin.settings.maintenanceHelp')}</Text>
       <Checkbox label={t('admin.settings.maintenanceSwitch')} checked={on} onChange={setOn} />
       <Field label={t('admin.settings.maintenanceMessage')} value={message} onChange={setMessage} multiline maxLength={300} />
-      <Text style={adminStyles.cellMuted}>{updated}</Text>
+      {footer}
       <Actions>
-        <SecondaryButton label={t('admin.common.save')} danger={on} onPress={() => onSave({ on, message: message.trim() })} />
+        <SecondaryButton label={t('admin.common.save')} danger={on} disabled={!onSave} onPress={() => onSave?.({ on, message: message.trim() })} />
       </Actions>
     </Panel>
   );
 }
 
-function FeaturesPanel({ value, onSave, updated }: { value: Record<string, boolean>; onSave: (v: Record<string, unknown>) => void; updated: string }) {
+function FeaturesPanel({ value, onSave, footer }: { value: Record<string, boolean>; onSave: Save; footer: ReactNode }) {
   const { t } = useTranslation();
   const [flags, setFlags] = useState(value);
   return (
@@ -128,27 +157,49 @@ function FeaturesPanel({ value, onSave, updated }: { value: Record<string, boole
       {Object.keys(flags).map((key) => (
         <Checkbox key={key} label={t(`admin.settings.feature.${key}`, { defaultValue: key })} checked={flags[key]} onChange={(on) => setFlags((old) => ({ ...old, [key]: on }))} />
       ))}
-      <Text style={adminStyles.cellMuted}>{updated}</Text>
+      {footer}
       <Actions>
-        <SecondaryButton label={t('admin.common.save')} onPress={() => onSave(flags)} />
+        <SecondaryButton label={t('admin.common.save')} disabled={!onSave} onPress={() => onSave?.(flags)} />
       </Actions>
     </Panel>
   );
 }
 
-function WhatsNewPanel({ value, onSave, updated }: { value: Record<string, unknown>; onSave: (v: Record<string, unknown>) => void; updated: string }) {
+function WhatsNewPanel({ value, onSave, footer }: { value: Value; onSave: Save; footer: ReactNode }) {
   const { t } = useTranslation();
   const [version, setVersion] = useState(String(value.version ?? '1.0.0'));
-  const [items, setItems] = useState(((value.items as string[] | undefined) ?? []).join('\n'));
+  const [items, setItems] = useState((Array.isArray(value.items) ? (value.items as string[]) : []).join('\n'));
+  const versionBad = VERSION.test(version.trim()) ? null : t('admin.settings.versionBad');
   const list = items.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 6);
   return (
     <Panel title={t('admin.settings.whatsNew')}>
       <Text style={adminStyles.cellMuted}>{t('admin.settings.whatsNewHelp')}</Text>
-      <Field label={t('admin.settings.forVersion')} value={version} onChange={setVersion} maxLength={11} />
+      <Field label={t('admin.settings.forVersion')} value={version} onChange={setVersion} maxLength={11} error={versionBad} />
       <Field label={t('admin.settings.whatsNewItems')} value={items} onChange={setItems} multiline maxLength={900} />
-      <Text style={adminStyles.cellMuted}>{updated}</Text>
+      {footer}
       <Actions>
-        <SecondaryButton label={t('admin.common.save')} disabled={!/^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(version.trim())} onPress={() => onSave({ version: version.trim(), items: list })} />
+        <SecondaryButton label={t('admin.common.save')} disabled={!onSave || !!versionBad} onPress={() => onSave?.({ version: version.trim(), items: list })} />
+      </Actions>
+    </Panel>
+  );
+}
+
+/** The support email and hours people see on the Contact and Help pages. */
+function SupportPanel({ value, onSave, footer }: { value: Value; onSave: Save; footer: ReactNode }) {
+  const { t } = useTranslation();
+  const [email, setEmail] = useState(text(value.email));
+  const [hours, setHours] = useState(text(value.hours));
+  const emailBad = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim()) ? null : t('admin.settings.supportEmailBad');
+  const hoursBad = hours.trim().length >= 3 ? null : t('admin.settings.supportHoursBad');
+  return (
+    <Panel title={t('admin.settings.support')}>
+      <Text style={adminStyles.cellMuted}>{t('admin.settings.supportHelp')}</Text>
+      <Field label={t('admin.settings.supportEmail')} value={email} onChange={setEmail} maxLength={120} error={emailBad} />
+      <Field label={t('admin.settings.supportHours')} value={hours} onChange={setHours} maxLength={120} placeholder={t('admin.settings.supportHoursExample')} error={hoursBad} />
+      {footer}
+      <Actions>
+        {/* Other values under this key, if the server ever adds any, are kept as they are. */}
+        <SecondaryButton label={t('admin.common.save')} disabled={!onSave || !!emailBad || !!hoursBad} onPress={() => onSave?.({ ...value, email: email.trim(), hours: hours.trim() })} />
       </Actions>
     </Panel>
   );

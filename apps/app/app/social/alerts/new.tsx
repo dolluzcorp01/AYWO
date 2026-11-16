@@ -1,19 +1,18 @@
 // New alert: death, hospital, blood, help or news. The sender always picks who hears it (F-NOT-01).
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { ConfirmDialog, Field, Label, Pills, PrimaryButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { AudiencePicker } from '@/social/AudiencePicker';
-import { ActionError, Note, Page } from '@/social/parts';
+import { ActionError, Note, Page, useGoBack } from '@/social/parts';
 import { ALERT_KINDS, BLOOD_GROUPS } from '@/social/types';
 import type { AlertKind, Audience } from '@/social/types';
 
 export default function NewAlert() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const goBack = useGoBack();
   const client = useQueryClient();
   const [kind, setKind] = useState<AlertKind | null>(null);
   const [blood, setBlood] = useState<string | null>(null);
@@ -31,7 +30,7 @@ export default function NewAlert() {
       }),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['alerts'] });
-      router.back();
+      goBack();
     },
     onSettled: () => setConfirming(false),
   });

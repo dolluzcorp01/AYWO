@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Every outside service starts on a dummy key. Pavithran replaces them in .env; nothing else changes.
+// Every outside service starts on a dummy key. The developer replaces them in .env; nothing else changes.
 const schema = z.object({
   NODE_ENV: z.string().default('development'),
   PORT: z.coerce.number().default(3000),

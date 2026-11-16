@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { useReducedMotion } from '@/components/Loaders';
 import { Text } from '@/components/Text';
+import { armSosStart } from '@/social/sosStart';
 import { colors, fonts, radius } from '@/theme/tokens';
 
 export const SOS_HOLD_MS = 2_000;
@@ -39,7 +40,8 @@ export function SosBar({ compact = false }: { compact?: boolean }) {
     timer.current = setTimeout(() => {
       setHolding(false);
       fill.setValue(0);
-      router.push({ pathname: '/social/sos', params: { start: '1' } });
+      armSosStart();
+      router.push('/social/sos');
     }, SOS_HOLD_MS);
   }
 
@@ -92,7 +94,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   compact: { minHeight: 64, paddingHorizontal: 14, gap: 10 },
-  fill: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: '#B3161A' },
+  fill: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: colors.alertDeep },
   siren: { backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   sirenMark: { color: colors.alert, fontFamily: fonts.extrabold, lineHeight: undefined },
   texts: { flex: 1, minWidth: 0, gap: 2 },

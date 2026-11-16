@@ -1,11 +1,10 @@
 // Abuse reports from people: memories, comments, chat messages and accounts. Apple and Google require these to be
 // acted on quickly; each report is due within 24 hours in the work queue.
-import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { ReportRow } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Field, FilterChips, formatDate, Message, Pager, Pill, QueryState, SecondaryButton, useAction, usePagedList } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Field, FilterChips, formatDate, Message, Missing, Pager, Pill, QueryState, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
 
@@ -110,7 +109,7 @@ export default function AdminReports() {
 
 function DecideDialog({ row, decision, onClose }: { row: ReportRow; decision: 'remove' | 'dismiss'; onClose: () => void }) {
   const { t } = useTranslation();
-  const client = useQueryClient();
+  const refreshAfter = useRefreshAfter();
   const [note, setNote] = useState('');
   const [blockOwner, setBlockOwner] = useState(false);
   const action = useAction();
@@ -119,10 +118,9 @@ function DecideDialog({ row, decision, onClose }: { row: ReportRow; decision: 'r
   async function decide() {
     const ok = await action.run(() => api.post(`/admin/reports/${row.id}/decide`, { decision, note: note.trim(), block_owner: blockOwner }));
     if (ok) {
-      await client.invalidateQueries({ queryKey: ['admin', 'reports'] });
-      await client.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
-      await client.invalidateQueries({ queryKey: ['admin', 'work'] });
       onClose();
+      // A decision closes its work item (the menu badge), and removing an account or 'also block' changes Users.
+      await refreshAfter('reports', 'work', 'users');
     }
   }
 
@@ -136,6 +134,7 @@ function DecideDialog({ row, decision, onClose }: { row: ReportRow; decision: 'r
         <Checkbox label={t('admin.reports.alsoBlock', { name: row.owner_name ?? '-' })} checked={blockOwner} onChange={setBlockOwner} />
       ) : null}
       {action.failure ? <Message text={action.failure} alert /> : null}
+      <Missing reasons={[note.trim().length < 5 && t('admin.common.needsText', { field: t('admin.takedowns.note'), count: 5 })]} />
       <Actions>
         <SecondaryButton label={t('admin.common.cancel')} onPress={onClose} disabled={action.busy} />
         <SecondaryButton
