@@ -15,6 +15,7 @@ import { VoiceButton } from '@/voice/VoiceButton';
 import { ConfirmDialog, Field, SmallButton, TextButton, TopBar } from '@/components/ui';
 import { api, uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
+import { showPhone } from '@/lib/phone';
 import { useTimeAgo } from '@/lib/time';
 import { BlockDialog, ReportDialog } from '@/ops/Report';
 import { pickPhotos } from '@/social/media';
@@ -215,9 +216,19 @@ export default function ChatRoom() {
 
   const first = chat.data?.pages[0];
   const title = first ? showName(first.chat.name) : t('social.chat.title');
-  const subtitle = first?.chat.kind === 'group' ? t('social.chat.memberCount', { count: first.chat.members }) : undefined;
   // Until AYWO knows who is signed in, "the other person" could be the person themself: no Block until then.
   const other = myId ? members.data?.find((m) => m.profile_id !== myId) : undefined;
+  // In a one-to-one chat, the other person's number under their name, when this person may see it (the card's rule).
+  const direct = first?.chat.kind === 'direct';
+  const otherNumber = useQuery({
+    queryKey: ['profile-number', other?.profile_id],
+    queryFn: () => api.rpc<string | null>('profile_number', { p_profile: other?.profile_id }),
+    enabled: direct && !!other,
+    staleTime: 5 * 60_000,
+  });
+  const subtitle = first?.chat.kind === 'group'
+    ? t('social.chat.memberCount', { count: first.chat.members })
+    : direct && otherNumber.data ? showPhone(otherNumber.data) : undefined;
   const iMadeIt = !!myId && !!members.data?.some((m) => m.creator && m.profile_id === myId);
   const removeMember = useMutation({
     mutationFn: (profileId: string) => api.rpc('chat_remove_member', { p_chat: id, p_profile: profileId }),

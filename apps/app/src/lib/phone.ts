@@ -95,3 +95,10 @@ export function toE164(value: string, country: CountryCode = defaultCountry()): 
   const parsed = text.startsWith('+') ? parsePhoneNumberFromString(text) : parsePhoneNumberFromString(text, country);
   return parsed && parsed.isValid() ? parsed.number : null;
 }
+
+/** A saved number as people read it: +91 98765 43210. Anything that does not parse is shown as it was saved. */
+export function showPhone(value: string | null | undefined): string {
+  if (!value) return '';
+  const parsed = parsePhoneNumberFromString(value.startsWith('+') ? value : `+${value}`);
+  return parsed?.isValid() ? parsed.formatInternational() : value;
+}

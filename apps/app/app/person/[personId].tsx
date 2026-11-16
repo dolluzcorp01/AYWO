@@ -4,6 +4,7 @@ import { describePath } from '@aywo/kinship';
 import type { PathWords } from '@aywo/kinship';
 import { contactActions } from '@aywo/shared';
 import type { ContactKind } from '@aywo/shared';
+import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
@@ -19,8 +20,9 @@ import { BackIcon, ContactIcon, LockIcon } from '@/components/ContactIcon';
 import { CommentIcon, HistoryIcon, PencilIcon, PlusIcon, ShareIcon } from '@/components/Icons';
 import { Text } from '@/components/Text';
 import { showToast } from '@/components/Toast';
-import { Card, ErrorText, PrimaryButton } from '@/components/ui';
+import { Card, ErrorText, PrimaryButton, SmallButton } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
+import { showPhone } from '@/lib/phone';
 import { canComment, canSeeHistory, canShare } from '@/tree/roles';
 import { useAskForContacts, usePersonCard } from '@/tree/useCard';
 import { FamilyLinks } from '@/tree/FamilyLinks';
@@ -216,12 +218,19 @@ export default function PersonCard() {
             <Text style={styles.note}>{t('card.noContacts')}</Text>
           )}
 
+          {card.data.contacts.values && card.data.contacts.values.length > 0 ? <NumberList values={card.data.contacts.values} /> : null}
+
           {locked && actions.length > 0 ? (
             <Card>
               <Text style={styles.cardTitle}>{t('card.wantToCall', { name: firstName })}</Text>
               <Text style={styles.cardText}>
                 {card.data.access === 'ask' ? t('card.askExplain', { name: askFrom }) : t('card.plusExplain')}
               </Text>
+              {card.data.access === 'plus' ? (
+                <View style={styles.plusButton}>
+                  <SmallButton label={t('social.plus.action')} kind="yellow" onPress={() => router.push('/plus')} />
+                </View>
+              ) : null}
             </Card>
           ) : null}
 
@@ -268,6 +277,45 @@ export default function PersonCard() {
           </View>
         </View>
       </ScrollView>
+    </View>
+  );
+}
+
+const NUMBER_KEY: Record<ContactKind, string> = { mobile: 'card.numberMobile', whatsapp: 'card.numberWhatsapp', email: 'card.numberEmail' };
+const NUMBER_ORDER: ContactKind[] = ['mobile', 'whatsapp', 'email'];
+
+/** The numbers themselves, so they can be read out, written down or copied, not only tapped. */
+function NumberList({ values }: { values: { kind: ContactKind; value: string }[] }) {
+  const { t } = useTranslation();
+  const rows = NUMBER_ORDER.flatMap((kind) => values.filter((v) => v.kind === kind));
+  const copy = (text: string) => {
+    Clipboard.setStringAsync(text).then(
+      () => showToast('success', t('card.copied')),
+      () => showToast('error', t('card.openFailed')),
+    );
+  };
+  return (
+    <View style={styles.numbers}>
+      {rows.map((row, index) => {
+        const text = row.kind === 'email' ? row.value : showPhone(row.value);
+        const what = t(NUMBER_KEY[row.kind]);
+        return (
+          <View key={`${row.kind}-${index}`} style={[styles.numberRow, index > 0 && styles.numberLine]}>
+            <View style={styles.numberText}>
+              <Text style={styles.numberKind}>{what}</Text>
+              <Text style={styles.numberValue} selectable>{text}</Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('card.copyLabel', { what })}
+              onPress={() => copy(text)}
+              style={({ hovered }: { hovered?: boolean }) => [styles.copy, hovered && styles.copyHover]}
+            >
+              <Text style={styles.copyText}>{t('card.copy')}</Text>
+            </Pressable>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -343,6 +391,16 @@ const styles = StyleSheet.create({
   lockedText: { color: colors.muted, fontFamily: fonts.extrabold, fontSize: 13 },
   cardTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 18, marginBottom: 8 },
   cardText: { color: colors.muted, fontFamily: fonts.medium, fontSize: 14, lineHeight: 21 },
+  plusButton: { alignItems: 'flex-start', marginTop: 10 },
+  numbers: { backgroundColor: colors.white, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 4 },
+  numberRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60 },
+  numberLine: { borderTopWidth: 1, borderTopColor: colors.line },
+  numberText: { flex: 1, gap: 2 },
+  numberKind: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 12 },
+  numberValue: { color: colors.text, fontFamily: fonts.bold, fontSize: 17 },
+  copy: { minHeight: minTapSize, minWidth: minTapSize, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
+  copyHover: { backgroundColor: colors.tint },
+  copyText: { color: colors.relation, fontFamily: fonts.extrabold, fontSize: 14 },
   note: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14, textAlign: 'center' },
   section: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

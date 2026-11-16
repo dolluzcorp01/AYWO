@@ -73,6 +73,12 @@
     "askFailed": "That didn't go through. Try again.",
     "theCreator": "the tree's Creator",
     "closeFamily": "Close family",
+    "numberMobile": "Mobile",
+    "numberWhatsapp": "WhatsApp",
+    "numberEmail": "Email",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyLabel": "Copy {{what}}",
     "addRelative": "Add relative",
     "invite": "Invite",
     "comment": "Comment",
@@ -392,6 +398,8 @@
     "restartFailed": "AYWO couldn't restart itself. Please close it and open it again."
   },
   "profile": {
+    "mobile": "Mobile number",
+    "mobileHelp": "You sign in with this number.",
     "lastStep": "Last step",
     "title": "How should your family see you?",
     "addPhoto": "Choose a photo",
@@ -751,6 +759,7 @@
     "pictureLivingNote": "Living people show name only."
   },
   "me": {
+    "signedInWith": "Signed in with {{number}}",
     "creatorOf_one": "Creator of {{count}} family tree",
     "creatorOf_other": "Creator of {{count}} family trees",
     "edit": "Edit",
