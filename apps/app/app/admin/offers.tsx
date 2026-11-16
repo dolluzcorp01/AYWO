@@ -93,7 +93,7 @@ function Coupons() {
     {
       key: 'when',
       label: t('admin.offers.when'),
-      render: (c) => `${isoToDay(c.starts_at)} – ${c.ends_at ? isoToDay(c.ends_at) : t('admin.offers.noEnd')}`,
+      render: (c) => `${isoToDay(c.starts_at)} - ${c.ends_at ? isoToDay(c.ends_at) : t('admin.offers.noEnd')}`,
     },
     {
       key: 'used',
@@ -220,7 +220,7 @@ function CouponDialog({ coupon, onClose }: { coupon: Coupon | null; onClose: () 
           items={[
             [t('admin.offers.off'), offText],
             [t('admin.offers.on'), products.map((p) => t(`admin.orders.products.${p}`)).join(', ')],
-            [t('admin.offers.when'), `${isoToDay(dayToIso(starts, false))} – ${endDay || t('admin.offers.noEnd')}`],
+            [t('admin.offers.when'), `${isoToDay(dayToIso(starts, false))} - ${endDay || t('admin.offers.noEnd')}`],
             [t('admin.offers.maxUses'), maxUses || t('admin.offers.noLimit')],
             [t('admin.offers.perUser'), perUser],
             [t('admin.offers.shown'), shown ? t('admin.user360.yes') : t('admin.user360.no')],
@@ -293,7 +293,7 @@ function Banners() {
     },
     { key: 'where', label: t('admin.offers.where'), render: (a) => a.placements.map((p) => t(`admin.offers.placements.${p}`)).join(', ') },
     { key: 'who', label: t('admin.offers.who'), flex: 0.8, render: (a) => t(`admin.offers.audiences.${a.audience}`) },
-    { key: 'when', label: t('admin.offers.when'), render: (a) => `${isoToDay(a.starts_at)} – ${a.ends_at ? isoToDay(a.ends_at) : t('admin.offers.noEnd')}` },
+    { key: 'when', label: t('admin.offers.when'), render: (a) => `${isoToDay(a.starts_at)} - ${a.ends_at ? isoToDay(a.ends_at) : t('admin.offers.noEnd')}` },
     {
       key: 'stats',
       label: t('admin.offers.reach'),
@@ -406,7 +406,7 @@ function BannerDialog({ item, onClose }: { item: Announcement | null; onClose: (
             [t('admin.offers.bannerTitle'), title.trim()],
             [t('admin.offers.where'), placements.map((p) => t(`admin.offers.placements.${p}`)).join(', ')],
             [t('admin.offers.who'), `${t(`admin.offers.audiences.${audience}`)} · ${t(`admin.offers.regions.${region}`)} · ${languageText}`],
-            [t('admin.offers.when'), `${isoToDay(dayToIso(starts, false))} – ${endDay || t('admin.offers.noEnd')}`],
+            [t('admin.offers.when'), `${isoToDay(dayToIso(starts, false))} - ${endDay || t('admin.offers.noEnd')}`],
             [t('admin.offers.link'), link.trim() || '-'],
           ]}
         />
