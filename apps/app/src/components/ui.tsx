@@ -31,7 +31,7 @@ export function PrimaryButton({ label, onPress, disabled, missing }: { label: st
   );
 }
 
-/** White pill under a primary button: 'Not me', 'Just have a look'. */
+/** The second choice beside or under a primary button: light indigo with an indigo border and words. */
 export function SecondaryButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
   const big = useSimpleMode();
   return (
@@ -40,7 +40,7 @@ export function SecondaryButton({ label, onPress, disabled }: { label: string; o
       accessibilityState={{ disabled: !!disabled }}
       onPress={onPress}
       disabled={disabled}
-      style={[styles.secondary, big && styles.bigSecondary, { opacity: disabled ? 0.5 : 1 }]}
+      style={({ hovered }: { hovered?: boolean }) => [styles.secondary, big && styles.bigSecondary, hovered && !disabled && styles.secondaryHover, { opacity: disabled ? 0.5 : 1 }]}
     >
       <Text style={styles.secondaryText}>{label}</Text>
     </Pressable>
@@ -60,11 +60,11 @@ export function TextButton({ label, onPress, disabled, danger }: { label: string
 /** The small pill on activity cards and the Undo button. */
 export function SmallButton({ label, onPress, kind = 'solid', disabled }: { label: string; onPress: () => void; kind?: 'solid' | 'plain' | 'yellow' | 'dark'; disabled?: boolean }) {
   const inner = <Text style={[styles.smallText, (kind === 'plain' || kind === 'yellow') && styles.smallTextDark]}>{label}</Text>;
-  const a11y = { accessibilityRole: 'button' as const, onPress, disabled, style: { opacity: disabled ? 0.5 : 1 } };
+  const a11y = { accessibilityRole: 'button' as const, onPress, disabled, style: { opacity: disabled ? 0.5 : 1, cursor: disabled ? ('default' as const) : ('pointer' as const) } };
   if (kind === 'plain') {
     return (
       <Pressable {...a11y}>
-        <View style={[styles.small, styles.smallPlain]}>{inner}</View>
+        {({ hovered }: { hovered?: boolean }) => <View style={[styles.small, styles.smallPlain, hovered && !disabled && styles.secondaryHover]}>{inner}</View>}
       </Pressable>
     );
   }
@@ -289,12 +289,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.button,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.logoIndigo,
+    backgroundColor: colors.tint,
     paddingHorizontal: 16,
+    cursor: 'pointer',
   },
-  secondaryText: { color: colors.text, fontFamily: fonts.bold, fontSize: 16, textAlign: 'center' },
+  secondaryHover: { backgroundColor: '#E6E0F5' },
+  secondaryText: { color: colors.logoIndigo, fontFamily: fonts.bold, fontSize: 16, textAlign: 'center' },
   // Elder mode: the main buttons grow by about a third, so they are easier to hit.
   bigButton: { height: 72 },
   bigSecondary: { minHeight: 72 },
@@ -303,10 +305,10 @@ const styles = StyleSheet.create({
   textButtonText: { color: colors.relation, fontFamily: fonts.bold, fontSize: 15, textAlign: 'center' },
   danger: { color: colors.alert },
   small: { minHeight: minTapSize, borderRadius: 22, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center' },
-  smallPlain: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.cardBorder },
+  smallPlain: { backgroundColor: colors.tint, borderWidth: 1.5, borderColor: colors.logoIndigo },
   smallSolid: { backgroundColor: colors.logoIndigo },
   smallText: { color: colors.white, fontFamily: fonts.bold, fontSize: 14 },
-  smallTextDark: { color: colors.text },
+  smallTextDark: { color: colors.logoIndigo },
   round: {
     width: minTapSize,
     height: minTapSize,

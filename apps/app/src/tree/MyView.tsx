@@ -303,7 +303,7 @@ export function MyView({ data, viewerId, focusId, seeingAs, onFocus, onOpenPerso
 
       <View style={styles.actions}>
         {onAdd ? (
-          <Pressable accessibilityRole="button" onPress={() => onAdd(focus.id)} style={styles.addButton}>
+          <Pressable accessibilityRole="button" onPress={() => onAdd(focus.id)} style={({ hovered }: { hovered?: boolean }) => [styles.addButton, hovered && styles.addHover]}>
             <Text style={styles.addText}>{t('tree.addTo', { name: nameOf(focus) })}</Text>
           </Pressable>
         ) : null}
@@ -350,13 +350,15 @@ const styles = StyleSheet.create({
     minHeight: minTapSize,
     paddingHorizontal: 20,
     borderRadius: 999,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+    backgroundColor: colors.tint,
+    borderWidth: 1.5,
+    borderColor: colors.logoIndigo,
     alignItems: 'center',
     justifyContent: 'center',
+    cursor: 'pointer',
     ...shadows.card,
   },
+  addHover: { backgroundColor: '#E6E0F5' },
   addText: { color: colors.logoIndigo, fontFamily: fonts.bold, fontSize: 14 },
   link: { minHeight: minTapSize, justifyContent: 'center', paddingHorizontal: 16 },
   linkText: { color: colors.relation, fontFamily: fonts.bold, fontSize: 14 },
