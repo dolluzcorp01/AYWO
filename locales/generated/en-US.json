@@ -144,7 +144,7 @@
     "namesOnly": "Names only",
     "myView": "My view",
     "seeAs": "See as...",
-    "myViewHelp": "Tap anyone to centre them.",
+    "myViewHelp": "Tap someone to bring them to the middle. Tap them again to open their card.",
     "namesHelp": "Pinch to zoom, drag to move.",
     "seeingAs": "Seeing the tree from {{name}}'s place.",
     "seeAsTitle": "See the tree as...",
@@ -502,7 +502,12 @@
     "partnerOf": "Partner of {{names}}",
     "inFamilyPeople_one": "In {{tree}} · {{count}} person",
     "inFamilyPeople_other": "In {{tree}} · {{count}} people",
-    "explainBy": "Your number matches the one {{name}} saved. {{first}} will be told."
+    "explainBy": "Your number matches the one {{name}} saved. {{first}} will be told.",
+    "notMeTitle": "Sure this is not you?",
+    "notMeText": "AYWO will stop asking about this person. If you tapped by mistake, you can turn the question back on under Me > Privacy and account.",
+    "notMeYes": "Yes, not me",
+    "askAgain": "Ask me \"Is this you?\" again",
+    "askAgainDone": "Done. You will be asked again the next time you sign in."
   },
   "add": {
     "title": "Add a relative",
@@ -752,7 +757,10 @@
       "contacts": "{{name}} changed contact details for {{person}}",
       "added": "{{name}} added {{person}}",
       "changed": "{{name}} changed {{person}}"
-    }
+    },
+    "newPhoto": "A new photo",
+    "declineTitle": "Decline this request?",
+    "declineText": "A decline cannot be changed later. They would have to ask again."
   },
   "merge": {
     "title": "Same person?",

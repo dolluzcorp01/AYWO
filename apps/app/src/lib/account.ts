@@ -111,6 +111,11 @@ export async function rememberNotMe(personId: string): Promise<void> {
   if (!list.includes(personId)) await deviceStore.set(NOT_ME, JSON.stringify([...list, personId]));
 }
 
+/** Undo for a "Not me" tapped by mistake: every "Is this you?" is asked again at the next sign-in. */
+export async function forgetNotMe(): Promise<void> {
+  await deviceStore.remove(NOT_ME);
+}
+
 export async function claimCandidates(): Promise<ClaimCandidate[]> {
   const [rows, notMe] = await Promise.all([api.rpc<ClaimCandidate[]>('claim_candidates'), notMeIds()]);
   return rows.filter((row) => !notMe.includes(row.person_id));

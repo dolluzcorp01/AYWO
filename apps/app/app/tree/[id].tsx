@@ -61,7 +61,7 @@ export default function TreeScreen() {
   const addTo = (personId: string) => router.push({ pathname: '/add/[treeId]', params: { treeId: id, anchor: personId } });
 
   const seeingAsName = mode === 'see_as' ? data?.nodes.find((n) => n.id === viewerId)?.name : undefined;
-  const subtitle = seeingAsName ? t('tree.seeingAs', { name: seeingAsName }) : mode === 'names' ? t('tree.namesHelp') : null;
+  const subtitle = seeingAsName ? t('tree.seeingAs', { name: seeingAsName }) : mode === 'names' ? t('tree.namesHelp') : t('tree.myViewHelp');
 
   return (
     <Screen flush>

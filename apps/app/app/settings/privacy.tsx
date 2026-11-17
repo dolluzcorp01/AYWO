@@ -7,6 +7,7 @@ import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { forgetNotMe } from '@/lib/account';
 import { showToast } from '@/components/Toast';
 import { Card, ConfirmDialog, ErrorText, Field, Muted, SecondaryButton, TextButton, TopBar } from '@/components/ui';
 import { api, clearSession } from '@/lib/api';
@@ -88,6 +89,13 @@ export default function Privacy() {
           <TextButton label={t('legal.termsLink')} onPress={() => router.push('/terms')} />
           <TextButton label={t('legal.privacyLink')} onPress={() => router.push('/privacy')} />
           <TextButton label={t('ops.myConsents.title')} onPress={() => router.push('/settings/consents')} />
+          {/* The undo for "Not me" tapped by mistake on "Is this you?". */}
+          <TextButton
+            label={t('claim.askAgain')}
+            onPress={() => {
+              void forgetNotMe().then(() => showToast('success', t('claim.askAgainDone')));
+            }}
+          />
           <TextButton label={t('ops.me.blocked')} onPress={() => router.push('/settings/blocked')} />
         </Card>
 

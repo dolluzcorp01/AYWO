@@ -8,7 +8,8 @@ import { goBack } from '@/lib/nav';
 import { CheckIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, Checkbox, ErrorText, Loading, LoadFailed, Muted, NeonPanel, PrimaryButton, TopBar } from '@/components/ui';
+import { Card, Checkbox, ErrorText, Loading, LoadFailed, Muted, NeonPanel, Pills, PrimaryButton, TopBar } from '@/components/ui';
+import { canShare } from '@/tree/roles';
 import { useTrees } from '@/lib/account';
 import { layoutIsRtl } from '@/i18n/rtl';
 import { api } from '@/lib/api';
@@ -67,13 +68,14 @@ export default function ExportScreen() {
   const router = useRouter();
   const errorText = useErrorText();
   const trees = useTrees();
-  const [format, setFormat] = useState<Format>('gedcom');
+  const [format, setFormat] = useState<Format>('pdf');
   const [includeLiving, setIncludeLiving] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<unknown>(null);
   const [done, setDone] = useState(false);
 
   const tree = trees.data?.find((row) => row.id === treeId);
+  const mine = (trees.data ?? []).filter((row) => canShare(row.role));
 
   async function download() {
     if (!tree) return;
@@ -123,8 +125,13 @@ export default function ExportScreen() {
         />
         <Muted>{t('export.explain')}</Muted>
 
-        <Option on={format === 'gedcom'} title={t('export.gedcom')} help={t('export.gedcomHelp')} onPress={() => setFormat('gedcom')} />
+        {/* With more than one tree to download, each can be chosen: it used to be the first one only. */}
+        {mine.length > 1 ? (
+          <Pills options={mine.map((row) => ({ value: row.id, label: row.name }))} value={treeId} onChange={(id) => { setDone(false); router.setParams({ treeId: id }); }} />
+        ) : null}
+
         <Option on={format === 'pdf'} title={t('export.pdf')} help={t('export.pdfHelp')} onPress={() => setFormat('pdf')} />
+        <Option on={format === 'gedcom'} title={t('export.gedcom')} help={t('export.gedcomHelp')} onPress={() => setFormat('gedcom')} />
 
         <Card>
           <Checkbox label={t('export.living')} help={t('export.livingHelp')} on={includeLiving} onChange={setIncludeLiving} />
