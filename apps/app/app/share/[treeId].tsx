@@ -20,6 +20,7 @@ import { normalizeContact } from '@/lib/contacts';
 import { useErrorText } from '@/lib/errors';
 import { shownName } from '@/tree/personName';
 import { canShare } from '@/tree/roles';
+import { usePersonCard } from '@/tree/useCard';
 import { useCreateShare, useRevokeShare, useShares } from '@/tree/useEdit';
 import type { EditMode, ShareInput, ShareRole, ShareRow } from '@/tree/useEdit';
 import { useTreeView } from '@/tree/useTreeView';
@@ -61,6 +62,17 @@ export default function ShareScreen() {
   const [phone, setPhone] = useState('');
   const [badPhone, setBadPhone] = useState(false);
   const [revoking, setRevoking] = useState<ShareRow | null>(null);
+  // The number already saved on this person's card: filled in when it may be shown, otherwise used by the server.
+  const card = usePersonCard(personId ?? '', !!personId);
+  const savedMobile = card.data?.contacts.values?.find((v) => v.kind === 'mobile')?.value ?? '';
+  const savedHidden = !savedMobile && !!card.data?.contacts.has_mobile;
+  const [otherNumber, setOtherNumber] = useState(false);
+  const filled = useRef(false);
+  useEffect(() => {
+    if (!savedMobile || filled.current) return;
+    filled.current = true;
+    setPhone((typed) => typed || savedMobile);
+  }, [savedMobile]);
   // One set of choices makes one link, however many times it is sent. Kept where every send reads the latest:
   // a send that falls back to another way must reuse the link it has just made, not make a second one.
   const made = useRef<{ key: string; url: string } | null>(null);
@@ -260,7 +272,15 @@ export default function ShareScreen() {
 
         <Switch label={t('share.contacts')} help={t('share.contactsHelp')} on={contactsVisible} onChange={setContactsVisible} />
 
-        {needsPhone ? (
+        {needsPhone && savedHidden && !otherNumber ? (
+          <Card style={styles.phoneCard}>
+            <Text style={styles.rowTitle}>{t('share.phone')}</Text>
+            <Muted>{t('share.savedNumber', { name: personName })}</Muted>
+            <View style={styles.otherNumber}>
+              <TextButton label={t('share.otherNumber')} onPress={() => setOtherNumber(true)} />
+            </View>
+          </Card>
+        ) : needsPhone ? (
           <Card style={styles.phoneCard}>
             <PhoneField
               label={t('share.phone')}
@@ -273,7 +293,7 @@ export default function ShareScreen() {
               invalid={badPhone}
               onPickContact={() => setBadPhone(false)}
             />
-            <Muted>{t('share.phoneHelp')}</Muted>
+            <Muted>{savedMobile && phone === savedMobile ? t('share.fromCard', { name: personName }) : t('share.phoneHelp')}</Muted>
             {badPhone ? <ErrorText>{t('details.badPhone')}</ErrorText> : null}
           </Card>
         ) : null}
@@ -367,6 +387,7 @@ const styles = StyleSheet.create({
   scroll: { gap: 10, paddingBottom: 12 },
   who: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
   phoneCard: { gap: 6, padding: 12 },
+  otherNumber: { alignItems: 'flex-start' },
   whoText: { flex: 1, minWidth: 0 },
   whoName: { color: colors.white, fontFamily: fonts.extrabold, fontSize: 15 },
   whoHelp: { color: colors.onNeon, fontFamily: fonts.semibold, fontSize: 12 },

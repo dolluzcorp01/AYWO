@@ -31,6 +31,13 @@ export default function Shop() {
   const [treeId, setTreeId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState('1');
   const [address, setAddress] = useState<ShippingAddress>({ ...EMPTY, name: me.data?.display_name ?? '' });
+  // Their name and sign-in number are the delivery name and phone unless they change them; filled in once the
+  // account loads (it may still be loading on the first render), never over something typed.
+  useEffect(() => {
+    const ownName = me.data?.display_name ?? '';
+    const ownPhone = me.data?.login_phone ?? '';
+    setAddress((a) => ({ ...a, name: a.name || ownName, phone: a.phone || ownPhone }));
+  }, [me.data?.display_name, me.data?.login_phone]);
   const [code, setCode] = useState((params.coupon ?? '').toUpperCase());
   const [quote, setQuote] = useState<CouponQuote | null>(null);
   // 'unconfirmed': the payment page was closed and the server has seen no payment (see pay/order.ts).
