@@ -1,5 +1,7 @@
 // One memory: photos, who is in it, reactions, comments, and closing the thread. Anyone can report it or a comment.
 // The author can edit the words and date, remove or reorder photos and untag people; anyone can edit their comment.
+import { DateField } from '@/components/DateTimeField';
+import { todayIso } from '@/lib/time';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -168,13 +170,7 @@ export default function MemoryDetail() {
                     <SecondaryButton label={t('social.memories.addPhotos')} disabled={addPhotos.isPending} onPress={() => addPhotos.mutate()} />
                   ) : null}
                   <Field label={t('social.memories.words')} value={draftBody} onChangeText={setDraftBody} multiline maxLength={4000} style={styles.words} />
-                  <Field
-                    label={t('social.memories.when')}
-                    value={draftDate}
-                    onChangeText={setDraftDate}
-                    placeholder={t('social.datePlaceholder')}
-                    autoCapitalize="none"
-                  />
+                  <DateField label={t('social.memories.when')} value={draftDate} onChange={setDraftDate} max={todayIso()} optional />
                   {data.tags.length > 0 ? (
                     <>
                       <Label>{t('social.memories.taggedPeople')}</Label>

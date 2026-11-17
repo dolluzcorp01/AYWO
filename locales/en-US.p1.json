@@ -346,6 +346,14 @@
     "weddingPlaceholder": "e.g. 21/03/1995",
     "badWeddingDate": "Type the full wedding date, like 21/03/1995. It can't be in the future."
   },
+  "picker": {
+    "pickDate": "Pick a date",
+    "pickTime": "Pick a time",
+    "clear": "Clear",
+    "clearLabel": "Clear {{what}}",
+    "cancel": "Cancel",
+    "done": "Done"
+  },
   "roles": {
     "title": "What each role can do",
     "subtitle": "Roles are per tree. The owner or a co-creator picks them when sharing.",

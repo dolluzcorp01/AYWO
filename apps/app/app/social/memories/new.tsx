@@ -1,4 +1,6 @@
 // New memory: where it belongs, photos, words, the date, who is in it, and who may help add to it.
+import { DateField } from '@/components/DateTimeField';
+import { todayIso } from '@/lib/time';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -107,7 +109,7 @@ export default function NewMemory() {
       {photos.length > 0 ? <Note>{t('social.photos.countOf', { n: photos.length, most: MOST_PHOTOS })}</Note> : null}
 
       <Field label={t('social.memories.words')} value={body} onChangeText={setBody} multiline maxLength={4000} style={styles.words} accessory={<VoiceButton voice={bodyVoice} />} />
-      <Field label={t('social.memories.when')} value={date} onChangeText={setDate} placeholder={t('social.datePlaceholder')} autoCapitalize="none" />
+      <DateField label={t('social.memories.when')} value={date} onChange={setDate} max={todayIso()} optional />
       {!dateOk ? <Note>{t('social.dateHelp')}</Note> : null}
 
       {treeId ? (
