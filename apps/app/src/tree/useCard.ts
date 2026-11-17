@@ -10,10 +10,11 @@ export interface CardAnswer {
 }
 
 /** LLD S-07. Contact values, when allowed, come only through this server call. */
-export function usePersonCard(personId: string) {
+export function usePersonCard(personId: string, enabled = true) {
   return useQuery({
     queryKey: ['person-card', personId],
     queryFn: () => api.rpc<CardAnswer>('person_card', { p_person: personId }),
+    enabled: enabled && !!personId,
   });
 }
 
