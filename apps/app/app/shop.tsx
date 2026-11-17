@@ -9,7 +9,7 @@ import { PhoneField } from '@/components/PhoneField';
 import { Text } from '@/components/Text';
 import { Card, Field, Label, Pills, PrimaryButton, SectionTitle, SmallButton } from '@/components/ui';
 import { toE164 } from '@/lib/phone';
-import { api } from '@/lib/api';
+import { api, deviceStore } from '@/lib/api';
 import { mainTree, useMe, useTrees } from '@/lib/account';
 import { startOrder } from '@/pay/order';
 import type { ShippingAddress } from '@/pay/order';
@@ -17,6 +17,9 @@ import { formatMoney } from '@/ops/types';
 import type { CouponQuote, Product, Products } from '@/ops/types';
 import { ActionError, Gate, Note, Page } from '@/social/parts';
 import { colors, fonts } from '@/theme/tokens';
+
+// The last delivery address, kept on this phone only, so a second order does not start from empty boxes.
+const LAST_ADDRESS = 'aywo.lastAddress';
 
 const EMPTY: ShippingAddress = { name: '', line1: '', line2: '', city: '', state: '', postal_code: '', country: 'IN', phone: '' };
 
@@ -38,6 +41,24 @@ export default function Shop() {
     const ownPhone = me.data?.login_phone ?? '';
     setAddress((a) => ({ ...a, name: a.name || ownName, phone: a.phone || ownPhone }));
   }, [me.data?.display_name, me.data?.login_phone]);
+  useEffect(() => {
+    void deviceStore
+      .get(LAST_ADDRESS)
+      .then((raw) => {
+        const last = raw ? (JSON.parse(raw) as Partial<ShippingAddress>) : null;
+        if (!last) return;
+        // Only into boxes still empty: never over something already typed.
+        setAddress((a) => ({
+          ...a,
+          line1: a.line1 || last.line1 || '',
+          line2: a.line2 || last.line2 || '',
+          city: a.city || last.city || '',
+          state: a.state || last.state || '',
+          postal_code: a.postal_code || last.postal_code || '',
+        }));
+      })
+      .catch(() => undefined);
+  }, []);
   const [code, setCode] = useState((params.coupon ?? '').toUpperCase());
   const [quote, setQuote] = useState<CouponQuote | null>(null);
   // The code the person asked to use: by tapping Apply, or by arriving from "Use it" on an offer. It is checked again
@@ -84,7 +105,14 @@ export default function Shop() {
         { description: t(`ops.shop.products.${product}`), methodLabel: t('ops.shop.pay') },
         { onOrder: (id) => { orderId.current = id; } },
       ),
-    onMutate: () => setState('idle'),
+    onMutate: () => {
+      setState('idle');
+      if (products.data?.needs_address) {
+        void deviceStore
+          .set(LAST_ADDRESS, JSON.stringify({ line1: address.line1, line2: address.line2, city: address.city, state: address.state, postal_code: address.postal_code }))
+          .catch(() => undefined);
+      }
+    },
     onSuccess: (result) => {
       // The server already shows it as paid: straight to My orders, which says so.
       if (result === 'paid') router.replace({ pathname: '/orders', params: { paid: '1', ...(orderId.current ? { order: orderId.current } : {}) } });

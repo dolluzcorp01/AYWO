@@ -2477,7 +2477,9 @@
       "messageChoices": "Message",
       "reply": "Reply",
       "chatName": "Chat name",
-      "tryAgain": "Try again"
+      "tryAgain": "Try again",
+      "sendPhotoTitle": "Send this photo?",
+      "sendPhotoYes": "Send"
     },
     "memories": {
       "title": "Memories",

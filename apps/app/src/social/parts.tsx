@@ -1,15 +1,32 @@
 // Building blocks shared by the social screens, on top of the frozen components.
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ChevronIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, ErrorText, LoadFailed, Loading, Muted, SmallButton, TopBar } from '@/components/ui';
+import { Card, ErrorText, Field, LoadFailed, Loading, Muted, SmallButton, TopBar } from '@/components/ui';
 import { errorCode, useErrorText } from '@/lib/errors';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
+
+/**
+ * A search box for a list that has grown long (more than 8 lines): `box(list)` draws it, `filter(list)` keeps the
+ * lines whose words contain what was typed. Short lists get no box.
+ */
+export function useListSearch<T>(words: (item: T) => string) {
+  const { t } = useTranslation();
+  const [typed, setTyped] = useState('');
+  const needle = typed.trim().toLowerCase();
+  return {
+    box: (list: T[]) =>
+      list.length > 8 ? <Field value={typed} onChangeText={setTyped} placeholder={t('search.placeholder')} accessibilityLabel={t('search.placeholder')} autoCorrect={false} /> : null,
+    filter: (list: T[]) => (needle ? list.filter((item) => words(item).toLowerCase().includes(needle)) : list),
+    nothing: (list: T[]) => !!needle && list.length > 0 && !list.some((item) => words(item).toLowerCase().includes(needle)),
+  };
+}
 
 /** Goes back, or Home when the screen was opened straight from a notification. */
 export function useGoBack() {

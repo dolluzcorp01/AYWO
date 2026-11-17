@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { EmptyState, PrimaryButton, SecondaryButton, SectionTitle } from '@/components/ui';
 import { api } from '@/lib/api';
-import { Gate, Page, Row, useName, useWhen } from '@/social/parts';
+import { Gate, Page, Row, useListSearch, useName, useWhen } from '@/social/parts';
 import type { EventRow } from '@/social/types';
 
 export default function Invites() {
@@ -25,6 +25,7 @@ export default function Invites() {
     return parts.join(' · ');
   }
 
+  const search = useListSearch<EventRow>((e) => `${e.title} ${showName(e.host_name)}`);
   function sections(list: EventRow[]): { key: 'upcoming' | 'past' | 'cancelled'; rows: EventRow[] }[] {
     // Still "upcoming" for a few hours after it starts: the function is going on.
     const cutOff = Date.now() - 6 * 3_600_000;
@@ -48,8 +49,10 @@ export default function Invites() {
             <EmptyState message={t('social.invites.empty')} />
           ) : (
             <>
+              {search.box(list)}
+              {search.nothing(list) ? <EmptyState message={t('search.nothing')} /> : null}
               {/* What is coming, soonest first; then what is over; cancelled ones last, out of the way. */}
-              {sections(list).map((section) => (
+              {sections(search.filter(list)).map((section) => (
                 <View key={section.key} style={{ gap: 8 }}>
                   <SectionTitle>{t(`social.invites.sections.${section.key}`)}</SectionTitle>
                   {section.rows.map((e) => (

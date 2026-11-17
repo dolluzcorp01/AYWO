@@ -212,9 +212,11 @@ export default function ChatRoom() {
     },
   });
 
+  // A picked photo waits here for a look and a tap on Send: a wrong tap in the gallery no longer goes to everyone.
+  const [photoToSend, setPhotoToSend] = useState<PickedFile | null>(null);
   async function sendPhoto() {
     const [photo] = await pickPhotos(1);
-    if (photo) send.mutate({ file: photo, kind: 'photo' });
+    if (photo) setPhotoToSend(photo);
   }
 
   const first = chat.data?.pages[0];
@@ -493,6 +495,18 @@ export default function ChatRoom() {
         onCancel={() => setAsking(null)}
       />
       <ConfirmDialog
+        visible={!!photoToSend}
+        title={t('social.chat.sendPhotoTitle')}
+        confirmLabel={t('social.chat.sendPhotoYes')}
+        onConfirm={() => {
+          if (photoToSend) send.mutate({ file: photoToSend, kind: 'photo' });
+          setPhotoToSend(null);
+        }}
+        onCancel={() => setPhotoToSend(null)}
+      >
+        {photoToSend ? <Image source={{ uri: photoToSend.uri }} style={styles.photoPreview} resizeMode="contain" accessibilityLabel={t('social.chat.photo')} /> : null}
+      </ConfirmDialog>
+      <ConfirmDialog
         visible={!!toDelete}
         title={t('social.chat.deleteTitle')}
         confirmLabel={t('social.delete')}
@@ -553,6 +567,7 @@ export default function ChatRoom() {
 }
 
 const styles = StyleSheet.create({
+  photoPreview: { width: '100%', height: 260, borderRadius: 12 },
   fill: { flex: 1 },
   unflip: { transform: [{ scaleY: -1 }] },
   tools: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },

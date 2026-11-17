@@ -2477,7 +2477,9 @@
       "messageChoices": "செய்தி",
       "reply": "பதில்",
       "chatName": "அரட்டைப் பெயர்",
-      "tryAgain": "மீண்டும் முயற்சி செய்"
+      "tryAgain": "மீண்டும் முயற்சி செய்",
+      "sendPhotoTitle": "இந்தப் படத்தை அனுப்பவா?",
+      "sendPhotoYes": "அனுப்பு"
     },
     "memories": {
       "title": "நினைவுகள்",

@@ -6,7 +6,7 @@ import { EmptyState, PrimaryButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useTimeAgo } from '@/lib/time';
 import { InviteFamily } from '@/social/InviteFamily';
-import { Gate, Page, Row, useName } from '@/social/parts';
+import { Gate, Note, Page, Row, useListSearch, useName } from '@/social/parts';
 import type { ChatRow } from '@/social/types';
 import { FETCH_WHEN_OFFLINE_MS, useChatSocket } from '@/social/useChatSocket';
 
@@ -16,6 +16,7 @@ export default function ChatList() {
   const client = useQueryClient();
   const ago = useTimeAgo();
   const showName = useName();
+  const search = useListSearch<ChatRow>((chat) => showName(chat.name));
   // Fetched again on every new message, and whenever the live connection comes back: messages that arrived while it
   // was down are not sent again, so the list would otherwise stay old.
   const connected = useChatSocket(
@@ -46,7 +47,9 @@ export default function ChatList() {
             {list.length === 0 ? (
               <InviteFamily title={t('social.chat.inviteTitle')} help={t('social.chat.inviteHelp')} fallback={<EmptyState message={t('social.chat.empty')} />} />
             ) : null}
-            {list.map((chat) => (
+            {search.box(list)}
+            {search.nothing(list) ? <Note>{t('search.nothing')}</Note> : null}
+            {search.filter(list).map((chat) => (
               <Row
                 key={chat.id}
                 title={showName(chat.name)}
