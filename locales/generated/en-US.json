@@ -391,7 +391,9 @@
     "email_missing": "Add an email address first.",
     "email_code_wrong": "That code isn't right, or it has expired. Ask for a new one.",
     "consent_needed": "Tick \"I agree\" to save health details on your card.",
-    "consent_outdated": "The notice was updated. Read the new one and tick \"I agree\" again."
+    "consent_outdated": "The notice was updated. Read the new one and tick \"I agree\" again.",
+    "phone_taken": "Another AYWO account already uses that number.",
+    "phone_same": "That is already your number."
   },
   "language": {
     "title": "Choose your language",
@@ -415,7 +417,13 @@
     "removePhoto": "Remove photo",
     "email": "Email (optional)",
     "emailHelp": "Only used for the notices you switch on \"By email\". AYWO asks you to confirm it under Notifications.",
-    "emailBad": "That does not look like an email address."
+    "emailBad": "That does not look like an email address.",
+    "changeNumber": "Change my mobile number",
+    "changeNumberHelp": "Got a new SIM? Type the new number. We text it a code, and tell your old number that it was changed. Your trees and everything else stay as they are.",
+    "newNumber": "New mobile number",
+    "codeSentTo": "Code sent to {{phone}}",
+    "confirmNumber": "Use this number from now on",
+    "numberChanged": "Your number was changed. Sign in with the new one from now on."
   },
   "start": {
     "title": "Hey {{name}}, let's bring your family together",
@@ -1841,7 +1849,9 @@
       "turnOn": "Turn on",
       "againText": "Your 12-hour staff sign-in has ended. Type a new 6-digit code from your authenticator app to carry on. The page underneath, and anything you typed on it, is still there.",
       "needsCode": "Type all 6 digits of the code.",
-      "backToApp": "Back to the app"
+      "backToApp": "Back to the app",
+      "qrLabel": "QR code to scan with your authenticator app",
+      "orKey": "Scan the square with your authenticator app. Or type this key into it:"
     },
     "work": {
       "title": "Work queue",
@@ -2787,7 +2797,8 @@
       "confirmStartTitle": "Start SOS now?",
       "confirmStartBody": "Your SOS contacts hear an alarm or get a text, and can see your location.",
       "confirmStart": "Start SOS",
-      "needNumber": "Type the phone number first."
+      "needNumber": "Type the phone number first.",
+      "callThem": "Call {{name}} now"
     },
     "missing": {
       "who": "Choose who can see this.",

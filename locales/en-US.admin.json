@@ -495,7 +495,9 @@
       "turnOn": "Turn on",
       "againText": "Your 12-hour staff sign-in has ended. Type a new 6-digit code from your authenticator app to carry on. The page underneath, and anything you typed on it, is still there.",
       "needsCode": "Type all 6 digits of the code.",
-      "backToApp": "Back to the app"
+      "backToApp": "Back to the app",
+      "qrLabel": "QR code to scan with your authenticator app",
+      "orKey": "Scan the square with your authenticator app. Or type this key into it:"
     },
     "work": {
       "title": "Work queue",

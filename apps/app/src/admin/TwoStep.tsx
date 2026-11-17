@@ -1,8 +1,9 @@
 // Staff second sign-in step: set up an authenticator app once, then type its 6-digit code every 12 hours.
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import qrcode from 'qrcode-generator';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Linking, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { PrimaryButton } from '@/components/ui';
 import { api, saveStaffProof } from '@/lib/api';
 import { logOut } from '@/lib/logout';
@@ -65,6 +66,18 @@ export function TwoStepCode({ onDone, text }: { onDone: () => void; text?: strin
 export function TwoStepSetup({ onDone, onCancel }: { onDone: () => void; onCancel?: () => void }) {
   const { t } = useTranslation();
   const [setup, setSetup] = useState<{ secret: string; otpauth_url: string } | null>(null);
+  const qr = useMemo(() => {
+    if (!setup) return null;
+    try {
+      const code = qrcode(0, 'M');
+      code.addData(setup.otpauth_url);
+      code.make();
+      return code.createDataURL(6, 12);
+    } catch {
+      // The key underneath still works.
+      return null;
+    }
+  }, [setup]);
   const [code, setCode] = useState('');
   const action = useAction();
 
@@ -90,6 +103,9 @@ export function TwoStepSetup({ onDone, onCancel }: { onDone: () => void; onCance
         {setup ? (
           <>
             <Text style={styles.step}>{t('admin.twoStep.step1')}</Text>
+            {/* On a computer: scan this with the authenticator app on the phone, instead of typing the long key. */}
+            {qr ? <Image source={{ uri: qr }} style={styles.qr} accessibilityLabel={t('admin.twoStep.qrLabel')} /> : null}
+            <Text style={styles.small}>{t('admin.twoStep.orKey')}</Text>
             <Text selectable accessibilityLabel={t('admin.twoStep.keyLabel')} style={styles.secret}>
               {setup.secret.replace(/(.{4})/g, '$1 ').trim()}
             </Text>
@@ -114,6 +130,7 @@ export function TwoStepSetup({ onDone, onCancel }: { onDone: () => void; onCance
 }
 
 const styles = StyleSheet.create({
+  qr: { width: 220, height: 220, alignSelf: 'center' },
   ways: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   page: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.background },
   card: { width: '100%', maxWidth: 460, gap: 14, padding: 28, borderRadius: 24, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.cardBorder },

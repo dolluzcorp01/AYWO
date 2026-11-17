@@ -388,7 +388,8 @@
       "confirmStartTitle": "Start SOS now?",
       "confirmStartBody": "Your SOS contacts hear an alarm or get a text, and can see your location.",
       "confirmStart": "Start SOS",
-      "needNumber": "Type the phone number first."
+      "needNumber": "Type the phone number first.",
+      "callThem": "Call {{name}} now"
     },
     "missing": {
       "who": "Choose who can see this.",

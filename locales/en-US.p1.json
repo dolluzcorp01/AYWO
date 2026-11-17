@@ -112,7 +112,9 @@
     "version_conflict": "Someone else changed this just now. Load the latest and make your change again.",
     "already_in_tree": "You already have a card in this tree.",
     "plan_cancel_first": "Your AYWO Plus is still running. Cancel it first, or confirm that you understand it will go on being charged.",
-    "offline": "You're offline. This needs the internet, so try again when you're connected."
+    "offline": "You're offline. This needs the internet, so try again when you're connected.",
+    "phone_taken": "Another AYWO account already uses that number.",
+    "phone_same": "That is already your number."
   },
   "language": {
     "title": "Choose your language",
@@ -141,7 +143,13 @@
     "removePhoto": "Remove photo",
     "email": "Email (optional)",
     "emailHelp": "Only used for the notices you switch on \"By email\". AYWO asks you to confirm it under Notifications.",
-    "emailBad": "That does not look like an email address."
+    "emailBad": "That does not look like an email address.",
+    "changeNumber": "Change my mobile number",
+    "changeNumberHelp": "Got a new SIM? Type the new number. We text it a code, and tell your old number that it was changed. Your trees and everything else stay as they are.",
+    "newNumber": "New mobile number",
+    "codeSentTo": "Code sent to {{phone}}",
+    "confirmNumber": "Use this number from now on",
+    "numberChanged": "Your number was changed. Sign in with the new one from now on."
   },
   "start": {
     "title": "Hey {{name}}, let's bring your family together",

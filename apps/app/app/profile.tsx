@@ -12,11 +12,12 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { showToast } from '@/components/Toast';
 import { BackButton, Card, ErrorText, Field, Heading, Muted, PrimaryButton, TextButton } from '@/components/ui';
+import { PhoneField } from '@/components/PhoneField';
 import { safeNext, useMe, useUpdateMe } from '@/lib/account';
-import { uploadFile } from '@/lib/api';
+import { api, uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
-import { showPhone } from '@/lib/phone';
+import { showPhone, toE164 } from '@/lib/phone';
 import { pickPhoto } from '@/lib/pick';
 import { track } from '@/lib/track';
 import { colors, fonts, gradients } from '@/theme/tokens';
@@ -142,6 +143,7 @@ export default function Profile() {
           <View style={styles.numberBlock}>
             <Field label={t('profile.mobile')} value={showPhone(me.data.login_phone)} editable={false} style={styles.numberInput} />
             <Muted>{t('profile.mobileHelp')}</Muted>
+            {editing ? <ChangeNumber onChanged={() => void me.refetch()} /> : null}
           </View>
         ) : null}
 
@@ -154,6 +156,74 @@ export default function Profile() {
       </ScrollView>
       <PrimaryButton label={editing ? t('common.save') : t('common.continue')} onPress={save} disabled={!name.trim() || busy || emailBad} />
     </Screen>
+  );
+}
+
+/** A new SIM: a code goes to the new number, and the old number is told by text. */
+function ChangeNumber({ onChanged }: { onChanged: () => void }) {
+  const { t } = useTranslation();
+  const errorText = useErrorText();
+  const [open, setOpen] = useState(false);
+  const [number, setNumber] = useState('');
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<unknown>(null);
+  const phone = toE164(number);
+
+  async function run(step: () => Promise<void>) {
+    setBusy(true);
+    setFailure(null);
+    try {
+      await step();
+    } catch (error) {
+      setFailure(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+  const send = () =>
+    run(async () => {
+      await api.post('/me/phone/send', { phone });
+      setSentTo(phone);
+      setCode('');
+    });
+  const confirm = () =>
+    run(async () => {
+      await api.post('/me/phone/verify', { phone: sentTo, code });
+      showToast('success', t('profile.numberChanged'));
+      setOpen(false);
+      setSentTo(null);
+      setNumber('');
+      onChanged();
+    });
+
+  if (!open) return <TextButton label={t('profile.changeNumber')} onPress={() => setOpen(true)} />;
+  return (
+    <Card>
+      <Muted>{t('profile.changeNumberHelp')}</Muted>
+      {sentTo ? (
+        <>
+          <Field
+            label={t('profile.codeSentTo', { phone: showPhone(sentTo) })}
+            value={code}
+            onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
+            keyboardType="number-pad"
+            autoComplete="sms-otp"
+          />
+          {failure ? <ErrorText>{errorText(failure)}</ErrorText> : null}
+          <PrimaryButton label={t('profile.confirmNumber')} onPress={() => void confirm()} disabled={busy} missing={code.length === 6 ? null : t('otp.needCode')} />
+          <TextButton label={t('otp.changeNumber')} onPress={() => setSentTo(null)} />
+        </>
+      ) : (
+        <>
+          <PhoneField label={t('profile.newNumber')} value={number} onChangeText={setNumber} autoComplete="tel" />
+          {failure ? <ErrorText>{errorText(failure)}</ErrorText> : null}
+          <PrimaryButton label={t('phone.send')} onPress={() => void send()} disabled={busy} missing={phone ? null : t('phone.needNumber')} />
+        </>
+      )}
+      <TextButton label={t('common.cancel')} onPress={() => setOpen(false)} />
+    </Card>
   );
 }
 
