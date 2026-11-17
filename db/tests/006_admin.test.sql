@@ -1,7 +1,7 @@
 -- AYWO Admin and Sub-admin: permissions, privacy and the audit log. Run: supabase test db
 begin;
 create extension if not exists pgtap;
-select plan(113);
+select plan(116);
 
 insert into languages (code, name_en) values ('en', 'English') on conflict (code) do nothing;
 insert into kin_paths (code, description_en, generation, blood) values ('T_ADMIN', 'test path', 0, true) on conflict (code) do nothing;
@@ -144,6 +144,9 @@ select throws_ok($$ select admin_tree_people('10000000-0000-0000-0000-0000000000
 select is((admin_tree_people('10000000-0000-0000-0000-0000000000e1', 'support ticket 42') ->> 'total')::int, 2, 'the look returns the people');
 select ok(admin_tree_people('10000000-0000-0000-0000-0000000000e1', 'support ticket 42')::text not like '%98111%', 'no contact values in the look');
 select is((select count(*)::int from admin_audit_log where action = 'tree.people_viewed' and reason = 'support ticket 42' and target_id = '10000000-0000-0000-0000-0000000000e1'), 2, 'every look is audited with its reason');
+select ok((admin_audit_list('support ticket 42') ->> 'total')::int >= 2, 'the audit search also looks in the reason');
+select ok((admin_audit_list(p_action => 'words nobody typed', p_actions => array['tree_people_viewed']) ->> 'total')::int >= 2, 'and takes the action codes whose label matched');
+select is((admin_audit_list(p_from => now() + interval '1 day') ->> 'total')::int, 0, 'and can be cut down to a range of days');
 reset role;
 select throws_ok($$ delete from admin_audit_log $$, 'PT403', 'admin_audit_append_only', 'the audit log cannot be deleted');
 select throws_ok($$ update admin_audit_log set reason = 'changed' $$, 'PT403', 'admin_audit_append_only', 'the audit log cannot be changed');

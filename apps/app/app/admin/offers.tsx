@@ -9,7 +9,7 @@ import { Text, View } from 'react-native';
 import { checkDays, dayToIso, isoToDay, todayInIndia } from '@/admin/dates';
 import type { DayProblem } from '@/admin/dates';
 import type { Announcement, Campaign, Coupon } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Facts, Field, FilterChips, formatDate, FormDialog, Message, Missing, money, Pill, QueryState, SecondaryButton, useAction, useErrorText, useRefreshAfter } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Facts, Field, FilterChips, formatDate, formatDay, FormDialog, Message, Missing, money, Pill, QueryState, SecondaryButton, useAction, useErrorText, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
 
@@ -94,7 +94,7 @@ function Coupons() {
     {
       key: 'when',
       label: t('admin.offers.when'),
-      render: (c) => `${isoToDay(c.starts_at)} - ${c.ends_at ? isoToDay(c.ends_at) : t('admin.offers.noEnd')}`,
+      render: (c) => `${formatDay(c.starts_at, i18n.language)} - ${c.ends_at ? formatDay(c.ends_at, i18n.language) : t('admin.offers.noEnd')}`,
     },
     {
       key: 'used',
@@ -221,7 +221,7 @@ function CouponDialog({ coupon, onClose }: { coupon: Coupon | null; onClose: () 
           items={[
             [t('admin.offers.off'), offText],
             [t('admin.offers.on'), products.map((p) => t(`admin.orders.products.${p}`)).join(', ')],
-            [t('admin.offers.when'), `${isoToDay(dayToIso(starts, false))} - ${endDay || t('admin.offers.noEnd')}`],
+            [t('admin.offers.when'), `${formatDay(dayToIso(starts, false), i18n.language)} - ${ends ? formatDay(dayToIso(ends, true), i18n.language) : t('admin.offers.noEnd')}`],
             [t('admin.offers.maxUses'), maxUses || t('admin.offers.noLimit')],
             [t('admin.offers.perUser'), perUser],
             [t('admin.offers.shown'), shown ? t('admin.user360.yes') : t('admin.user360.no')],
@@ -275,7 +275,7 @@ function CouponDialog({ coupon, onClose }: { coupon: Coupon | null; onClose: () 
 
 // ===== Banners =====
 function Banners() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [view, setView] = useState<'active' | 'ended' | 'all'>('active');
   const [editing, setEditing] = useState<Announcement | 'new' | null>(null);
   const query = useQuery({ queryKey: ['admin', 'announcements', view], queryFn: () => api.get<Announcement[]>(`/admin/announcements?view=${view}`) });
@@ -294,7 +294,7 @@ function Banners() {
     },
     { key: 'where', label: t('admin.offers.where'), render: (a) => a.placements.map((p) => t(`admin.offers.placements.${p}`)).join(', ') },
     { key: 'who', label: t('admin.offers.who'), flex: 0.8, render: (a) => t(`admin.offers.audiences.${a.audience}`) },
-    { key: 'when', label: t('admin.offers.when'), render: (a) => `${isoToDay(a.starts_at)} - ${a.ends_at ? isoToDay(a.ends_at) : t('admin.offers.noEnd')}` },
+    { key: 'when', label: t('admin.offers.when'), render: (a) => `${formatDay(a.starts_at, i18n.language)} - ${a.ends_at ? formatDay(a.ends_at, i18n.language) : t('admin.offers.noEnd')}` },
     {
       key: 'stats',
       label: t('admin.offers.reach'),
@@ -337,7 +337,7 @@ function Banners() {
 }
 
 function BannerDialog({ item, onClose }: { item: Announcement | null; onClose: () => void }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const refreshAfter = useRefreshAfter();
   // A banner can hold several languages, or one this page has no chip for. 'keep' leaves that list exactly as it is.
   const before = item?.languages?.length ? item.languages : null;
@@ -407,7 +407,7 @@ function BannerDialog({ item, onClose }: { item: Announcement | null; onClose: (
             [t('admin.offers.bannerTitle'), title.trim()],
             [t('admin.offers.where'), placements.map((p) => t(`admin.offers.placements.${p}`)).join(', ')],
             [t('admin.offers.who'), `${t(`admin.offers.audiences.${audience}`)} · ${t(`admin.offers.regions.${region}`)} · ${languageText}`],
-            [t('admin.offers.when'), `${isoToDay(dayToIso(starts, false))} - ${endDay || t('admin.offers.noEnd')}`],
+            [t('admin.offers.when'), `${formatDay(dayToIso(starts, false), i18n.language)} - ${ends ? formatDay(dayToIso(ends, true), i18n.language) : t('admin.offers.noEnd')}`],
             [t('admin.offers.link'), link.trim() || '-'],
           ]}
         />

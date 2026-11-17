@@ -1,9 +1,11 @@
 // Staff second sign-in step: set up an authenticator app once, then type its 6-digit code every 12 hours.
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { PrimaryButton } from '@/components/ui';
 import { api, saveStaffProof } from '@/lib/api';
+import { logOut } from '@/lib/logout';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 import { Message, SecondaryButton, useAction } from './ui';
 
@@ -28,6 +30,7 @@ function CodeBox({ value, onChange, onSubmit, label }: { value: string; onChange
 /** Asks for today's code. onDone runs once the proof is saved. */
 export function TwoStepCode({ onDone, text }: { onDone: () => void; text?: string }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const [code, setCode] = useState('');
   const action = useAction();
   const submit = () =>
@@ -48,6 +51,11 @@ export function TwoStepCode({ onDone, text }: { onDone: () => void; text?: strin
         {action.failure ? <Message text={action.failure} alert /> : null}
         <PrimaryButton label={t('admin.twoStep.continue')} onPress={submit} disabled={action.busy} missing={code.length !== 6 ? t('admin.twoStep.needsCode') : null} />
         <Text style={styles.small}>{t('admin.twoStep.lost')}</Text>
+        {/* Without the phone at hand nobody should be stuck on this screen. */}
+        <View style={styles.ways}>
+          <SecondaryButton label={t('admin.twoStep.backToApp')} onPress={() => router.replace('/home')} />
+          <SecondaryButton label={t('settings.signOut')} onPress={() => void logOut()} />
+        </View>
       </View>
     </View>
   );
@@ -106,6 +114,7 @@ export function TwoStepSetup({ onDone, onCancel }: { onDone: () => void; onCance
 }
 
 const styles = StyleSheet.create({
+  ways: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   page: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.background },
   card: { width: '100%', maxWidth: 460, gap: 14, padding: 28, borderRadius: 24, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.cardBorder },
   title: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 24, letterSpacing: -0.4 },

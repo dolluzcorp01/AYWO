@@ -54,7 +54,15 @@ export default function AdminBroadcast() {
             setBody('');
             setAsking(false);
           }}
-        />
+        >
+          {/* The last look before it goes to everyone: exactly what they will read. */}
+          <View style={{ gap: 4 }}>
+            <Text style={adminStyles.fieldLabel}>{t('admin.broadcast.preview')}</Text>
+            <Text style={adminStyles.cellStrong}>{title.trim()}</Text>
+            <Text style={adminStyles.cellMuted}>{body.trim()}</Text>
+          </View>
+          <Message text={t('admin.broadcast.limitNote')} />
+        </FormDialog>
       ) : null}
     </AdminPage>
   );

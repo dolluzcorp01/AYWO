@@ -1390,7 +1390,9 @@
       "discardClose": "Throw it away and close",
       "needsText_one": "Still needed: {{field}}, at least {{count}} character.",
       "needsText_other": "Still needed: {{field}}, at least {{count}} characters.",
-      "moreThan": "{{max}}+"
+      "moreThan": "{{max}}+",
+      "notAllowedHelp": "This page needs: {{needs}}. Ask an AYWO Admin if you should have it.",
+      "backToDashboard": "Back to the dashboard"
     },
     "gate": {
       "webOnly": "The admin panel opens only on the web.",
@@ -1445,7 +1447,7 @@
       "users": "find accounts, block and unblock them",
       "trees": "find trees; see a tree's people with a reason",
       "payments": "see plans and orders, refund orders, give free Plus days",
-      "support": "answer help tickets, look up accounts",
+      "support": "answer help tickets, look up accounts, give free AYWO Plus days",
       "moderation": "decide abuse reports about memories, comments, chats and accounts",
       "orders": "print and ship posters and books, see shipping addresses with a reason",
       "marketing": "coupons, scrolling banners and promotional messages",
@@ -1713,7 +1715,7 @@
     "audit": {
       "title": "Audit log",
       "subtitle": "Every staff action. Nobody can change or delete this record.",
-      "search": "Filter by action, for example takedown",
+      "search": "Search: an action (removed staff), a staff name, or a reason",
       "empty": "Nothing recorded.",
       "when": "When",
       "who": "Who",
@@ -1729,10 +1731,15 @@
         "config": "App setting",
         "invite": "Invite",
         "order": "Order",
-        "role": "Staff role",
+        "role": "Team role",
         "work_item": "Work item",
         "none": "-",
-        "takedown": "Takedown request"
+        "takedown": "Takedown request",
+        "ticket": "Help ticket",
+        "coupon": "Coupon",
+        "announcement": "Banner",
+        "report": "Abuse report",
+        "work": "Work item"
       },
       "reason": "Reason",
       "details": "Details",
@@ -1781,6 +1788,16 @@
         "config_changed": "Changed app settings",
         "takedown_person_search": "Searched for a person for a takedown",
         "staff_invite_changed": "Changed a staff invite"
+      },
+      "from": "From this day",
+      "to": "Up to this day",
+      "keys": {
+        "role": "Role",
+        "permissions": "Permissions",
+        "found": "Matches found",
+        "days": "Days",
+        "fulfilment": "Order step",
+        "recipients": "People reached"
       }
     },
     "broadcast": {
@@ -1793,7 +1810,9 @@
       "confirmText": "It goes to every account by push and email, and it can't be taken back. The reason you write is kept in the audit log.",
       "reason": "Why is this notice needed?",
       "sent_one": "Sent to {{count}} account.",
-      "sent_other": "Sent to {{count}} accounts."
+      "sent_other": "Sent to {{count}} accounts.",
+      "preview": "Everyone will read this",
+      "limitNote": "It goes to every member at once and cannot be taken back. At most 3 notices can be sent in a day."
     },
     "menuGroup": {
       "work": "Work",
@@ -1816,7 +1835,8 @@
       "step2": "2. Type the 6-digit code the app shows:",
       "turnOn": "Turn on",
       "againText": "Your 12-hour staff sign-in has ended. Type a new 6-digit code from your authenticator app to carry on. The page underneath, and anything you typed on it, is still there.",
-      "needsCode": "Type all 6 digits of the code."
+      "needsCode": "Type all 6 digits of the code.",
+      "backToApp": "Back to the app"
     },
     "work": {
       "title": "Work queue",
@@ -1868,7 +1888,8 @@
       "close": "Close",
       "noteFirst": "Add your note, or clear it, before leaving this item.",
       "needNote": "Write a note to add it.",
-      "doneHelp": "\"Done\" only ticks this off the work queue. The ticket, report or request itself is answered on its own page: use \"Go to the page to decide\". Deciding it there marks this done by itself."
+      "doneHelp": "\"Done\" only ticks this off the work queue. The ticket, report or request itself is answered on its own page: use \"Go to the page to decide\". Deciding it there marks this done by itself.",
+      "dueDay": "Due on"
     },
     "reports": {
       "title": "Abuse reports",
@@ -2174,7 +2195,8 @@
       "plans": "Plans by store",
       "languages": "Languages",
       "devices": "Phones",
-      "funnelAllTime": "Funnel (all time, from accounts)"
+      "funnelAllTime": "Funnel (all time, from accounts)",
+      "webBrowser": "Web browser"
     },
     "settings": {
       "title": "App settings",

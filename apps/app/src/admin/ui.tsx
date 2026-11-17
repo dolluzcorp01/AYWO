@@ -1,6 +1,7 @@
 // Shared pieces of the admin panel: page frame, table, search, paging, dialogs. Web only, using the frozen tokens.
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -63,12 +64,23 @@ export function AdminPage({
 }) {
   const { t } = useTranslation();
   const access = useAdminAccess();
+  const router = useRouter();
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.pageBody}>
       <View style={styles.pageInner}>
         <Heading>{title}</Heading>
         {subtitle ? <Muted>{subtitle}</Muted> : null}
-        {access.can(gates) ? children : <Message text={t('admin.common.notAllowed')} alert />}
+        {access.can(gates) ? (
+          children
+        ) : (
+          <>
+            <Message text={t('admin.common.notAllowed')} alert />
+            <Text style={styles.cellMuted}>{t('admin.common.notAllowedHelp', { needs: gates.map((g) => t(`admin.permissions.${g}`, { defaultValue: g })).join(', ') })}</Text>
+            <View style={styles.actions}>
+              <SecondaryButton main label={t('admin.common.backToDashboard')} onPress={() => router.navigate('/admin')} />
+            </View>
+          </>
+        )}
       </View>
     </ScrollView>
   );
@@ -333,7 +345,13 @@ export function Pill({ label, alert }: { label: string; alert?: boolean }) {
   );
 }
 
-export function StatCard({ label, value, onPress }: { label: string; value: number; onPress?: () => void }) {
+/** A date with no time, as people read it: 17 Nov 2026. For offer and banner dates, which are whole days in India. */
+export function formatDay(iso: string | null | undefined, language: string): string {
+  if (!iso) return '-';
+  return new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(new Date(iso));
+}
+
+export function StatCard({ label, value, onPress }: { label: string; value: number | string; onPress?: () => void }) {
   const body = (
     <Card>
       <Text style={styles.statValue}>{value}</Text>

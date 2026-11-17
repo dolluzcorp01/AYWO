@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
+import { DateField } from '@/components/DateTimeField';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -10,6 +11,11 @@ import type { WorkDetail, WorkItem, WorkKind, WorkPage, WorkPriority, WorkStatus
 import { Actions, AdminPage, adminStyles, CloseGuard, DataTable, DialogFrame, Field, FilterChips, formatDate, Message, Missing, Pager, Pill, QueryState, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
+
+/** "2026-11-17" for a moment, as the day it is in India. */
+function dayInIndia(iso: string): string {
+  return new Date(Date.parse(iso) + 5.5 * 3_600_000).toISOString().slice(0, 10);
+}
 
 type View_ = 'open' | 'mine' | 'unassigned' | 'overdue' | 'done';
 const VIEWS: View_[] = ['open', 'mine', 'unassigned', 'overdue', 'done'];
@@ -157,6 +163,13 @@ function WorkDialog({ id, onClose }: { id: string; onClose: () => void }) {
               value={item.assignee_id ?? 'none'}
               onChange={(value: string) => change({ assignee_id: value === 'none' ? null : value })}
               options={[{ value: 'none', label: t('admin.work.nobody') }, ...item.assignable.map((a) => ({ value: a.profile_id, label: a.name }))]}
+            />
+            {/* Any day can be picked, earlier or later; "One more day" stays as the quick way. */}
+            <DateField
+              label={t('admin.work.dueDay')}
+              value={dayInIndia(item.due_at)}
+              min={dayInIndia(new Date().toISOString())}
+              onChange={(day) => day && change({ due_at: new Date(`${day}T18:00:00+05:30`).toISOString() })}
             />
             <Actions>
               <SecondaryButton label={t('admin.work.plusDay')} onPress={() => change({ due_at: new Date(Math.max(Date.now(), Date.parse(item.due_at)) + 86_400_000).toISOString() })} />

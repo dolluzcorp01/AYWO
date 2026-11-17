@@ -3,7 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { AdminPage, adminStyles, DataTable, FilterChips, formatDate, Pager, PAGE_SIZE, QueryState, Section, StatCard, StatRow } from '@/admin/ui';
+import { AdminPage, adminStyles, DataTable, FilterChips, formatDate, money, Pager, PAGE_SIZE, QueryState, Section, StatCard, StatRow } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import type { PaymentsOverview, PlanRow } from '@/admin/types';
 import { api } from '@/lib/api';
@@ -77,7 +77,7 @@ export default function AdminPayments() {
                     <StatCard key={state} label={t(`admin.payments.orderStatus.${state}`, { defaultValue: state })} value={count} />
                   ))}
                   {Object.entries(data.orders.paid_minor_by_currency).map(([currency, minor]) => (
-                    <StatCard key={currency} label={t('admin.payments.paidIn', { currency })} value={Number(minor) / 100} />
+                    <StatCard key={currency} label={t('admin.payments.paidIn', { currency })} value={money(Number(minor), currency, i18n.language)} />
                   ))}
                 </StatRow>
               </Section>

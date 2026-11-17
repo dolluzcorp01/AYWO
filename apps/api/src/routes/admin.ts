@@ -508,8 +508,27 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   // ----- Audit log: AYWO Admin only -----
   app.get('/admin/audit', (req) => {
     const q = z
-      .object({ action: z.string().trim().max(100).optional(), actor: z.string().uuid().optional(), ...paging })
+      .object({
+        action: z.string().trim().max(100).optional(),
+        actor: z.string().uuid().optional(),
+        // The action codes whose plain-language label matched what was typed, comma separated.
+        actions: z.string().max(2000).regex(/^[a-z0-9_.,]*$/).optional(),
+        // Whole days, as "2026-11-17", in India.
+        from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+        to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+        ...paging,
+      })
       .parse(req.query);
-    return staffCall(req, ['audit'], 'admin_audit_list', [q.action || null, q.actor ?? null, q.limit, q.offset]);
+    const codes = (q.actions ?? '').split(',').filter(Boolean).slice(0, 80);
+    return staffCall(req, ['audit'], 'admin_audit_list', [
+      q.action || null,
+      q.actor ?? null,
+      q.limit,
+      q.offset,
+      codes.length ? codes : null,
+      q.from ? `${q.from}T00:00:00+05:30` : null,
+      // The "to" day is included: up to the start of the day after.
+      q.to ? new Date(Date.parse(`${q.to}T00:00:00+05:30`) + 86_400_000).toISOString() : null,
+    ]);
   });
 }

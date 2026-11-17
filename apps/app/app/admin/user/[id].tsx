@@ -154,7 +154,8 @@ export default function AdminUser() {
             ...(doing === 'plus' ? [{ name: 'days', label: t('admin.user360.days'), minLength: 1, initial: '30' }] : []),
             { name: 'reason', label: t('admin.common.reason'), minLength: 5, multiline: true },
           ]}
-          confirmLabel={t('admin.common.save')}
+          // The button says what it does. "Save" on a box that blocks someone tells nobody anything.
+          confirmLabel={t(doing === 'block' ? 'admin.users.block' : doing === 'unblock' ? 'admin.users.unblock' : doing === 'end' ? 'admin.user360.endSessions' : 'admin.user360.givePlus')}
           danger={doing === 'block'}
           onCancel={() => setDoing(null)}
           onConfirm={async ({ reason: why, days }) => {
