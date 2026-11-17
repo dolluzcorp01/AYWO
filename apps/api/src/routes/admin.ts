@@ -423,6 +423,12 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const q = z.object({ status: z.enum(['open', 'removed', 'dismissed']).default('open'), ...paging }).parse(req.query);
     return staffCall(req, ['takedowns'], 'admin_takedowns_list', [q.status, q.limit, q.offset]);
   });
+  // A request with only a name: the people that name could be, for staff to pick from.
+  app.get('/admin/takedowns/:id/people', (req) => {
+    const { id } = idParam.parse(req.params);
+    const q = z.object({ q: z.string().trim().min(2).max(120) }).parse(req.query);
+    return staffCall(req, ['takedowns'], 'admin_takedown_people', [id, q.q]);
+  });
   app.post('/admin/takedowns/:id/decide', (req) => {
     const { id } = idParam.parse(req.params);
     const body = z

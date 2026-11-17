@@ -10,7 +10,7 @@ import { Card, ConfirmDialog, Field, Pills, PrimaryButton, SecondaryButton, Sect
 import { api } from '@/lib/api';
 import { startOrder } from '@/pay/order';
 import { InviteCard } from '@/social/InviteCard';
-import { ActionError, Gate, Note, Page, parseDateTime, Row, useName, useWhen } from '@/social/parts';
+import { ActionError, Gate, Note, Page, parseDateTime, Row, todayIso, useName, useWhen } from '@/social/parts';
 import { FREE_DESIGNS, PREMIUM_DESIGNS } from '@/social/types';
 import type { Design, EventDetail, PollRow, RsvpAnswer } from '@/social/types';
 import { colors, fonts } from '@/theme/tokens';
@@ -61,7 +61,15 @@ export default function InviteDetail() {
     client.invalidateQueries({ queryKey: key });
     client.invalidateQueries({ queryKey: ['events'] });
     client.invalidateQueries({ queryKey: ['social-home'] });
+    // The family calendar shows invitations too: a new date, or a cancelled one, must show there at once.
+    client.invalidateQueries({ queryKey: ['calendar'] });
   };
+  // A date already gone is almost always a slip. A past event can still have its title or place fixed, so the
+  // edit box only objects when the date itself was moved to the past.
+  const isPast = (d: string, c: string) => (parseDateTime(d, c)?.getTime() ?? Infinity) < Date.now();
+  const detailsAt = details ? parseDateTime(details.date, details.time) : null;
+  const savedAt = event.data?.starts_at ? new Date(event.data.starts_at).getTime() : null;
+  const movedToPast = !!detailsAt && detailsAt.getTime() < Date.now() && (savedAt === null || Math.abs(savedAt - detailsAt.getTime()) > 60_000);
 
   const rsvp = useMutation({
     mutationFn: async (input: { answer: RsvpAnswer; onlyGuests?: boolean }) => {
@@ -224,12 +232,13 @@ export default function InviteDetail() {
               {isPop && e.is_mine && !e.decided && !e.cancelled ? (
                 <Card style={styles.card}>
                   <SectionTitle>{t('social.pop.decide')}</SectionTitle>
-                  <DateField label={t('social.dateLabel')} value={date} onChange={setDate} />
+                  <DateField label={t('social.dateLabel')} value={date} onChange={setDate} min={todayIso()} invalid={isPast(date, time)} />
                   <TimeField label={t('social.timeLabel')} value={time} onChange={setTime} />
+                  {isPast(date, time) ? <Note>{t('social.missing.future')}</Note> : null}
                   <Field label={t('social.invites.place')} value={place} onChangeText={setPlace} maxLength={200} />
                   <Field label={t('social.pop.menu')} value={menu} onChangeText={setMenu} maxLength={200} />
                   <ActionError error={decide.error} />
-                  <SmallButton label={t('social.pop.settle')} disabled={!parseDateTime(date, time) || decide.isPending} onPress={() => decide.mutate()} />
+                  <SmallButton label={t('social.pop.settle')} disabled={!parseDateTime(date, time) || isPast(date, time) || decide.isPending} onPress={() => decide.mutate()} />
                 </Card>
               ) : null}
 
@@ -304,7 +313,7 @@ export default function InviteDetail() {
         title={t('social.invites.editDetails')}
         confirmLabel={t('common.save')}
         busy={saveDetails.isPending}
-        onConfirm={() => details && details.title.trim() && parseDateTime(details.date, details.time) && saveDetails.mutate(details)}
+        onConfirm={() => details && details.title.trim() && parseDateTime(details.date, details.time) && !movedToPast && saveDetails.mutate(details)}
         onCancel={() => setDetails(null)}
       >
         {details ? (
@@ -314,6 +323,7 @@ export default function InviteDetail() {
             <TimeField label={t('social.timeLabel')} value={details.time} onChange={(v) => setDetails({ ...details, time: v })} />
             {!details.title.trim() ? <Note>{t('social.missing.title')}</Note> : null}
             {!parseDateTime(details.date, details.time) ? <Note>{t('social.missing.when')}</Note> : null}
+            {movedToPast ? <Note>{t('social.missing.future')}</Note> : null}
             <Field label={t('social.invites.place')} value={details.place} onChangeText={(v) => setDetails({ ...details, place: v })} maxLength={200} />
             <Field label={t('social.invites.note')} value={details.note} onChangeText={(v) => setDetails({ ...details, note: v })} multiline maxLength={1000} />
             <Note>{t('social.invites.editTellsEveryone')}</Note>

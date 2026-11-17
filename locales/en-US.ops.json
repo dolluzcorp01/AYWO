@@ -167,7 +167,7 @@
         "family_book": "A printed book with your family tree, people and memories."
       },
       "whichTree": "Which family tree?",
-      "quantity": "How many (1 to 10)",
+      "quantity": "How many",
       "address": "Send to",
       "name": "Name",
       "line1": "House and street",
@@ -195,7 +195,10 @@
       "payAgain": "Try paying again",
       "notPaidTitle": "The payment was not completed",
       "notPaid": "We have not received a payment for this order. If you closed the payment page without paying, nothing was charged and you can try again below. If you did pay, do not pay again: your order will show in My orders within a few minutes.",
-      "seeOrders": "See My orders"
+      "seeOrders": "See My orders",
+      "fewer": "One fewer",
+      "more": "One more",
+      "checkingCoupon": "Checking your code..."
     },
     "refer": {
       "title": "Invite and earn",

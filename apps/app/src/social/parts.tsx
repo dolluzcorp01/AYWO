@@ -130,6 +130,12 @@ export function parseDateTime(date: string, time: string): Date | null {
   return value;
 }
 
+/** Today as "2026-12-25", in the person's own time zone: the earliest day an event can be planned for. */
+export function todayIso(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
 /** Every line that has words on it. */
 export function lines(text: string): string[] {
   return text.split('\n').map((l) => l.trim()).filter(Boolean);

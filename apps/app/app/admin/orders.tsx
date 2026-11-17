@@ -1,6 +1,7 @@
 // Posters and books: print, ship with tracking, deliver. Refunds go back through Razorpay or Stripe.
 // The full shipping address opens only with a reason, which is recorded.
-import { useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';
@@ -15,7 +16,13 @@ export default function AdminOrders() {
   const { t, i18n } = useTranslation();
   const access = useAdminAccess();
   const refreshAfter = useRefreshAfter();
-  const [step, setStep] = useState<Fulfilment | 'all'>('queued');
+  // A dashboard card opens the step it counted.
+  const params = useLocalSearchParams<{ step?: string }>();
+  const asked = (['queued', 'printing', 'shipped', 'delivered', 'cancelled'] as Fulfilment[]).find((s) => s === params.step);
+  const [step, setStep] = useState<Fulfilment | 'all'>(asked ?? 'queued');
+  useEffect(() => {
+    if (asked) setStep(asked);
+  }, [asked]);
   const [q, setQ] = useState('');
   const [moving, setMoving] = useState<OrderRow | null>(null);
   const [address, setAddress] = useState<OrderRow | null>(null);

@@ -243,11 +243,20 @@
       "remove": "Remove from tree",
       "dismiss": "Dismiss",
       "note": "Your note (recorded in the audit log)",
-      "personId": "Person id (find it on the Trees page)",
       "removeTitle": "Remove {{name}}?",
       "removeText": "This person disappears from the tree, their contact details are deleted, and the tree's Creator is told. It can't be brought back from history.",
       "dismissTitle": "Dismiss the request about {{name}}?",
-      "dismissText": "Nothing changes in the tree. Reply to the person asking yourself."
+      "dismissText": "Nothing changes in the tree. Reply to the person asking yourself.",
+      "whichPerson": "Which person is this about?",
+      "searchName": "Type the person's name",
+      "searchHelp": "Type at least 2 letters of the name, then press Search.",
+      "noMatch": "Nobody with that name is in any tree. Try a shorter or different spelling.",
+      "tooMany": "Only the first 20 are shown. Type more of the name to narrow it down.",
+      "thisOne": "This one",
+      "pickAnother": "Pick someone else",
+      "needPerson": "Still needed: pick which person to remove.",
+      "born": "Born {{year}}",
+      "madeBy": "Tree made by {{name}}"
     },
     "payments": {
       "title": "Payments",
@@ -371,7 +380,8 @@
         "order": "Order",
         "role": "Staff role",
         "work_item": "Work item",
-        "none": "-"
+        "none": "-",
+        "takedown": "Takedown request"
       },
       "reason": "Reason",
       "details": "Details",
@@ -417,7 +427,8 @@
         "announcement_created": "Made a banner",
         "announcement_updated": "Changed a banner",
         "campaign_sent": "Sent a promotional message",
-        "config_changed": "Changed app settings"
+        "config_changed": "Changed app settings",
+        "takedown_person_search": "Searched for a person for a takedown"
       }
     },
     "broadcast": {
@@ -504,7 +515,8 @@
       "addNote": "Add note",
       "close": "Close",
       "noteFirst": "Add your note, or clear it, before leaving this item.",
-      "needNote": "Write a note to add it."
+      "needNote": "Write a note to add it.",
+      "doneHelp": "\"Done\" only ticks this off the work queue. The ticket, report or request itself is answered on its own page: use \"Go to the page to decide\". Deciding it there marks this done by itself."
     },
     "reports": {
       "title": "Abuse reports",

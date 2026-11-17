@@ -24,6 +24,7 @@ export default function Privacy() {
   const [warning, setWarning] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [word, setWord] = useState('');
   const confirmWord = t('settings.deleteWord');
 
@@ -67,7 +68,18 @@ export default function Privacy() {
           {exportData.isError ? <ErrorText>{errorText(exportData.error)}</ErrorText> : null}
         </Card>
 
-        <SecondaryButton label={t('settings.signOut')} onPress={() => logOut()} />
+        <SecondaryButton label={t('settings.signOut')} onPress={() => setSigningOut(true)} />
+        <ConfirmDialog
+          visible={signingOut}
+          title={t('nav.signOutTitle')}
+          message={t('nav.signOutMessage')}
+          confirmLabel={t('settings.signOut')}
+          onConfirm={() => {
+            setSigningOut(false);
+            void logOut();
+          }}
+          onCancel={() => setSigningOut(false)}
+        />
 
         <Card style={styles.card}>
           <TextButton label={t('legal.termsLink')} onPress={() => router.push('/terms')} />

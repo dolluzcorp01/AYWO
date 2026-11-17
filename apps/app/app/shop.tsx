@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { PhoneField } from '@/components/PhoneField';
 import { Text } from '@/components/Text';
-import { Card, Field, Pills, PrimaryButton, SectionTitle, SmallButton } from '@/components/ui';
+import { Card, Field, Label, Pills, PrimaryButton, SectionTitle, SmallButton } from '@/components/ui';
 import { toE164 } from '@/lib/phone';
 import { api } from '@/lib/api';
 import { mainTree, useMe, useTrees } from '@/lib/account';
@@ -29,7 +29,7 @@ export default function Shop() {
   const products = useQuery({ queryKey: ['shop-products'], queryFn: () => api.get<Products>('/pay/products') });
   const [product, setProduct] = useState<Product>(params.product === 'family_book' ? 'family_book' : 'tree_poster');
   const [treeId, setTreeId] = useState<string | null>(null);
-  const [quantity, setQuantity] = useState('1');
+  const [count, setCount] = useState(1);
   const [address, setAddress] = useState<ShippingAddress>({ ...EMPTY, name: me.data?.display_name ?? '' });
   // Their name and sign-in number are the delivery name and phone unless they change them; filled in once the
   // account loads (it may still be loading on the first render), never over something typed.
@@ -40,6 +40,9 @@ export default function Shop() {
   }, [me.data?.display_name, me.data?.login_phone]);
   const [code, setCode] = useState((params.coupon ?? '').toUpperCase());
   const [quote, setQuote] = useState<CouponQuote | null>(null);
+  // The code the person asked to use: by tapping Apply, or by arriving from "Use it" on an offer. It is checked again
+  // whenever the product or the number changes, so the discount is never dropped without a word.
+  const [applied, setApplied] = useState<string | null>(params.coupon ? params.coupon.toUpperCase() : null);
   // 'unconfirmed': the payment page was closed and the server has seen no payment (see pay/order.ts).
   const [state, setState] = useState<'idle' | 'started' | 'cancelled' | 'unconfirmed'>('idle');
   const orderId = useRef<string | null>(null);
@@ -50,16 +53,23 @@ export default function Shop() {
   }, [myName]);
 
   const tree = treeId ?? mainTree(trees.data)?.id ?? null;
-  const count = Math.min(10, Math.max(1, Number(quantity) || 1));
   const price = products.data?.products.find((p) => p.product === product);
   const full = (price?.amount_minor ?? 0) * count;
   const currency = products.data?.currency ?? 'INR';
 
   const check = useMutation({
-    mutationFn: () => api.rpc<CouponQuote>('coupon_quote', { p_code: code.trim(), p_product: product, p_amount_minor: full, p_currency: currency }),
-    onSuccess: setQuote,
+    mutationFn: (input: { code: string; product: Product; amount: number }) =>
+      api.rpc<CouponQuote>('coupon_quote', { p_code: input.code, p_product: input.product, p_amount_minor: input.amount, p_currency: currency }),
+    // An answer for an older product or number must not show against the new total.
+    onSuccess: (answer, input) => {
+      if (input.code === applied && input.product === product && input.amount === full) setQuote(answer);
+    },
     onError: () => setQuote(null),
   });
+  const checkCoupon = check.mutate;
+  useEffect(() => {
+    if (applied && full > 0) checkCoupon({ code: applied, product, amount: full });
+  }, [applied, product, full, currency, checkCoupon]);
 
   const pay = useMutation({
     mutationFn: () =>
@@ -142,7 +152,14 @@ export default function Shop() {
               </>
             ) : null}
 
-            <Field label={t('ops.shop.quantity')} value={quantity} onChangeText={(v) => { setQuantity(v.replace(/\D/g, '').slice(0, 2)); setQuote(null); }} keyboardType="number-pad" />
+            <View style={styles.block}>
+              <Label>{t('ops.shop.quantity')}</Label>
+              <View style={styles.stepper}>
+                <SmallButton kind="plain" label="−" accessibilityLabel={t('ops.shop.fewer')} disabled={count <= 1} onPress={() => { setCount(count - 1); setQuote(null); }} />
+                <Text accessibilityLiveRegion="polite" style={styles.count}>{count}</Text>
+                <SmallButton kind="plain" label="+" accessibilityLabel={t('ops.shop.more')} disabled={count >= 10} onPress={() => { setCount(count + 1); setQuote(null); }} />
+              </View>
+            </View>
 
             {needsAddress ? (
               <Card style={styles.block}>
@@ -163,11 +180,12 @@ export default function Shop() {
               <SectionTitle>{t('ops.shop.coupon')}</SectionTitle>
               <View style={styles.couponRow}>
                 <View style={styles.couponField}>
-                  <Field value={code} onChangeText={(v) => { setCode(v.toUpperCase().replace(/[^A-Z0-9]/g, '')); setQuote(null); }} maxLength={20} placeholder={t('ops.shop.couponPlaceholder')} accessibilityLabel={t('ops.shop.coupon')} autoCapitalize="characters" />
+                  <Field value={code} onChangeText={(v) => { setCode(v.toUpperCase().replace(/[^A-Z0-9]/g, '')); setQuote(null); setApplied(null); check.reset(); }} maxLength={20} placeholder={t('ops.shop.couponPlaceholder')} accessibilityLabel={t('ops.shop.coupon')} autoCapitalize="characters" />
                 </View>
-                <SmallButton label={t('ops.shop.apply')} disabled={code.length < 4 || check.isPending || !price} onPress={() => check.mutate()} />
+                <SmallButton label={t('ops.shop.apply')} disabled={code.length < 4 || check.isPending || !price} onPress={() => (applied === code ? checkCoupon({ code, product, amount: full }) : setApplied(code))} />
               </View>
               {quote ? <Text style={styles.good}>{t('ops.shop.saved', { amount: formatMoney(quote.discount_minor, currency, i18n.language), title: quote.title })}</Text> : null}
+              {applied && check.isPending ? <Note>{t('ops.shop.checkingCoupon')}</Note> : null}
               <ActionError error={check.error} />
             </Card>
 
@@ -191,7 +209,7 @@ export default function Shop() {
             ) : null}
             <PrimaryButton
               label={pay.isPending ? t('ops.shop.paying') : state === 'unconfirmed' ? t('ops.shop.payAgain') : t('ops.shop.pay')}
-              disabled={!price || pay.isPending}
+              disabled={!price || pay.isPending || (!!applied && check.isPending)}
               missing={pay.isPending ? null : missing}
               onPress={() => pay.mutate()}
             />
@@ -205,6 +223,8 @@ export default function Shop() {
 
 const styles = StyleSheet.create({
   block: { gap: 10 },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  count: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 20, minWidth: 28, textAlign: 'center' },
   couponRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
   couponField: { flex: 1 },
   good: { color: colors.good, fontFamily: fonts.bold, fontSize: 14 },

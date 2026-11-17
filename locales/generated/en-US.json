@@ -1544,11 +1544,20 @@
       "remove": "Remove from tree",
       "dismiss": "Dismiss",
       "note": "Your note (recorded in the audit log)",
-      "personId": "Person id (find it on the Trees page)",
       "removeTitle": "Remove {{name}}?",
       "removeText": "This person disappears from the tree, their contact details are deleted, and the tree's Creator is told. It can't be brought back from history.",
       "dismissTitle": "Dismiss the request about {{name}}?",
-      "dismissText": "Nothing changes in the tree. Reply to the person asking yourself."
+      "dismissText": "Nothing changes in the tree. Reply to the person asking yourself.",
+      "whichPerson": "Which person is this about?",
+      "searchName": "Type the person's name",
+      "searchHelp": "Type at least 2 letters of the name, then press Search.",
+      "noMatch": "Nobody with that name is in any tree. Try a shorter or different spelling.",
+      "tooMany": "Only the first 20 are shown. Type more of the name to narrow it down.",
+      "thisOne": "This one",
+      "pickAnother": "Pick someone else",
+      "needPerson": "Still needed: pick which person to remove.",
+      "born": "Born {{year}}",
+      "madeBy": "Tree made by {{name}}"
     },
     "payments": {
       "title": "Payments",
@@ -1672,7 +1681,8 @@
         "order": "Order",
         "role": "Staff role",
         "work_item": "Work item",
-        "none": "-"
+        "none": "-",
+        "takedown": "Takedown request"
       },
       "reason": "Reason",
       "details": "Details",
@@ -1718,7 +1728,8 @@
         "announcement_created": "Made a banner",
         "announcement_updated": "Changed a banner",
         "campaign_sent": "Sent a promotional message",
-        "config_changed": "Changed app settings"
+        "config_changed": "Changed app settings",
+        "takedown_person_search": "Searched for a person for a takedown"
       }
     },
     "broadcast": {
@@ -1805,7 +1816,8 @@
       "addNote": "Add note",
       "close": "Close",
       "noteFirst": "Add your note, or clear it, before leaving this item.",
-      "needNote": "Write a note to add it."
+      "needNote": "Write a note to add it.",
+      "doneHelp": "\"Done\" only ticks this off the work queue. The ticket, report or request itself is answered on its own page: use \"Go to the page to decide\". Deciding it there marks this done by itself."
     },
     "reports": {
       "title": "Abuse reports",
@@ -2685,7 +2697,8 @@
       "options": "Add at least one date, place or menu to vote on.",
       "blood": "Choose the blood group.",
       "message": "Write the message.",
-      "canva": "Fix the Canva link, or leave it empty."
+      "canva": "Fix the Canva link, or leave it empty.",
+      "future": "That date and time has already passed. Pick one that is still to come."
     },
     "photos": {
       "photoN": "Photo {{n}}",
@@ -2868,7 +2881,7 @@
         "family_book": "A printed book with your family tree, people and memories."
       },
       "whichTree": "Which family tree?",
-      "quantity": "How many (1 to 10)",
+      "quantity": "How many",
       "address": "Send to",
       "name": "Name",
       "line1": "House and street",
@@ -2896,7 +2909,10 @@
       "payAgain": "Try paying again",
       "notPaidTitle": "The payment was not completed",
       "notPaid": "We have not received a payment for this order. If you closed the payment page without paying, nothing was charged and you can try again below. If you did pay, do not pay again: your order will show in My orders within a few minutes.",
-      "seeOrders": "See My orders"
+      "seeOrders": "See My orders",
+      "fewer": "One fewer",
+      "more": "One more",
+      "checkingCoupon": "Checking your code..."
     },
     "refer": {
       "title": "Invite and earn",

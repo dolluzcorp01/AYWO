@@ -1,7 +1,7 @@
 -- AYWO Admin and Sub-admin: permissions, privacy and the audit log. Run: supabase test db
 begin;
 create extension if not exists pgtap;
-select plan(108);
+select plan(113);
 
 insert into languages (code, name_en) values ('en', 'English') on conflict (code) do nothing;
 insert into kin_paths (code, description_en, generation, blood) values ('T_ADMIN', 'test path', 0, true) on conflict (code) do nothing;
@@ -124,6 +124,11 @@ select test_login('00000000-0000-0000-0000-0000000000e3');
 select is((admin_takedowns_list('open') ->> 'total')::int, 2, 'Sub-admin sees open takedowns');
 select lives_ok($$ select admin_takedown_decide((select (r ->> 'id')::uuid from jsonb_array_elements(admin_takedowns_list('open') -> 'rows') r where r ->> 'person_id' is not null), 'remove', 'Confirmed with the person asking.') $$, 'Sub-admin removes the person');
 select throws_ok($$ select admin_takedown_decide((select (r ->> 'id')::uuid from jsonb_array_elements(admin_takedowns_list('open') -> 'rows') r), 'remove', 'No person linked to this request.') $$, 'PT422', 'admin_takedown_needs_person', 'removing needs a person');
+-- A request with only a name: staff pick the person from the matches (0027).
+select is(jsonb_array_length(admin_takedown_people((select (r ->> 'id')::uuid from jsonb_array_elements(admin_takedowns_list('open') -> 'rows') r), 'stays')), 2, 'a name search finds the people it could be');
+select ok(admin_takedown_people((select (r ->> 'id')::uuid from jsonb_array_elements(admin_takedowns_list('open') -> 'rows') r), 'Stays One')::text like '%Audit family%' and admin_takedown_people((select (r ->> 'id')::uuid from jsonb_array_elements(admin_takedowns_list('open') -> 'rows') r), 'Stays One')::text not like '%98111%', 'a match shows its tree and no contact values');
+select is(jsonb_array_length(admin_takedown_people((select (r ->> 'id')::uuid from jsonb_array_elements(admin_takedowns_list('open') -> 'rows') r), 'Asked To Go')), 0, 'a person already removed is not offered');
+select throws_ok($$ select admin_takedown_people((select (r ->> 'id')::uuid from jsonb_array_elements(admin_takedowns_list('open') -> 'rows') r), 'S') $$, 'PT422', 'bad_input', 'one letter is too little to search');
 reset role;
 select ok((select deleted_at is not null and taken_down_at is not null from persons where id = '20000000-0000-0000-0000-0000000000e1'), 'the person is soft-deleted');
 select is((select count(*)::int from person_contacts where person_id = '20000000-0000-0000-0000-0000000000e1'), 0, 'their contact values are gone');
@@ -164,6 +169,7 @@ select throws_ok($$ select admin_term_reports_list() $$, 'PT403', 'admin_not_all
 select throws_ok($$ select admin_term_report_decide('40000000-0000-0000-0000-0000000000e1', 'dismiss') $$, 'PT403', 'admin_not_allowed', 'ordinary user: report decision refused');
 select throws_ok($$ select admin_takedowns_list() $$, 'PT403', 'admin_not_allowed', 'ordinary user: takedowns list refused');
 select throws_ok($$ select admin_takedown_decide('50000000-0000-0000-0000-0000000000e1', 'dismiss', 'because of testing') $$, 'PT403', 'admin_not_allowed', 'ordinary user: takedown decision refused');
+select throws_ok($$ select admin_takedown_people('50000000-0000-0000-0000-0000000000e1', 'Stays') $$, 'PT403', 'admin_not_allowed', 'ordinary user: takedown name search refused');
 select throws_ok($$ select admin_payments_overview() $$, 'PT403', 'admin_not_allowed', 'ordinary user: payments refused');
 select throws_ok($$ select admin_staff_list() $$, 'PT403', 'admin_not_allowed', 'ordinary user: staff list refused');
 select throws_ok($$ select admin_staff_add('+919811100004', 'aywo_admin') $$, 'PT403', 'admin_not_allowed', 'ordinary user: adding staff refused');

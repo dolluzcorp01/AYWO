@@ -387,7 +387,8 @@
       "options": "Add at least one date, place or menu to vote on.",
       "blood": "Choose the blood group.",
       "message": "Write the message.",
-      "canva": "Fix the Canva link, or leave it empty."
+      "canva": "Fix the Canva link, or leave it empty.",
+      "future": "That date and time has already passed. Pick one that is still to come."
     },
     "photos": {
       "photoN": "Photo {{n}}",

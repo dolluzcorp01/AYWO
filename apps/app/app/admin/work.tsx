@@ -1,9 +1,9 @@
 // One queue for everything staff must act on: abuse reports, help tickets, orders to print, takedowns, word reports.
 // Each item has an owner, a status, a priority and a deadline. Opening one shows its history and internal notes.
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { WorkDetail, WorkItem, WorkKind, WorkPage, WorkPriority, WorkStatus } from '@/admin/types';
@@ -12,6 +12,7 @@ import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
 
 type View_ = 'open' | 'mine' | 'unassigned' | 'overdue' | 'done';
+const VIEWS: View_[] = ['open', 'mine', 'unassigned', 'overdue', 'done'];
 
 const SOURCE: Record<WorkKind, Href> = {
   report: '/admin/reports',
@@ -23,7 +24,13 @@ const SOURCE: Record<WorkKind, Href> = {
 
 export default function AdminWork() {
   const { t, i18n } = useTranslation();
-  const [view, setView] = useState<View_>('open');
+  // A dashboard card opens the list it counted: "Late" opens the late ones, not everything.
+  const params = useLocalSearchParams<{ view?: string }>();
+  const asked = VIEWS.find((v) => v === params.view);
+  const [view, setView] = useState<View_>(asked ?? 'open');
+  useEffect(() => {
+    if (asked) setView(asked);
+  }, [asked]);
   const [kind, setKind] = useState<WorkKind | 'all'>('all');
   const [open, setOpen] = useState<string | null>(null);
   const { query, page, setPage } = usePagedList<WorkItem>(['admin', 'work'], '/admin/work', { view, kind: kind === 'all' ? undefined : kind });
@@ -138,6 +145,7 @@ function WorkDialog({ id, onClose }: { id: string; onClose: () => void }) {
               onChange={(status: WorkStatus) => change({ status })}
               options={(['open', 'in_progress', 'waiting', 'done'] as WorkStatus[]).map((s) => ({ value: s, label: t(`admin.work.statuses.${s}`) }))}
             />
+            <Text style={adminStyles.cellMuted}>{t('admin.work.doneHelp')}</Text>
             <Text style={adminStyles.fieldLabel}>{t('admin.work.priority')}</Text>
             <FilterChips
               value={item.priority}

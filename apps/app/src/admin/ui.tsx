@@ -240,9 +240,9 @@ export function Pager({ page, total, onPage }: { page: number; total: number; on
 }
 
 /** Searches when Enter or the button is pressed, so a half-typed word is never sent. */
-export function SearchBox({ placeholder, onSearch }: { placeholder: string; onSearch: (q: string) => void }) {
+export function SearchBox({ placeholder, onSearch, initial = '' }: { placeholder: string; onSearch: (q: string) => void; initial?: string }) {
   const { t } = useTranslation();
-  const [text, setText] = useState('');
+  const [text, setText] = useState(initial);
   return (
     <View style={styles.search}>
       <TextInput
@@ -389,6 +389,7 @@ export function FormDialog({
   confirmLabel,
   cancelLabel,
   danger,
+  blocked,
   onCancel,
   onConfirm,
   children,
@@ -399,6 +400,8 @@ export function FormDialog({
   confirmLabel: string;
   cancelLabel?: string;
   danger?: boolean;
+  /** Why the confirm button must stay off for a reason outside the fields, such as nobody picked yet. */
+  blocked?: string | null;
   /** Extra warnings, shown above the fields. */
   children?: ReactNode;
   onCancel: () => void;
@@ -413,7 +416,7 @@ export function FormDialog({
   const [failure, setFailure] = useState<string | null>(null);
   const watchTwoStep = useTwoStepWatch();
   const short = fields.find((field) => (values[field.name] ?? '').trim().length < (field.minLength ?? 0));
-  const ready = !short;
+  const ready = !short && !blocked;
 
   async function confirm() {
     setBusy(true);
@@ -444,7 +447,7 @@ export function FormDialog({
         </View>
       ))}
       {failure ? <Message text={failure} alert /> : null}
-      <Missing reasons={[short ? t('admin.common.needsText', { field: short.label, count: short.minLength ?? 1 }) : null]} />
+      <Missing reasons={[blocked, short ? t('admin.common.needsText', { field: short.label, count: short.minLength ?? 1 }) : null]} />
       <View style={styles.dialogActions}>
         <SecondaryButton label={cancelLabel ?? t('admin.common.cancel')} onPress={onCancel} disabled={busy} />
         <SecondaryButton main label={confirmLabel} onPress={confirm} disabled={busy || !ready} danger={danger} />

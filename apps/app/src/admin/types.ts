@@ -109,6 +109,16 @@ export interface TakedownRow {
   created_at: string;
 }
 
+/** Someone a name-only takedown request could be about. */
+export interface TakedownMatch {
+  id: string;
+  name: string;
+  birth_year: number | null;
+  tree_id: string;
+  tree_name: string;
+  creator_name: string | null;
+}
+
 export interface PlanRow {
   id: string;
   payer_id: string;
