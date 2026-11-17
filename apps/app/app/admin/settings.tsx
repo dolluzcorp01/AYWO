@@ -117,7 +117,7 @@ function VersionPanel({ min, latest, onSaveMin, onSaveLatest, minFooter, latestF
       </View>
       {minFooter}
       <Actions>
-        <SecondaryButton label={t('admin.settings.saveMin')} danger disabled={!onSaveMin || !!bad(minIos) || !!bad(minAndroid)} onPress={() => onSaveMin?.({ ios: minIos.trim(), android: minAndroid.trim() })} />
+        <SecondaryButton main label={t('admin.settings.saveMin')} danger disabled={!onSaveMin || !!bad(minIos) || !!bad(minAndroid)} onPress={() => onSaveMin?.({ ios: minIos.trim(), android: minAndroid.trim() })} />
       </Actions>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
         <View style={{ flexBasis: 240, flexGrow: 1 }}><Field label={t('admin.settings.latestIos')} value={latestIos} onChange={setLatestIos} maxLength={11} error={bad(latestIos)} /></View>
@@ -125,7 +125,7 @@ function VersionPanel({ min, latest, onSaveMin, onSaveLatest, minFooter, latestF
       </View>
       {latestFooter}
       <Actions>
-        <SecondaryButton label={t('admin.settings.saveLatest')} disabled={!onSaveLatest || !!bad(latestIos) || !!bad(latestAndroid)} onPress={() => onSaveLatest?.({ ios: latestIos.trim(), android: latestAndroid.trim() })} />
+        <SecondaryButton main label={t('admin.settings.saveLatest')} disabled={!onSaveLatest || !!bad(latestIos) || !!bad(latestAndroid)} onPress={() => onSaveLatest?.({ ios: latestIos.trim(), android: latestAndroid.trim() })} />
       </Actions>
     </Panel>
   );
@@ -142,7 +142,7 @@ function MaintenancePanel({ value, onSave, footer }: { value: Value; onSave: Sav
       <Field label={t('admin.settings.maintenanceMessage')} value={message} onChange={setMessage} multiline maxLength={300} />
       {footer}
       <Actions>
-        <SecondaryButton label={t('admin.common.save')} danger={on} disabled={!onSave} onPress={() => onSave?.({ on, message: message.trim() })} />
+        <SecondaryButton main label={t('admin.common.save')} danger={on} disabled={!onSave} onPress={() => onSave?.({ on, message: message.trim() })} />
       </Actions>
     </Panel>
   );
@@ -159,7 +159,7 @@ function FeaturesPanel({ value, onSave, footer }: { value: Record<string, boolea
       ))}
       {footer}
       <Actions>
-        <SecondaryButton label={t('admin.common.save')} disabled={!onSave} onPress={() => onSave?.(flags)} />
+        <SecondaryButton main label={t('admin.common.save')} disabled={!onSave} onPress={() => onSave?.(flags)} />
       </Actions>
     </Panel>
   );
@@ -178,7 +178,7 @@ function WhatsNewPanel({ value, onSave, footer }: { value: Value; onSave: Save; 
       <Field label={t('admin.settings.whatsNewItems')} value={items} onChange={setItems} multiline maxLength={900} />
       {footer}
       <Actions>
-        <SecondaryButton label={t('admin.common.save')} disabled={!onSave || !!versionBad} onPress={() => onSave?.({ version: version.trim(), items: list })} />
+        <SecondaryButton main label={t('admin.common.save')} disabled={!onSave || !!versionBad} onPress={() => onSave?.({ version: version.trim(), items: list })} />
       </Actions>
     </Panel>
   );
@@ -199,7 +199,7 @@ function SupportPanel({ value, onSave, footer }: { value: Value; onSave: Save; f
       {footer}
       <Actions>
         {/* Other values under this key, if the server ever adds any, are kept as they are. */}
-        <SecondaryButton label={t('admin.common.save')} disabled={!onSave || !!emailBad || !!hoursBad} onPress={() => onSave?.({ ...value, email: email.trim(), hours: hours.trim() })} />
+        <SecondaryButton main label={t('admin.common.save')} disabled={!onSave || !!emailBad || !!hoursBad} onPress={() => onSave?.({ ...value, email: email.trim(), hours: hours.trim() })} />
       </Actions>
     </Panel>
   );

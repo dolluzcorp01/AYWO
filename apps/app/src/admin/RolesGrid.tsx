@@ -131,7 +131,7 @@ export function RolesGrid({ roles, editable, onSaved, onEditRole }: {
           <Missing reasons={[empty && t('admin.rolesGrid.needOne', { name: empty.name })]} />
           <View style={styles.saveButtons}>
             <SecondaryButton label={t('admin.rolesGrid.discard')} onPress={() => setDraft({})} />
-            <SecondaryButton label={t('admin.rolesGrid.save')} disabled={!!empty} onPress={() => setConfirming(true)} />
+            <SecondaryButton main label={t('admin.rolesGrid.save')} disabled={!!empty} onPress={() => setConfirming(true)} />
           </View>
         </View>
       ) : null}

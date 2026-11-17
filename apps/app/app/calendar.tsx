@@ -9,7 +9,7 @@ import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 're
 import { ChevronIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { LoadFailed, Loading, SecondaryButton, TopBar } from '@/components/ui';
+import { LoadFailed, Loading, PrimaryButton, SecondaryButton, TopBar } from '@/components/ui';
 import { addMonths, monthGrid, ymd } from '@/calendar/month';
 import { useCalendar } from '@/calendar/useCalendar';
 import type { CalendarItem, CalendarKind } from '@/calendar/useCalendar';
@@ -214,7 +214,7 @@ export default function Calendar() {
           {/* Ways to add to the calendar. */}
           <View style={styles.addBox}>
             <Text style={styles.addTitle}>{t('calendar.addTitle')}</Text>
-            <SecondaryButton
+            <PrimaryButton
               label={picked ? t('calendar.planOnDay') : t('calendar.planEvent')}
               onPress={() => router.push({ pathname: '/social/invites/new', params: picked ? { date: picked } : {} })}
             />

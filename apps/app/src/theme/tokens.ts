@@ -24,6 +24,8 @@ export const colors = {
   logoOrange: '#FD8E49',
   // Named so screens need no hex codes.
   tint: '#F4F0FA',
+  /** A step darker than tint: second buttons under the mouse. */
+  tintDeep: '#E6E0F5',
   idleTab: '#9A96AE',
   dashed: '#D9D3EA',
   checkboxOff: '#E4E0EC',

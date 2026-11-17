@@ -40,7 +40,7 @@ export default function AdminUser() {
           <Field label={t('admin.common.reason')} value={reason} onChange={setReason} multiline maxLength={500} />
           {action.failure ? <Message text={action.failure} alert /> : null}
           <Actions>
-            <SecondaryButton label={t('admin.user360.open')} disabled={reason.trim().length < 5 || action.busy} onPress={open} />
+            <SecondaryButton main label={t('admin.user360.open')} disabled={reason.trim().length < 5 || action.busy} onPress={open} />
           </Actions>
           <Missing reasons={[reason.trim().length < 5 && t('admin.common.needsText', { field: t('admin.common.reason'), count: 5 })]} />
         </Panel>

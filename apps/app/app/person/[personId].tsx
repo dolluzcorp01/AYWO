@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
   numberKind: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 12 },
   numberValue: { color: colors.text, fontFamily: fonts.bold, fontSize: 17 },
   copy: { minHeight: minTapSize, minWidth: minTapSize, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1.5, borderColor: colors.logoIndigo, backgroundColor: colors.tint, alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
-  copyHover: { backgroundColor: '#E6E0F5' },
+  copyHover: { backgroundColor: colors.tintDeep },
   copyText: { color: colors.logoIndigo, fontFamily: fonts.extrabold, fontSize: 14 },
   note: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14, textAlign: 'center' },
   section: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },

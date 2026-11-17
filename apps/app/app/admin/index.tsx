@@ -25,7 +25,7 @@ export default function AdminDashboard() {
         <Panel title={t('admin.dashboard.twoStepTitle')}>
           <Text style={adminStyles.cellMuted}>{t('admin.dashboard.twoStepText')}</Text>
           <Actions>
-            <SecondaryButton label={t('admin.twoStep.begin')} onPress={() => setSettingUp(true)} />
+            <SecondaryButton main label={t('admin.twoStep.begin')} onPress={() => setSettingUp(true)} />
           </Actions>
         </Panel>
       ) : null}

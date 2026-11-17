@@ -20,7 +20,7 @@ import { normalizeContact } from '@/lib/contacts';
 import { useErrorText } from '@/lib/errors';
 import { shownName } from '@/tree/personName';
 import { canShare } from '@/tree/roles';
-import { RoleRightsList } from '@/tree/RoleRights';
+import { RoleRightsList } from '@/tree/RoleRightsList';
 import { usePersonCard } from '@/tree/useCard';
 import { useCreateShare, useRevokeShare, useShares } from '@/tree/useEdit';
 import type { EditMode, ShareInput, ShareRole, ShareRow } from '@/tree/useEdit';

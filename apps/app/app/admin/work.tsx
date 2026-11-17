@@ -168,7 +168,7 @@ function WorkDialog({ id, onClose }: { id: string; onClose: () => void }) {
             <Field label={t('admin.work.note')} value={note} onChange={setNote} multiline maxLength={2000} help={t('admin.work.noteHelp')} />
             {action.failure ? <Message text={action.failure} alert /> : null}
             <Actions>
-              <SecondaryButton label={t('admin.work.addNote')} disabled={!note.trim() || action.busy} onPress={addNote} />
+              <SecondaryButton main label={t('admin.work.addNote')} disabled={!note.trim() || action.busy} onPress={addNote} />
             </Actions>
             <Missing reasons={[!note.trim() && t('admin.work.needNote')]} />
           </View>

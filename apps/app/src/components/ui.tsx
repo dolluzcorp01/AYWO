@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     cursor: 'pointer',
   },
-  secondaryHover: { backgroundColor: '#E6E0F5' },
+  secondaryHover: { backgroundColor: colors.tintDeep },
   secondaryText: { color: colors.logoIndigo, fontFamily: fonts.bold, fontSize: 16, textAlign: 'center' },
   // Elder mode: the main buttons grow by about a third, so they are easier to hit.
   bigButton: { height: 72 },

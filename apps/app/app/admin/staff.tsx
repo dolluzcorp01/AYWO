@@ -87,7 +87,7 @@ export default function AdminStaff() {
   return (
     <AdminPage title={t('admin.staff.title')} subtitle={t('admin.staff.subtitle')} gates={['staff']}>
       <Actions>
-        <SecondaryButton label={t('admin.staff.add')} onPress={() => setAdding(true)} />
+        <SecondaryButton main label={t('admin.staff.add')} onPress={() => setAdding(true)} />
       </Actions>
       <QueryState query={query} isEmpty={(data) => data.rows.length === 0} emptyText={t('admin.staff.empty')}>
         {(data) => (
@@ -112,7 +112,7 @@ export default function AdminStaff() {
         </Panel>
       ) : null}
 
-      <Panel title={t('admin.staff.teamRoles')} actions={<SecondaryButton label={t('admin.staff.newRole')} onPress={() => setRole('new')} />}>
+      <Panel title={t('admin.staff.teamRoles')} actions={<SecondaryButton main label={t('admin.staff.newRole')} onPress={() => setRole('new')} />}>
         <Text style={adminStyles.cellMuted}>{t('admin.staff.teamRolesHelp')}</Text>
         <QueryState query={roles} isEmpty={(rows) => rows.length === 0}>
           {(rows) => <RolesGrid roles={rows} editable onSaved={refresh} onEditRole={(r) => setRole(r)} />}
@@ -218,7 +218,7 @@ function StaffDialog({ row, roles, onDone, onClose }: { row?: StaffRow; roles: T
         {action.failure ? <Message text={action.failure} alert /> : null}
         <Actions>
           <SecondaryButton label={t('admin.staff.promoteBack')} onPress={() => setConfirming(false)} disabled={action.busy} />
-          <SecondaryButton label={t('admin.staff.promoteConfirm')} danger onPress={save} disabled={action.busy} />
+          <SecondaryButton main label={t('admin.staff.promoteConfirm')} danger onPress={save} disabled={action.busy} />
         </Actions>
       </DialogFrame>
     );

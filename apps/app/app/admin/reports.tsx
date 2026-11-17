@@ -138,6 +138,7 @@ function DecideDialog({ row, decision, onClose }: { row: ReportRow; decision: 'r
       <Actions>
         <SecondaryButton label={t('admin.common.cancel')} onPress={onClose} disabled={action.busy} />
         <SecondaryButton
+          main
           label={t(decision === 'remove' ? 'admin.reports.remove' : 'admin.reports.dismiss')}
           danger={decision === 'remove'}
           disabled={action.busy || note.trim().length < 5}

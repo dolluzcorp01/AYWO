@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     cursor: 'pointer',
     ...shadows.card,
   },
-  addHover: { backgroundColor: '#E6E0F5' },
+  addHover: { backgroundColor: colors.tintDeep },
   addText: { color: colors.logoIndigo, fontFamily: fonts.bold, fontSize: 14 },
   link: { minHeight: minTapSize, justifyContent: 'center', paddingHorizontal: 16 },
   linkText: { color: colors.relation, fontFamily: fonts.bold, fontSize: 14 },

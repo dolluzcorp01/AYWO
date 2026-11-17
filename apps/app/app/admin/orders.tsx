@@ -201,7 +201,7 @@ function StepDialog({ row, to, onDone, onClose }: { row: OrderRow; to: Fulfilmen
       <Missing reasons={missing} />
       <Actions>
         <SecondaryButton label={t('admin.common.cancel')} onPress={onClose} disabled={action.busy} />
-        <SecondaryButton label={t(`admin.orders.moveTo.${to}`)} onPress={save} disabled={action.busy || missing.some(Boolean)} />
+        <SecondaryButton main label={t(`admin.orders.moveTo.${to}`)} onPress={save} disabled={action.busy || missing.some(Boolean)} />
       </Actions>
     </DialogFrame>
   );

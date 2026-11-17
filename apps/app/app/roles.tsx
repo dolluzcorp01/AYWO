@@ -8,7 +8,7 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Card, Muted, TopBar } from '@/components/ui';
 import { goBack } from '@/lib/nav';
-import { RightMark, RoleRightsList } from '@/tree/RoleRights';
+import { RightMark, RoleRightsList } from '@/tree/RoleRightsList';
 import { isTreeRole, RIGHTS, ROLE_NAME, ROLE_ORDER, type TreeRole } from '@/tree/roleRights';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 

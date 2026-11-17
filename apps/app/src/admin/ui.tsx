@@ -117,7 +117,7 @@ export function CloseGuard({ dirty, onClose }: { dirty: boolean; onClose: () => 
         <Message text={t('admin.common.unsentText')} alert />
         <View style={styles.actions}>
           <SecondaryButton label={t('admin.common.keepWriting')} onPress={() => setAsking(false)} />
-          <SecondaryButton label={t('admin.common.discardClose')} danger onPress={onClose} />
+          <SecondaryButton main label={t('admin.common.discardClose')} danger onPress={onClose} />
         </View>
       </View>
     );
@@ -254,7 +254,7 @@ export function SearchBox({ placeholder, onSearch }: { placeholder: string; onSe
         accessibilityLabel={placeholder}
         style={[styles.input, styles.searchInput]}
       />
-      <SecondaryButton label={t('admin.common.search')} onPress={() => onSearch(text.trim())} />
+      <SecondaryButton main label={t('admin.common.search')} onPress={() => onSearch(text.trim())} />
     </View>
   );
 }
@@ -293,11 +293,14 @@ export function SecondaryButton({
   onPress,
   disabled,
   danger,
+  main,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   danger?: boolean;
+  /** The one action this page or box is for (Save, Send, New ...): filled, like the main button in the app. */
+  main?: boolean;
 }) {
   return (
     <Pressable
@@ -305,9 +308,15 @@ export function SecondaryButton({
       accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[styles.button, danger && styles.buttonDanger, disabled && styles.disabled]}
+      style={({ hovered }: { hovered?: boolean }) => [
+        styles.button,
+        danger && styles.buttonDanger,
+        main && (danger ? styles.buttonMainDanger : styles.buttonMain),
+        hovered && !disabled && !main && (danger ? styles.buttonDangerHover : styles.buttonHover),
+        disabled && styles.disabled,
+      ]}
     >
-      <Text style={[styles.buttonText, danger && styles.buttonTextDanger]}>{label}</Text>
+      <Text style={[styles.buttonText, danger && styles.buttonTextDanger, main && styles.buttonTextMain]}>{label}</Text>
     </Pressable>
   );
 }
@@ -438,7 +447,7 @@ export function FormDialog({
       <Missing reasons={[short ? t('admin.common.needsText', { field: short.label, count: short.minLength ?? 1 }) : null]} />
       <View style={styles.dialogActions}>
         <SecondaryButton label={cancelLabel ?? t('admin.common.cancel')} onPress={onCancel} disabled={busy} />
-        <SecondaryButton label={confirmLabel} onPress={confirm} disabled={busy || !ready} danger={danger} />
+        <SecondaryButton main label={confirmLabel} onPress={confirm} disabled={busy || !ready} danger={danger} />
       </View>
     </DialogFrame>
   );
@@ -653,12 +662,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.logoPurple,
-    backgroundColor: colors.card,
+    borderColor: colors.logoIndigo,
+    backgroundColor: colors.tint,
+    cursor: 'pointer',
   },
-  buttonDanger: { borderColor: colors.alert },
-  buttonText: { color: colors.relation, fontFamily: fonts.bold, fontSize: 14 },
+  buttonHover: { backgroundColor: colors.tintDeep },
+  buttonDanger: { borderColor: colors.alert, backgroundColor: colors.card },
+  buttonDangerHover: { backgroundColor: colors.alertTint },
+  buttonMain: { backgroundColor: colors.logoIndigo },
+  buttonMainDanger: { backgroundColor: colors.alert },
+  buttonText: { color: colors.logoIndigo, fontFamily: fonts.bold, fontSize: 14 },
   buttonTextDanger: { color: colors.alert },
+  buttonTextMain: { color: colors.white },
   disabled: { opacity: 0.45 },
   pill: {
     alignSelf: 'flex-start',

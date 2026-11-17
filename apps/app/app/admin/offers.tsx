@@ -134,7 +134,7 @@ function Coupons() {
             { value: 'all', label: t('admin.payments.all') },
           ]}
         />
-        <SecondaryButton label={t('admin.offers.newCoupon')} onPress={() => setEditing('new')} />
+        <SecondaryButton main label={t('admin.offers.newCoupon')} onPress={() => setEditing('new')} />
       </Actions>
       <QueryState query={query} isEmpty={(rows) => rows.length === 0} emptyText={t('admin.offers.noCoupons')}>
         {(rows) => <DataTable columns={columns} rows={rows} rowKey={(c) => c.id} />}
@@ -234,7 +234,7 @@ function CouponDialog({ coupon, onClose }: { coupon: Coupon | null; onClose: () 
         {action.failure ? <Message text={action.failure} alert /> : null}
         <Actions>
           <SecondaryButton label={t('admin.offers.backToEdit')} onPress={() => setReviewing(false)} disabled={action.busy} />
-          <SecondaryButton label={t('admin.offers.confirmSave')} onPress={save} disabled={action.busy} />
+          <SecondaryButton main label={t('admin.offers.confirmSave')} onPress={save} disabled={action.busy} />
         </Actions>
       </DialogFrame>
     );
@@ -267,7 +267,7 @@ function CouponDialog({ coupon, onClose }: { coupon: Coupon | null; onClose: () 
       <Missing reasons={missing} />
       <Actions>
         <SecondaryButton label={t('admin.common.cancel')} onPress={onClose} disabled={action.busy} />
-        <SecondaryButton label={active ? t('admin.offers.checkAndSave') : t('admin.common.save')} onPress={active ? () => setReviewing(true) : save} disabled={action.busy || !ready} />
+        <SecondaryButton main label={active ? t('admin.offers.checkAndSave') : t('admin.common.save')} onPress={active ? () => setReviewing(true) : save} disabled={action.busy || !ready} />
       </Actions>
     </DialogFrame>
   );
@@ -326,7 +326,7 @@ function Banners() {
             { value: 'all', label: t('admin.payments.all') },
           ]}
         />
-        <SecondaryButton label={t('admin.offers.newBanner')} onPress={() => setEditing('new')} />
+        <SecondaryButton main label={t('admin.offers.newBanner')} onPress={() => setEditing('new')} />
       </Actions>
       <QueryState query={query} isEmpty={(rows) => rows.length === 0} emptyText={t('admin.offers.noBanners')}>
         {(rows) => <DataTable columns={columns} rows={rows} rowKey={(a) => a.id} />}
@@ -416,7 +416,7 @@ function BannerDialog({ item, onClose }: { item: Announcement | null; onClose: (
         {action.failure ? <Message text={action.failure} alert /> : null}
         <Actions>
           <SecondaryButton label={t('admin.offers.backToEdit')} onPress={() => setReviewing(false)} disabled={action.busy} />
-          <SecondaryButton label={t('admin.offers.confirmSave')} onPress={save} disabled={action.busy} />
+          <SecondaryButton main label={t('admin.offers.confirmSave')} onPress={save} disabled={action.busy} />
         </Actions>
       </DialogFrame>
     );
@@ -455,7 +455,7 @@ function BannerDialog({ item, onClose }: { item: Announcement | null; onClose: (
       <Missing reasons={missing} />
       <Actions>
         <SecondaryButton label={t('admin.common.cancel')} onPress={onClose} disabled={action.busy} />
-        <SecondaryButton label={active ? t('admin.offers.checkAndSave') : t('admin.common.save')} onPress={active ? () => setReviewing(true) : save} disabled={action.busy || !ready} />
+        <SecondaryButton main label={active ? t('admin.offers.checkAndSave') : t('admin.common.save')} onPress={active ? () => setReviewing(true) : save} disabled={action.busy || !ready} />
       </Actions>
     </DialogFrame>
   );
@@ -530,7 +530,7 @@ function Messages() {
       ) : null}
       {sent !== null ? <Message text={t('admin.offers.sentDone', { count: sent })} good /> : null}
       <Actions>
-        <SecondaryButton label={t('admin.offers.send')} disabled={!ready} onPress={() => setAsking(true)} />
+        <SecondaryButton main label={t('admin.offers.send')} disabled={!ready} onPress={() => setAsking(true)} />
       </Actions>
       <Missing reasons={missing} />
       <QueryState query={history} isEmpty={(rows) => rows.length === 0} emptyText={t('admin.offers.noMessages')}>

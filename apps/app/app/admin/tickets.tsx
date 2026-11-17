@@ -100,7 +100,7 @@ function TicketDialog({ id, onClose }: { id: string; onClose: () => void }) {
                 <Field label={t('admin.tickets.reply')} value={reply} onChange={setReply} multiline maxLength={4000} help={t('admin.tickets.replyHelp')} />
                 {action.failure ? <Message text={action.failure} alert /> : null}
                 <Actions>
-                  <SecondaryButton label={t('admin.tickets.send')} disabled={!reply.trim() || action.busy} onPress={() => send(false)} />
+                  <SecondaryButton main label={t('admin.tickets.send')} disabled={!reply.trim() || action.busy} onPress={() => send(false)} />
                   <SecondaryButton label={t('admin.tickets.sendClose')} disabled={!reply.trim() || action.busy} onPress={() => send(true)} />
                 </Actions>
                 <Missing reasons={[!reply.trim() && t('admin.tickets.needReply')]} />

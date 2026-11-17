@@ -31,7 +31,7 @@ export default function AdminBroadcast() {
       </View>
       {sent !== null ? <Message text={t('admin.broadcast.sent', { count: sent })} good /> : null}
       <Actions>
-        <SecondaryButton label={t('admin.broadcast.send')} disabled={!ready} onPress={() => setAsking(true)} />
+        <SecondaryButton main label={t('admin.broadcast.send')} disabled={!ready} onPress={() => setAsking(true)} />
       </Actions>
       <Missing
         reasons={[
