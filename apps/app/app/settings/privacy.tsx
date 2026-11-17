@@ -7,6 +7,7 @@ import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { showToast } from '@/components/Toast';
 import { Card, ConfirmDialog, ErrorText, Field, Muted, SecondaryButton, TextButton, TopBar } from '@/components/ui';
 import { api, clearSession } from '@/lib/api';
 import { errorCode, useErrorText } from '@/lib/errors';
@@ -39,6 +40,8 @@ export default function Privacy() {
       await unregisterPush().catch(() => undefined);
       await signOutOfStore().catch(() => undefined);
       await clearSession();
+      // Said after the screen has changed to Welcome, so the person is not left wondering what happened.
+      showToast('success', t('settings.deletedNote'));
     },
     // The server has the last word: a plan this screen had not heard about yet still gets the warning.
     onError: (error) => {

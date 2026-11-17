@@ -197,7 +197,8 @@
     "save": "Save",
     "continue": "Continue",
     "done": "Done",
-    "close": "Close"
+    "close": "Close",
+    "saved": "Saved"
   },
   "phoneField": {
     "placeholder": "Mobile number",
@@ -410,17 +411,23 @@
     "addPhoto": "Choose a photo",
     "photoHelp": "A photo helps elders recognise you",
     "yourName": "Your name",
-    "lookedNote": "No tree has your number yet. Start your own, or wait for an invite."
+    "lookedNote": "No tree has your number yet. Start your own, or wait for an invite.",
+    "removePhoto": "Remove photo"
   },
   "start": {
     "title": "Hey {{name}}, let's bring your family together",
     "titleNoName": "Let's bring your family together",
     "fastest": "FASTEST",
     "haveTree": "I already have a tree",
-    "haveTreeHelp": "From Lighten, Ancestry, MyHeritage, FamilySearch or GEDCOM.",
+    "haveTreeHelp": "Bring it in from another family-tree app or a family-tree file.",
     "fromMe": "Start from me",
     "fromMeHelp": "Add your parents, then grow one person at a time.",
-    "treeName": "{{name}} family"
+    "treeName": "{{name}} family",
+    "anotherTitle": "Start another family tree?",
+    "anotherText": "You already have a tree. This makes a new, separate one. To add people to the tree you have, go back and open it.",
+    "anotherYes": "Start the new tree",
+    "anotherName": "Name of the new tree",
+    "anotherPlaceholder": "For example: Mother's side"
   },
   "import": {
     "title": "Bring in your tree",
@@ -890,7 +897,8 @@
     "deleteBookedHelp": "You asked to delete it. Changed your mind? Keep it with one tap.",
     "keepAccount": "Keep my account",
     "simpleMode": "Simple mode for elders",
-    "simpleModeHelp": "A few big buttons on Home, larger text and bigger buttons everywhere."
+    "simpleModeHelp": "A few big buttons on Home, larger text and bigger buttons everywhere.",
+    "deletedNote": "Your account is set to be deleted in 30 days. Sign in again before then to keep it."
   },
   "time": {
     "justNow": "Just now",

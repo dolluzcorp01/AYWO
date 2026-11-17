@@ -10,7 +10,8 @@ import { Avatar } from '@/components/Avatar';
 import { CameraIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { BackButton, Card, ErrorText, Field, Heading, Muted, PrimaryButton } from '@/components/ui';
+import { showToast } from '@/components/Toast';
+import { BackButton, Card, ErrorText, Field, Heading, Muted, PrimaryButton, TextButton } from '@/components/ui';
 import { safeNext, useMe, useUpdateMe } from '@/lib/account';
 import { uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
@@ -32,6 +33,8 @@ export default function Profile() {
   const update = useUpdateMe();
   const [name, setName] = useState(params.name ?? '');
   const [photo, setPhoto] = useState<PickedFile | null>(null);
+  // "Remove photo" was pressed: the saved photo goes when Save is pressed.
+  const [noPhoto, setNoPhoto] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<unknown>(null);
 
@@ -45,7 +48,10 @@ export default function Profile() {
     setFailure(null);
     try {
       const picked = await pickPhoto();
-      if (picked) setPhoto(picked);
+      if (picked) {
+        setPhoto(picked);
+        setNoPhoto(false);
+      }
     } catch (error) {
       setFailure(error);
     }
@@ -56,7 +62,8 @@ export default function Profile() {
     setFailure(null);
     try {
       const photoPath = photo ? await uploadFile('photos', photo) : null;
-      await update.mutateAsync({ display_name: name.trim(), ...(photoPath ? { photo_path: photoPath } : {}) });
+      await update.mutateAsync({ display_name: name.trim(), ...(photoPath ? { photo_path: photoPath } : noPhoto ? { photo_path: null } : {}) });
+      if (editing) showToast('success', t('common.saved'));
       if (!editing) track('name_saved');
       if (editing) goBack(router);
       else router.replace((safeNext(params.next) ?? '/home') as Href);
@@ -86,7 +93,7 @@ export default function Profile() {
             {photo ? (
               <Image source={{ uri: photo.uri }} style={styles.photo} accessibilityIgnoresInvertColors />
             ) : (
-              <Avatar personId={me.data?.id ?? 'me'} size={AVATAR} photoUrl={me.data?.photo_url} />
+              <Avatar personId={me.data?.id ?? 'me'} size={AVATAR} photoUrl={noPhoto ? null : me.data?.photo_url} />
             )}
           </View>
           <View style={styles.camera}>
@@ -95,6 +102,17 @@ export default function Profile() {
         </Pressable>
         <View style={styles.centred}>
           <Muted>{t('profile.photoHelp')}</Muted>
+          {photo || (me.data?.photo_url && !noPhoto) ? (
+            <TextButton
+              label={t('profile.removePhoto')}
+              danger
+              onPress={() => {
+                // A photo only just picked is simply dropped; a saved one goes on Save.
+                if (photo) setPhoto(null);
+                else setNoPhoto(true);
+              }}
+            />
+          ) : null}
         </View>
 
         <Field label={t('profile.yourName')} value={name} onChangeText={setName} autoComplete="name" style={styles.nameInput} />

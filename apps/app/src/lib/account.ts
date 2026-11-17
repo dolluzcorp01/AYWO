@@ -78,7 +78,7 @@ export function useTrees() {
 export function useUpdateMe() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (changes: { display_name?: string; email?: string; language_code?: string; large_text?: boolean; simple_mode?: boolean; photo_path?: string }) =>
+    mutationFn: (changes: { display_name?: string; email?: string; language_code?: string; large_text?: boolean; simple_mode?: boolean; photo_path?: string | null }) =>
       api.patch<Me>('/me', changes),
     onSuccess: (_answer, changes) => {
       client.invalidateQueries({ queryKey: ['me'] });

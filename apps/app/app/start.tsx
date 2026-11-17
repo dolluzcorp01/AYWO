@@ -2,6 +2,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { goBack } from '@/lib/nav';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,8 +12,8 @@ import { DownloadIcon, LinkedPeopleIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { TAB_BAR_SPACE, TabBar } from '@/components/TabBar';
 import { Text } from '@/components/Text';
-import { Card, ErrorText, NeonPanel } from '@/components/ui';
-import { firstName, useMe } from '@/lib/account';
+import { BackButton, Card, ConfirmDialog, ErrorText, Field, NeonPanel } from '@/components/ui';
+import { firstName, useMe, useTrees } from '@/lib/account';
 import { api } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
 import { track } from '@/lib/track';
@@ -27,12 +28,18 @@ export default function Start() {
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<unknown>(null);
   const name = firstName(me.data?.display_name);
+  // Someone who already has a tree came here from Home or Me: they need a way back, and another tree is asked
+  // about first and given its own name, so two trees are never called the same.
+  const trees = useTrees();
+  const hasTree = (trees.data ?? []).length > 0;
+  const [naming, setNaming] = useState<string | null>(null);
 
-  async function startFromMe() {
+  async function startFromMe(treeName?: string) {
+    setNaming(null);
     setBusy(true);
     setFailure(null);
     try {
-      const tree = await api.post<{ id: string }>('/trees', { name: t('start.treeName', { name: me.data?.display_name ?? '' }) });
+      const tree = await api.post<{ id: string }>('/trees', { name: treeName?.trim() || t('start.treeName', { name: me.data?.display_name ?? '' }) });
       await client.invalidateQueries({ queryKey: ['trees'] });
       track('tree_started');
       // A new tree starts with the family guide: mother, father, partner, children, one at a time.
@@ -47,6 +54,7 @@ export default function Start() {
     <Screen flush>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.top}>
+          {hasTree ? <BackButton onPress={() => goBack(router)} /> : null}
           <Image source={require('../assets/aywo_logo_app.png')} style={styles.logo} resizeMode="contain" accessibilityLabel="AYWO" />
           <Pressable accessibilityRole="button" accessibilityLabel={t('tabs.me')} onPress={() => router.replace('/me')}>
             <Avatar personId={me.data?.id ?? 'me'} size={48} ring />
@@ -70,7 +78,7 @@ export default function Start() {
           </NeonPanel>
         </Pressable>
 
-        <Pressable accessibilityRole="button" disabled={busy || me.isLoading} onPress={startFromMe}>
+        <Pressable accessibilityRole="button" disabled={busy || me.isLoading} onPress={() => (hasTree ? setNaming('') : void startFromMe())}>
           <Card style={styles.panel}>
             <LinearGradient colors={gradients.button} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.iconSolid}>
               <LinkedPeopleIcon color={colors.white} size={24} />
@@ -82,6 +90,17 @@ export default function Start() {
 
         {failure ? <ErrorText>{errorText(failure)}</ErrorText> : null}
       </ScrollView>
+      <ConfirmDialog
+        visible={naming !== null}
+        title={t('start.anotherTitle')}
+        message={t('start.anotherText')}
+        confirmLabel={t('start.anotherYes')}
+        busy={busy || !naming?.trim()}
+        onConfirm={() => void startFromMe(naming ?? '')}
+        onCancel={() => setNaming(null)}
+      >
+        <Field label={t('start.anotherName')} value={naming ?? ''} onChangeText={setNaming} maxLength={80} placeholder={t('start.anotherPlaceholder')} />
+      </ConfirmDialog>
       <TabBar active="home" />
     </Screen>
   );
