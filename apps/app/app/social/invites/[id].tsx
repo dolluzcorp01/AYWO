@@ -1,4 +1,5 @@
 // One invite or Pop Party: details, RSVP, polls, sharing, the Canva link and premium designs.
+import { DateField, TimeField } from '@/components/DateTimeField';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -223,8 +224,8 @@ export default function InviteDetail() {
               {isPop && e.is_mine && !e.decided && !e.cancelled ? (
                 <Card style={styles.card}>
                   <SectionTitle>{t('social.pop.decide')}</SectionTitle>
-                  <Field label={t('social.dateLabel')} value={date} onChangeText={setDate} placeholder={t('social.datePlaceholder')} autoCapitalize="none" />
-                  <Field label={t('social.timeLabel')} value={time} onChangeText={setTime} placeholder={t('social.timePlaceholder')} autoCapitalize="none" />
+                  <DateField label={t('social.dateLabel')} value={date} onChange={setDate} />
+                  <TimeField label={t('social.timeLabel')} value={time} onChange={setTime} />
                   <Field label={t('social.invites.place')} value={place} onChangeText={setPlace} maxLength={200} />
                   <Field label={t('social.pop.menu')} value={menu} onChangeText={setMenu} maxLength={200} />
                   <ActionError error={decide.error} />
@@ -309,8 +310,8 @@ export default function InviteDetail() {
         {details ? (
           <>
             <Field label={t('social.invites.titleField')} value={details.title} onChangeText={(v) => setDetails({ ...details, title: v })} maxLength={120} />
-            <Field label={t('social.dateLabel')} value={details.date} onChangeText={(v) => setDetails({ ...details, date: v })} placeholder={t('social.datePlaceholder')} autoCapitalize="none" />
-            <Field label={t('social.timeLabel')} value={details.time} onChangeText={(v) => setDetails({ ...details, time: v })} placeholder={t('social.timePlaceholder')} autoCapitalize="none" />
+            <DateField label={t('social.dateLabel')} value={details.date} onChange={(v) => setDetails({ ...details, date: v })} />
+            <TimeField label={t('social.timeLabel')} value={details.time} onChange={(v) => setDetails({ ...details, time: v })} />
             {!details.title.trim() ? <Note>{t('social.missing.title')}</Note> : null}
             {!parseDateTime(details.date, details.time) ? <Note>{t('social.missing.when')}</Note> : null}
             <Field label={t('social.invites.place')} value={details.place} onChangeText={(v) => setDetails({ ...details, place: v })} maxLength={200} />

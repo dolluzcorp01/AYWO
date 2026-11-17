@@ -570,6 +570,14 @@
     "weddingPlaceholder": "e.g. 21/03/1995",
     "badWeddingDate": "Type the full wedding date, like 21/03/1995. It can't be in the future."
   },
+  "picker": {
+    "pickDate": "Pick a date",
+    "pickTime": "Pick a time",
+    "clear": "Clear",
+    "clearLabel": "Clear {{what}}",
+    "cancel": "Cancel",
+    "done": "Done"
+  },
   "roles": {
     "title": "What each role can do",
     "subtitle": "Roles are per tree. The owner or a co-creator picks them when sharing.",
@@ -1952,8 +1960,8 @@
       "amount": "Fixed amount",
       "percentValue": "Percentage off (1 to 90)",
       "amountValue": "Amount off",
-      "starts": "Starts (year-month-day)",
-      "ends": "Ends (year-month-day)",
+      "starts": "Starts on",
+      "ends": "Ends on",
       "maxUses": "Total uses allowed",
       "noLimit": "No limit",
       "perUser": "Uses per person",
@@ -2025,7 +2033,7 @@
       "dateBad": "This isn't a real day. Type year-month-day, like {{example}}.",
       "endBeforeStart": "The end day is before the start day.",
       "dateHelp": "Starts at the beginning of this day, India time.",
-      "endHelp": "Runs until the end of this day, India time. Leave empty for no end.",
+      "endHelp": "Runs until the end of this day, India time. Tap Clear for no end.",
       "percentBad": "The percentage must be a whole number from 1 to 90.",
       "amountBad": "The amount must be more than 0.",
       "perUserBad": "Uses per person must be from 1 to 100.",

@@ -19,3 +19,9 @@ export function useTimeAgo() {
     return then.toLocaleDateString(i18n.language);
   };
 }
+
+/** Today on this device as "2026-12-25", the format the date pickers use. */
+export function todayIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}

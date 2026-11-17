@@ -1,4 +1,5 @@
 // New invite. Everyone invited comes from the sender's own tree or groups.
+import { DateField, TimeField } from '@/components/DateTimeField';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -57,8 +58,8 @@ export default function NewInvite() {
       <Label>{t('social.invites.kind')}</Label>
       <Pills options={EVENT_KINDS.map((k) => ({ value: k as EventKind, label: t(`social.invites.kinds.${k}`) }))} value={kind} onChange={setKind} />
       <Field label={t('social.invites.titleField')} value={title} onChangeText={setTitle} maxLength={120} />
-      <Field label={t('social.dateLabel')} value={date} onChangeText={setDate} placeholder={t('social.datePlaceholder')} autoCapitalize="none" />
-      <Field label={t('social.timeLabel')} value={time} onChangeText={setTime} placeholder={t('social.timePlaceholder')} autoCapitalize="none" />
+      <DateField label={t('social.dateLabel')} value={date} onChange={setDate} />
+      <TimeField label={t('social.timeLabel')} value={time} onChange={setTime} />
       {date && time && !startsAt ? <Note>{t('social.dateHelp')}</Note> : null}
       <Field label={t('social.invites.place')} value={place} onChangeText={setPlace} maxLength={200} />
       <Field label={t('social.invites.note')} value={note} onChangeText={setNote} multiline maxLength={1000} />
