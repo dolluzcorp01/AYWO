@@ -1609,7 +1609,7 @@
       "added": "Added",
       "add": "Add staff",
       "addTitle": "Add staff",
-      "addText": "If this number has never signed in, it gets an invite that works at its first sign-in, for 14 days.",
+      "addText": "Type the person's mobile number. If they already use AYWO they become staff now. If the number has never signed in, an invite waits for its first sign-in, for 14 days. To add back someone you removed, use \"Removed from staff\" below: no number needed.",
       "phone": "Phone number, in international form",
       "change": "Change",
       "changeTitle": "Change {{name}}",
@@ -1635,7 +1635,7 @@
       "resetText": "They are signed out and must set up their authenticator app again at the next sign-in.",
       "custom": "Choose permissions",
       "invitedTitle": "Invite saved",
-      "invitedText": "This number hasn't signed in to AYWO yet. It becomes staff at its first sign-in within 14 days.",
+      "invitedText": "AYWO does not send this person any message. Please tell them yourself: sign in to AYWO with this number within 14 days, then open the admin page. They become staff at that first sign-in.",
       "editRole": "Change {{name}}",
       "roleName": "Role name",
       "deleteRole": "Delete role",
@@ -1658,7 +1658,17 @@
       "deleteRoleBlocked": "This role can be deleted only when nobody has it. Move its people to another role first.",
       "roleConfirmTitle": "Change what {{name}} can do?",
       "roleGains": "They gain: {{list}}",
-      "roleLoses": "They lose: {{list}}"
+      "roleLoses": "They lose: {{list}}",
+      "invitesHelp": "AYWO sends no message for an invite. Tell the person to sign in with that number.",
+      "renewInvite": "Renew for 14 days",
+      "changeInviteTitle": "Change the invite for {{phone}}",
+      "changeInviteText": "Saving also renews the invite for another 14 days.",
+      "former": "Removed from staff",
+      "formerHelp": "Add someone back with the role they had. No phone number to type. For safety they set up their second step again.",
+      "formerWas": "Was {{role}} · removed {{when}}",
+      "addBack": "Add back",
+      "addPersonTitle": "Make {{name}} staff",
+      "addPersonText": "This account already uses AYWO, so no phone number is needed. Choose what they can do."
     },
     "audit": {
       "title": "Audit log",
@@ -1729,7 +1739,8 @@
         "announcement_updated": "Changed a banner",
         "campaign_sent": "Sent a promotional message",
         "config_changed": "Changed app settings",
-        "takedown_person_search": "Searched for a person for a takedown"
+        "takedown_person_search": "Searched for a person for a takedown",
+        "staff_invite_changed": "Changed a staff invite"
       }
     },
     "broadcast": {
@@ -2257,7 +2268,8 @@
         "end": "{{name}} is signed out everywhere.",
         "plus": "Free Plus days added for {{name}}."
       },
-      "daysBad": "Days must be a whole number from 1 to 365."
+      "daysBad": "Days must be a whole number from 1 to 365.",
+      "makeStaff": "Make staff"
     },
     "funnel": {
       "title": "Step by step: devices that first opened the app in the last {{count}} days",

@@ -177,13 +177,28 @@ export interface StaffInvite {
   phone_masked: string;
   phone_key: string;
   role: StaffRole;
+  team_role_id: string | null;
   team_role: string | null;
+  permissions: Grantable[];
   expires_at: string;
   expired: boolean;
 }
 
+/** Someone taken off staff, kept with what they had so adding them back needs no typing. */
+export interface FormerStaff {
+  profile_id: string;
+  display_name: string | null;
+  phone_masked: string | null;
+  role: StaffRole;
+  team_role_id: string | null;
+  team_role: string | null;
+  permissions: Grantable[];
+  removed_at: string;
+}
+
 export interface StaffPage extends Page<StaffRow> {
   invites: StaffInvite[];
+  former?: FormerStaff[];
 }
 
 export interface TeamRole {

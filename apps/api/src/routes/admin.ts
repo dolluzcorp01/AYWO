@@ -468,9 +468,14 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   });
   app.post('/admin/staff', (req) => {
     const body = z
-      .object({ phone: z.string().max(30), role, permissions, team_role_id: z.string().uuid().nullable().optional() })
+      .object({ phone: z.string().max(30).optional(), profile_id: z.string().uuid().optional(), role, permissions, team_role_id: z.string().uuid().nullable().optional() })
+      .refine((b) => !!b.phone !== !!b.profile_id)
       .parse(req.body);
-    const phone = e164(body.phone);
+    // An account that already exists (removed staff, or picked on the Users page): no number is typed.
+    if (body.profile_id) {
+      return staffCall(req, ['staff'], 'admin_staff_add_person', [body.profile_id, body.role, body.permissions, body.team_role_id ?? null]);
+    }
+    const phone = e164(body.phone ?? '');
     // The reviewers' code is public, so their number can never become staff, now or by invite.
     if (isReviewerLogin(phone)) throw new ApiError(422, 'not_allowed');
     return staffCall(req, ['staff'], 'admin_staff_add', [phone, body.role, body.permissions, body.team_role_id ?? null]);
@@ -483,6 +488,12 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   app.delete('/admin/staff/:id', (req) => {
     const { id } = idParam.parse(req.params);
     return staffCall(req, ['staff'], 'admin_staff_remove', [id]);
+  });
+  // Change what a waiting invite gives, or renew one that ended: it waits another 14 days.
+  app.patch('/admin/staff-invites/:key', (req) => {
+    const { key } = z.object({ key: z.string().regex(/^[0-9a-f]{32}$/) }).parse(req.params);
+    const body = z.object({ role, permissions, team_role_id: z.string().uuid().nullable().optional() }).parse(req.body);
+    return staffCall(req, ['staff'], 'admin_staff_invite_update', [key, body.role, body.permissions, body.team_role_id ?? null]);
   });
   app.delete('/admin/staff-invites/:key', (req) => {
     const { key } = z.object({ key: z.string().regex(/^[0-9a-f]{32}$/) }).parse(req.params);

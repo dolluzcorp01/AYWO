@@ -245,6 +245,7 @@ function AddressDialog({ row, onClose }: { row: OrderRow; onClose: () => void })
           {action.failure ? <Message text={action.failure} alert /> : null}
           <Actions>
             <SecondaryButton
+              main
               label={t('admin.orders.showAddress')}
               disabled={reason.trim().length < 5 || action.busy}
               onPress={() => action.run(async () => setData(await api.post<OrderAddress>(`/admin/orders/${row.id}/address`, { reason: reason.trim() })))}

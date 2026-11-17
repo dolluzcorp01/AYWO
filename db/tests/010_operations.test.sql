@@ -290,5 +290,23 @@ select ok(staff_invite_claim('00000000-0000-0000-0000-0000000000f9'), 'the invit
 select is((select array_agg(permission order by permission) from app_admin_permissions where profile_id = '00000000-0000-0000-0000-0000000000f9'),
   array['analytics', 'marketing'], 'with the Marketing role''s permissions');
 
+-- ===== Staff again without typing a number (0028) =====
+select test_login('00000000-0000-0000-0000-0000000000f1');
+select lives_ok($$ select admin_staff_remove('00000000-0000-0000-0000-0000000000f9') $$, 'a staff member is removed');
+select is((admin_staff_list() -> 'former' -> 0 ->> 'team_role'), 'Marketing', 'and is remembered with the role they had');
+select lives_ok($$ select admin_staff_add_person('00000000-0000-0000-0000-0000000000f9', 'sub_admin', '{}', (admin_staff_list() -> 'former' -> 0 ->> 'team_role_id')::uuid) $$, 'they are added back without a phone number');
+select is(jsonb_array_length(admin_staff_list() -> 'former'), 0, 'and are no longer listed as removed');
+select is((select array_agg(permission order by permission) from app_admin_permissions where profile_id = '00000000-0000-0000-0000-0000000000f9'),
+  array['analytics', 'marketing'], 'with the role''s permissions again');
+select throws_ok($$ select admin_staff_add_person('00000000-0000-0000-0000-0000000000f9', 'sub_admin', '{}', current_setting('test.r_mkt')::uuid) $$, 'PT409', 'admin_already_staff', 'someone already staff is not added twice');
+select throws_ok($$ select admin_staff_add_person('00000000-0000-0000-0000-00000000dead', 'sub_admin', '{}', current_setting('test.r_mkt')::uuid) $$, 'PT404', 'admin_user_not_found', 'an account that does not exist is refused');
+select is((select admin_staff_add('+919822288888', 'sub_admin', '{}', current_setting('test.r_mkt')::uuid) ->> 'invited'), 'true', 'another unknown number is invited');
+select lives_ok($$ select admin_staff_invite_update(md5('+919822288888'), 'sub_admin', '{}', current_setting('test.r_support')::uuid) $$, 'a waiting invite is changed');
+select is((admin_staff_list() -> 'invites' -> 0 ->> 'team_role'), 'Support', 'the invite now gives the new role');
+reset role;
+select test_login('00000000-0000-0000-0000-0000000000f2');
+select throws_ok($$ select admin_staff_add_person('00000000-0000-0000-0000-0000000000f6', 'sub_admin', '{}', current_setting('test.r_mkt')::uuid) $$, 'PT403', 'admin_not_allowed', 'a Sub-admin cannot add staff');
+reset role;
+
 select * from finish();
 rollback;

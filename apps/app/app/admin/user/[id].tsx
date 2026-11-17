@@ -76,6 +76,9 @@ export default function AdminUser() {
                 ) : null}
                 {access.can(['users']) && !staffLocked ? <SecondaryButton label={t('admin.user360.endSessions')} onPress={() => setDoing('end')} /> : null}
                 {access.can(['payments', 'support']) ? <SecondaryButton label={t('admin.user360.givePlus')} onPress={() => setDoing('plus')} /> : null}
+                {access.can(['staff']) && !user.staff_role && !user.deleted && !user.blocked_at ? (
+                  <SecondaryButton label={t('admin.user360.makeStaff')} onPress={() => router.navigate({ pathname: '/admin/staff', params: { add: user.id, name: user.display_name } })} />
+                ) : null}
               </Actions>
             }
           >
