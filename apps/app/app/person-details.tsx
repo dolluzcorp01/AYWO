@@ -1,7 +1,7 @@
 // E2 / S-08: a new person (from E1) or changing an existing one. Name is the only required thing.
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
@@ -118,6 +118,11 @@ export default function PersonDetails() {
   const [form, setForm] = useState<Form>(() => (params.gender ? { ...EMPTY, gender: params.gender } : EMPTY));
   const [contacts, setContacts] = useState<Contacts>(NO_CONTACTS);
   const [photo, setPhoto] = useState<PickedFile | null>(null);
+  // "Remove photo" was pressed: the saved photo goes when Save is pressed.
+  const [noPhoto, setNoPhoto] = useState(false);
+  // Anything typed or picked since the form opened: Back then asks before throwing it away.
+  const touched = useRef(false);
+  const [leaving, setLeaving] = useState(false);
   const [more, setMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -160,6 +165,7 @@ export default function PersonDetails() {
   }, [stored.data]);
 
   function changeContact(kind: ContactKind, value: string) {
+    touched.current = true;
     setContacts((now) => ({ ...now, [kind]: value, ...(kind === 'mobile' && sameWhatsapp ? { whatsapp: value } : {}) }));
     if (badField === kind || (kind === 'mobile' && sameWhatsapp && badField === 'whatsapp')) setBadField(null);
     setFailure(null);
@@ -215,6 +221,7 @@ export default function PersonDetails() {
   const nameVoice = useVoiceInput(form.name, (v) => change('name', v), { shape: asName });
 
   function change<K extends keyof Form>(key: K, value: Form[K]) {
+    touched.current = true;
     setForm((now) => ({ ...now, [key]: value }));
     setFailure(null);
     if ((key === 'name' || key === 'nameUnknown') && badField === 'name') setBadField(null);
@@ -224,7 +231,11 @@ export default function PersonDetails() {
   async function choosePhoto() {
     try {
       const picked = await pickPhoto();
-      if (picked) setPhoto(picked);
+      if (picked) {
+        touched.current = true;
+        setPhoto(picked);
+        setNoPhoto(false);
+      }
     } catch (error) {
       setFailure(errorText(error));
     }
@@ -332,7 +343,7 @@ export default function PersonDetails() {
 
       if (editing && personId) {
         const version = loadedVersion ?? node?.version ?? 1;
-        const answer = await savePerson(personId, version, { ...built.fields, ...(photoPath ? { photo_path: photoPath } : {}) });
+        const answer = await savePerson(personId, version, { ...built.fields, ...(photoPath ? { photo_path: photoPath } : noPhoto ? { photo_path: null } : {}) });
         if (answer.status === 'requested') {
           setNotice(t('details.sentForApproval'));
           setBusy(false);
@@ -484,14 +495,26 @@ export default function PersonDetails() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <TopBar title={title} subtitle={subtitle} onBack={leave} />
+        <TopBar title={title} subtitle={subtitle} onBack={() => (touched.current ? setLeaving(true) : leave())} />
+        <ConfirmDialog
+          visible={leaving}
+          title={t('details.leaveTitle')}
+          message={t('details.leaveText')}
+          confirmLabel={t('details.leaveYes')}
+          danger
+          onConfirm={() => {
+            setLeaving(false);
+            leave();
+          }}
+          onCancel={() => setLeaving(false)}
+        />
 
         <View style={styles.nameRow}>
           <Pressable accessibilityRole="button" accessibilityLabel={t('profile.addPhoto')} onPress={choosePhoto}>
             {photo ? (
               <Image source={{ uri: photo.uri }} style={styles.photo} accessibilityIgnoresInvertColors />
             ) : (
-              <Avatar personId={personId ?? 'new'} size={76} photoUrl={node?.photoUrl} />
+              <Avatar personId={personId ?? 'new'} size={76} photoUrl={noPhoto ? null : node?.photoUrl} />
             )}
             <View style={styles.photoPlus}>
               <PlusIcon color={colors.white} size={14} width={3} />
@@ -510,6 +533,18 @@ export default function PersonDetails() {
             />
           </View>
         </View>
+        {photo || (node?.photoUrl && !noPhoto) ? (
+          <TextButton
+            label={t('profile.removePhoto')}
+            danger
+            onPress={() => {
+              touched.current = true;
+              // A photo only just picked is simply dropped; a saved one goes on Save.
+              if (photo) setPhoto(null);
+              else setNoPhoto(true);
+            }}
+          />
+        ) : null}
         {!editing && contactsOpen && canPickContact() ? (
           <Pressable accessibilityRole="button" onPress={() => void fillFromContacts()} style={styles.fromContacts}>
             <ContactsIcon color={colors.logoPurple} size={20} />

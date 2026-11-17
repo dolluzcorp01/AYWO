@@ -18,6 +18,7 @@ import { HELP_PAGES } from '@/legal/LegalLinks';
 import { api } from '@/lib/api';
 import { DeleteBanner } from '@/components/DeleteBanner';
 import { mainTree, useMe, useTrees, useUpdateMe } from '@/lib/account';
+import { TreeSettings } from '@/tree/TreeSettings';
 import { useFeature } from '@/ops/appConfig';
 import type { MyExtras } from '@/ops/types';
 import { useErrorText } from '@/lib/errors';
@@ -39,6 +40,7 @@ export default function MeScreen() {
   const [signingOut, setSigningOut] = useState(false);
   const trees = useTrees();
   const update = useUpdateMe();
+  const [treeSettings, setTreeSettings] = useState(false);
   const plan = usePlan();
   const prefs = useNotificationPrefs();
   const large = useLargeText();
@@ -158,11 +160,13 @@ export default function MeScreen() {
                 title={tree.name}
                 value={t('home.peopleCount', { count: tree.people })}
                 onPress={() => router.push({ pathname: '/tree/[id]', params: { id: tree.id } })}
-                last={i === list.length - 1}
+                last={i === list.length - 1 && created.length === 0}
               />
             ))
           )}
+          {created.length > 0 ? <Row title={t('me.treeSettings')} onPress={() => setTreeSettings(true)} last /> : null}
         </Card>
+        {treeSettings ? <TreeSettings trees={created} onClose={() => setTreeSettings(false)} /> : null}
 
         {offersOn || ordersOn || referralsOn ? (
           <>

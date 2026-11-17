@@ -582,7 +582,10 @@
     "weddingPlaceholder": "e.g. 21/03/1995",
     "badWeddingDate": "Type the full wedding date, like 21/03/1995. It can't be in the future.",
     "pickBorn": "Pick the date of birth from a calendar",
-    "pickDied": "Pick the date of passing from a calendar"
+    "pickDied": "Pick the date of passing from a calendar",
+    "leaveTitle": "Leave without saving?",
+    "leaveText": "What you typed here will be lost.",
+    "leaveYes": "Leave, don't save"
   },
   "picker": {
     "hour": "Hour",
@@ -853,7 +856,14 @@
     "noSuccessor": "Not set",
     "successorsSet_one": "{{count}} of {{total}} set",
     "successorsSet_other": "{{count}} of {{total}} set",
-    "help": "Help and legal"
+    "help": "Help and legal",
+    "treeSettings": "Rename or delete a tree",
+    "treeName": "Name of the tree",
+    "saveTreeName": "Save the name",
+    "deleteTree": "Delete this tree",
+    "deleteTreeText": "Deleting \"{{name}}\" removes it for everyone it is shared with. This cannot be undone here. To go ahead, type the word {{word}}.",
+    "deleteTreeYes": "Delete \"{{name}}\" for everyone",
+    "treeDeleted": "The tree was deleted."
   },
   "settings": {
     "language": "Language",
