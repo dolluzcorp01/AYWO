@@ -1,4 +1,5 @@
 // Find trees by name or id. Counts only, until someone gives a reason to look at the people. Every look is audited.
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -16,7 +17,9 @@ interface Look {
 
 export default function AdminTrees() {
   const { t, i18n } = useTranslation();
-  const [q, setQ] = useState('');
+  // Opened from an account's page: that tree is searched for straight away.
+  const params = useLocalSearchParams<{ q?: string }>();
+  const [q, setQ] = useState(params.q ?? '');
   const [asking, setAsking] = useState<TreeRow | null>(null);
   const [look, setLook] = useState<Look | null>(null);
   const [pageFailed, setPageFailed] = useState(false);
@@ -77,16 +80,8 @@ export default function AdminTrees() {
 
   return (
     <AdminPage title={t('admin.trees.title')} subtitle={t('admin.trees.subtitle')} gates={['trees']}>
-      <SearchBox placeholder={t('admin.trees.search')} onSearch={setQ} />
-      <QueryState query={query} isEmpty={(data) => data.rows.length === 0} emptyText={t('admin.trees.empty')}>
-        {(data) => (
-          <>
-            <DataTable columns={columns} rows={data.rows} rowKey={(tree) => tree.id} />
-            <Pager page={page} total={data.total} onPage={setPage} />
-          </>
-        )}
-      </QueryState>
-
+      <SearchBox placeholder={t('admin.trees.search')} onSearch={setQ} initial={params.q ?? ''} />
+      {/* Right under the search box: below a full table nobody saw this list appear. */}
       {look ? (
         <Section title={t('admin.trees.peopleOf', { name: look.tree.name })}>
           <Text style={adminStyles.cellMuted}>{t('admin.trees.lookRecorded', { reason: look.reason })}</Text>
@@ -104,6 +99,15 @@ export default function AdminTrees() {
           </Actions>
         </Section>
       ) : null}
+
+      <QueryState query={query} isEmpty={(data) => data.rows.length === 0} emptyText={t('admin.trees.empty')}>
+        {(data) => (
+          <>
+            <DataTable columns={columns} rows={data.rows} rowKey={(tree) => tree.id} />
+            <Pager page={page} total={data.total} onPage={setPage} />
+          </>
+        )}
+      </QueryState>
 
       {asking ? (
         <FormDialog

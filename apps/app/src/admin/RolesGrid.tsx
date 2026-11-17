@@ -1,7 +1,7 @@
 // Admin side > Staff > Team roles: every permission against every role in one grid. AYWO Admin ticks and unticks
 // boxes, sees what changed, and saves once; the confirm lists each role's gains and losses and how many people they
 // reach. AYWO Admin's own column and the AYWO-Admin-only rows (staff, audit) are locked: the server never grants those.
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { CheckIcon } from '@/components/Icons';
@@ -35,6 +35,17 @@ export function RolesGrid({ roles, editable, onSaved, onEditRole }: {
 
   const current = (role: TeamRole): Grantable[] => draft[role.id] ?? role.permissions;
   const changed = useMemo(() => roles.filter((r) => draft[r.id] && !sameSet(draft[r.id], r.permissions)), [roles, draft]);
+  // Ticks not saved yet: closing or refreshing the page asks first, so they are not lost without a word.
+  const unsaved = changed.length > 0;
+  useEffect(() => {
+    if (!unsaved || typeof globalThis.addEventListener !== 'function') return;
+    const warn = (event: { preventDefault: () => void; returnValue?: string }) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    globalThis.addEventListener('beforeunload', warn as never);
+    return () => globalThis.removeEventListener('beforeunload', warn as never);
+  }, [unsaved]);
   const changeCount = changed.reduce((n, r) => {
     const now = current(r);
     return n + now.filter((p) => !r.permissions.includes(p)).length + r.permissions.filter((p) => !now.includes(p)).length;

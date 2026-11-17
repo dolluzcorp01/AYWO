@@ -110,7 +110,12 @@ export default function AdminUser() {
           <Panel title={t('admin.user360.trees')}>
             {user.trees.length === 0 ? <Text style={adminStyles.cellMuted}>{t('admin.user360.none')}</Text> : null}
             {user.trees.map((tree) => (
-              <Text key={tree.id} style={adminStyles.cellStrong}>
+              <Text
+                key={tree.id}
+                style={[adminStyles.cellStrong, access.can(['trees']) && { textDecorationLine: 'underline' }]}
+                accessibilityRole={access.can(['trees']) ? 'link' : undefined}
+                onPress={access.can(['trees']) ? () => router.navigate({ pathname: '/admin/trees', params: { q: tree.id } }) : undefined}
+              >
                 {tree.name} · {tree.creator ? t('admin.user360.creator') : t('admin.user360.sharedWith')} · {t('admin.user360.peopleCount', { count: tree.people })}
               </Text>
             ))}

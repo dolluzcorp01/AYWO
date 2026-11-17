@@ -70,6 +70,23 @@ export default function AdminOffers() {
 }
 
 // ===== Coupons =====
+// The pages a banner or message usually opens, so nobody has to remember and type "/family-plan".
+const PAGES = ['/offers', '/shop', '/plus', '/invite-friends', '/calendar', '/social/memories', '/home'] as const;
+
+function PageChoices({ onPick }: { onPick: (path: string) => void }) {
+  const { t } = useTranslation();
+  return (
+    <View style={{ gap: 6 }}>
+      <Text style={adminStyles.cellMuted}>{t('admin.offers.pickPage')}</Text>
+      <Actions>
+        {PAGES.map((path) => (
+          <SecondaryButton key={path} label={t(`admin.offers.pages.${path.slice(1).replace('/', '_').replace('-', '_')}`)} onPress={() => onPick(path)} />
+        ))}
+      </Actions>
+    </View>
+  );
+}
+
 function Coupons() {
   const { t, i18n } = useTranslation();
   const [view, setView] = useState<'active' | 'ended' | 'all'>('active');
@@ -427,6 +444,7 @@ function BannerDialog({ item, onClose }: { item: Announcement | null; onClose: (
       <Field label={t('admin.offers.bannerTitle')} value={title} onChange={setTitle} maxLength={80} help={t('admin.offers.bannerTitleHelp')} />
       <Field label={t('admin.offers.bannerBody')} value={body} onChange={setBody} multiline maxLength={200} />
       <Field label={t('admin.offers.link')} value={link} onChange={setLink} maxLength={300} placeholder="/offers" help={t('admin.offers.linkHelp')} error={linkOk ? null : t('admin.offers.linkBad')} />
+      <PageChoices onPick={setLink} />
       <Field label={t('admin.offers.linkLabel')} value={linkLabel} onChange={setLinkLabel} maxLength={30} />
       <Text style={adminStyles.fieldLabel}>{t('admin.offers.style')}</Text>
       <FilterChips value={style} onChange={setStyle} options={(['offer', 'info', 'celebration', 'warning'] as const).map((s) => ({ value: s, label: t(`admin.offers.styles.${s}`) }))} />
@@ -512,6 +530,7 @@ function Messages() {
       <Field label={t('admin.broadcast.heading')} value={title} onChange={setTitle} maxLength={60} />
       <Field label={t('admin.broadcast.body')} value={body} onChange={setBody} multiline maxLength={180} />
       <Field label={t('admin.offers.opens')} value={link} onChange={setLink} maxLength={100} help={t('admin.offers.opensHelp')} error={linkOk ? null : t('admin.offers.opensBad')} />
+      <PageChoices onPick={setLink} />
       <FilterChips value={audience} onChange={setAudience} options={(['everyone', 'plus', 'free'] as const).map((a) => ({ value: a, label: t(`admin.offers.audiences.${a}`) }))} />
       <FilterChips value={region} onChange={setRegion} options={(['all', 'india', 'overseas'] as const).map((r) => ({ value: r, label: t(`admin.offers.regions.${r}`) }))} />
       <FilterChips

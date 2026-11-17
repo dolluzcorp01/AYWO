@@ -2165,7 +2165,17 @@
       "nobodyToSend": "Nobody in this group has switched on offers, so there is no one to send to. Choose a wider group.",
       "countFailed": "We couldn't count who will get this. {{why}}",
       "sentDone_one": "Sent to {{count}} person.",
-      "sentDone_other": "Sent to {{count}} people."
+      "sentDone_other": "Sent to {{count}} people.",
+      "pickPage": "Or pick the page it opens:",
+      "pages": {
+        "offers": "Offers",
+        "shop": "Shop",
+        "plus": "AYWO Plus plans",
+        "invite_friends": "Invite and earn",
+        "calendar": "Family calendar",
+        "social_memories": "Memories",
+        "home": "Home"
+      }
     },
     "analytics": {
       "title": "Analytics",
