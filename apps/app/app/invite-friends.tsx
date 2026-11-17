@@ -62,7 +62,7 @@ export default function InviteFriends() {
                 <Text style={styles.stat}>{t('ops.refer.joined', { count: data.joined })}</Text>
                 <Text style={styles.stat}>{t('ops.refer.rewarded', { count: data.rewarded })}</Text>
                 {data.bonus_until && new Date(data.bonus_until) > new Date() ? (
-                  <Text style={styles.stat}>{t('ops.refer.freeUntil', { date: new Date(data.bonus_until).toLocaleDateString(i18n.language) })}</Text>
+                  <Text style={styles.stat}>{t('ops.refer.freeUntil', { date: new Date(data.bonus_until).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' }) })}</Text>
                 ) : null}
               </Card>
               <Card style={styles.block}>

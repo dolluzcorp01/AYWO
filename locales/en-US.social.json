@@ -137,7 +137,8 @@
       "editComment": "Edit your comment",
       "deleteCommentTitle": "Delete this comment?",
       "addTags": "Tag the people ticked",
-      "addHelpers": "Add helpers"
+      "addHelpers": "Add helpers",
+      "morePhotos": "+{{count}} more"
     },
     "groups": {
       "title": "Friends groups",
@@ -247,7 +248,12 @@
       "guestsAnswerFirst": "Choose Yes, Maybe or No above: the number is saved with your answer.",
       "guestsSaved": "Saved. The host can see the new number.",
       "inviteMore": "Invite more people",
-      "sendToThem": "Send the invite to them"
+      "sendToThem": "Send the invite to them",
+      "sections": {
+        "upcoming": "Coming up",
+        "past": "Over",
+        "cancelled": "Cancelled"
+      }
     },
     "pop": {
       "new": "New Pop Party",
@@ -406,7 +412,10 @@
       "countOf": "{{n}} of {{most}} photos. Use ✕ to remove one, ‹ › to change the order.",
       "removeTitle": "Remove this photo?",
       "removeMessage": "It will be taken off this memory for everyone.",
-      "removeYes": "Remove photo"
+      "removeYes": "Remove photo",
+      "openN": "Open photo {{n}} full screen",
+      "previous": "Previous photo",
+      "next": "Next photo"
     },
     "edited": "edited",
     "edit": "Edit"

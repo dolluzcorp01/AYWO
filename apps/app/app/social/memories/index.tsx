@@ -43,7 +43,14 @@ export default function Memories() {
                     <Text style={styles.who}>{showName(post.author_name)}</Text>
                     <Note>{[post.scope_name, when(post.happened_on, true)].filter(Boolean).join(' · ')}</Note>
                     {post.media[0]?.url ? (
-                      <Image source={{ uri: post.media[0].url }} style={styles.photo} accessibilityLabel={t('social.memories.photo')} />
+                      <View>
+                        <Image source={{ uri: post.media[0].url }} style={styles.photo} accessibilityLabel={t('social.memories.photo')} />
+                        {post.media.length > 1 ? (
+                          <View style={styles.more}>
+                            <Text style={styles.moreText}>{t('social.memories.morePhotos', { count: post.media.length - 1 })}</Text>
+                          </View>
+                        ) : null}
+                      </View>
                     ) : null}
                     {post.body ? <Text numberOfLines={4} style={styles.body}>{post.body}</Text> : null}
                     <View style={styles.counts}>
@@ -69,6 +76,8 @@ const styles = StyleSheet.create({
   card: { gap: 8 },
   who: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
   photo: { width: '100%', height: 220, borderRadius: 14 },
+  more: { position: 'absolute', right: 10, bottom: 10, backgroundColor: colors.scrim, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  moreText: { color: colors.white, fontFamily: fonts.bold, fontSize: 13 },
   body: { color: colors.text, fontFamily: fonts.medium, fontSize: 15, lineHeight: 22 },
   counts: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   count: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 13 },

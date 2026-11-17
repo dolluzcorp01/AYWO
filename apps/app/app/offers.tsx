@@ -43,7 +43,7 @@ export default function Offers() {
                   {o.description ? <Text style={styles.body}>{o.description}</Text> : null}
                   <Note>
                     {o.products.map((p) => t(`ops.shop.products.${p}`)).join(', ')}
-                    {o.ends_at ? ` · ${t('ops.offers.until', { date: new Date(o.ends_at).toLocaleDateString(i18n.language) })}` : ''}
+                    {o.ends_at ? ` · ${t('ops.offers.until', { date: new Date(o.ends_at).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' }) })}` : ''}
                   </Note>
                   <View style={styles.actions}>
                     <SmallButton

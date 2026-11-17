@@ -97,7 +97,7 @@ export default function MyOrders() {
                       {o.quantity > 1 ? ` x ${o.quantity}` : ''}
                     </Text>
                     <Note>
-                      {formatMoney(o.amount_minor, o.currency, i18n.language)} · {new Date(o.created_at).toLocaleDateString(i18n.language)}
+                      {formatMoney(o.amount_minor, o.currency, i18n.language)} · {new Date(o.created_at).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })}
                     </Note>
                     {o.status === 'refunded' ? (
                       <Text style={styles.state}>{t('ops.orders.refunded')}</Text>

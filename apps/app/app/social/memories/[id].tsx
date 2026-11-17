@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { Card, ConfirmDialog, Field, Label, SecondaryButton, SectionTitle, SmallButton, TextButton } from '@/components/ui';
 import { api, uploadFile } from '@/lib/api';
@@ -51,6 +51,8 @@ export default function MemoryDetail() {
   const [draftDate, setDraftDate] = useState('');
   const [editingComment, setEditingComment] = useState<{ id: string; body: string } | null>(null);
   const [removingPhoto, setRemovingPhoto] = useState<string | null>(null);
+  // The photo opened to fill the screen, by its place in the row.
+  const [viewing, setViewing] = useState<number | null>(null);
   // One "are you sure" for the small removals on this screen: what is asked, and what Yes does.
   const [asking, setAsking] = useState<{ title: string; yes: string; run: () => void } | null>(null);
   const [reporting, setReporting] = useState<{ type: ReportTarget; id: string; ownerId: string; ownerName: string } | null>(null);
@@ -254,7 +256,11 @@ export default function MemoryDetail() {
                   {data.media.length > 0 ? (
                     <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.strip}>
                       {data.media.map((m, i) =>
-                        m.url ? <Image key={m.id} source={{ uri: m.url }} style={styles.photo} accessibilityLabel={t('social.photos.photoN', { n: i + 1 })} /> : null,
+                        m.url ? (
+                          <Pressable key={m.id} accessibilityRole="imagebutton" accessibilityLabel={t('social.photos.openN', { n: i + 1 })} onPress={() => setViewing(i)}>
+                            <Image source={{ uri: m.url }} style={styles.photo} />
+                          </Pressable>
+                        ) : null,
                       )}
                     </ScrollView>
                   ) : null}
@@ -396,6 +402,27 @@ export default function MemoryDetail() {
           </>
         )}
       </Gate>
+      <Modal visible={viewing !== null} transparent animationType="fade" onRequestClose={() => setViewing(null)}>
+        <View style={styles.viewer}>
+          {(() => {
+            const shown = (post.data?.media ?? []).filter((m) => m.url);
+            const at = Math.min(viewing ?? 0, Math.max(shown.length - 1, 0));
+            const photo = shown[at];
+            if (!photo?.url) return null;
+            return (
+              <>
+                <Image source={{ uri: photo.url }} style={styles.viewerPhoto} resizeMode="contain" accessibilityLabel={t('social.photos.photoN', { n: at + 1 })} />
+                <View style={styles.viewerBar}>
+                  <SmallButton kind="plain" label="‹" accessibilityLabel={t('social.photos.previous')} disabled={at === 0} onPress={() => setViewing(at - 1)} />
+                  <Text style={styles.viewerCount}>{`${at + 1} / ${shown.length}`}</Text>
+                  <SmallButton kind="plain" label="›" accessibilityLabel={t('social.photos.next')} disabled={at >= shown.length - 1} onPress={() => setViewing(at + 1)} />
+                  <SmallButton label={t('common.close')} onPress={() => setViewing(null)} />
+                </View>
+              </>
+            );
+          })()}
+        </View>
+      </Modal>
       <ConfirmDialog
         visible={!!asking}
         title={asking?.title ?? ''}
@@ -460,6 +487,10 @@ const styles = StyleSheet.create({
   body: { color: colors.text, fontFamily: fonts.medium, fontSize: 15, lineHeight: 22 },
   strip: { gap: 8 },
   photo: { width: 260, height: 260, borderRadius: 14 },
+  viewer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'center' },
+  viewerPhoto: { flex: 1, width: '100%' },
+  viewerBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 16 },
+  viewerCount: { color: colors.white, fontFamily: fonts.bold, fontSize: 15 },
   emojis: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   emoji: {
     minHeight: minTapSize,

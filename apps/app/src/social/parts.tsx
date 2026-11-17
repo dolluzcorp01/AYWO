@@ -115,7 +115,7 @@ export function useWhen() {
     const value = day ? new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3])) : new Date(iso);
     if (Number.isNaN(value.getTime())) return '';
     return dateOnly || day
-      ? value.toLocaleDateString(i18n.language)
+      ? value.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })
       : value.toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short', hour12: true });
   };
 }
@@ -130,11 +130,8 @@ export function parseDateTime(date: string, time: string): Date | null {
   return value;
 }
 
-/** Today as "2026-12-25", in the person's own time zone: the earliest day an event can be planned for. */
-export function todayIso(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-}
+// Today as "2026-12-25": the earliest day an event can be planned for.
+export { todayIso } from '@/lib/time';
 
 /** Every line that has words on it. */
 export function lines(text: string): string[] {
