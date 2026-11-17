@@ -116,7 +116,7 @@ export function useWhen() {
     if (Number.isNaN(value.getTime())) return '';
     return dateOnly || day
       ? value.toLocaleDateString(i18n.language)
-      : value.toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short' });
+      : value.toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short', hour12: true });
   };
 }
 

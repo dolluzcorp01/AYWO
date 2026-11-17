@@ -39,7 +39,7 @@ export function OfflineBar({ inset }: { inset?: boolean }) {
 /** "6:30 pm" today, otherwise "10 Nov, 6:30 pm". */
 function savedWhen(time: number, lang: string): string {
   const date = new Date(time);
-  const clock = date.toLocaleTimeString(lang, { hour: 'numeric', minute: '2-digit' });
+  const clock = date.toLocaleTimeString(lang, { hour: 'numeric', minute: '2-digit', hour12: true });
   if (date.toDateString() === new Date().toDateString()) return clock;
   return `${date.toLocaleDateString(lang, { day: 'numeric', month: 'short' })}, ${clock}`;
 }

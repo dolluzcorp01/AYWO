@@ -32,7 +32,7 @@ function shown(type: 'date' | 'time', value: string, locale: string): string {
   const d = toDate(type, value);
   return type === 'date'
     ? d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
-    : d.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
+    : d.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 function Box({ type, label, value, onChange, min, max, invalid, help, error, optional }: DateTimeFieldProps & { type: 'date' | 'time' }) {
@@ -46,6 +46,8 @@ function Box({ type, label, value, onChange, min, max, invalid, help, error, opt
       mode={type}
       value={ios ? draft : toDate(type, value)}
       display={ios ? (type === 'date' ? 'inline' : 'spinner') : 'default'}
+      // 12-hour with AM / PM on Android, as time is said in India. iPhone follows the phone's own setting.
+      is24Hour={false}
       minimumDate={type === 'date' && min ? toDate('date', min) : undefined}
       maximumDate={type === 'date' && max ? toDate('date', max) : undefined}
       onChange={(event: DateTimePickerEvent, picked?: Date) => {

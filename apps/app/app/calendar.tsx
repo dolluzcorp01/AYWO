@@ -304,7 +304,7 @@ function ItemRow({ item, onPress }: { item: CalendarItem; onPress: () => void })
     title = t('calendar.remembering', { name });
     sub = years ? t('calendar.yearsSince', { count: years }) : t('calendar.kinds.remembrance');
   } else {
-    const time = item.starts_at ? new Date(item.starts_at).toLocaleTimeString(i18n.language, { hour: 'numeric', minute: '2-digit' }) : '';
+    const time = item.starts_at ? new Date(item.starts_at).toLocaleTimeString(i18n.language, { hour: 'numeric', minute: '2-digit', hour12: true }) : '';
     sub = [item.event_kind ? t(`social.invites.kinds.${item.event_kind}`) : '', time, item.me ? t('social.invites.youHost') : ''].filter(Boolean).join(' · ');
   }
   return (
