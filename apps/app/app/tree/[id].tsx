@@ -95,6 +95,17 @@ export default function TreeScreen() {
           <ViewSwitch mode={mode} onChange={changeMode} canSeeAs={canSeeAs} hasOwnPlace={!!viewerId || mode === 'see_as'} />
         </View>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        {data && data.role !== 'creator' && data.role !== 'none' ? (
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => router.push({ pathname: '/roles', params: { role: data.role } })}
+            style={({ hovered }: { hovered?: boolean }) => [styles.yourRole, hovered && styles.yourRoleHover]}
+          >
+            <Text style={styles.yourRoleText}>
+              {t(`roles.yours.${data.role}`)} <Text style={styles.yourRoleLink}>{t('roles.whatCanI')}</Text>
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {query.isError ? (
@@ -155,6 +166,10 @@ const styles = StyleSheet.create({
   titleText: { flex: 1, minWidth: 0 },
   eyebrow: { color: colors.muted, fontFamily: fonts.bold, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase' },
   title: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 28, letterSpacing: -0.9, lineHeight: 34 },
+  yourRole: { marginTop: 8, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: colors.tint, cursor: 'pointer' },
+  yourRoleHover: { backgroundColor: colors.line },
+  yourRoleText: { color: colors.text, fontFamily: fonts.medium, fontSize: 13 },
+  yourRoleLink: { color: colors.relation, fontFamily: fonts.bold, textDecorationLine: 'underline' },
   subtitle: { color: colors.muted, fontFamily: fonts.medium, fontSize: 13, lineHeight: 18, textAlign: 'center' },
   iconButton: {
     width: minTapSize,

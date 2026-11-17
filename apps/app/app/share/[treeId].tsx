@@ -20,6 +20,7 @@ import { normalizeContact } from '@/lib/contacts';
 import { useErrorText } from '@/lib/errors';
 import { shownName } from '@/tree/personName';
 import { canShare } from '@/tree/roles';
+import { RoleRightsList } from '@/tree/RoleRights';
 import { usePersonCard } from '@/tree/useCard';
 import { useCreateShare, useRevokeShare, useShares } from '@/tree/useEdit';
 import type { EditMode, ShareInput, ShareRole, ShareRow } from '@/tree/useEdit';
@@ -270,6 +271,14 @@ export default function ShareScreen() {
           </View>
         ) : null}
 
+        <Card style={styles.rightsCard}>
+          <Text style={styles.rightsTitle}>{t('roles.withRole', { role: t(ROLES.find((r) => r.value === role)?.nameKey ?? 'share.view') })}</Text>
+          <RoleRightsList role={role} approveFirst={editMode === 'approval'} />
+          <View style={styles.otherNumber}>
+            <TextButton label={t('roles.compare')} onPress={() => router.push({ pathname: '/roles', params: { role } })} />
+          </View>
+        </Card>
+
         <Switch label={t('share.contacts')} help={t('share.contactsHelp')} on={contactsVisible} onChange={setContactsVisible} />
 
         {needsPhone && savedHidden && !otherNumber ? (
@@ -388,6 +397,8 @@ const styles = StyleSheet.create({
   who: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
   phoneCard: { gap: 6, padding: 12 },
   otherNumber: { alignItems: 'flex-start' },
+  rightsCard: { gap: 10, padding: 14 },
+  rightsTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
   whoText: { flex: 1, minWidth: 0 },
   whoName: { color: colors.white, fontFamily: fonts.extrabold, fontSize: 15 },
   whoHelp: { color: colors.onNeon, fontFamily: fonts.semibold, fontSize: 12 },

@@ -38,13 +38,13 @@ const REFERRAL = 'aywo.referral';
 
 // Screens that work without an account. Everything else needs a session.
 // admin has its own gate, which says why someone cannot come in and offers sign-in.
-const PUBLIC_ROUTES = new Set(['phone', 'otp', 'link', 'invite', 'outsider', 'terms', 'privacy', 'refunds', 'faq', 'contact', 'takedown', 'admin']);
+const PUBLIC_ROUTES = new Set(['phone', 'otp', 'link', 'invite', 'outsider', 'terms', 'privacy', 'refunds', 'faq', 'roles', 'contact', 'takedown', 'admin']);
 
 // Before the app proper: welcome and the first steps after signing in. On a computer these stay a centred column.
 const ONBOARDING = new Set(['index', 'after-login', 'profile', 'is-this-you', 'start', 'import']);
 // Signed in, these keep the side menu (help pages, bringing in another tree, editing your name): nobody should lose
 // their way back by opening the FAQ or the Contact page.
-const IN_APP_WHEN_SIGNED_IN = new Set(['terms', 'privacy', 'refunds', 'faq', 'contact', 'takedown', 'import', 'profile']);
+const IN_APP_WHEN_SIGNED_IN = new Set(['terms', 'privacy', 'refunds', 'faq', 'roles', 'contact', 'takedown', 'import', 'profile']);
 
 function AppFrame({ children, signedIn }: { children: ReactNode; signedIn: boolean }) {
   const first = (useSegments() as string[])[0];
