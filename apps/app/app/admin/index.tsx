@@ -1,4 +1,5 @@
 // Staff dashboard. The work queue first, then each area this person is granted. The server sends only those groups.
+import { MyAccess } from '@/admin/MyAccess';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -121,6 +122,7 @@ export default function AdminDashboard() {
           </>
         )}
       </QueryState>
+      <MyAccess />
     </AdminPage>
   );
 }
