@@ -15,11 +15,12 @@ import { PhoneField } from '@/components/PhoneField';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { showToast } from '@/components/Toast';
-import { Card, ConfirmDialog, ErrorText, Loading, LoadFailed, Muted, NeonPanel, SectionTitle, SmallButton, Switch, TextButton, TopBar } from '@/components/ui';
+import { Card, ConfirmDialog, ErrorText, Loading, LoadFailed, Muted, NeonPanel, SecondaryButton, SectionTitle, SmallButton, Switch, TextButton, TopBar } from '@/components/ui';
 import { normalizeContact } from '@/lib/contacts';
 import { useErrorText } from '@/lib/errors';
 import { shownName } from '@/tree/personName';
 import { canShare } from '@/tree/roles';
+import { PersonPicker } from '@/tree/PersonPicker';
 import { RoleRightsList } from '@/tree/RoleRightsList';
 import { usePersonCard } from '@/tree/useCard';
 import { useCreateShare, useRevokeShare, useShares } from '@/tree/useEdit';
@@ -68,12 +69,24 @@ export default function ShareScreen() {
   const savedMobile = card.data?.contacts.values?.find((v) => v.kind === 'mobile')?.value ?? '';
   const savedHidden = !savedMobile && !!card.data?.contacts.has_mobile;
   const [otherNumber, setOtherNumber] = useState(false);
-  const filled = useRef(false);
+  // Opened from the top of the tree, nobody is named yet: "Who is this for?" picks them, so their saved number is used.
+  const [picking, setPicking] = useState(false);
+  const filled = useRef<string | null>(null);
   useEffect(() => {
-    if (!savedMobile || filled.current) return;
-    filled.current = true;
+    if (!savedMobile || filled.current === personId) return;
+    filled.current = personId ?? null;
     setPhone((typed) => typed || savedMobile);
-  }, [savedMobile]);
+  }, [savedMobile, personId]);
+  function choosePerson(id: string | undefined) {
+    // Another person: the number of the one before must not follow along.
+    filled.current = null;
+    setPhone('');
+    setOtherNumber(false);
+    setBadPhone(false);
+    setBranch(false);
+    setPicking(false);
+    router.setParams({ personId: id });
+  }
   // One set of choices makes one link, however many times it is sent. Kept where every send reads the latest:
   // a send that falls back to another way must reuse the link it has just made, not make a second one.
   const made = useRef<{ key: string; url: string } | null>(null);
@@ -177,7 +190,9 @@ export default function ShareScreen() {
     const url = await linkOrNull();
     if (!url) return;
     try {
-      await Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message(url))}`);
+      // Straight into that person's chat when their number is on screen; otherwise WhatsApp asks who to send it to.
+      const to = (needsPhone && normalizeContact('mobile', phone.trim())) || '';
+      await Linking.openURL(`https://wa.me/${to.replace(/\D/g, '')}?text=${encodeURIComponent(message(url))}`);
     } catch {
       // WhatsApp is not on this phone: the phone's own share sheet, with the link already made.
       await shareWith(url);
@@ -218,8 +233,24 @@ export default function ShareScreen() {
               <Text style={styles.whoName}>{personName}</Text>
               <Text style={styles.whoHelp}>{t('share.inTree')}</Text>
             </View>
+            <SmallButton kind="plain" label={t('share.changePerson')} onPress={() => setPicking(true)} />
           </NeonPanel>
+        ) : canManage ? (
+          <Card style={styles.pick}>
+            <Text style={styles.pickTitle}>{t('share.whoFor')}</Text>
+            <Muted>{t('share.whoForHelp')}</Muted>
+            <SecondaryButton label={t('share.pickPerson')} onPress={() => setPicking(true)} />
+          </Card>
         ) : null}
+        <PersonPicker
+          visible={picking}
+          title={t('share.whoFor')}
+          // Not me, and not someone who has passed away: neither can be invited.
+          people={data.nodes.filter((n) => n.living !== 'deceased' && !n.nameUnknown)}
+          excludeId={data.viewer_person_id}
+          onPick={choosePerson}
+          onClose={() => setPicking(false)}
+        />
 
         <SectionTitle>{t('share.theyCan')}</SectionTitle>
         <View accessibilityRole="radiogroup" style={styles.roles}>
@@ -393,6 +424,8 @@ function Choice({ label, on, onPress }: { label: string; on: boolean; onPress: (
 }
 
 const styles = StyleSheet.create({
+  pick: { gap: 8 },
+  pickTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 16 },
   scroll: { gap: 10, paddingBottom: 12 },
   who: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
   phoneCard: { gap: 6, padding: 12 },

@@ -1,3 +1,14 @@
+/** A small calendar button beside a box that also takes typed text, such as a birth year. */
+export interface DatePickButtonProps {
+  /** Said by screen readers: "Pick the date of birth". */
+  label: string;
+  /** "1968-03-21" opens the calendar on that day; anything else opens it on today. */
+  value: string;
+  min?: string;
+  max?: string;
+  onChange: (value: string) => void;
+}
+
 export interface DateTimeFieldProps {
   label?: string;
   /** "2026-12-25" for a date, "18:30" for a time, or "" when not picked. */

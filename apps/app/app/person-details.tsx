@@ -8,6 +8,7 @@ import { Avatar } from '@/components/Avatar';
 import { ContactsIcon, PlusIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { DateField, DatePickButton } from '@/components/DateTimeField';
 import { PhoneField } from '@/components/PhoneField';
 import { showToast } from '@/components/Toast';
 import { bestNumber, canPickContact, ContactsDenied, pickContact } from '@/lib/pickContact';
@@ -72,6 +73,12 @@ function formFrom(node: TreeNode): Form {
 }
 
 type Contacts = Record<ContactKind, string>;
+/** Today on this phone as "2026-12-25": nobody is born, married or lost after today. */
+function todayText(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
 type BadField = 'name' | 'born' | 'died' | 'wedding' | ContactKind;
 const NO_CONTACTS: Contacts = { mobile: '', whatsapp: '', email: '' };
 
@@ -543,6 +550,7 @@ export default function PersonDetails() {
               placeholder={t('details.bornPlaceholder')}
               keyboardType="numbers-and-punctuation"
               invalid={badField === 'born'}
+              accessory={<DatePickButton label={t('details.pickBorn')} value={form.born} max={todayText()} onChange={(v) => change('born', v)} />}
             />
           </View>
           {hasParents ? (
@@ -558,17 +566,17 @@ export default function PersonDetails() {
         </View>
 
         {weddingBoxes.map((box) => (
-          <Field
+          <DateField
             key={box.id}
             label={box.label}
             value={weddings[box.id] ?? ''}
-            onChangeText={(v) => {
+            onChange={(v) => {
               setWeddings((now) => ({ ...now, [box.id]: v }));
               setFailure(null);
               if (badField === 'wedding') setBadField(null);
             }}
-            placeholder={t('details.weddingPlaceholder')}
-            keyboardType="numbers-and-punctuation"
+            max={todayText()}
+            optional
             invalid={badField === 'wedding'}
           />
         ))}
@@ -616,7 +624,15 @@ export default function PersonDetails() {
             <Field label={t('details.birthPlace')} value={form.birthPlace} onChangeText={(v) => change('birthPlace', v)} />
             {form.living === 'deceased' ? (
               <>
-                <Field label={t('details.died')} value={form.died} onChangeText={(v) => change('died', v)} placeholder={t('details.bornPlaceholder')} keyboardType="numbers-and-punctuation" invalid={badField === 'died'} />
+                <Field
+                  label={t('details.died')}
+                  value={form.died}
+                  onChangeText={(v) => change('died', v)}
+                  placeholder={t('details.bornPlaceholder')}
+                  keyboardType="numbers-and-punctuation"
+                  invalid={badField === 'died'}
+                  accessory={<DatePickButton label={t('details.pickDied')} value={form.died} max={todayText()} onChange={(v) => change('died', v)} />}
+                />
                 <Field label={t('details.deathPlace')} value={form.deathPlace} onChangeText={(v) => change('deathPlace', v)} />
               </>
             ) : null}

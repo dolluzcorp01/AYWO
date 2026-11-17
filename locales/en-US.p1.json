@@ -266,7 +266,10 @@
     "comment": "Comment",
     "history": "History",
     "edit": "Edit",
-    "openFailed": "That didn't open on this device. Check that the app for it is installed."
+    "openFailed": "That didn't open on this device. Check that the app for it is installed.",
+    "born": "Born",
+    "passedAway": "Passed away",
+    "aboutDate": "About {{date}}"
   },
   "add": {
     "title": "Add a relative",
@@ -317,7 +320,7 @@
     "born": "Born (year is fine)",
     "bornPlaceholder": "e.g. 1968",
     "died": "Passed away (year is fine)",
-    "badDate": "Type a year like 1968, a month like 03/1968, or a full date like 21/03/1968.",
+    "badDate": "Type just the year, like 1968, or tap the calendar button to pick the full date.",
     "childNumber": "Child number",
     "notSet": "Not set",
     "earlier": "Earlier in the family",
@@ -344,7 +347,9 @@
     "weddingDate": "Wedding date (optional)",
     "weddingWith": "Wedding date with {{name}}",
     "weddingPlaceholder": "e.g. 21/03/1995",
-    "badWeddingDate": "Type the full wedding date, like 21/03/1995. It can't be in the future."
+    "badWeddingDate": "Type the full wedding date, like 21/03/1995. It can't be in the future.",
+    "pickBorn": "Pick the date of birth from a calendar",
+    "pickDied": "Pick the date of passing from a calendar"
   },
   "picker": {
     "hour": "Hour",
@@ -445,7 +450,11 @@
     "anyoneWithLink": "Anyone with the link",
     "revoke": "Remove",
     "revokeTitle": "Remove this access?",
-    "revokeHelp": "Their link stops working straight away."
+    "revokeHelp": "Their link stops working straight away.",
+    "whoFor": "Who is this for?",
+    "whoForHelp": "Pick them from the tree and AYWO uses the mobile number already saved on their card. They also see the tree from their own place.",
+    "pickPerson": "Choose from the tree",
+    "changePerson": "Change"
   },
   "activity": {
     "title": "Activity",

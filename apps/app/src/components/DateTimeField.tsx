@@ -6,8 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { Label } from '@/components/ui';
-import { colors, fonts, radius } from '@/theme/tokens';
-import type { DateTimeFieldProps } from './DateTimeField.types';
+import { CalendarIcon } from '@/components/Icons';
+import { colors, fonts, minTapSize, radius } from '@/theme/tokens';
+import type { DatePickButtonProps, DateTimeFieldProps } from './DateTimeField.types';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -124,7 +125,73 @@ export function TimeField(props: DateTimeFieldProps) {
   return <Box type="time" {...props} />;
 }
 
+/** Opens the phone's calendar from a round button. The box beside it keeps taking a typed year. */
+export function DatePickButton({ label, value, min, max, onChange }: DatePickButtonProps) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(() => toDate('date', value));
+  const ios = Platform.OS === 'ios';
+  const picker = (
+    <DateTimePicker
+      mode="date"
+      value={ios ? draft : toDate('date', value)}
+      display={ios ? 'inline' : 'default'}
+      minimumDate={min ? toDate('date', min) : undefined}
+      maximumDate={max ? toDate('date', max) : undefined}
+      onChange={(event: DateTimePickerEvent, picked?: Date) => {
+        if (ios) {
+          if (picked) setDraft(picked);
+          return;
+        }
+        setOpen(false);
+        if (event.type === 'set' && picked) onChange(fromDate('date', picked));
+      }}
+    />
+  );
+  return (
+    <>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        onPress={() => {
+          setDraft(toDate('date', value));
+          setOpen(true);
+        }}
+        style={styles.pick}
+      >
+        <CalendarIcon color={colors.text} size={20} />
+      </Pressable>
+      {open && !ios ? picker : null}
+      {open && ios ? (
+        <Modal transparent animationType="slide" visible onRequestClose={() => setOpen(false)}>
+          <View style={styles.sheetWrap}>
+            <View style={styles.sheet}>
+              {picker}
+              <View style={styles.sheetActions}>
+                <Pressable accessibilityRole="button" onPress={() => setOpen(false)} style={styles.sheetButton}>
+                  <Text style={styles.cancelText}>{t('picker.cancel')}</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    onChange(fromDate('date', draft));
+                    setOpen(false);
+                  }}
+                  style={[styles.sheetButton, styles.doneButton]}
+                >
+                  <Text style={styles.doneText}>{t('picker.done')}</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      ) : null}
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
+  pick: { width: 54, height: 54, minWidth: minTapSize, borderRadius: radius.button, borderWidth: 1, borderColor: colors.cardBorder, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
   field: { gap: 6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   box: {

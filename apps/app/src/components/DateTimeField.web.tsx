@@ -1,12 +1,13 @@
 // Date and time boxes for the web: the browser's own calendar and clock, so nobody types 2026-12-25 by hand.
 // Values stay the same strings the screens already use: "2026-12-25" and "18:30".
-import { createElement, useState } from 'react';
+import { createElement, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { Label } from '@/components/ui';
-import { colors, fonts, radius } from '@/theme/tokens';
-import type { DateTimeFieldProps } from './DateTimeField.types';
+import { CalendarIcon } from '@/components/Icons';
+import { colors, fonts, minTapSize, radius } from '@/theme/tokens';
+import type { DatePickButtonProps, DateTimeFieldProps } from './DateTimeField.types';
 
 function Box({ type, label, value, onChange, min, max, invalid, help, error, optional }: DateTimeFieldProps & { type: 'date' | 'time' }) {
   const { t } = useTranslation();
@@ -67,6 +68,42 @@ function Box({ type, label, value, onChange, min, max, invalid, help, error, opt
 
 export function DateField(props: DateTimeFieldProps) {
   return <Box type="date" {...props} />;
+}
+
+/** Opens the browser's calendar from a round button. The box beside it keeps taking a typed year. */
+export function DatePickButton({ label, value, min, max, onChange }: DatePickButtonProps) {
+  const ref = useRef<{ showPicker?: () => void; focus?: () => void } | null>(null);
+  const input = createElement('input', {
+    ref,
+    type: 'date',
+    value: /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '',
+    min,
+    max,
+    tabIndex: -1,
+    'aria-hidden': true,
+    onChange: (e: { target: { value: string } }) => {
+      if (e.target.value) onChange(e.target.value);
+    },
+    // Present but unseen: the calendar needs a real date box to open from.
+    style: { position: 'absolute', left: 0, bottom: 0, width: '100%', height: 1, opacity: 0, border: 0, padding: 0, pointerEvents: 'none' },
+  });
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={() => {
+        try {
+          ref.current?.showPicker?.();
+        } catch {
+          ref.current?.focus?.();
+        }
+      }}
+      style={({ hovered }: { hovered?: boolean }) => [styles.pick, hovered && styles.clearHover]}
+    >
+      <CalendarIcon color={colors.text} size={20} />
+      {input}
+    </Pressable>
+  );
 }
 
 const HOURS = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -158,6 +195,7 @@ export function TimeField({ label, value, onChange, invalid, help, error }: Date
 }
 
 const styles = StyleSheet.create({
+  pick: { width: 54, height: 54, minWidth: minTapSize, borderRadius: radius.button, borderWidth: 1, borderColor: colors.cardBorder, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
   field: { gap: 6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   grow: { flex: 1, minWidth: 0 },

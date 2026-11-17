@@ -25,6 +25,7 @@ import { useErrorText } from '@/lib/errors';
 import { showPhone } from '@/lib/phone';
 import { canComment, canSeeHistory, canShare } from '@/tree/roles';
 import { useAskForContacts, usePersonCard } from '@/tree/useCard';
+import { dateForReading } from '@/tree/dateText';
 import { FamilyLinks } from '@/tree/FamilyLinks';
 import { shownFirstName, shownName } from '@/tree/personName';
 import { useTreeView } from '@/tree/useTreeView';
@@ -91,6 +92,17 @@ export default function PersonCard() {
       </View>
     );
   }
+  // Opened from an address that does not say which tree: nothing will ever load, so say so instead of spinning.
+  if (!treeId) {
+    return (
+      <View style={styles.centre}>
+        <Text style={styles.message}>{t('errors.person_not_found')}</Text>
+        <Pressable accessibilityRole="button" onPress={() => router.replace('/home')} style={styles.textButton}>
+          <Text style={styles.link}>{t('card.goBack')}</Text>
+        </Pressable>
+      </View>
+    );
+  }
   if (!data || !node || !card.data) {
     return (
       <View style={styles.centre}>
@@ -128,7 +140,8 @@ export default function PersonCard() {
       onPress: () => router.push({ pathname: '/add/[treeId]', params: { treeId, anchor: personId } }),
     },
   ];
-  if (canShare(role)) {
+  // Inviting is for a living relative who is not me.
+  if (canShare(role) && node.living !== 'deceased' && personId !== data.viewer_person_id) {
     actionsRow.push({
       key: 'invite',
       label: t('card.invite'),
@@ -152,6 +165,16 @@ export default function PersonCard() {
       onPress: () => router.push({ pathname: '/history/[treeId]', params: { treeId, personId } }),
     });
   }
+
+  // What is known about the person, readable without opening the edit form.
+  const sayAbout = (date: string) => t('card.aboutDate', { date });
+  const born = [dateForReading(node.birthDate, node.birthPrecision, i18n.language, sayAbout), node.birthPlace?.trim()].filter(Boolean).join(' · ');
+  const passed = [dateForReading(node.deathDate, node.deathPrecision, i18n.language, sayAbout), node.deathPlace?.trim()].filter(Boolean).join(' · ');
+  const about: [string, string][] = [
+    [t('card.born'), born],
+    [t('card.passedAway'), passed],
+    [t('details.notes'), node.notes?.trim() ?? ''],
+  ].filter((row): row is [string, string] => !!row[1]);
 
   return (
     <View style={styles.page}>
@@ -242,6 +265,17 @@ export default function PersonCard() {
             )
           ) : null}
           {ask.isError ? <ErrorText>{t('card.askFailed')}</ErrorText> : null}
+
+          {about.length > 0 ? (
+            <Card>
+              {about.map(([what, value]) => (
+                <View key={what} style={styles.fact}>
+                  <Text style={styles.factLabel}>{what}</Text>
+                  <Text selectable style={styles.factValue}>{value}</Text>
+                </View>
+              ))}
+            </Card>
+          ) : null}
 
           {family.length > 0 ? (
             <>
@@ -403,6 +437,9 @@ const styles = StyleSheet.create({
   copyText: { color: colors.logoIndigo, fontFamily: fonts.extrabold, fontSize: 14 },
   note: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14, textAlign: 'center' },
   section: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
+  fact: { paddingVertical: 6, gap: 2 },
+  factLabel: { color: colors.muted, fontFamily: fonts.bold, fontSize: 12, letterSpacing: 0.4, textTransform: 'uppercase' },
+  factValue: { color: colors.text, fontFamily: fonts.semibold, fontSize: 16, lineHeight: 23 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     flexDirection: 'row',
