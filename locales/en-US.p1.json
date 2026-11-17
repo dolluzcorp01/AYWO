@@ -346,6 +346,51 @@
     "weddingPlaceholder": "e.g. 21/03/1995",
     "badWeddingDate": "Type the full wedding date, like 21/03/1995. It can't be in the future."
   },
+  "roles": {
+    "title": "What each role can do",
+    "subtitle": "Roles are per tree. The owner or a co-creator picks them when sharing.",
+    "creator": "Owner",
+    "withRole": "With {{role}} they can",
+    "compare": "Compare all roles",
+    "whatCanI": "What can I do?",
+    "rights": {
+      "see": "See the tree, photos and memories",
+      "change": "Add or fix people",
+      "notes": "Leave notes on people",
+      "history": "See who changed what",
+      "numbers": "See phone numbers (with AYWO Plus)",
+      "approve": "Approve others' changes",
+      "share": "Share the tree and change roles",
+      "export": "Download the tree",
+      "delete": "Delete the tree"
+    },
+    "mark": {
+      "yes": "Yes",
+      "no": "No",
+      "approval": "Yes, after the owner approves",
+      "approvalShort": "Owner approves",
+      "ifShown": "Only if the owner allows",
+      "ifShownShort": "If allowed"
+    },
+    "about": {
+      "viewer": "Can look. Anything they add or fix waits for the owner.",
+      "commenter": "Can look and leave notes. Anything they add or fix waits for the owner.",
+      "editor": "Can add and fix people.",
+      "co_creator": "Helps run the tree with the owner.",
+      "creator": "Started the tree. Decides everything, and is the only one who can delete it."
+    },
+    "yours": {
+      "viewer": "You can see this tree. People you add or fix go to the owner to approve.",
+      "commenter": "You can see this tree and leave notes. People you add or fix go to the owner to approve.",
+      "editor": "You can add and fix people in this tree.",
+      "co_creator": "You help run this tree: edit, share and approve."
+    },
+    "notesTitle": "Good to know",
+    "noteApproval": "\"Owner approves\": your change is sent to the owner and co-creators, and shows once one of them says yes.",
+    "noteNumbers": "\"If allowed\": the owner turned on Show contact numbers when sharing. Seeing numbers also needs AYWO Plus.",
+    "noteEditor": "When sharing as Editor, the owner can pick \"I approve first\". Then an Editor's changes wait for approval too.",
+    "noteOneTree": "A role is for one tree. You can be the owner of one tree and a viewer in another."
+  },
   "share": {
     "action": "Share",
     "title": "Share {{tree}}",

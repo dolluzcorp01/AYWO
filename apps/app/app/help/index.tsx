@@ -41,6 +41,7 @@ export default function HelpCentre() {
       <Card style={styles.block}>
         <SectionTitle>{t('ops.help.quick')}</SectionTitle>
         <TextButton label={t('ops.help.faq')} onPress={() => router.push('/faq')} />
+        <TextButton label={t('roles.title')} onPress={() => router.push('/roles')} />
         <TextButton label={t('ops.help.sos')} onPress={() => router.push('/social/sos')} />
         <TextButton label={t('ops.help.privacy')} onPress={() => router.push('/settings/privacy')} />
       </Card>
