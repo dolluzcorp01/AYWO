@@ -10,6 +10,7 @@ import { Card, ConfirmDialog, Field, Pills, PrimaryButton, SecondaryButton, Sect
 import { api } from '@/lib/api';
 import { startOrder } from '@/pay/order';
 import { InviteCard } from '@/social/InviteCard';
+import { PeoplePicker } from '@/social/AudiencePicker';
 import { ActionError, Gate, Note, Page, parseDateTime, Row, todayIso, useName, useWhen } from '@/social/parts';
 import { FREE_DESIGNS, PREMIUM_DESIGNS } from '@/social/types';
 import type { Design, EventDetail, PollRow, RsvpAnswer } from '@/social/types';
@@ -45,7 +46,10 @@ export default function InviteDetail() {
   const [guestsSaved, setGuestsSaved] = useState(false);
   const me = useQuery({ queryKey: ['social-me'], queryFn: () => api.get<{ id: string }>('/me') });
   const [cancelling, setCancelling] = useState(false);
-  const [canva, setCanva] = useState('');
+  // Null until the host types: then the box shows the link already saved.
+  const [canvaTyped, setCanva] = useState<string | null>(null);
+  // Someone forgotten: more people can be invited after sending.
+  const [more, setMore] = useState<string[] | null>(null);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [place, setPlace] = useState('');
@@ -70,6 +74,15 @@ export default function InviteDetail() {
   const detailsAt = details ? parseDateTime(details.date, details.time) : null;
   const savedAt = event.data?.starts_at ? new Date(event.data.starts_at).getTime() : null;
   const movedToPast = !!detailsAt && detailsAt.getTime() < Date.now() && (savedAt === null || Math.abs(savedAt - detailsAt.getTime()) > 60_000);
+
+  const canva = canvaTyped ?? event.data?.canva_url ?? '';
+  const addGuests = useMutation({
+    mutationFn: () => api.rpc('event_add_invitees', { p_event: id, p_audience: { type: 'people', profile_ids: more ?? [] } }),
+    onSuccess: () => {
+      setMore(null);
+      refresh();
+    },
+  });
 
   const rsvp = useMutation({
     mutationFn: async (input: { answer: RsvpAnswer; onlyGuests?: boolean }) => {
@@ -256,6 +269,25 @@ export default function InviteDetail() {
               ))}
 
               {e.is_mine && !e.cancelled ? (
+                more ? (
+                  <Card style={styles.card}>
+                    <SectionTitle>{t('social.invites.inviteMore')}</SectionTitle>
+                    <PeoplePicker chosen={more} onChange={setMore} exclude={e.people.map((p) => p.profile_id)} />
+                    <ActionError error={addGuests.error} />
+                    <PrimaryButton
+                      label={addGuests.isPending ? t('social.sending') : t('social.invites.sendToThem')}
+                      disabled={addGuests.isPending}
+                      missing={more.length === 0 ? t('social.missing.tickSomeone') : null}
+                      onPress={() => addGuests.mutate()}
+                    />
+                    <TextButton label={t('social.cancel')} onPress={() => setMore(null)} />
+                  </Card>
+                ) : (
+                  <SecondaryButton label={t('social.invites.inviteMore')} onPress={() => setMore([])} />
+                )
+              ) : null}
+
+              {e.is_mine && !e.cancelled ? (
                 <>
                   {!isPop ? (
                     <Card style={styles.card}>
@@ -282,7 +314,7 @@ export default function InviteDetail() {
                       <ActionError error={setDesign.error ?? buyDesign.error} />
                       <Field label={t('social.invites.canvaLink')} value={canva} onChangeText={setCanva} autoCapitalize="none" placeholder={t('social.invites.canvaPlaceholder')} />
                       <ActionError error={saveCanva.error} />
-                      <SmallButton label={t('social.invites.saveCanva')} kind="plain" disabled={!canva.trim() || saveCanva.isPending} onPress={() => saveCanva.mutate()} />
+                      <SmallButton label={t('social.invites.saveCanva')} kind="plain" disabled={!canva.trim() || canva.trim() === (e.canva_url ?? '') || saveCanva.isPending} onPress={() => saveCanva.mutate()} />
                     </Card>
                   ) : null}
                   {!isPop || e.starts_at ? (

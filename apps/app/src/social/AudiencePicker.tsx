@@ -26,15 +26,17 @@ export function usePeople(treeId?: string | null, groupId?: string | null) {
 }
 
 /** Tick people from the caller's own circle. Names only: no numbers ever reach this list. */
-export function PeoplePicker({ treeId, groupId, chosen, onChange }: { treeId?: string | null; groupId?: string | null; chosen: string[]; onChange: (ids: string[]) => void }) {
+/** exclude: people already in (a group's members, an event's guests), so nobody is offered or told twice. */
+export function PeoplePicker({ treeId, groupId, chosen, onChange, exclude }: { treeId?: string | null; groupId?: string | null; chosen: string[]; onChange: (ids: string[]) => void; exclude?: string[] }) {
   const { t } = useTranslation();
   const showName = useName();
   const people = usePeople(treeId, groupId);
   const [search, setSearch] = useState('');
   return (
     <Gate query={people}>
-      {(list) => {
-        if (list.length === 0) return <Note>{t('social.audience.nobody')}</Note>;
+      {(all) => {
+        const list = exclude?.length ? all.filter((p) => !exclude.includes(p.profile_id)) : all;
+        if (list.length === 0) return <Note>{t(all.length > 0 ? 'social.audience.allAdded' : 'social.audience.nobody')}</Note>;
         const needle = search.trim().toLowerCase();
         const shown = needle ? list.filter((p) => p.name.toLowerCase().includes(needle)) : list;
         return (

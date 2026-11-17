@@ -74,7 +74,7 @@ export default function InviteFriends() {
                   <>
                     <Field value={theirs} onChangeText={(v) => setTheirs(v.toUpperCase().replace(/[^A-Z0-9]/g, ''))} maxLength={12} accessibilityLabel={t('ops.refer.gotCode')} autoCapitalize="characters" />
                     <ActionError error={claim.error} />
-                    <PrimaryButton label={t('ops.refer.claim')} disabled={theirs.length < 6 || claim.isPending} onPress={() => claim.mutate()} />
+                    <PrimaryButton label={t('ops.refer.claim')} disabled={claim.isPending} missing={theirs.length < 6 ? t('ops.refer.needCode') : null} onPress={() => claim.mutate()} />
                   </>
                 )}
               </Card>

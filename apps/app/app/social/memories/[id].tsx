@@ -15,6 +15,7 @@ import { ReportDialog } from '@/ops/Report';
 import type { ReportTarget } from '@/ops/Report';
 import { pickPhotos } from '@/social/media';
 import { moveItem, PhotoStrip } from '@/social/PhotoStrip';
+import { PeoplePicker, PersonSearch } from '@/social/AudiencePicker';
 import { ActionError, Gate, Note, Page, useGoBack, useName, useWhen } from '@/social/parts';
 import type { Post } from '@/social/types';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
@@ -50,6 +51,8 @@ export default function MemoryDetail() {
   const [draftDate, setDraftDate] = useState('');
   const [editingComment, setEditingComment] = useState<{ id: string; body: string } | null>(null);
   const [removingPhoto, setRemovingPhoto] = useState<string | null>(null);
+  // One "are you sure" for the small removals on this screen: what is asked, and what Yes does.
+  const [asking, setAsking] = useState<{ title: string; yes: string; run: () => void } | null>(null);
   const [reporting, setReporting] = useState<{ type: ReportTarget; id: string; ownerId: string; ownerName: string } | null>(null);
 
   const key = ['post', id];
@@ -101,6 +104,23 @@ export default function MemoryDetail() {
   const reorder = useMutation({
     mutationFn: (order: string[]) => api.rpc('post_reorder_media', { p_post: id, p_order: order }),
     onSuccess: refresh,
+  });
+  const addTag = useMutation({
+    mutationFn: (input: { person?: string; profiles?: string[] }) =>
+      api.rpc('post_add_tags', { p_post: id, p_tag_people: input.person ? [input.person] : null, p_tag_profiles: input.profiles ?? null }),
+    onSuccess: () => {
+      setNewFriends([]);
+      refresh();
+    },
+  });
+  const [newFriends, setNewFriends] = useState<string[]>([]);
+  const [newHelpers, setNewHelpers] = useState<string[]>([]);
+  const addHelpers = useMutation({
+    mutationFn: () => api.rpc('post_add_collaborators', { p_post: id, p_collaborators: newHelpers }),
+    onSuccess: () => {
+      setNewHelpers([]);
+      refresh();
+    },
   });
   const untag = useMutation({
     mutationFn: (tag: { person_id: string | null; profile_id: string | null }) =>
@@ -180,7 +200,7 @@ export default function MemoryDetail() {
                             key={`${tag.person_id ?? tag.profile_id}`}
                             label={tag.name}
                             removeLabel={t('social.memories.untag', { name: tag.name })}
-                            onRemove={tag.can_remove ? () => untag.mutate(tag) : undefined}
+                            onRemove={tag.can_remove ? () => setAsking({ title: t('social.memories.untag', { name: tag.name }) + '?', yes: t('social.remove'), run: () => untag.mutate(tag) }) : undefined}
                           />
                         ))}
                       </View>
@@ -195,13 +215,30 @@ export default function MemoryDetail() {
                             key={c.profile_id}
                             label={showName(c.name)}
                             removeLabel={t('social.memories.removeHelper', { name: showName(c.name) })}
-                            onRemove={c.can_remove ? () => removeHelper.mutate(c.profile_id) : undefined}
+                            onRemove={c.can_remove ? () => setAsking({ title: t('social.groups.removeTitle', { name: showName(c.name) }), yes: t('social.remove'), run: () => removeHelper.mutate(c.profile_id) }) : undefined}
                           />
                         ))}
                       </View>
                     </>
                   ) : null}
-                  <ActionError error={update.error ?? untag.error ?? removeHelper.error} />
+                  {data.tree_id ? (
+                    <PersonSearch treeId={data.tree_id} label={t('social.memories.tagSomeone')} onPick={(person) => addTag.mutate({ person: person.id })} />
+                  ) : null}
+                  {data.group_id ? (
+                    <>
+                      <Label>{t('social.memories.tagSomeone')}</Label>
+                      <PeoplePicker groupId={data.group_id} chosen={newFriends} onChange={setNewFriends} exclude={data.tags.map((tag) => tag.profile_id ?? '')} />
+                      {newFriends.length > 0 ? <SmallButton kind="plain" label={t('social.memories.addTags')} disabled={addTag.isPending} onPress={() => addTag.mutate({ profiles: newFriends })} /> : null}
+                    </>
+                  ) : null}
+                  {data.is_mine && (data.tree_id || data.group_id) ? (
+                    <>
+                      <Label>{t('social.memories.addHelpers')}</Label>
+                      <PeoplePicker treeId={data.tree_id} groupId={data.group_id} chosen={newHelpers} onChange={setNewHelpers} exclude={data.collaborators.map((c) => c.profile_id)} />
+                      {newHelpers.length > 0 ? <SmallButton kind="plain" label={t('social.memories.addHelpers')} disabled={addHelpers.isPending} onPress={() => addHelpers.mutate()} /> : null}
+                    </>
+                  ) : null}
+                  <ActionError error={update.error ?? untag.error ?? removeHelper.error ?? addTag.error ?? addHelpers.error} />
                   <View style={styles.row}>
                     <SmallButton
                       label={t('common.save')}
@@ -310,7 +347,7 @@ export default function MemoryDetail() {
                   {c.mine && !data.closed && editingComment?.id !== c.id ? (
                     <TextButton label={t('social.edit')} onPress={() => setEditingComment({ id: c.id, body: c.body })} />
                   ) : null}
-                  {c.mine || data.is_mine ? <TextButton label={t('social.delete')} danger onPress={() => removeComment.mutate(c.id)} /> : null}
+                  {c.mine || data.is_mine ? <TextButton label={t('social.delete')} danger onPress={() => setAsking({ title: t('social.memories.deleteCommentTitle'), yes: t('social.delete'), run: () => removeComment.mutate(c.id) })} /> : null}
                   {!c.mine ? (
                     <TextButton
                       label={t('ops.report.short')}
@@ -359,6 +396,17 @@ export default function MemoryDetail() {
           </>
         )}
       </Gate>
+      <ConfirmDialog
+        visible={!!asking}
+        title={asking?.title ?? ''}
+        confirmLabel={asking?.yes ?? ''}
+        danger
+        onConfirm={() => {
+          asking?.run();
+          setAsking(null);
+        }}
+        onCancel={() => setAsking(null)}
+      />
       <ConfirmDialog
         visible={!!removingPhoto}
         title={t('social.photos.removeTitle')}

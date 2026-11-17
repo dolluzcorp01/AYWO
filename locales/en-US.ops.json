@@ -116,7 +116,10 @@
       "replyTime": "We usually answer within a day.",
       "reply": "Your reply",
       "sendReply": "Send",
-      "solved": "My problem is solved"
+      "solved": "My problem is solved",
+      "needTopic": "Choose a topic first.",
+      "needSubject": "Add a short line saying what it is about.",
+      "needBody": "Write your question."
     },
     "offers": {
       "title": "Offers",
@@ -221,7 +224,8 @@
       "gotCodeHelp": "If someone invited you, type their code. It works in your first 14 days.",
       "claim": "Use code",
       "claimed": "Thanks! {{name}} invited you. Your free days start once you're in a family tree.",
-      "fine": "Up to 12 rewards a year. Free days are added on top of any Plus you have."
+      "fine": "Up to 12 rewards a year. Free days are added on top of any Plus you have.",
+      "needCode": "Type the full code your friend gave you."
     },
     "card": {
       "title": "Emergency card",

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { Text, TextInput } from '@/components/Text';
-import { ErrorText, Heading, Muted, PrimaryButton, TextButton } from '@/components/ui';
+import { BackButton, ErrorText, Heading, Muted, PrimaryButton, TextButton } from '@/components/ui';
 import { api, ApiFailure, saveSession } from '@/lib/api';
 import { errorKey } from '@/lib/errors';
 import { getSignInPhone, setSignInPhone } from '@/lib/signInPhone';
@@ -69,6 +69,9 @@ export default function Otp() {
   return (
     <Screen>
       <View style={styles.top}>
+        <View style={styles.back}>
+          <BackButton onPress={changeNumber} />
+        </View>
         <Heading>{t('otp.title')}</Heading>
         <Muted>{t('otp.sentTo', { phone })}</Muted>
         <TextButton label={t('otp.changeNumber')} onPress={changeNumber} />
@@ -94,13 +97,14 @@ export default function Otp() {
       ) : (
         <Text accessibilityRole="button" onPress={resend} style={[styles.resend, styles.resendOn]}>{t('otp.resend')}</Text>
       )}
-      <PrimaryButton label={t('otp.verify')} onPress={() => void verify()} disabled={code.length !== 6 || busy} />
+      <PrimaryButton label={t('otp.verify')} onPress={() => void verify()} disabled={busy} missing={code.length === 6 ? null : t('otp.needCode')} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  top: { flex: 1, gap: 14, paddingTop: 40 },
+  back: { alignSelf: 'flex-start', marginBottom: 8 },
+  top: { flex: 1, gap: 14, paddingTop: 8 },
   code: {
     minHeight: 64,
     borderRadius: 18,

@@ -16,7 +16,8 @@
     "privacyNote": "Only for signing in. Never shown to anyone.",
     "terms": "By continuing you agree to the <terms>Terms</terms> and <privacy>Privacy policy</privacy>.",
     "send": "Send code",
-    "sendFailed": "We couldn't send the code. Check the number and try again."
+    "sendFailed": "We couldn't send the code. Check the number and try again.",
+    "needNumber": "Type your full mobile number to continue."
   },
   "otp": {
     "title": "Enter the 6-digit code",
@@ -25,7 +26,8 @@
     "resend": "Send the code again",
     "resendIn": "Resend code in {{seconds}} seconds",
     "wrongCode": "That code didn't work. Try again.",
-    "changeNumber": "Wrong number? Change it"
+    "changeNumber": "Wrong number? Change it",
+    "needCode": "Type all 6 digits of the code."
   },
   "home": {
     "noTrees": "No family tree yet.",
@@ -909,7 +911,10 @@
     "note": "Used only to answer this request.",
     "send": "Send request",
     "sending": "Sending...",
-    "done": "We have your request. An AYWO Admin will look at it and reply to you."
+    "done": "We have your request. An AYWO Admin will look at it and reply to you.",
+    "needName": "Still needed: the person's name.",
+    "needContact": "Still needed: a phone number or email where we can reach you.",
+    "needReason": "Still needed: the reason, in a sentence or two."
   },
   "legal": {
     "termsLink": "Terms of use",
@@ -2377,7 +2382,8 @@
       "searchPeople": "Find a name",
       "typeName": "Type a name",
       "noMatch": "No one by that name.",
-      "nobody": "No one yet. People appear once they join your tree or a group."
+      "nobody": "No one yet. People appear once they join your tree or a group.",
+      "allAdded": "Everyone you could add is already in."
     },
     "chat": {
       "title": "Chat",
@@ -2443,7 +2449,7 @@
       "whoIsIn": "Who is in it?",
       "tagSomeone": "Tag someone",
       "helpers": "Helpers",
-      "helpersNote": "Collaborators can add photos and tags.",
+      "helpersNote": "Helpers can add photos and tag people.",
       "share": "Share memory",
       "with": "With {{names}}",
       "addedWith": "Collaborators: {{names}}",
@@ -2464,7 +2470,10 @@
       "untag": "Untag {{name}}",
       "untagMe": "Remove my tag",
       "removeHelper": "Remove {{name}} as a helper",
-      "editComment": "Edit your comment"
+      "editComment": "Edit your comment",
+      "deleteCommentTitle": "Delete this comment?",
+      "addTags": "Tag the people ticked",
+      "addHelpers": "Add helpers"
     },
     "groups": {
       "title": "Friends groups",
@@ -2572,7 +2581,9 @@
       "uninviteMessage": "They will no longer see it. You can invite them again.",
       "saveGuests": "Save the number",
       "guestsAnswerFirst": "Choose Yes, Maybe or No above: the number is saved with your answer.",
-      "guestsSaved": "Saved. The host can see the new number."
+      "guestsSaved": "Saved. The host can see the new number.",
+      "inviteMore": "Invite more people",
+      "sendToThem": "Send the invite to them"
     },
     "pop": {
       "new": "New Pop Party",
@@ -2676,7 +2687,7 @@
       "fromFamily": "From your family and friends",
       "tapToAdd": "Tap to add",
       "byNumber": "Or type a phone number",
-      "byNumberNote": "For someone not on AYWO. They get a text with a link.",
+      "byNumberNote": "For someone not on AYWO, or to ring a family member directly. They get a text with a link. You can pick the number from your phone's contacts.",
       "contactName": "Name",
       "contactPhone": "Phone number",
       "addNumber": "Add this number",
@@ -2688,7 +2699,7 @@
       "noPlaceYet": "No location has reached us yet. This screen keeps checking.",
       "watchEnds": "Live location ends at {{when}}",
       "deletedAfter": "Location data is deleted 7 days after an SOS ends.",
-      "noDirectCall": "Gets the alert. Add by number to call them directly.",
+      "noDirectCall": "Gets the alert inside AYWO. AYWO keeps family members' numbers private, so to ring them straight away, also add their number below.",
       "alerted": "Alarm ringing on {{apps}} family phones · text sent to {{texts}}",
       "seenIt": "I've seen it. Stop the alarm",
       "silentTitle": "Let family SOS ring on silent",
@@ -2704,7 +2715,8 @@
       "startFailed": "Your contacts were not alerted. Try again, or call the emergency number below.",
       "confirmStartTitle": "Start SOS now?",
       "confirmStartBody": "Your SOS contacts hear an alarm or get a text, and can see your location.",
-      "confirmStart": "Start SOS"
+      "confirmStart": "Start SOS",
+      "needNumber": "Type the phone number first."
     },
     "missing": {
       "who": "Choose who can see this.",
@@ -2719,7 +2731,8 @@
       "blood": "Choose the blood group.",
       "message": "Write the message.",
       "canva": "Fix the Canva link, or leave it empty.",
-      "future": "That date and time has already passed. Pick one that is still to come."
+      "future": "That date and time has already passed. Pick one that is still to come.",
+      "tickSomeone": "Tick at least one person."
     },
     "photos": {
       "photoN": "Photo {{n}}",
@@ -2851,7 +2864,10 @@
       "replyTime": "We usually answer within a day.",
       "reply": "Your reply",
       "sendReply": "Send",
-      "solved": "My problem is solved"
+      "solved": "My problem is solved",
+      "needTopic": "Choose a topic first.",
+      "needSubject": "Add a short line saying what it is about.",
+      "needBody": "Write your question."
     },
     "offers": {
       "title": "Offers",
@@ -2956,7 +2972,8 @@
       "gotCodeHelp": "If someone invited you, type their code. It works in your first 14 days.",
       "claim": "Use code",
       "claimed": "Thanks! {{name}} invited you. Your free days start once you're in a family tree.",
-      "fine": "Up to 12 rewards a year. Free days are added on top of any Plus you have."
+      "fine": "Up to 12 rewards a year. Free days are added on top of any Plus you have.",
+      "needCode": "Type the full code your friend gave you."
     },
     "card": {
       "title": "Emergency card",

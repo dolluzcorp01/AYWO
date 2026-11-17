@@ -685,7 +685,10 @@
     "note": "Used only to answer this request.",
     "send": "Send request",
     "sending": "Sending...",
-    "done": "We have your request. An AYWO Admin will look at it and reply to you."
+    "done": "We have your request. An AYWO Admin will look at it and reply to you.",
+    "needName": "Still needed: the person's name.",
+    "needContact": "Still needed: a phone number or email where we can reach you.",
+    "needReason": "Still needed: the reason, in a sentence or two."
   },
   "legal": {
     "termsLink": "Terms of use",

@@ -19,6 +19,7 @@ import { showPhone } from '@/lib/phone';
 import { useTimeAgo } from '@/lib/time';
 import { BlockDialog, ReportDialog } from '@/ops/Report';
 import { pickPhotos } from '@/social/media';
+import { PeoplePicker } from '@/social/AudiencePicker';
 import { ActionError, Gate, newClientId, Note, useGoBack, useName } from '@/social/parts';
 import type { ChatPage, Message } from '@/social/types';
 import { FETCH_WHEN_OFFLINE_MS, useChatSocket } from '@/social/useChatSocket';
@@ -58,6 +59,8 @@ export default function ChatRoom() {
   const [recording, setRecording] = useState(false);
   const [micDenied, setMicDenied] = useState(false);
   const [toDelete, setToDelete] = useState<Message | null>(null);
+  // One "are you sure" for the small removals on this screen: what is asked, and what Yes does.
+  const [asking, setAsking] = useState<{ title: string; yes: string; run: () => void } | null>(null);
   const [toReport, setToReport] = useState<Message | null>(null);
   const [blocking, setBlocking] = useState(false);
   const [people, setPeople] = useState(false);
@@ -230,6 +233,16 @@ export default function ChatRoom() {
     ? t('social.chat.memberCount', { count: first.chat.members })
     : direct && otherNumber.data ? showPhone(otherNumber.data) : undefined;
   const iMadeIt = !!myId && !!members.data?.some((m) => m.creator && m.profile_id === myId);
+  // Null while the list of members shows; a list (even empty) while people are being ticked to add.
+  const [adding, setAdding] = useState<string[] | null>(null);
+  const addMembers = useMutation({
+    mutationFn: () => api.rpc('chat_add_members', { p_chat: id, p_members: adding ?? [] }),
+    onSuccess: () => {
+      setAdding(null);
+      void members.refetch();
+      client.invalidateQueries({ queryKey: ['chats'] });
+    },
+  });
   const removeMember = useMutation({
     mutationFn: (profileId: string) => api.rpc('chat_remove_member', { p_chat: id, p_profile: profileId }),
     onSuccess: () => {
@@ -469,6 +482,17 @@ export default function ChatRoom() {
         <ActionError error={leave.error} />
       </ConfirmDialog>
       <ConfirmDialog
+        visible={!!asking}
+        title={asking?.title ?? ''}
+        confirmLabel={asking?.yes ?? ''}
+        danger
+        onConfirm={() => {
+          asking?.run();
+          setAsking(null);
+        }}
+        onCancel={() => setAsking(null)}
+      />
+      <ConfirmDialog
         visible={!!toDelete}
         title={t('social.chat.deleteTitle')}
         confirmLabel={t('social.delete')}
@@ -501,7 +525,7 @@ export default function ChatRoom() {
           <View key={m.profile_id} style={styles.member}>
             <Text style={styles.memberName}>{showName(m.name)}{m.creator ? ` · ${t('ops.chat.madeIt')}` : ''}</Text>
             {iMadeIt && m.profile_id !== myId ? (
-              <TextButton label={t('ops.chat.remove')} danger disabled={removeMember.isPending} onPress={() => removeMember.mutate(m.profile_id)} />
+              <TextButton label={t('ops.chat.remove')} danger disabled={removeMember.isPending} onPress={() => setAsking({ title: t('social.groups.removeTitle', { name: showName(m.name) }), yes: t('ops.chat.remove'), run: () => removeMember.mutate(m.profile_id) })} />
             ) : null}
           </View>
         ))}
@@ -512,6 +536,17 @@ export default function ChatRoom() {
           </>
         ) : null}
         <ActionError error={removeMember.error} />
+        {adding ? (
+          <>
+            <PeoplePicker chosen={adding} onChange={setAdding} exclude={(members.data ?? []).map((m) => m.profile_id)} />
+            <ActionError error={addMembers.error} />
+            <SmallButton label={t('social.groups.addChosen')} disabled={adding.length === 0 || addMembers.isPending} onPress={() => addMembers.mutate()} />
+            {adding.length === 0 ? <Note>{t('social.missing.tickSomeone')}</Note> : null}
+            <TextButton label={t('social.cancel')} onPress={() => setAdding(null)} />
+          </>
+        ) : (
+          <SmallButton kind="plain" label={t('social.groups.addPeople')} onPress={() => setAdding([])} />
+        )}
       </ConfirmDialog>
     </Screen>
   );
