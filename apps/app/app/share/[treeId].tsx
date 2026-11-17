@@ -23,7 +23,7 @@ import { canShare } from '@/tree/roles';
 import { PersonPicker } from '@/tree/PersonPicker';
 import { RoleRightsList } from '@/tree/RoleRightsList';
 import { usePersonCard } from '@/tree/useCard';
-import { useCreateShare, useRevokeShare, useShares } from '@/tree/useEdit';
+import { useCreateShare, useRevokeShare, useShares, useUpdateShare } from '@/tree/useEdit';
 import type { EditMode, ShareInput, ShareRole, ShareRow } from '@/tree/useEdit';
 import { useTreeView } from '@/tree/useTreeView';
 import { colors, fonts, gradients, minTapSize } from '@/theme/tokens';
@@ -64,6 +64,8 @@ export default function ShareScreen() {
   const [phone, setPhone] = useState('');
   const [badPhone, setBadPhone] = useState(false);
   const [revoking, setRevoking] = useState<ShareRow | null>(null);
+  const [changing, setChanging] = useState<ShareRow | null>(null);
+  const changeRole = useUpdateShare(treeId);
   // The number already saved on this person's card: filled in when it may be shown, otherwise used by the server.
   const card = usePersonCard(personId ?? '', !!personId);
   const savedMobile = card.data?.contacts.values?.find((v) => v.kind === 'mobile')?.value ?? '';
@@ -89,7 +91,7 @@ export default function ShareScreen() {
   }
   // One set of choices makes one link, however many times it is sent. Kept where every send reads the latest:
   // a send that falls back to another way must reuse the link it has just made, not make a second one.
-  const made = useRef<{ key: string; url: string } | null>(null);
+  const made = useRef<{ key: string; url: string; id: string; who: string } | null>(null);
 
   // "Link copied" is only true for the link that was copied. Any change to the choices means a new link.
   useEffect(() => {
@@ -148,8 +150,15 @@ export default function ShareScreen() {
     // The end date moves with the clock, so it is not part of what makes two links the same.
     const key = JSON.stringify({ ...input, expires_at: undefined, endIndex });
     if (made.current?.key === key) return made.current.url;
+    // Changed your mind (View, then Edit)? The link made a moment ago is taken back first, so the same person
+    // never ends up on the list twice with two different sets of rights.
+    // Only for the same person: a link already sent to one relative stays when the next is for someone else.
+    const who = `${input.grantee_person_id ?? ''}|${input.grantee_phone ?? ''}`;
+    const earlier = made.current;
+    made.current = null;
+    if (earlier && earlier.who === who) await revoke.mutateAsync(earlier.id).catch(() => undefined);
     const share = await create.mutateAsync(input);
-    made.current = { key, url: share.link_url };
+    made.current = { key, url: share.link_url, id: share.id, who };
     return share.link_url;
   }
 
@@ -371,16 +380,43 @@ export default function ShareScreen() {
               <View key={s.id} style={styles.accessRow}>
                 <View style={styles.whoText}>
                   <Text style={styles.rowTitle}>{s.grantee_name || (s.grantee_person_name ? shownName(t, s.grantee_person_name) : '') || s.waiting_phone || t('share.anyoneWithLink')}</Text>
-                  <Text style={styles.rowValueLeft}>{t(ROLES.find((r) => r.value === s.role)?.nameKey ?? 'share.view')}</Text>
+                  <Text style={styles.rowValueLeft}>
+                    {t(ROLES.find((r) => r.value === s.role)?.nameKey ?? 'share.view')}
+                    {s.expires_at ? ` · ${t('share.endsOn', { date: new Date(s.expires_at).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' }) })}` : ''}
+                  </Text>
+                  <View style={styles.accessActions}>
+                    <SmallButton label={t('share.changeRole')} kind="plain" onPress={() => setChanging(s)} />
+                    {s.link_url ? <SmallButton label={t('share.copy')} kind="plain" onPress={() => void copyUrl(s.link_url as string)} /> : null}
+                    <SmallButton label={t('share.revoke')} kind="plain" onPress={() => setRevoking(s)} />
+                  </View>
                 </View>
-                <SmallButton label={t('share.revoke')} kind="plain" onPress={() => setRevoking(s)} />
               </View>
             ))}
           </>
         ) : null}
         {revoke.isError ? <ErrorText>{errorText(revoke.error)}</ErrorText> : null}
+        {changeRole.isError ? <ErrorText>{errorText(changeRole.error)}</ErrorText> : null}
       </ScrollView>
 
+      <Modal visible={changing !== null} transparent animationType="slide" onRequestClose={() => setChanging(null)}>
+        <View style={styles.backdrop}>
+          <View style={styles.sheet}>
+            <SectionTitle>{t('share.changeRole')}</SectionTitle>
+            {ROLES.map((r) => (
+              <Choice
+                key={r.value}
+                label={`${t(r.nameKey)} · ${t(r.helpKey)}`}
+                on={changing?.role === r.value}
+                onPress={() => {
+                  if (changing && changing.role !== r.value) changeRole.mutate({ shareId: changing.id, role: r.value });
+                  setChanging(null);
+                }}
+              />
+            ))}
+            <TextButton label={t('common.cancel')} onPress={() => setChanging(null)} />
+          </View>
+        </View>
+      </Modal>
       <Modal visible={choosing !== null} transparent animationType="slide" onRequestClose={() => setChoosing(null)}>
         <View style={styles.backdrop}>
           <View style={styles.sheet}>
@@ -424,6 +460,7 @@ function Choice({ label, on, onPress }: { label: string; on: boolean; onPress: (
 }
 
 const styles = StyleSheet.create({
+  accessActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
   pick: { gap: 8 },
   pickTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 16 },
   scroll: { gap: 10, paddingBottom: 12 },

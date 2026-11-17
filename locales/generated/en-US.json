@@ -412,7 +412,10 @@
     "photoHelp": "A photo helps elders recognise you",
     "yourName": "Your name",
     "lookedNote": "No tree has your number yet. Start your own, or wait for an invite.",
-    "removePhoto": "Remove photo"
+    "removePhoto": "Remove photo",
+    "email": "Email (optional)",
+    "emailHelp": "Only used for the notices you switch on \"By email\". AYWO asks you to confirm it under Notifications.",
+    "emailBad": "That does not look like an email address."
   },
   "start": {
     "title": "Hey {{name}}, let's bring your family together",
@@ -695,7 +698,9 @@
     "whoFor": "Who is this for?",
     "whoForHelp": "Pick them from the tree and AYWO uses the mobile number already saved on their card. They also see the tree from their own place.",
     "pickPerson": "Choose from the tree",
-    "changePerson": "Change"
+    "changePerson": "Change",
+    "endsOn": "until {{date}}",
+    "changeRole": "Change what they can do"
   },
   "activity": {
     "title": "Activity",

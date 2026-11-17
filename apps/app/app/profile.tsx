@@ -35,6 +35,9 @@ export default function Profile() {
   const [photo, setPhoto] = useState<PickedFile | null>(null);
   // "Remove photo" was pressed: the saved photo goes when Save is pressed.
   const [noPhoto, setNoPhoto] = useState(false);
+  // Null until typed: then the box shows the address already saved. Empty takes the address away.
+  const [email, setEmail] = useState<string | null>(null);
+  const emailBad = !!email?.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<unknown>(null);
 
@@ -62,7 +65,9 @@ export default function Profile() {
     setFailure(null);
     try {
       const photoPath = photo ? await uploadFile('photos', photo) : null;
-      await update.mutateAsync({ display_name: name.trim(), ...(photoPath ? { photo_path: photoPath } : noPhoto ? { photo_path: null } : {}) });
+      await update.mutateAsync({ display_name: name.trim(), ...(photoPath ? { photo_path: photoPath } : noPhoto ? { photo_path: null } : {}),
+        ...(email !== null ? { email: email.trim() || null } : {}),
+      });
       if (editing) showToast('success', t('common.saved'));
       if (!editing) track('name_saved');
       if (editing) goBack(router);
@@ -117,6 +122,22 @@ export default function Profile() {
 
         <Field label={t('profile.yourName')} value={name} onChangeText={setName} autoComplete="name" style={styles.nameInput} />
 
+        {editing ? (
+          <View style={styles.numberBlock}>
+            <Field
+              label={t('profile.email')}
+              value={email ?? me.data?.email ?? ''}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              invalid={emailBad}
+            />
+            <Muted>{emailBad ? t('profile.emailBad') : t('profile.emailHelp')}</Muted>
+          </View>
+        ) : null}
+
         {me.data?.login_phone ? (
           <View style={styles.numberBlock}>
             <Field label={t('profile.mobile')} value={showPhone(me.data.login_phone)} editable={false} style={styles.numberInput} />
@@ -131,7 +152,7 @@ export default function Profile() {
         )}
         {failure ? <ErrorText>{errorText(failure)}</ErrorText> : null}
       </ScrollView>
-      <PrimaryButton label={editing ? t('common.save') : t('common.continue')} onPress={save} disabled={!name.trim() || busy} />
+      <PrimaryButton label={editing ? t('common.save') : t('common.continue')} onPress={save} disabled={!name.trim() || busy || emailBad} />
     </Screen>
   );
 }

@@ -228,6 +228,15 @@ export function useRevokeShare(treeId: string) {
   });
 }
 
+/** Change what someone who already has access may do, without taking the access away and sending a new link. */
+export function useUpdateShare(treeId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { shareId: string; role: ShareRole }) => api.patch<unknown>(`/shares/${input.shareId}`, { role: input.role }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['shares', treeId] }),
+  });
+}
+
 // ----- Activity (E4) -----
 
 export type ActivityTab = 'needs_you' | 'changes' | 'access' | 'all';
