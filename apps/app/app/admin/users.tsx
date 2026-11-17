@@ -4,10 +4,13 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';
-import { Actions, AdminPage, adminStyles, DataTable, FormDialog, formatDate, Pager, Pill, QueryState, SearchBox, SecondaryButton, usePagedList, useRefreshAfter } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, DataTable, FilterChips, FormDialog, formatDate, Pager, Pill, QueryState, SearchBox, SecondaryButton, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import type { UserRow } from '@/admin/types';
 import { api } from '@/lib/api';
+
+type Filter = 'all' | 'blocked' | 'plus' | 'staff';
+type Sort = 'newest' | 'active' | 'name';
 
 export default function AdminUsers() {
   const { t, i18n } = useTranslation();
@@ -16,7 +19,10 @@ export default function AdminUsers() {
   const refreshAfter = useRefreshAfter();
   const [q, setQ] = useState('');
   const [acting, setActing] = useState<{ user: UserRow; action: 'block' | 'unblock' } | null>(null);
-  const { query, page, setPage } = usePagedList<UserRow>(['admin', 'users'], '/admin/users', { q });
+  const [filter, setFilter] = useState<Filter>('all');
+  const [sort, setSort] = useState<Sort>('newest');
+  const [copied, setCopied] = useState<string | null>(null);
+  const { query, page, setPage } = usePagedList<UserRow>(['admin', 'users'], '/admin/users', { q, filter, sort });
   const canBlock = access.can(['users']);
   const canBlockStaff = access.can(['staff']);
 
@@ -28,7 +34,16 @@ export default function AdminUsers() {
       render: (user) => (
         <View>
           <Text style={adminStyles.cellStrong}>{user.display_name || t('admin.users.noName')}</Text>
-          <Text style={adminStyles.cellMuted}>{user.id}</Text>
+          {/* The long internal id is not for reading. It can still be copied, for a search or a note to a colleague. */}
+          <Text
+            accessibilityRole="button"
+            style={[adminStyles.cellMuted, { textDecorationLine: 'underline' }]}
+            onPress={() => {
+              void globalThis.navigator?.clipboard?.writeText(user.id).then(() => setCopied(user.id));
+            }}
+          >
+            {copied === user.id ? t('admin.users.idCopied') : t('admin.users.copyId')}
+          </Text>
         </View>
       ),
     },
@@ -77,6 +92,19 @@ export default function AdminUsers() {
   return (
     <AdminPage title={t('admin.users.title')} subtitle={t('admin.users.subtitle')} gates={['users', 'support']}>
       <SearchBox placeholder={t('admin.users.search')} onSearch={setQ} />
+      <FilterChips
+        value={filter}
+        onChange={setFilter}
+        options={(['all', 'blocked', 'plus', 'staff'] as Filter[]).map((value) => ({ value, label: t(`admin.users.filters.${value}`) }))}
+      />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
+        <Text style={adminStyles.fieldLabel}>{t('admin.users.sortBy')}</Text>
+        <FilterChips
+          value={sort}
+          onChange={setSort}
+          options={(['newest', 'active', 'name'] as Sort[]).map((value) => ({ value, label: t(`admin.users.sorts.${value}`) }))}
+        />
+      </View>
       <QueryState query={query} isEmpty={(data) => data.rows.length === 0} emptyText={t('admin.users.empty')}>
         {(data) => (
           <>

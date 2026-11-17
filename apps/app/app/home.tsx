@@ -274,8 +274,9 @@ function FamilyCard({ tree }: { tree: TreeRow }) {
         </Text>
       </View>
       {data && viewerId ? <MiniTree nodes={data.nodes} viewerId={viewerId} focus={focusView(graphFromApi(data), viewerId)} /> : <View style={styles.miniSpace} />}
+      {/* The shared small button, so "Open tree" looks like every other button. It does what the card does. */}
       <View style={styles.openButton}>
-        <Text style={styles.openText}>{t('home.openTree')}</Text>
+        <SmallButton label={t('home.openTree')} onPress={open} />
       </View>
     </Pressable>
     {/* Outside the card's own button, so each relative button opens its own form. */}
@@ -492,8 +493,7 @@ const styles = StyleSheet.create({
   miniRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   miniLine: { width: 2, height: 12, backgroundColor: colors.line, borderRadius: 1 },
   miniSpace: { height: 40 },
-  openButton: { alignSelf: 'flex-start', minHeight: 46, paddingHorizontal: 22, borderRadius: radius.button, backgroundColor: colors.logoIndigo, justifyContent: 'center' },
-  openText: { color: colors.white, fontFamily: fonts.bold, fontSize: 15 },
+  openButton: { alignSelf: 'flex-start' },
   need: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -50,6 +50,10 @@ export default function SosWatch() {
               </Text>
               {data.last ? <Text style={styles.text}>{t('social.sos.lastPlace', { when: when(data.last.at) })}</Text> : null}
             </View>
+            {/* First, because the alert says "please call now". */}
+            {data.active && data.call_phone ? (
+              <PrimaryButton label={t('social.sos.callThem', { name: showName(data.name) })} onPress={() => void Linking.openURL(`tel:${data.call_phone}`)} />
+            ) : null}
             {data.last ? (
               <PrimaryButton
                 label={t('social.sos.openMap')}

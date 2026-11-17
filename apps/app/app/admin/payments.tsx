@@ -1,33 +1,55 @@
 // Plans and orders overview. Read only: webhooks alone change plans, and refunds happen at the store or gateway.
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
-import { AdminPage, adminStyles, DataTable, FilterChips, formatDate, Pager, PAGE_SIZE, QueryState, Section, StatCard, StatRow } from '@/admin/ui';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useAdminAccess } from '@/admin/access';
+import { csvDay, downloadCsv } from '@/admin/csv';
+import { Actions, AdminPage, adminStyles, DataTable, FilterChips, formatDate, money, Pager, PAGE_SIZE, QueryState, SearchBox, SecondaryButton, Section, StatCard, StatRow } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import type { PaymentsOverview, PlanRow } from '@/admin/types';
 import { api } from '@/lib/api';
+import { colors, fonts } from '@/theme/tokens';
 
 const STATUSES = ['all', 'active', 'trial', 'grace', 'expired', 'cancelled'] as const;
 type Filter = (typeof STATUSES)[number];
+
+/** Monthly or yearly, read from the product code. Every store names its products its own way, but all say the period. */
+function planPeriod(productId: string): 'monthly' | 'yearly' | null {
+  const code = productId.toLowerCase();
+  if (/year|annual/.test(code)) return 'yearly';
+  if (/month/.test(code)) return 'monthly';
+  return null;
+}
 
 export default function AdminPayments() {
   const { t, i18n } = useTranslation();
   const [status, setStatus] = useState<Filter>('all');
   const [page, setPage] = useState(0);
-  useEffect(() => setPage(0), [status]);
+  const [q, setQ] = useState('');
+  useEffect(() => setPage(0), [status, q]);
+  const router = useRouter();
+  // The payer's name opens their account page, for the people who may open accounts.
+  const canOpenAccount = useAdminAccess().can(['users', 'support']);
 
   const query = useQuery({
-    queryKey: ['admin', 'payments', status, page],
+    queryKey: ['admin', 'payments', status, q, page],
     queryFn: () => {
       const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(page * PAGE_SIZE) });
       if (status !== 'all') params.set('status', status);
+      if (q) params.set('q', q);
       return api.get<PaymentsOverview>(`/admin/payments?${params.toString()}`);
     },
     placeholderData: keepPreviousData,
   });
 
   const planStatus = (value: string) => t(`admin.payments.status.${value}`, { defaultValue: value });
+  // "AYWO Plus, yearly" where the code says which; the raw code otherwise, so nothing is ever hidden.
+  const planName = (productId: string) => {
+    const period = planPeriod(productId);
+    return period ? t(`admin.payments.period.${period}`) : productId;
+  };
   const columns: Column<PlanRow>[] = [
     {
       key: 'payer',
@@ -35,7 +57,13 @@ export default function AdminPayments() {
       flex: 1.4,
       render: (plan) => (
         <View>
-          <Text style={adminStyles.cellStrong}>{plan.payer_name || t('admin.users.noName')}</Text>
+          {canOpenAccount ? (
+            <Pressable accessibilityRole="link" onPress={() => router.navigate({ pathname: '/admin/user/[id]', params: { id: plan.payer_id } })}>
+              <Text style={styles.link}>{plan.payer_name || t('admin.users.noName')}</Text>
+            </Pressable>
+          ) : (
+            <Text style={adminStyles.cellStrong}>{plan.payer_name || t('admin.users.noName')}</Text>
+          )}
           <Text style={adminStyles.cellMuted}>{plan.payer_phone_masked ?? '-'}</Text>
         </View>
       ),
@@ -46,7 +74,7 @@ export default function AdminPayments() {
       flex: 1.4,
       render: (plan) => (
         <View>
-          <Text style={adminStyles.cellStrong}>{plan.product_id}</Text>
+          <Text style={adminStyles.cellStrong}>{planName(plan.product_id)}</Text>
           <Text style={adminStyles.cellMuted}>{t(`admin.payments.store.${plan.store}`, { defaultValue: plan.store })}</Text>
         </View>
       ),
@@ -77,7 +105,7 @@ export default function AdminPayments() {
                     <StatCard key={state} label={t(`admin.payments.orderStatus.${state}`, { defaultValue: state })} value={count} />
                   ))}
                   {Object.entries(data.orders.paid_minor_by_currency).map(([currency, minor]) => (
-                    <StatCard key={currency} label={t('admin.payments.paidIn', { currency })} value={Number(minor) / 100} />
+                    <StatCard key={currency} label={t('admin.payments.paidIn', { currency })} value={money(Number(minor), currency, i18n.language)} />
                   ))}
                 </StatRow>
               </Section>
@@ -91,12 +119,45 @@ export default function AdminPayments() {
                   label: value === 'all' ? t('admin.payments.all') : planStatus(value),
                 }))}
               />
+              {/* The key empties the box when the search is cleared with the button below. */}
+              <SearchBox key={q} placeholder={t('admin.payments.search')} onSearch={setQ} initial={q} />
+              {q ? (
+                <Actions>
+                  <Text style={adminStyles.cellMuted}>{t('admin.payments.searchingFor', { q })}</Text>
+                  <SecondaryButton label={t('admin.payments.clearSearch')} onPress={() => setQ('')} />
+                </Actions>
+              ) : null}
               {data.rows.length === 0 ? (
-                <Text style={adminStyles.cellMuted}>{t('admin.payments.empty')}</Text>
+                <Text style={adminStyles.cellMuted}>{q ? t('admin.payments.noMatch') : t('admin.payments.empty')}</Text>
               ) : (
                 <>
                   <DataTable columns={columns} rows={data.rows} rowKey={(plan) => plan.id} />
                   <Pager page={page} total={data.total} onPage={setPage} />
+                  <Actions>
+                    <SecondaryButton
+                      label={t('admin.common.downloadCsv')}
+                      onPress={() =>
+                        downloadCsv(
+                          `aywo-plans-${csvDay()}`,
+                          [
+                            t('admin.payments.payer'), t('admin.payments.csvPhone'), t('admin.payments.plan'), t('admin.payments.csvStore'), t('admin.payments.statusLabel'),
+                            t('admin.payments.members'), t('admin.payments.renews'), t('admin.payments.externalId'),
+                          ],
+                          data.rows.map((plan) => [
+                            plan.payer_name ?? '',
+                            plan.payer_phone_masked ?? '',
+                            planName(plan.product_id),
+                            t(`admin.payments.store.${plan.store}`, { defaultValue: plan.store }),
+                            planStatus(plan.status),
+                            String(plan.members),
+                            formatDate(plan.renews_at ?? plan.trial_ends_at, i18n.language),
+                            plan.external_id,
+                          ]),
+                        )
+                      }
+                    />
+                  </Actions>
+                  <Text style={adminStyles.cellMuted}>{t('admin.common.downloadCsvHelp', { count: data.rows.length })}</Text>
                 </>
               )}
             </Section>
@@ -106,3 +167,8 @@ export default function AdminPayments() {
     </AdminPage>
   );
 }
+
+const styles = StyleSheet.create({
+  // A name that opens the account: the same weight as other names, in the link colour.
+  link: { color: colors.logoIndigo, fontFamily: fonts.bold, fontSize: 14, textDecorationLine: 'underline' },
+});

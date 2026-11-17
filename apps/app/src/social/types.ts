@@ -171,6 +171,7 @@ export interface AlertRow {
   recipients: number | null;
   seen: boolean;
   closed?: boolean;
+  edited?: boolean;
 }
 
 // ===== SOS =====
@@ -207,6 +208,8 @@ export interface SosView {
   ends_at: string;
   ended_at: string | null;
   active: boolean;
+  /** The sender's own number, only while the SOS runs and only for the people it alerted. */
+  call_phone?: string | null;
   last: { lat: number; lng: number; at: string } | null;
   trail: { lat: number; lng: number; at: string }[];
 }

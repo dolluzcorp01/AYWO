@@ -1,7 +1,7 @@
 // The date helpers that apps/app/src/lib/contacts.ts hands out. They live here, with no imports, because contacts.ts
 // also pulls in the phone-number code, which needs the device.
 import { describe, expect, it } from 'vitest';
-import { dateFromBox, dateToText, parseDateText } from './dateText';
+import { dateForReading, dateFromBox, dateToText, parseDateText } from './dateText';
 
 describe('parseDateText', () => {
   it('reads a year', () => {
@@ -85,5 +85,21 @@ describe('dateFromBox', () => {
 
   it('a new person has no stored date to keep', () => {
     expect(dateFromBox('1968')).toEqual({ date: '1968-01-01', precision: 'year' });
+  });
+});
+
+describe('dateForReading', () => {
+  const about = (date: string) => `About ${date}`;
+  it('says only as much as is known', () => {
+    expect(dateForReading('1968-01-01', 'year', 'en-GB', about)).toBe('1968');
+    expect(dateForReading('1968-03-01', 'month', 'en-GB', about)).toBe('Mar 1968');
+    expect(dateForReading('1968-03-21', 'exact', 'en-GB', about)).toBe('21 Mar 1968');
+  });
+  it('marks an uncertain date', () => {
+    expect(dateForReading('1950-01-01', 'about', 'en-GB', about)).toBe('About 1950');
+    expect(dateForReading('1950-03-01', 'about', 'en-GB', about)).toBe('About Mar 1950');
+  });
+  it('is empty when there is no date', () => {
+    expect(dateForReading(null, null, 'en-GB', about)).toBe('');
   });
 });

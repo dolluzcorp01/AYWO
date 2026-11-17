@@ -108,9 +108,10 @@ export default function GroupScreen() {
             ))}
             {adding ? (
               <>
-                <PeoplePicker chosen={chosen} onChange={setChosen} />
+                <PeoplePicker chosen={chosen} onChange={setChosen} exclude={data.members.map((m) => m.profile_id)} />
                 <ActionError error={add.error} />
-                <PrimaryButton label={t('social.groups.addChosen')} disabled={chosen.length === 0 || add.isPending} onPress={() => add.mutate()} />
+                <PrimaryButton label={t('social.groups.addChosen')} disabled={add.isPending} missing={chosen.length === 0 ? t('social.missing.tickSomeone') : null} onPress={() => add.mutate()} />
+                <TextButton label={t('social.cancel')} onPress={() => { setAdding(false); setChosen([]); }} />
               </>
             ) : (
               <SecondaryButton label={t('social.groups.addPeople')} onPress={() => setAdding(true)} />

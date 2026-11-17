@@ -2,7 +2,7 @@
 // Someone new can also type the code of the person who invited them, within 14 days of joining.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Share, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -20,6 +20,12 @@ export default function InviteFriends() {
   const mine = useQuery({ queryKey: ['referral'], queryFn: () => api.rpc<Referral>('referral_my') });
   const [copied, setCopied] = useState(false);
   const [theirs, setTheirs] = useState('');
+  // "Copied" goes back to "Copy" after a moment, so a second tap later still shows that it worked.
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 3000);
+    return () => clearTimeout(timer);
+  }, [copied]);
   const claim = useMutation({
     mutationFn: () => api.rpc<{ by: string }>('referral_claim', { p_code: theirs.trim() }),
     onSuccess: () => client.invalidateQueries({ queryKey: ['referral'] }),
@@ -62,7 +68,7 @@ export default function InviteFriends() {
                 <Text style={styles.stat}>{t('ops.refer.joined', { count: data.joined })}</Text>
                 <Text style={styles.stat}>{t('ops.refer.rewarded', { count: data.rewarded })}</Text>
                 {data.bonus_until && new Date(data.bonus_until) > new Date() ? (
-                  <Text style={styles.stat}>{t('ops.refer.freeUntil', { date: new Date(data.bonus_until).toLocaleDateString(i18n.language) })}</Text>
+                  <Text style={styles.stat}>{t('ops.refer.freeUntil', { date: new Date(data.bonus_until).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' }) })}</Text>
                 ) : null}
               </Card>
               <Card style={styles.block}>
@@ -74,7 +80,7 @@ export default function InviteFriends() {
                   <>
                     <Field value={theirs} onChangeText={(v) => setTheirs(v.toUpperCase().replace(/[^A-Z0-9]/g, ''))} maxLength={12} accessibilityLabel={t('ops.refer.gotCode')} autoCapitalize="characters" />
                     <ActionError error={claim.error} />
-                    <PrimaryButton label={t('ops.refer.claim')} disabled={theirs.length < 6 || claim.isPending} onPress={() => claim.mutate()} />
+                    <PrimaryButton label={t('ops.refer.claim')} disabled={claim.isPending} missing={theirs.length < 6 ? t('ops.refer.needCode') : null} onPress={() => claim.mutate()} />
                   </>
                 )}
               </Card>

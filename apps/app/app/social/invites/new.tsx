@@ -9,7 +9,7 @@ import { Field, Label, Pills, PrimaryButton, SecondaryButton } from '@/component
 import { api } from '@/lib/api';
 import { AudiencePicker } from '@/social/AudiencePicker';
 import { InviteCard } from '@/social/InviteCard';
-import { ActionError, Note, Page, parseDateTime } from '@/social/parts';
+import { ActionError, Note, Page, parseDateTime, todayIso } from '@/social/parts';
 import { EVENT_KINDS, FREE_DESIGNS } from '@/social/types';
 import type { Audience, Design, EventKind } from '@/social/types';
 
@@ -32,6 +32,8 @@ export default function NewInvite() {
   const [audience, setAudience] = useState<Audience | null>(null);
 
   const startsAt = parseDateTime(date, time);
+  // An invitation is for something still to come: a date already gone is almost always a slip of the finger.
+  const inPast = !!startsAt && startsAt.getTime() < Date.now();
   const canvaOk = canva.trim() === '' || /^https:\/\/(www\.)?canva\.(com|link)\//.test(canva.trim());
 
   const create = useMutation({
@@ -49,6 +51,7 @@ export default function NewInvite() {
     onSuccess: (id) => {
       client.invalidateQueries({ queryKey: ['events'] });
       client.invalidateQueries({ queryKey: ['social-home'] });
+      client.invalidateQueries({ queryKey: ['calendar'] });
       router.replace({ pathname: '/social/invites/[id]', params: { id } });
     },
   });
@@ -58,7 +61,7 @@ export default function NewInvite() {
       <Label>{t('social.invites.kind')}</Label>
       <Pills options={EVENT_KINDS.map((k) => ({ value: k as EventKind, label: t(`social.invites.kinds.${k}`) }))} value={kind} onChange={setKind} />
       <Field label={t('social.invites.titleField')} value={title} onChangeText={setTitle} maxLength={120} />
-      <DateField label={t('social.dateLabel')} value={date} onChange={setDate} />
+      <DateField label={t('social.dateLabel')} value={date} onChange={setDate} min={todayIso()} invalid={inPast} />
       <TimeField label={t('social.timeLabel')} value={time} onChange={setTime} />
       {date && time && !startsAt ? <Note>{t('social.dateHelp')}</Note> : null}
       <Field label={t('social.invites.place')} value={place} onChangeText={setPlace} maxLength={200} />
@@ -85,6 +88,8 @@ export default function NewInvite() {
               ? t('social.missing.title')
               : !startsAt
                 ? t('social.missing.when')
+                : inPast
+                  ? t('social.missing.future')
                 : !canvaOk
                   ? t('social.missing.canva')
                   : !audience

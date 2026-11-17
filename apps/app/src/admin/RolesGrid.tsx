@@ -1,12 +1,12 @@
 // Admin side > Staff > Team roles: every permission against every role in one grid. AYWO Admin ticks and unticks
 // boxes, sees what changed, and saves once; the confirm lists each role's gains and losses and how many people they
 // reach. AYWO Admin's own column and the AYWO-Admin-only rows (staff, audit) are locked: the server never grants those.
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { CheckIcon } from '@/components/Icons';
 import { GRANTABLE } from '@/admin/types';
-import type { Grantable, TeamRole } from '@/admin/types';
+import type { Grantable, StaffRow, TeamRole } from '@/admin/types';
 import { adminStyles, FormDialog, Message, Missing, SecondaryButton } from '@/admin/ui';
 import { api } from '@/lib/api';
 import { colors, fonts } from '@/theme/tokens';
@@ -20,8 +20,10 @@ function sameSet(a: readonly string[], b: readonly string[]) {
   return a.length === b.length && a.every((x) => b.includes(x));
 }
 
-export function RolesGrid({ roles, editable, onSaved, onEditRole }: {
+export function RolesGrid({ roles, staff = [], editable, onSaved, onEditRole }: {
   roles: TeamRole[];
+  /** The staff rows the Staff page shows. People with hand-picked permissions and no team role get a column of their own. */
+  staff?: StaffRow[];
   /** AYWO Admin: tick and save. Otherwise the grid only shows. */
   editable: boolean;
   onSaved: () => Promise<unknown>;
@@ -35,6 +37,17 @@ export function RolesGrid({ roles, editable, onSaved, onEditRole }: {
 
   const current = (role: TeamRole): Grantable[] => draft[role.id] ?? role.permissions;
   const changed = useMemo(() => roles.filter((r) => draft[r.id] && !sameSet(draft[r.id], r.permissions)), [roles, draft]);
+  // Ticks not saved yet: closing or refreshing the page asks first, so they are not lost without a word.
+  const unsaved = changed.length > 0;
+  useEffect(() => {
+    if (!unsaved || typeof globalThis.addEventListener !== 'function') return;
+    const warn = (event: { preventDefault: () => void; returnValue?: string }) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    globalThis.addEventListener('beforeunload', warn as never);
+    return () => globalThis.removeEventListener('beforeunload', warn as never);
+  }, [unsaved]);
   const changeCount = changed.reduce((n, r) => {
     const now = current(r);
     return n + now.filter((p) => !r.permissions.includes(p)).length + r.permissions.filter((p) => !now.includes(p)).length;
@@ -49,6 +62,10 @@ export function RolesGrid({ roles, editable, onSaved, onEditRole }: {
   }
 
   const label = (p: string) => t(`admin.permissions.${p}`);
+  // Without a team role these people were in no column, so the grid did not show everything staff can do.
+  // Their boxes are locked here: hand-picked permissions are changed with "Change" on the person's own row.
+  const handPicked = staff.filter((s) => s.role === 'sub_admin' && !s.team_role_id);
+  const personName = (s: StaffRow) => s.display_name || t('admin.users.noName');
 
   return (
     <View style={styles.wrap}>
@@ -82,6 +99,12 @@ export function RolesGrid({ roles, editable, onSaved, onEditRole }: {
               <Text style={styles.headSub}>{t('admin.rolesGrid.people', { count: r.members })}</Text>
             </View>
           ))}
+          {handPicked.map((s) => (
+            <View key={s.profile_id} style={styles.cell}>
+              <Text style={styles.headText}>{personName(s)}</Text>
+              <Text style={styles.headSub}>{t('admin.rolesGrid.handPicked')}</Text>
+            </View>
+          ))}
         </View>
 
         {GRANTABLE.map((p, i) => (
@@ -102,6 +125,11 @@ export function RolesGrid({ roles, editable, onSaved, onEditRole }: {
                 </View>
               );
             })}
+            {handPicked.map((s) => (
+              <View key={s.profile_id} style={styles.cell}>
+                <Box on={s.permissions.includes(p)} locked label={`${personName(s)}: ${label(p)}`} />
+              </View>
+            ))}
           </View>
         ))}
 
@@ -119,10 +147,16 @@ export function RolesGrid({ roles, editable, onSaved, onEditRole }: {
                 <Box on={false} locked label={`${r.name}: ${label(p)}`} />
               </View>
             ))}
+            {handPicked.map((s) => (
+              <View key={s.profile_id} style={styles.cell}>
+                <Box on={false} locked label={`${personName(s)}: ${label(p)}`} />
+              </View>
+            ))}
           </View>
         ))}
       </View>
       <Text style={adminStyles.cellMuted}>{t('admin.rolesGrid.adminOnlyNote')}</Text>
+      {handPicked.length > 0 ? <Text style={adminStyles.cellMuted}>{t('admin.rolesGrid.handPickedNote')}</Text> : null}
 
       {saved ? <Message text={t('admin.rolesGrid.saved')} good /> : null}
       {editable && changed.length > 0 ? (
@@ -203,11 +237,11 @@ const styles = StyleSheet.create({
   table: { borderWidth: 1, borderColor: colors.cardBorder, borderRadius: 12, overflow: 'hidden' },
   tr: { flexDirection: 'row', alignItems: 'center', minHeight: 54 },
   head: { backgroundColor: colors.background, borderBottomWidth: 1, borderBottomColor: colors.cardBorder, minHeight: 60 },
-  striped: { backgroundColor: '#FBFAF8' },
+  striped: { backgroundColor: colors.background },
   adminOnly: { backgroundColor: colors.tint },
   first: { flex: 2.6, paddingHorizontal: 12, paddingVertical: 8, gap: 2 },
   cell: { flex: 1, minWidth: 90, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 4 },
-  moved: { backgroundColor: '#FFF4D6' },
+  moved: { backgroundColor: colors.celebrationTint },
   headText: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 13, textAlign: 'center' },
   headSub: { color: colors.muted, fontFamily: fonts.medium, fontSize: 11, textAlign: 'center' },
   link: { color: colors.relation, textDecorationLine: 'underline' },
@@ -222,7 +256,7 @@ const styles = StyleSheet.create({
   boxClick: { cursor: 'pointer' },
   boxHover: { transform: [{ scale: 1.1 }], borderColor: colors.relation },
   cross: { color: colors.muted, fontSize: 12, fontFamily: fonts.bold },
-  saveBar: { gap: 8, padding: 12, borderRadius: 12, backgroundColor: '#FFF4D6', borderWidth: 1, borderColor: '#F3D58A' },
+  saveBar: { gap: 8, padding: 12, borderRadius: 12, backgroundColor: colors.warmTint, borderWidth: 1, borderColor: colors.warmBorder },
   saveText: { color: colors.text, fontFamily: fonts.bold, fontSize: 14 },
   saveButtons: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   change: { gap: 2, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.cardBorder },

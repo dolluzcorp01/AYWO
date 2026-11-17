@@ -11,12 +11,14 @@ import { LanguagePicker } from '@/components/LanguagePicker';
 import { Screen } from '@/components/Screen';
 import { TAB_BAR_SPACE, TabBar } from '@/components/TabBar';
 import { Text } from '@/components/Text';
-import { Card, Checkbox, ConfirmDialog, ErrorText, Loading, LoadFailed, NeonPanel, SecondaryButton } from '@/components/ui';
+import { showToast } from '@/components/Toast';
+import { Card, Checkbox, ConfirmDialog, ErrorText, Loading, LoadFailed, NeonPanel, SecondaryButton, SmallButton } from '@/components/ui';
 import { languageLabel } from '@/i18n/languages';
 import { HELP_PAGES } from '@/legal/LegalLinks';
 import { api } from '@/lib/api';
 import { DeleteBanner } from '@/components/DeleteBanner';
 import { mainTree, useMe, useTrees, useUpdateMe } from '@/lib/account';
+import { TreeSettings } from '@/tree/TreeSettings';
 import { useFeature } from '@/ops/appConfig';
 import type { MyExtras } from '@/ops/types';
 import { useErrorText } from '@/lib/errors';
@@ -38,6 +40,7 @@ export default function MeScreen() {
   const [signingOut, setSigningOut] = useState(false);
   const trees = useTrees();
   const update = useUpdateMe();
+  const [treeSettings, setTreeSettings] = useState(false);
   const plan = usePlan();
   const prefs = useNotificationPrefs();
   const large = useLargeText();
@@ -74,25 +77,29 @@ export default function MeScreen() {
     );
   }
 
+  // A quiet "Saved", so a changed setting is seen to have been kept.
+  const saved = () => showToast('success', t('common.saved'));
+
   function chooseLanguage(code: string) {
     setPicking(false);
     setLanguage(code);
-    update.mutate({ language_code: code });
+    update.mutate({ language_code: code }, { onSuccess: saved });
   }
 
   function toggleLarge(on: boolean) {
     setLargeText(on);
-    update.mutate({ large_text: on });
+    update.mutate({ large_text: on }, { onSuccess: saved });
   }
 
   function toggleSimple(on: boolean) {
     void setSimpleMode(on);
     // Elder mode brings large text with it.
-    update.mutate(on ? { simple_mode: true, large_text: true } : { simple_mode: false });
+    update.mutate(on ? { simple_mode: true, large_text: true } : { simple_mode: false }, { onSuccess: saved });
   }
 
   const memberCount = plan.data?.members.length;
-  const allOn = (prefs.data ?? []).every((p) => p.push || p.email || p.sms);
+  // About this phone only: the email switches start on, and would keep saying "All on" after everything was turned off here.
+  const allOn = (prefs.data ?? []).every((p) => p.push);
   // Free Plus days (referrals, support) count as Plus too; GET /plan reports them apart from a paid plan.
   const planOn = plan.data ? hasPlusNow(plan.data) : me.data.plus;
   const bonusOnly = !!plan.data && onBonusOnly(plan.data);
@@ -117,9 +124,7 @@ export default function MeScreen() {
             {me.data.login_phone ? <Text style={styles.sub} selectable>{t('me.signedInWith', { number: showPhone(me.data.login_phone) })}</Text> : null}
             {created.length > 0 ? <Text style={styles.sub}>{t('me.creatorOf', { count: created.length })}</Text> : null}
           </View>
-          <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/profile', params: { edit: '1' } })} style={styles.edit}>
-            <Text style={styles.editText}>{t('me.edit')}</Text>
-          </Pressable>
+          <SmallButton kind="plain" label={t('me.edit')} onPress={() => router.push({ pathname: '/profile', params: { edit: '1' } })} />
         </View>
 
         <DeleteBanner />
@@ -155,11 +160,13 @@ export default function MeScreen() {
                 title={tree.name}
                 value={t('home.peopleCount', { count: tree.people })}
                 onPress={() => router.push({ pathname: '/tree/[id]', params: { id: tree.id } })}
-                last={i === list.length - 1}
+                last={i === list.length - 1 && created.length === 0}
               />
             ))
           )}
+          {created.length > 0 ? <Row title={t('me.treeSettings')} onPress={() => setTreeSettings(true)} last /> : null}
         </Card>
+        {treeSettings ? <TreeSettings trees={created} onClose={() => setTreeSettings(false)} /> : null}
 
         {offersOn || ordersOn || referralsOn ? (
           <>
@@ -251,7 +258,11 @@ function Row({ title, value, onPress, last }: { title: string; value?: string; o
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={[styles.row, styles.rowInner, !last && styles.rowLine]}>
       <Text style={styles.rowTitle}>{title}</Text>
-      {value ? <Text style={styles.rowValue}>{value}</Text> : null}
+      <View style={styles.rowEnd}>
+        {value ? <Text style={styles.rowValue}>{value}</Text> : null}
+        {/* The arrow says "this opens something": a bare line of text does not look tappable. */}
+        <ChevronIcon color={colors.idleTab} size={16} />
+      </View>
     </Pressable>
   );
 }
@@ -274,5 +285,6 @@ const styles = StyleSheet.create({
   rowInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   rowLine: { borderBottomWidth: 1, borderBottomColor: colors.tint },
   rowTitle: { flexShrink: 1, color: colors.text, fontFamily: fonts.bold, fontSize: 15 },
+  rowEnd: { flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
   rowValue: { flexShrink: 1, color: colors.muted, fontFamily: fonts.semibold, fontSize: 13 },
 });

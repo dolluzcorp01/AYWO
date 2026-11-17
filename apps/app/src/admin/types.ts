@@ -109,6 +109,16 @@ export interface TakedownRow {
   created_at: string;
 }
 
+/** Someone a name-only takedown request could be about. */
+export interface TakedownMatch {
+  id: string;
+  name: string;
+  birth_year: number | null;
+  tree_id: string;
+  tree_name: string;
+  creator_name: string | null;
+}
+
 export interface PlanRow {
   id: string;
   payer_id: string;
@@ -167,13 +177,28 @@ export interface StaffInvite {
   phone_masked: string;
   phone_key: string;
   role: StaffRole;
+  team_role_id: string | null;
   team_role: string | null;
+  permissions: Grantable[];
   expires_at: string;
   expired: boolean;
 }
 
+/** Someone taken off staff, kept with what they had so adding them back needs no typing. */
+export interface FormerStaff {
+  profile_id: string;
+  display_name: string | null;
+  phone_masked: string | null;
+  role: StaffRole;
+  team_role_id: string | null;
+  team_role: string | null;
+  permissions: Grantable[];
+  removed_at: string;
+}
+
 export interface StaffPage extends Page<StaffRow> {
   invites: StaffInvite[];
+  former?: FormerStaff[];
 }
 
 export interface TeamRole {
@@ -210,8 +235,18 @@ export interface WorkPage extends Page<WorkItem> {
   counts: { open: number; mine: number; unassigned: number; overdue: number };
 }
 
+/** One change to a work item. `assignee: null` means the owner was taken off. */
+export interface WorkChanges {
+  status?: WorkStatus;
+  priority?: WorkPriority;
+  due_at?: string;
+  assignee?: string | null;
+  assignee_name?: string | null;
+}
+
 export interface WorkDetail extends WorkItem {
-  history: { id: number; author_name: string | null; body: string; created_at: string }[];
+  /** `changes` is set on lines the system wrote: what changed, as data, so the screen can say it in any language. */
+  history: { id: number; author_name: string | null; body: string; created_at: string; changes?: WorkChanges | null }[];
   assignable: { profile_id: string; name: string }[];
 }
 

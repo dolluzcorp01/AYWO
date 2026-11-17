@@ -59,6 +59,25 @@ export function dateToText(date: string | null | undefined, precision: string | 
   return iso;
 }
 
+/**
+ * A stored date as people say it, with only as much as is really known: "21 Mar 1968", "Mar 1968", "1968".
+ * `about` is the word for an uncertain date in the reader's language ("About {{date}}").
+ */
+export function dateForReading(date: string | null | undefined, precision: string | null | undefined, locale: string, about: (date: string) => string): string {
+  if (!date) return '';
+  const iso = date.slice(0, 10);
+  const [year, month, day] = [Number(iso.slice(0, 4)), Number(iso.slice(5, 7)), Number(iso.slice(8, 10))];
+  if (!year) return '';
+  // Built from the parts, at noon: a date has no time zone, and must never slip to the day before.
+  const at = new Date(year, month - 1, day, 12);
+  const full = () => at.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+  const monthYear = () => at.toLocaleDateString(locale, { month: 'short', year: 'numeric' });
+  if (precision === 'year' || precision === 'unknown') return String(year);
+  if (precision === 'month') return monthYear();
+  if (precision === 'about') return about(day !== 1 ? full() : month !== 1 ? monthYear() : String(year));
+  return full();
+}
+
 export interface StoredDate {
   date: string | null | undefined;
   precision: string | null | undefined;

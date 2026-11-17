@@ -7,6 +7,8 @@ import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { forgetNotMe } from '@/lib/account';
+import { showToast } from '@/components/Toast';
 import { Card, ConfirmDialog, ErrorText, Field, Muted, SecondaryButton, TextButton, TopBar } from '@/components/ui';
 import { api, clearSession } from '@/lib/api';
 import { errorCode, useErrorText } from '@/lib/errors';
@@ -24,6 +26,7 @@ export default function Privacy() {
   const [warning, setWarning] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [word, setWord] = useState('');
   const confirmWord = t('settings.deleteWord');
 
@@ -38,6 +41,8 @@ export default function Privacy() {
       await unregisterPush().catch(() => undefined);
       await signOutOfStore().catch(() => undefined);
       await clearSession();
+      // Said after the screen has changed to Welcome, so the person is not left wondering what happened.
+      showToast('success', t('settings.deletedNote'));
     },
     // The server has the last word: a plan this screen had not heard about yet still gets the warning.
     onError: (error) => {
@@ -67,12 +72,30 @@ export default function Privacy() {
           {exportData.isError ? <ErrorText>{errorText(exportData.error)}</ErrorText> : null}
         </Card>
 
-        <SecondaryButton label={t('settings.signOut')} onPress={() => logOut()} />
+        <SecondaryButton label={t('settings.signOut')} onPress={() => setSigningOut(true)} />
+        <ConfirmDialog
+          visible={signingOut}
+          title={t('nav.signOutTitle')}
+          message={t('nav.signOutMessage')}
+          confirmLabel={t('settings.signOut')}
+          onConfirm={() => {
+            setSigningOut(false);
+            void logOut();
+          }}
+          onCancel={() => setSigningOut(false)}
+        />
 
         <Card style={styles.card}>
           <TextButton label={t('legal.termsLink')} onPress={() => router.push('/terms')} />
           <TextButton label={t('legal.privacyLink')} onPress={() => router.push('/privacy')} />
           <TextButton label={t('ops.myConsents.title')} onPress={() => router.push('/settings/consents')} />
+          {/* The undo for "Not me" tapped by mistake on "Is this you?". */}
+          <TextButton
+            label={t('claim.askAgain')}
+            onPress={() => {
+              void forgetNotMe().then(() => showToast('success', t('claim.askAgainDone')));
+            }}
+          />
           <TextButton label={t('ops.me.blocked')} onPress={() => router.push('/settings/blocked')} />
         </Card>
 

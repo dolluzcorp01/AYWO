@@ -7,7 +7,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, ErrorText, Loading, LoadFailed, Muted, NeonPanel, PrimaryButton, SecondaryButton } from '@/components/ui';
+import { Card, ConfirmDialog, ErrorText, Loading, LoadFailed, Muted, NeonPanel, PrimaryButton, SecondaryButton } from '@/components/ui';
 import { claimDetails, firstName, rememberNotMe } from '@/lib/account';
 import { api } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
@@ -61,6 +61,7 @@ export default function IsThisYou() {
     }
   }
 
+  const [asking, setAsking] = useState(false);
   async function notMe() {
     if (!candidate) return;
     setBusy(true);
@@ -110,7 +111,18 @@ export default function IsThisYou() {
       </ScrollView>
       <View style={styles.buttons}>
         <PrimaryButton label={t('claim.yes')} onPress={yes} disabled={busy} />
-        <SecondaryButton label={t('claim.notMe')} onPress={notMe} disabled={busy} />
+        <SecondaryButton label={t('claim.notMe')} onPress={() => setAsking(true)} disabled={busy} />
+        <ConfirmDialog
+          visible={asking}
+          title={t('claim.notMeTitle', { name: shownName(t, candidate.display_name) })}
+          message={t('claim.notMeText')}
+          confirmLabel={t('claim.notMeYes')}
+          onConfirm={() => {
+            setAsking(false);
+            void notMe();
+          }}
+          onCancel={() => setAsking(false)}
+        />
       </View>
     </Screen>
   );

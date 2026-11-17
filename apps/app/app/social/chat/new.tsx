@@ -7,7 +7,7 @@ import { Field, Pills, PrimaryButton, SectionTitle } from '@/components/ui';
 import { api } from '@/lib/api';
 import { AudiencePicker, usePeople } from '@/social/AudiencePicker';
 import { InviteFamily } from '@/social/InviteFamily';
-import { ActionError, Gate, Note, Page, Row, useName } from '@/social/parts';
+import { ActionError, Gate, Note, Page, Row, useListSearch, useName } from '@/social/parts';
 import type { Audience } from '@/social/types';
 
 export default function NewChat() {
@@ -15,6 +15,7 @@ export default function NewChat() {
   const router = useRouter();
   const client = useQueryClient();
   const showName = useName();
+  const search = useListSearch<{ profile_id: string; name: string }>((p) => showName(p.name));
   const [mode, setMode] = useState<'direct' | 'group'>('direct');
   const [name, setName] = useState('');
   const [audience, setAudience] = useState<Audience | null>(null);
@@ -54,7 +55,9 @@ export default function NewChat() {
                 <Note>{t('social.chat.inviteHelp')}</Note>
               ) : (
                 <>
-                  {list.map((p) => (
+                  {search.box(list)}
+                  {search.nothing(list) ? <Note>{t('search.nothing')}</Note> : null}
+                  {search.filter(list).map((p) => (
                     <Row key={p.profile_id} title={showName(p.name)} onPress={() => direct.mutate(p.profile_id)} />
                   ))}
                 </>

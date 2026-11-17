@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { Card, ConfirmDialog, Field, Label, SecondaryButton, SectionTitle, SmallButton, TextButton } from '@/components/ui';
 import { api, uploadFile } from '@/lib/api';
@@ -15,6 +15,7 @@ import { ReportDialog } from '@/ops/Report';
 import type { ReportTarget } from '@/ops/Report';
 import { pickPhotos } from '@/social/media';
 import { moveItem, PhotoStrip } from '@/social/PhotoStrip';
+import { PeoplePicker, PersonSearch } from '@/social/AudiencePicker';
 import { ActionError, Gate, Note, Page, useGoBack, useName, useWhen } from '@/social/parts';
 import type { Post } from '@/social/types';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
@@ -50,6 +51,10 @@ export default function MemoryDetail() {
   const [draftDate, setDraftDate] = useState('');
   const [editingComment, setEditingComment] = useState<{ id: string; body: string } | null>(null);
   const [removingPhoto, setRemovingPhoto] = useState<string | null>(null);
+  // The photo opened to fill the screen, by its place in the row.
+  const [viewing, setViewing] = useState<number | null>(null);
+  // One "are you sure" for the small removals on this screen: what is asked, and what Yes does.
+  const [asking, setAsking] = useState<{ title: string; yes: string; run: () => void } | null>(null);
   const [reporting, setReporting] = useState<{ type: ReportTarget; id: string; ownerId: string; ownerName: string } | null>(null);
 
   const key = ['post', id];
@@ -101,6 +106,23 @@ export default function MemoryDetail() {
   const reorder = useMutation({
     mutationFn: (order: string[]) => api.rpc('post_reorder_media', { p_post: id, p_order: order }),
     onSuccess: refresh,
+  });
+  const addTag = useMutation({
+    mutationFn: (input: { person?: string; profiles?: string[] }) =>
+      api.rpc('post_add_tags', { p_post: id, p_tag_people: input.person ? [input.person] : null, p_tag_profiles: input.profiles ?? null }),
+    onSuccess: () => {
+      setNewFriends([]);
+      refresh();
+    },
+  });
+  const [newFriends, setNewFriends] = useState<string[]>([]);
+  const [newHelpers, setNewHelpers] = useState<string[]>([]);
+  const addHelpers = useMutation({
+    mutationFn: () => api.rpc('post_add_collaborators', { p_post: id, p_collaborators: newHelpers }),
+    onSuccess: () => {
+      setNewHelpers([]);
+      refresh();
+    },
   });
   const untag = useMutation({
     mutationFn: (tag: { person_id: string | null; profile_id: string | null }) =>
@@ -180,7 +202,7 @@ export default function MemoryDetail() {
                             key={`${tag.person_id ?? tag.profile_id}`}
                             label={tag.name}
                             removeLabel={t('social.memories.untag', { name: tag.name })}
-                            onRemove={tag.can_remove ? () => untag.mutate(tag) : undefined}
+                            onRemove={tag.can_remove ? () => setAsking({ title: t('social.memories.untag', { name: tag.name }) + '?', yes: t('social.remove'), run: () => untag.mutate(tag) }) : undefined}
                           />
                         ))}
                       </View>
@@ -195,13 +217,30 @@ export default function MemoryDetail() {
                             key={c.profile_id}
                             label={showName(c.name)}
                             removeLabel={t('social.memories.removeHelper', { name: showName(c.name) })}
-                            onRemove={c.can_remove ? () => removeHelper.mutate(c.profile_id) : undefined}
+                            onRemove={c.can_remove ? () => setAsking({ title: t('social.groups.removeTitle', { name: showName(c.name) }), yes: t('social.remove'), run: () => removeHelper.mutate(c.profile_id) }) : undefined}
                           />
                         ))}
                       </View>
                     </>
                   ) : null}
-                  <ActionError error={update.error ?? untag.error ?? removeHelper.error} />
+                  {data.tree_id ? (
+                    <PersonSearch treeId={data.tree_id} label={t('social.memories.tagSomeone')} onPick={(person) => addTag.mutate({ person: person.id })} />
+                  ) : null}
+                  {data.group_id ? (
+                    <>
+                      <Label>{t('social.memories.tagSomeone')}</Label>
+                      <PeoplePicker groupId={data.group_id} chosen={newFriends} onChange={setNewFriends} exclude={data.tags.map((tag) => tag.profile_id ?? '')} />
+                      {newFriends.length > 0 ? <SmallButton kind="plain" label={t('social.memories.addTags')} disabled={addTag.isPending} onPress={() => addTag.mutate({ profiles: newFriends })} /> : null}
+                    </>
+                  ) : null}
+                  {data.is_mine && (data.tree_id || data.group_id) ? (
+                    <>
+                      <Label>{t('social.memories.addHelpers')}</Label>
+                      <PeoplePicker treeId={data.tree_id} groupId={data.group_id} chosen={newHelpers} onChange={setNewHelpers} exclude={data.collaborators.map((c) => c.profile_id)} />
+                      {newHelpers.length > 0 ? <SmallButton kind="plain" label={t('social.memories.addHelpers')} disabled={addHelpers.isPending} onPress={() => addHelpers.mutate()} /> : null}
+                    </>
+                  ) : null}
+                  <ActionError error={update.error ?? untag.error ?? removeHelper.error ?? addTag.error ?? addHelpers.error} />
                   <View style={styles.row}>
                     <SmallButton
                       label={t('common.save')}
@@ -211,13 +250,18 @@ export default function MemoryDetail() {
                     <SmallButton kind="plain" label={t('common.cancel')} onPress={() => setEditing(false)} />
                   </View>
                   {!draftDateOk ? <Note>{t('social.missing.date')}</Note> : null}
+                  {!draftBody.trim() && data.media.length === 0 ? <Note>{t('social.missing.words')}</Note> : null}
                 </>
               ) : (
                 <>
                   {data.media.length > 0 ? (
                     <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.strip}>
                       {data.media.map((m, i) =>
-                        m.url ? <Image key={m.id} source={{ uri: m.url }} style={styles.photo} accessibilityLabel={t('social.photos.photoN', { n: i + 1 })} /> : null,
+                        m.url ? (
+                          <Pressable key={m.id} accessibilityRole="imagebutton" accessibilityLabel={t('social.photos.openN', { n: i + 1 })} onPress={() => setViewing(i)}>
+                            <Image source={{ uri: m.url }} style={styles.photo} />
+                          </Pressable>
+                        ) : null,
                       )}
                     </ScrollView>
                   ) : null}
@@ -310,7 +354,7 @@ export default function MemoryDetail() {
                   {c.mine && !data.closed && editingComment?.id !== c.id ? (
                     <TextButton label={t('social.edit')} onPress={() => setEditingComment({ id: c.id, body: c.body })} />
                   ) : null}
-                  {c.mine || data.is_mine ? <TextButton label={t('social.delete')} danger onPress={() => removeComment.mutate(c.id)} /> : null}
+                  {c.mine || data.is_mine ? <TextButton label={t('social.delete')} danger onPress={() => setAsking({ title: t('social.memories.deleteCommentTitle'), yes: t('social.delete'), run: () => removeComment.mutate(c.id) })} /> : null}
                   {!c.mine ? (
                     <TextButton
                       label={t('ops.report.short')}
@@ -359,6 +403,38 @@ export default function MemoryDetail() {
           </>
         )}
       </Gate>
+      <Modal visible={viewing !== null} transparent animationType="fade" onRequestClose={() => setViewing(null)}>
+        <View style={styles.viewer}>
+          {(() => {
+            const shown = (post.data?.media ?? []).filter((m) => m.url);
+            const at = Math.min(viewing ?? 0, Math.max(shown.length - 1, 0));
+            const photo = shown[at];
+            if (!photo?.url) return null;
+            return (
+              <>
+                <Image source={{ uri: photo.url }} style={styles.viewerPhoto} resizeMode="contain" accessibilityLabel={t('social.photos.photoN', { n: at + 1 })} />
+                <View style={styles.viewerBar}>
+                  <SmallButton kind="plain" label="‹" accessibilityLabel={t('social.photos.previous')} disabled={at === 0} onPress={() => setViewing(at - 1)} />
+                  <Text style={styles.viewerCount}>{`${at + 1} / ${shown.length}`}</Text>
+                  <SmallButton kind="plain" label="›" accessibilityLabel={t('social.photos.next')} disabled={at >= shown.length - 1} onPress={() => setViewing(at + 1)} />
+                  <SmallButton label={t('common.close')} onPress={() => setViewing(null)} />
+                </View>
+              </>
+            );
+          })()}
+        </View>
+      </Modal>
+      <ConfirmDialog
+        visible={!!asking}
+        title={asking?.title ?? ''}
+        confirmLabel={asking?.yes ?? ''}
+        danger
+        onConfirm={() => {
+          asking?.run();
+          setAsking(null);
+        }}
+        onCancel={() => setAsking(null)}
+      />
       <ConfirmDialog
         visible={!!removingPhoto}
         title={t('social.photos.removeTitle')}
@@ -412,6 +488,10 @@ const styles = StyleSheet.create({
   body: { color: colors.text, fontFamily: fonts.medium, fontSize: 15, lineHeight: 22 },
   strip: { gap: 8 },
   photo: { width: 260, height: 260, borderRadius: 14 },
+  viewer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'center' },
+  viewerPhoto: { flex: 1, width: '100%' },
+  viewerBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 16 },
+  viewerCount: { color: colors.white, fontFamily: fonts.bold, fontSize: 15 },
   emojis: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   emoji: {
     minHeight: minTapSize,

@@ -78,7 +78,7 @@ export function useTrees() {
 export function useUpdateMe() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (changes: { display_name?: string; email?: string; language_code?: string; large_text?: boolean; simple_mode?: boolean; photo_path?: string }) =>
+    mutationFn: (changes: { display_name?: string; email?: string | null; language_code?: string; large_text?: boolean; simple_mode?: boolean; photo_path?: string | null }) =>
       api.patch<Me>('/me', changes),
     onSuccess: (_answer, changes) => {
       client.invalidateQueries({ queryKey: ['me'] });
@@ -109,6 +109,11 @@ export async function notMeIds(): Promise<string[]> {
 export async function rememberNotMe(personId: string): Promise<void> {
   const list = await notMeIds();
   if (!list.includes(personId)) await deviceStore.set(NOT_ME, JSON.stringify([...list, personId]));
+}
+
+/** Undo for a "Not me" tapped by mistake: every "Is this you?" is asked again at the next sign-in. */
+export async function forgetNotMe(): Promise<void> {
+  await deviceStore.remove(NOT_ME);
 }
 
 export async function claimCandidates(): Promise<ClaimCandidate[]> {

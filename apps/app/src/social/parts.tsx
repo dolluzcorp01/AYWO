@@ -1,15 +1,32 @@
 // Building blocks shared by the social screens, on top of the frozen components.
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ChevronIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, ErrorText, LoadFailed, Loading, Muted, SmallButton, TopBar } from '@/components/ui';
+import { Card, ErrorText, Field, LoadFailed, Loading, Muted, SmallButton, TopBar } from '@/components/ui';
 import { errorCode, useErrorText } from '@/lib/errors';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
+
+/**
+ * A search box for a list that has grown long (more than 8 lines): `box(list)` draws it, `filter(list)` keeps the
+ * lines whose words contain what was typed. Short lists get no box.
+ */
+export function useListSearch<T>(words: (item: T) => string) {
+  const { t } = useTranslation();
+  const [typed, setTyped] = useState('');
+  const needle = typed.trim().toLowerCase();
+  return {
+    box: (list: T[]) =>
+      list.length > 8 ? <Field value={typed} onChangeText={setTyped} placeholder={t('search.placeholder')} accessibilityLabel={t('search.placeholder')} autoCorrect={false} /> : null,
+    filter: (list: T[]) => (needle ? list.filter((item) => words(item).toLowerCase().includes(needle)) : list),
+    nothing: (list: T[]) => !!needle && list.length > 0 && !list.some((item) => words(item).toLowerCase().includes(needle)),
+  };
+}
 
 /** Goes back, or Home when the screen was opened straight from a notification. */
 export function useGoBack() {
@@ -115,7 +132,7 @@ export function useWhen() {
     const value = day ? new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3])) : new Date(iso);
     if (Number.isNaN(value.getTime())) return '';
     return dateOnly || day
-      ? value.toLocaleDateString(i18n.language)
+      ? value.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })
       : value.toLocaleString(i18n.language, { dateStyle: 'medium', timeStyle: 'short', hour12: true });
   };
 }
@@ -129,6 +146,31 @@ export function parseDateTime(date: string, time: string): Date | null {
   if (Number.isNaN(value.getTime()) || value.getMonth() !== Number(d[2]) - 1 || Number(c[1]) > 23 || Number(c[2]) > 59) return null;
   return value;
 }
+
+/**
+ * A Pop Party date choice picked from the calendar is stored as '2026-12-25' or '2026-12-25 18:30'. That way every
+ * reader sees it in their own language, and the host's "settle" boxes can be filled from the leading choice.
+ * Null for anything else: older parties have choices typed as words ("Saturday evening").
+ */
+export function readDateOption(label: string): { date: string; time: string } | null {
+  const m = label.trim().match(/^(\d{4}-\d{2}-\d{2})(?: (\d{2}:\d{2}))?$/);
+  if (!m) return null;
+  return { date: m[1], time: m[2] ?? '' };
+}
+
+/** How a Pop Party date choice reads on screen. Words typed by hand are shown as they are. */
+export function useDateOption() {
+  const when = useWhen();
+  return (label: string) => {
+    const read = readDateOption(label);
+    if (!read) return label;
+    const shown = read.time ? when(parseDateTime(read.date, read.time)?.toISOString()) : when(read.date);
+    return shown || label;
+  };
+}
+
+// Today as "2026-12-25": the earliest day an event can be planned for.
+export { todayIso } from '@/lib/time';
 
 /** Every line that has words on it. */
 export function lines(text: string): string[] {

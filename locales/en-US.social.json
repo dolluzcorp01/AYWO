@@ -38,15 +38,16 @@
     "audience": {
       "who": "Who should this go to?",
       "tree": "Whole tree",
-      "branch": "A branch",
+      "branch": "One side of the family",
       "people": "Chosen people",
       "group": "A group",
-      "branchTop": "Whose branch?",
-      "branchOf": "The branch of {{name}}",
+      "branchTop": "Whose side of the family?",
+      "branchOf": "{{name}} and their family",
       "searchPeople": "Find a name",
       "typeName": "Type a name",
       "noMatch": "No one by that name.",
-      "nobody": "No one yet. People appear once they join your tree or a group."
+      "nobody": "No one yet. People appear once they join your tree or a group.",
+      "allAdded": "Everyone you could add is already in."
     },
     "chat": {
       "title": "Chat",
@@ -92,7 +93,13 @@
       "messageChoices": "Message",
       "reply": "Reply",
       "chatName": "Chat name",
-      "tryAgain": "Try again"
+      "tryAgain": "Try again",
+      "sendPhotoTitle": "Send this photo?",
+      "sendPhotoYes": "Send",
+      "hide": "Remove from my list",
+      "hideTitle": "Remove this chat from your list?",
+      "hideMessage": "Only your list changes. The messages are kept, and the chat comes back when a new message arrives.",
+      "hideYes": "Remove"
     },
     "memories": {
       "title": "Memories",
@@ -112,7 +119,7 @@
       "whoIsIn": "Who is in it?",
       "tagSomeone": "Tag someone",
       "helpers": "Helpers",
-      "helpersNote": "Collaborators can add photos and tags.",
+      "helpersNote": "Helpers can add photos and tag people.",
       "share": "Share memory",
       "with": "With {{names}}",
       "addedWith": "Collaborators: {{names}}",
@@ -121,11 +128,11 @@
       "noComments": "No comments yet.",
       "like": "Like",
       "unlike": "Remove like",
-      "closedNote": "This thread is closed.",
+      "closedNote": "Comments are closed. Nothing more can be added.",
       "addComment": "Add a comment",
       "postComment": "Post",
-      "reopen": "Open the thread again",
-      "close": "Close the thread",
+      "reopen": "Allow comments again",
+      "close": "Stop new comments",
       "delete": "Delete this memory",
       "deleteTitle": "Delete this memory? This cannot be undone.",
       "edit": "Edit",
@@ -133,11 +140,15 @@
       "untag": "Untag {{name}}",
       "untagMe": "Remove my tag",
       "removeHelper": "Remove {{name}} as a helper",
-      "editComment": "Edit your comment"
+      "editComment": "Edit your comment",
+      "deleteCommentTitle": "Delete this comment?",
+      "addTags": "Tag the people ticked",
+      "addHelpers": "Add helpers",
+      "morePhotos": "+{{count}} more"
     },
     "groups": {
       "title": "Friends groups",
-      "subtitle": "College, office and other gangs",
+      "subtitle": "College, office and other groups",
       "new": "New group",
       "empty": "No groups yet. Start one and share the link.",
       "memberCount_one": "{{count}} person",
@@ -171,7 +182,7 @@
     },
     "invites": {
       "title": "Invites",
-      "subtitle": "Functions, RSVP and Pop Parties",
+      "subtitle": "Family events, who is coming, and quick get-togethers",
       "new": "New invite",
       "empty": "No invites yet.",
       "youHost": "You are hosting",
@@ -203,7 +214,7 @@
       },
       "premiumLater": "Premium designs can be added after the invite is made.",
       "openCanva": "Design it on Canva",
-      "canvaLink": "Canva design link (optional)",
+      "canvaLink": "Link to a card you designed on the Canva website (optional)",
       "canvaPlaceholder": "https://www.canva.com/...",
       "canvaHelp": "Paste a link starting https://www.canva.com/",
       "send": "Send invite",
@@ -241,13 +252,26 @@
       "uninviteMessage": "They will no longer see it. You can invite them again.",
       "saveGuests": "Save the number",
       "guestsAnswerFirst": "Choose Yes, Maybe or No above: the number is saved with your answer.",
-      "guestsSaved": "Saved. The host can see the new number."
+      "guestsSaved": "Saved. The host can see the new number.",
+      "inviteMore": "Invite more people",
+      "sendToThem": "Send the invite to them",
+      "sections": {
+        "upcoming": "Coming up",
+        "past": "Over",
+        "cancelled": "Cancelled"
+      },
+      "removeCanva": "Remove link",
+      "removeCanvaTitle": "Remove the Canva link?",
+      "removeCanvaMessage": "People invited will no longer see the 'See the design' button. You can add a link again later.",
+      "canvaEmpty": "Paste a link above, then save it.",
+      "canvaSame": "This link is already saved.",
+      "guestsSame": "Change the number above, then save it."
     },
     "pop": {
       "new": "New Pop Party",
       "subtitle": "A quick plan with polls",
       "name": "What is the plan?",
-      "oneEachLine": "Write one choice on each line. Leave out anything already decided.",
+      "oneEachLine": "For places and food, write one choice on each line. Leave out anything already decided.",
       "topics": {
         "date": "Date",
         "venue": "Venue",
@@ -266,7 +290,11 @@
       "leading": "leading",
       "decide": "Settle the plan",
       "menu": "Menu",
-      "settle": "Settle and tell everyone"
+      "settle": "Settle and tell everyone",
+      "dateChoices": "Dates to vote on",
+      "timeOptional": "Time (optional)",
+      "addDate": "Add this date",
+      "filledFromVotes": "Filled in from the choices with the most votes. Change anything you like."
     },
     "alerts": {
       "title": "Alerts",
@@ -295,7 +323,10 @@
       "markSorted": "Mark as sorted",
       "reopen": "Not sorted yet",
       "deleteTitle": "Delete this alert?",
-      "deleteMessage": "It goes from everyone's list. Use 'Mark as sorted' instead if they should still see it."
+      "deleteMessage": "It goes from everyone's list. Use 'Mark as sorted' instead if they should still see it.",
+      "replyInChat": "Reply in chat",
+      "editTitle": "Correct this alert",
+      "editNote": "Everyone who got this alert will see the new words. They are not told again."
     },
     "sos": {
       "mark": "SOS",
@@ -345,7 +376,7 @@
       "fromFamily": "From your family and friends",
       "tapToAdd": "Tap to add",
       "byNumber": "Or type a phone number",
-      "byNumberNote": "For someone not on AYWO. They get a text with a link.",
+      "byNumberNote": "For someone not on AYWO, or to ring a family member directly. They get a text with a link. You can pick the number from your phone's contacts.",
       "contactName": "Name",
       "contactPhone": "Phone number",
       "addNumber": "Add this number",
@@ -357,7 +388,7 @@
       "noPlaceYet": "No location has reached us yet. This screen keeps checking.",
       "watchEnds": "Live location ends at {{when}}",
       "deletedAfter": "Location data is deleted 7 days after an SOS ends.",
-      "noDirectCall": "Gets the alert. Add by number to call them directly.",
+      "noDirectCall": "Gets the alert inside AYWO. AYWO keeps family members' numbers private, so to ring them straight away, also add their number below.",
       "alerted": "Alarm ringing on {{apps}} family phones · text sent to {{texts}}",
       "seenIt": "I've seen it. Stop the alarm",
       "silentTitle": "Let family SOS ring on silent",
@@ -373,7 +404,9 @@
       "startFailed": "Your contacts were not alerted. Try again, or call the emergency number below.",
       "confirmStartTitle": "Start SOS now?",
       "confirmStartBody": "Your SOS contacts hear an alarm or get a text, and can see your location.",
-      "confirmStart": "Start SOS"
+      "confirmStart": "Start SOS",
+      "needNumber": "Type the phone number first.",
+      "callThem": "Call {{name}} now"
     },
     "missing": {
       "who": "Choose who can see this.",
@@ -387,7 +420,9 @@
       "options": "Add at least one date, place or menu to vote on.",
       "blood": "Choose the blood group.",
       "message": "Write the message.",
-      "canva": "Fix the Canva link, or leave it empty."
+      "canva": "Fix the Canva link, or leave it empty.",
+      "future": "That date and time has already passed. Pick one that is still to come.",
+      "tickSomeone": "Tick at least one person."
     },
     "photos": {
       "photoN": "Photo {{n}}",
@@ -397,7 +432,10 @@
       "countOf": "{{n}} of {{most}} photos. Use ✕ to remove one, ‹ › to change the order.",
       "removeTitle": "Remove this photo?",
       "removeMessage": "It will be taken off this memory for everyone.",
-      "removeYes": "Remove photo"
+      "removeYes": "Remove photo",
+      "openN": "Open photo {{n}} full screen",
+      "previous": "Previous photo",
+      "next": "Next photo"
     },
     "edited": "edited",
     "edit": "Edit"

@@ -10,12 +10,14 @@ import { Avatar } from '@/components/Avatar';
 import { CameraIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { BackButton, Card, ErrorText, Field, Heading, Muted, PrimaryButton } from '@/components/ui';
+import { showToast } from '@/components/Toast';
+import { BackButton, Card, ErrorText, Field, Heading, Muted, PrimaryButton, TextButton } from '@/components/ui';
+import { PhoneField } from '@/components/PhoneField';
 import { safeNext, useMe, useUpdateMe } from '@/lib/account';
-import { uploadFile } from '@/lib/api';
+import { api, uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
-import { showPhone } from '@/lib/phone';
+import { showPhone, toE164 } from '@/lib/phone';
 import { pickPhoto } from '@/lib/pick';
 import { track } from '@/lib/track';
 import { colors, fonts, gradients } from '@/theme/tokens';
@@ -32,6 +34,11 @@ export default function Profile() {
   const update = useUpdateMe();
   const [name, setName] = useState(params.name ?? '');
   const [photo, setPhoto] = useState<PickedFile | null>(null);
+  // "Remove photo" was pressed: the saved photo goes when Save is pressed.
+  const [noPhoto, setNoPhoto] = useState(false);
+  // Null until typed: then the box shows the address already saved. Empty takes the address away.
+  const [email, setEmail] = useState<string | null>(null);
+  const emailBad = !!email?.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<unknown>(null);
 
@@ -45,7 +52,10 @@ export default function Profile() {
     setFailure(null);
     try {
       const picked = await pickPhoto();
-      if (picked) setPhoto(picked);
+      if (picked) {
+        setPhoto(picked);
+        setNoPhoto(false);
+      }
     } catch (error) {
       setFailure(error);
     }
@@ -56,7 +66,10 @@ export default function Profile() {
     setFailure(null);
     try {
       const photoPath = photo ? await uploadFile('photos', photo) : null;
-      await update.mutateAsync({ display_name: name.trim(), ...(photoPath ? { photo_path: photoPath } : {}) });
+      await update.mutateAsync({ display_name: name.trim(), ...(photoPath ? { photo_path: photoPath } : noPhoto ? { photo_path: null } : {}),
+        ...(email !== null ? { email: email.trim() || null } : {}),
+      });
+      if (editing) showToast('success', t('common.saved'));
       if (!editing) track('name_saved');
       if (editing) goBack(router);
       else router.replace((safeNext(params.next) ?? '/home') as Href);
@@ -86,7 +99,7 @@ export default function Profile() {
             {photo ? (
               <Image source={{ uri: photo.uri }} style={styles.photo} accessibilityIgnoresInvertColors />
             ) : (
-              <Avatar personId={me.data?.id ?? 'me'} size={AVATAR} photoUrl={me.data?.photo_url} />
+              <Avatar personId={me.data?.id ?? 'me'} size={AVATAR} photoUrl={noPhoto ? null : me.data?.photo_url} />
             )}
           </View>
           <View style={styles.camera}>
@@ -95,14 +108,42 @@ export default function Profile() {
         </Pressable>
         <View style={styles.centred}>
           <Muted>{t('profile.photoHelp')}</Muted>
+          {photo || (me.data?.photo_url && !noPhoto) ? (
+            <TextButton
+              label={t('profile.removePhoto')}
+              danger
+              onPress={() => {
+                // A photo only just picked is simply dropped; a saved one goes on Save.
+                if (photo) setPhoto(null);
+                else setNoPhoto(true);
+              }}
+            />
+          ) : null}
         </View>
 
         <Field label={t('profile.yourName')} value={name} onChangeText={setName} autoComplete="name" style={styles.nameInput} />
+
+        {editing ? (
+          <View style={styles.numberBlock}>
+            <Field
+              label={t('profile.email')}
+              value={email ?? me.data?.email ?? ''}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              invalid={emailBad}
+            />
+            <Muted>{emailBad ? t('profile.emailBad') : t('profile.emailHelp')}</Muted>
+          </View>
+        ) : null}
 
         {me.data?.login_phone ? (
           <View style={styles.numberBlock}>
             <Field label={t('profile.mobile')} value={showPhone(me.data.login_phone)} editable={false} style={styles.numberInput} />
             <Muted>{t('profile.mobileHelp')}</Muted>
+            {editing ? <ChangeNumber onChanged={() => void me.refetch()} /> : null}
           </View>
         ) : null}
 
@@ -113,8 +154,76 @@ export default function Profile() {
         )}
         {failure ? <ErrorText>{errorText(failure)}</ErrorText> : null}
       </ScrollView>
-      <PrimaryButton label={editing ? t('common.save') : t('common.continue')} onPress={save} disabled={!name.trim() || busy} />
+      <PrimaryButton label={editing ? t('common.save') : t('common.continue')} onPress={save} disabled={!name.trim() || busy || emailBad} />
     </Screen>
+  );
+}
+
+/** A new SIM: a code goes to the new number, and the old number is told by text. */
+function ChangeNumber({ onChanged }: { onChanged: () => void }) {
+  const { t } = useTranslation();
+  const errorText = useErrorText();
+  const [open, setOpen] = useState(false);
+  const [number, setNumber] = useState('');
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<unknown>(null);
+  const phone = toE164(number);
+
+  async function run(step: () => Promise<void>) {
+    setBusy(true);
+    setFailure(null);
+    try {
+      await step();
+    } catch (error) {
+      setFailure(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+  const send = () =>
+    run(async () => {
+      await api.post('/me/phone/send', { phone });
+      setSentTo(phone);
+      setCode('');
+    });
+  const confirm = () =>
+    run(async () => {
+      await api.post('/me/phone/verify', { phone: sentTo, code });
+      showToast('success', t('profile.numberChanged'));
+      setOpen(false);
+      setSentTo(null);
+      setNumber('');
+      onChanged();
+    });
+
+  if (!open) return <TextButton label={t('profile.changeNumber')} onPress={() => setOpen(true)} />;
+  return (
+    <Card>
+      <Muted>{t('profile.changeNumberHelp')}</Muted>
+      {sentTo ? (
+        <>
+          <Field
+            label={t('profile.codeSentTo', { phone: showPhone(sentTo) })}
+            value={code}
+            onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
+            keyboardType="number-pad"
+            autoComplete="sms-otp"
+          />
+          {failure ? <ErrorText>{errorText(failure)}</ErrorText> : null}
+          <PrimaryButton label={t('profile.confirmNumber')} onPress={() => void confirm()} disabled={busy} missing={code.length === 6 ? null : t('otp.needCode')} />
+          <TextButton label={t('otp.changeNumber')} onPress={() => setSentTo(null)} />
+        </>
+      ) : (
+        <>
+          <PhoneField label={t('profile.newNumber')} value={number} onChangeText={setNumber} autoComplete="tel" />
+          {failure ? <ErrorText>{errorText(failure)}</ErrorText> : null}
+          <PrimaryButton label={t('phone.send')} onPress={() => void send()} disabled={busy} missing={phone ? null : t('phone.needNumber')} />
+        </>
+      )}
+      <TextButton label={t('common.cancel')} onPress={() => setOpen(false)} />
+    </Card>
   );
 }
 

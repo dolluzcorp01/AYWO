@@ -201,8 +201,15 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
 
   // ----- Users -----
   app.get('/admin/users', (req) => {
-    const q = z.object({ q: z.string().trim().max(200).optional(), ...paging }).parse(req.query);
-    return staffCall(req, ['users', 'support'], 'admin_users_list', [q.q || null, q.limit, q.offset]);
+    const q = z
+      .object({
+        q: z.string().trim().max(200).optional(),
+        filter: z.enum(['all', 'blocked', 'plus', 'staff']).default('all'),
+        sort: z.enum(['newest', 'active', 'name']).default('newest'),
+        ...paging,
+      })
+      .parse(req.query);
+    return staffCall(req, ['users', 'support'], 'admin_users_list', [q.q || null, q.limit, q.offset, q.filter, q.sort]);
   });
   // POST because it writes to the audit log, and the reason stays out of the address.
   app.post('/admin/users/:id/view', (req) => {
@@ -234,11 +241,26 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const body = z.object({ days: z.number().int().min(1).max(365), reason }).parse(req.body);
     return staffCall(req, ['payments', 'support'], 'admin_user_give_plus', [id, body.days, body.reason]);
   });
+  // The undo for give-plus: days typed by mistake come off again, never below today.
+  app.post('/admin/users/:id/take-plus', (req) => {
+    const { id } = idParam.parse(req.params);
+    const body = z.object({ days: z.number().int().min(1).max(365), reason }).parse(req.body);
+    return staffCall(req, ['payments', 'support'], 'admin_user_take_plus', [id, body.days, body.reason]);
+  });
+  // Names only, so a sub admin knows whom to ask for more access.
+  app.get('/admin/admins', (req) => staffCall(req, null, 'admin_admin_names'));
 
   // ----- Abuse reports -----
   app.get('/admin/reports', (req) => {
-    const q = z.object({ status: z.enum(['open', 'removed', 'dismissed']).default('open'), ...paging }).parse(req.query);
-    return staffCall(req, ['moderation'], 'admin_reports_list', [q.status, q.limit, q.offset]);
+    // only: one report whatever its state, for the link from the work queue.
+    const q = z.object({ status: z.enum(['open', 'removed', 'dismissed']).default('open'), only: z.string().uuid().optional(), ...paging }).parse(req.query);
+    return staffCall(req, ['moderation'], 'admin_reports_list', [q.status, q.limit, q.offset, q.only ?? null]);
+  });
+  // "Keep it" pressed by mistake: open again and back in the work queue. A removal stays final.
+  app.post('/admin/reports/:id/reopen', (req) => {
+    const { id } = idParam.parse(req.params);
+    const body = z.object({ reason }).parse(req.body);
+    return staffCall(req, ['moderation'], 'admin_report_reopen', [id, body.reason]);
   });
   app.post('/admin/reports/:id/decide', (req) => {
     const { id } = idParam.parse(req.params);
@@ -248,9 +270,13 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
 
   // ----- Help tickets -----
   app.get('/admin/tickets', (req) => {
-    const q = z.object({ status: z.enum(['open', 'waiting', 'closed']).default('open'), ...paging }).parse(req.query);
-    return staffCall(req, ['support'], 'admin_tickets_list', [q.status, q.limit, q.offset]);
+    const q = z
+      .object({ status: z.enum(['open', 'waiting', 'closed', 'all']).default('open'), q: z.string().trim().max(100).optional(), ...paging })
+      .parse(req.query);
+    return staffCall(req, ['support'], 'admin_tickets_list', [q.status, q.limit, q.offset, q.q || null]);
   });
+  app.post('/admin/tickets/:id/reopen', (req) => staffCall(req, ['support'], 'admin_ticket_reopen', [idParam.parse(req.params).id]));
+  app.post('/admin/tickets/:id/close', (req) => staffCall(req, ['support'], 'admin_ticket_close', [idParam.parse(req.params).id]));
   app.get('/admin/tickets/:id', (req) => staffCall(req, ['support'], 'admin_ticket_detail', [idParam.parse(req.params).id]));
   app.post('/admin/tickets/:id/reply', (req) => {
     const { id } = idParam.parse(req.params);
@@ -292,6 +318,25 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       body.tracking_url || null,
     ]);
   });
+  // A shipped order whose tracking number or courier was typed wrongly.
+  app.post('/admin/orders/:id/tracking', (req) => {
+    const { id } = idParam.parse(req.params);
+    const body = z
+      .object({
+        carrier: z.string().trim().max(60).optional(),
+        tracking_number: z.string().trim().min(1).max(80),
+        tracking_url: z.string().trim().url().max(300).optional(),
+        reason,
+      })
+      .parse(req.body);
+    return staffCall(req, ['orders'], 'admin_order_correct_tracking', [id, body.carrier || null, body.tracking_number, body.tracking_url || null, body.reason]);
+  });
+  // One step back, for a step clicked by mistake.
+  app.post('/admin/orders/:id/step-back', (req) => {
+    const { id } = idParam.parse(req.params);
+    const body = z.object({ reason }).parse(req.body);
+    return staffCall(req, ['orders'], 'admin_order_step_back', [id, body.reason]);
+  });
 
   // ----- Offers: coupons, banners, promotional messages -----
   app.get('/admin/coupons', (req) => {
@@ -306,6 +351,8 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const { id } = idParam.parse(req.params);
     return staffCall(req, ['marketing'], 'admin_coupon_save', [id, JSON.stringify(coupon.parse(req.body))]);
   });
+  // Only a coupon nobody paid with; the database refuses the rest.
+  app.delete('/admin/coupons/:id', (req) => staffCall(req, ['marketing'], 'admin_coupon_delete', [idParam.parse(req.params).id]));
 
   app.get('/admin/announcements', (req) => {
     const q = z.object({ view: z.enum(['active', 'ended', 'all']).default('active') }).parse(req.query);
@@ -319,6 +366,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const { id } = idParam.parse(req.params);
     return staffCall(req, ['marketing'], 'admin_announcement_save', [id, JSON.stringify(announcement.parse(req.body))]);
   });
+  app.delete('/admin/announcements/:id', (req) => staffCall(req, ['marketing'], 'admin_announcement_delete', [idParam.parse(req.params).id]));
 
   const audience = {
     audience: z.enum(['everyone', 'plus', 'free']),
@@ -358,6 +406,12 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       .parse(req.body);
     return staffCall(req, ['staff'], 'admin_broadcast', [body.title, body.body, body.reason]);
   });
+  // The notices sent before, and how many accounts the next one reaches.
+  app.get('/admin/broadcasts', (req) => {
+    const q = z.object(paging).parse(req.query);
+    return staffCall(req, ['staff'], 'admin_broadcasts_list', [q.limit, q.offset]);
+  });
+  app.get('/admin/broadcast/count', (req) => staffCall(req, ['staff'], 'admin_broadcast_count'));
 
   // ----- App settings, analytics, app health -----
   app.get('/admin/config', (req) => staffCall(req, ['settings'], 'admin_config_get'));
@@ -394,16 +448,25 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   // ----- Dictionary -----
   app.get('/admin/kin-terms', (req) => {
     const q = z
-      .object({ status: z.enum(['pending', 'verified', 'ai_seeded', 'rejected']).default('pending'), ...paging })
+      .object({ status: z.enum(['pending', 'verified', 'ai_seeded', 'rejected']).default('pending'), q: z.string().trim().max(120).optional(), ...paging })
       .parse(req.query);
-    return staffCall(req, ['dictionary'], 'admin_kin_terms_list', [q.status, q.limit, q.offset]);
+    return staffCall(req, ['dictionary'], 'admin_kin_terms_list', [q.status, q.limit, q.offset, q.q || null]);
   });
+  // term and term_native: the spelling as staff corrected it while approving. Left out, the word stays as sent.
   app.post('/admin/kin-review', (req) => {
-    const body = z.object({ id: z.string().uuid(), decision: z.enum(['approve', 'reject']) }).parse(req.body);
-    return staffCall(req, ['dictionary'], 'admin_kin_review', [body.id, body.decision]);
+    const body = z
+      .object({
+        id: z.string().uuid(),
+        decision: z.enum(['approve', 'reject']),
+        term: z.string().trim().min(1).max(120).optional(),
+        term_native: z.string().trim().max(120).optional(),
+      })
+      .parse(req.body);
+    return staffCall(req, ['dictionary'], 'admin_kin_review', [body.id, body.decision, body.term ?? null, body.term_native || null]);
   });
   app.get('/admin/term-reports', (req) => {
-    const q = z.object({ status: z.enum(['open', 'accepted', 'dismissed']).default('open'), ...paging }).parse(req.query);
+    // decided: accepted and dismissed together, the newest decision first.
+    const q = z.object({ status: z.enum(['open', 'accepted', 'dismissed', 'decided']).default('open'), ...paging }).parse(req.query);
     return staffCall(req, ['dictionary'], 'admin_term_reports_list', [q.status, q.limit, q.offset]);
   });
   app.post('/admin/term-reports/:id/decide', (req) => {
@@ -420,8 +483,21 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
 
   // ----- Takedowns -----
   app.get('/admin/takedowns', (req) => {
-    const q = z.object({ status: z.enum(['open', 'removed', 'dismissed']).default('open'), ...paging }).parse(req.query);
-    return staffCall(req, ['takedowns'], 'admin_takedowns_list', [q.status, q.limit, q.offset]);
+    // only: one request whatever its state, for the link from the work queue.
+    const q = z.object({ status: z.enum(['open', 'removed', 'dismissed']).default('open'), only: z.string().uuid().optional(), ...paging }).parse(req.query);
+    return staffCall(req, ['takedowns'], 'admin_takedowns_list', [q.status, q.limit, q.offset, q.only ?? null]);
+  });
+  // A request dismissed by mistake: open again and back in the work queue. A removal stays final.
+  app.post('/admin/takedowns/:id/reopen', (req) => {
+    const { id } = idParam.parse(req.params);
+    const body = z.object({ reason }).parse(req.body);
+    return staffCall(req, ['takedowns'], 'admin_takedown_reopen', [id, body.reason]);
+  });
+  // A request with only a name: the people that name could be, for staff to pick from.
+  app.get('/admin/takedowns/:id/people', (req) => {
+    const { id } = idParam.parse(req.params);
+    const q = z.object({ q: z.string().trim().min(2).max(120) }).parse(req.query);
+    return staffCall(req, ['takedowns'], 'admin_takedown_people', [id, q.q]);
   });
   app.post('/admin/takedowns/:id/decide', (req) => {
     const { id } = idParam.parse(req.params);
@@ -434,9 +510,9 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   // ----- Payments -----
   app.get('/admin/payments', (req) => {
     const q = z
-      .object({ status: z.enum(['trial', 'active', 'grace', 'expired', 'cancelled']).optional(), ...paging })
+      .object({ status: z.enum(['trial', 'active', 'grace', 'expired', 'cancelled']).optional(), q: z.string().trim().max(100).optional(), ...paging })
       .parse(req.query);
-    return staffCall(req, ['payments'], 'admin_payments_overview', [q.status ?? null, q.limit, q.offset]);
+    return staffCall(req, ['payments'], 'admin_payments_overview', [q.status ?? null, q.limit, q.offset, q.q || null]);
   });
 
   // ----- Staff and team roles: AYWO Admin only -----
@@ -462,9 +538,14 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   });
   app.post('/admin/staff', (req) => {
     const body = z
-      .object({ phone: z.string().max(30), role, permissions, team_role_id: z.string().uuid().nullable().optional() })
+      .object({ phone: z.string().max(30).optional(), profile_id: z.string().uuid().optional(), role, permissions, team_role_id: z.string().uuid().nullable().optional() })
+      .refine((b) => !!b.phone !== !!b.profile_id)
       .parse(req.body);
-    const phone = e164(body.phone);
+    // An account that already exists (removed staff, or picked on the Users page): no number is typed.
+    if (body.profile_id) {
+      return staffCall(req, ['staff'], 'admin_staff_add_person', [body.profile_id, body.role, body.permissions, body.team_role_id ?? null]);
+    }
+    const phone = e164(body.phone ?? '');
     // The reviewers' code is public, so their number can never become staff, now or by invite.
     if (isReviewerLogin(phone)) throw new ApiError(422, 'not_allowed');
     return staffCall(req, ['staff'], 'admin_staff_add', [phone, body.role, body.permissions, body.team_role_id ?? null]);
@@ -477,6 +558,12 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   app.delete('/admin/staff/:id', (req) => {
     const { id } = idParam.parse(req.params);
     return staffCall(req, ['staff'], 'admin_staff_remove', [id]);
+  });
+  // Change what a waiting invite gives, or renew one that ended: it waits another 14 days.
+  app.patch('/admin/staff-invites/:key', (req) => {
+    const { key } = z.object({ key: z.string().regex(/^[0-9a-f]{32}$/) }).parse(req.params);
+    const body = z.object({ role, permissions, team_role_id: z.string().uuid().nullable().optional() }).parse(req.body);
+    return staffCall(req, ['staff'], 'admin_staff_invite_update', [key, body.role, body.permissions, body.team_role_id ?? null]);
   });
   app.delete('/admin/staff-invites/:key', (req) => {
     const { key } = z.object({ key: z.string().regex(/^[0-9a-f]{32}$/) }).parse(req.params);
@@ -491,8 +578,27 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   // ----- Audit log: AYWO Admin only -----
   app.get('/admin/audit', (req) => {
     const q = z
-      .object({ action: z.string().trim().max(100).optional(), actor: z.string().uuid().optional(), ...paging })
+      .object({
+        action: z.string().trim().max(100).optional(),
+        actor: z.string().uuid().optional(),
+        // The action codes whose plain-language label matched what was typed, comma separated.
+        actions: z.string().max(2000).regex(/^[a-z0-9_.,]*$/).optional(),
+        // Whole days, as "2026-11-17", in India.
+        from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+        to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+        ...paging,
+      })
       .parse(req.query);
-    return staffCall(req, ['audit'], 'admin_audit_list', [q.action || null, q.actor ?? null, q.limit, q.offset]);
+    const codes = (q.actions ?? '').split(',').filter(Boolean).slice(0, 80);
+    return staffCall(req, ['audit'], 'admin_audit_list', [
+      q.action || null,
+      q.actor ?? null,
+      q.limit,
+      q.offset,
+      codes.length ? codes : null,
+      q.from ? `${q.from}T00:00:00+05:30` : null,
+      // The "to" day is included: up to the start of the day after.
+      q.to ? new Date(Date.parse(`${q.to}T00:00:00+05:30`) + 86_400_000).toISOString() : null,
+    ]);
   });
 }

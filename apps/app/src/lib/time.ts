@@ -16,7 +16,7 @@ export function useTimeAgo() {
     if (gap < HOUR) return t('time.minutes', { count: Math.floor(gap / MINUTE) });
     if (gap < DAY) return t('time.hours', { count: Math.floor(gap / HOUR) });
     if (gap < 7 * DAY) return t('time.days', { count: Math.floor(gap / DAY) });
-    return then.toLocaleDateString(i18n.language);
+    return then.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' });
   };
 }
 

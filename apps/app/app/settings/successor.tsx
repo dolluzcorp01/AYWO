@@ -6,6 +6,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { showToast } from '@/components/Toast';
 import { Card, EmptyState, ErrorText, Loading, LoadFailed, Muted, TextButton, TopBar } from '@/components/ui';
 import { useTrees } from '@/lib/account';
 import type { TreeRow } from '@/lib/account';
@@ -47,7 +48,11 @@ function TreeSuccessor({ tree }: { tree: TreeRow }) {
   const members = useTreeMembers(tree.id);
   const save = useMutation({
     mutationFn: (profileId: string | null) => api.patch<unknown>(`/trees/${tree.id}`, { successor_id: profileId }),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['tree-members', tree.id] }),
+    onSuccess: () => {
+      // Choosing a name saves at once: say so, or the page looks as if nothing happened.
+      showToast('success', t('common.saved'));
+      return client.invalidateQueries({ queryKey: ['tree-members', tree.id] });
+    },
   });
 
   // Anyone who has joined the tree or had it shared with them, except the Creator, who cannot succeed themselves.

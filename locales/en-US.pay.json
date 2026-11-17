@@ -68,12 +68,12 @@
       "yes": "Yes",
       "no": "No",
       "confirmNamed": "Yes, {{action}}: {{name}}",
-      "add": "Add from your tree ({{count}} places left)",
-      "add_one": "Add from your tree (1 place left)",
+      "add": "Add a family member ({{count}} places left)",
+      "add_one": "Add a family member (1 place left)",
       "addPlaceholder": "Name in your tree, or phone number",
       "addNumber": "Add this number",
       "addNamed": "Add {{name}}",
-      "noMatch": "No one with that name. Try their phone number.",
+      "noMatch": "No one with that name in your trees. Try \"By mobile number\".",
       "closeAdd": "Close",
       "manage": "Manage subscription",
       "cancel": "Cancel subscription",
@@ -91,7 +91,18 @@
       "unnamed": "Family member",
       "cancelAskedTrial": "Ending your free months. This page updates by itself in a moment.",
       "cancelDone": "Cancelled. You will not be charged again. Plus stays on for your family until {{date}}.",
-      "cancelDoneTrial": "Your free months have ended and nothing was charged. Plus is now off for the family."
+      "cancelDoneTrial": "Your free months have ended and nothing was charged. Plus is now off for the family.",
+      "fromTree": "From my tree",
+      "byNumber": "By mobile number",
+      "numberLabel": "Their mobile number",
+      "needNumber": "Type their full mobile number first.",
+      "nameLabel": "Their name in your tree",
+      "namePlaceholder": "Type a name",
+      "notJoined": "{{count}} people with that name have not joined AYWO yet, so they cannot be added. Ask them to join first.",
+      "notJoined_one": "1 person with that name has not joined AYWO yet, so they cannot be added. Ask them to join first.",
+      "endingPayer": "You cancelled this plan. You will not be charged again. Plus stays on for your family until {{date}}. To carry on after that, come back to this page after {{date}} and subscribe again.",
+      "endingPayerStore": "This plan will not renew. Plus stays on for your family until {{date}}. To keep it going, turn renewal back on with \"Manage subscription\" below.",
+      "endingMember": "The person who pays has cancelled this plan. Plus stays on for you until {{date}}."
     },
     "pendingWhy": "We are still waiting to hear from the payment service. So that you cannot pay twice by mistake, buying is paused on this phone or browser for 30 minutes. You can leave this page; it carries on checking when you come back.",
     "checkAgain": "Check again now",
@@ -105,6 +116,17 @@
     },
     "push": {
       "sosChannel": "Family SOS alarms"
+    },
+    "now": {
+      "title": "You have AYWO Plus",
+      "yearly": "Your plan: {{price}} a year. Next payment on {{date}}.",
+      "monthly": "Your plan: {{price}} a month. Next payment on {{date}}.",
+      "trialYearly": "Free until {{date}}. After that, {{price}} a year.",
+      "trialMonthly": "Free until {{date}}. After that, {{price}} a month.",
+      "ending": "Your plan is cancelled and you will not be charged again. Plus stays on until {{date}}. You can subscribe again after that date.",
+      "member": "You are on {{name}}'s family plan. They pay for it; you pay nothing.",
+      "memberNoName": "You are on a family plan that someone in your family pays for. You pay nothing.",
+      "manageHint": "Members, payment and cancelling are on the Family plan page."
     }
   },
   "errors": {

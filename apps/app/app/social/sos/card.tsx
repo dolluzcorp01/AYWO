@@ -30,6 +30,11 @@ export default function EmergencyCardScreen() {
   const [saved, setSaved] = useState(false);
   const [agree, setAgree] = useState(false);
   const [confirmWithdraw, setConfirmWithdraw] = useState(false);
+  // "Saved" is only true until a box is changed again: after that it would be a lie.
+  const edit = <T,>(set: (value: T) => void) => (value: T) => {
+    setSaved(false);
+    set(value);
+  };
   const consents = useMyConsents();
   const consent = healthConsent(consents.data);
   // Agreed to the notice shown now. An older agreement, or none, means showing the notice and asking again.
@@ -74,6 +79,7 @@ export default function EmergencyCardScreen() {
       setMedications('');
       setNote('');
       setAgree(false);
+      setSaved(false);
       setConfirmWithdraw(false);
       client.invalidateQueries({ queryKey: ['emergency-card'] });
       client.invalidateQueries({ queryKey: ['my-consents'] });
@@ -88,13 +94,13 @@ export default function EmergencyCardScreen() {
           <>
             <Card style={styles.block}>
               <SectionTitle>{t('ops.card.blood')}</SectionTitle>
-              <Pills options={GROUPS.map((g) => ({ value: g, label: g }))} value={blood} onChange={setBlood} />
-              {blood ? <TextButton label={t('ops.card.notSure')} onPress={() => setBlood(null)} /> : null}
+              <Pills options={GROUPS.map((g) => ({ value: g, label: g }))} value={blood} onChange={edit(setBlood)} />
+              {blood ? <TextButton label={t('ops.card.notSure')} onPress={() => edit(setBlood)(null)} /> : null}
             </Card>
-            <Field label={t('ops.card.allergies')} value={allergies} onChangeText={setAllergies} maxLength={300} multiline placeholder={t('ops.card.allergiesHint')} />
-            <Field label={t('ops.card.conditions')} value={conditions} onChangeText={setConditions} maxLength={300} multiline placeholder={t('ops.card.conditionsHint')} />
-            <Field label={t('ops.card.medications')} value={medications} onChangeText={setMedications} maxLength={300} multiline />
-            <Field label={t('ops.card.note')} value={note} onChangeText={setNote} maxLength={300} multiline placeholder={t('ops.card.noteHint')} />
+            <Field label={t('ops.card.allergies')} value={allergies} onChangeText={edit(setAllergies)} maxLength={300} multiline placeholder={t('ops.card.allergiesHint')} />
+            <Field label={t('ops.card.conditions')} value={conditions} onChangeText={edit(setConditions)} maxLength={300} multiline placeholder={t('ops.card.conditionsHint')} />
+            <Field label={t('ops.card.medications')} value={medications} onChangeText={edit(setMedications)} maxLength={300} multiline />
+            <Field label={t('ops.card.note')} value={note} onChangeText={edit(setNote)} maxLength={300} multiline placeholder={t('ops.card.noteHint')} />
             <Note>{t('ops.card.who')}</Note>
             {/* A card saved before the notice existed is hidden from SOS helpers until its owner agrees. */}
             {card.data && !agreed ? <Text style={styles.warn}>{t('ops.consent.hiddenUntilAgree')}</Text> : null}

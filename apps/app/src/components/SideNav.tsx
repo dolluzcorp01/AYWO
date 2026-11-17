@@ -123,7 +123,7 @@ export function SideNav() {
 
         <Text style={[styles.group, tight && styles.groupTight]}>{t('nav.you')}</Text>
         <Item tight={tight} label={t('tabs.me')} active={on('/me') || on('/settings')} onPress={() => go('/me')} icon={(c) => <MeIcon color={c} />} />
-        <Item tight={tight} label={t('me.plus')} active={on('/plus') || on('/family-plan')} onPress={() => go('/family-plan')} icon={(c) => <PlusIcon color={c} size={20} width={1.8} />} />
+        <Item tight={tight} label={t('me.plus')} active={on('/plus') || on('/family-plan')} onPress={() => go(me.data?.plus ? '/family-plan' : '/plus')} icon={(c) => <PlusIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('ops.nav.offers')} active={on('/offers') || on('/shop') || on('/orders')} onPress={() => go('/offers')} icon={(c) => <PartyIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('ops.nav.help')} active={on('/help')} onPress={() => go('/help')} icon={(c) => <ChatIcon color={c} size={20} width={1.8} />} />
         {/* Staff only: the way into the admin panel (it used to need typing /admin). */}

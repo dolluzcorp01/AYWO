@@ -157,6 +157,15 @@ export function useAddComment(personId: string) {
   });
 }
 
+export function useChangeComment(personId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: string; body?: string }) =>
+      input.body === undefined ? api.del<unknown>(`/comments/${input.id}`) : api.patch<unknown>(`/comments/${input.id}`, { body: input.body }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['comments', personId] }),
+  });
+}
+
 // ----- Sharing -----
 
 export interface ShareInput {
@@ -224,6 +233,15 @@ export function useRevokeShare(treeId: string) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (shareId: string) => api.del<unknown>(`/shares/${shareId}`),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['shares', treeId] }),
+  });
+}
+
+/** Change what someone who already has access may do, without taking the access away and sending a new link. */
+export function useUpdateShare(treeId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { shareId: string; role: ShareRole }) => api.patch<unknown>(`/shares/${input.shareId}`, { role: input.role }),
     onSuccess: () => client.invalidateQueries({ queryKey: ['shares', treeId] }),
   });
 }

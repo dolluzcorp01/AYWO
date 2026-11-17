@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { PhoneField } from '@/components/PhoneField';
 import { Text } from '@/components/Text';
-import { Card, ErrorText, Heading, Muted, PrimaryButton } from '@/components/ui';
+import { BackButton, Card, ErrorText, Heading, Muted, PrimaryButton } from '@/components/ui';
 import { api, ApiFailure } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
 import { toE164 } from '@/lib/phone';
@@ -51,6 +51,10 @@ export default function Phone() {
   return (
     <Screen>
       <View style={styles.top}>
+        {/* Back to Welcome: to change the language, or to use "Got a link from family?". */}
+        <View style={styles.back}>
+          <BackButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+        </View>
         <Heading>{t('phone.title')}</Heading>
         <Muted>{t('phone.subtitle')}</Muted>
         <PhoneField
@@ -76,13 +80,14 @@ export default function Phone() {
           }}
         />
       </Text>
-      <PrimaryButton label={t('phone.send')} onPress={send} disabled={!valid || busy} />
+      <PrimaryButton label={t('phone.send')} onPress={send} disabled={busy} missing={valid ? null : t('phone.needNumber')} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  top: { flex: 1, gap: 14, paddingTop: 40 },
+  top: { flex: 1, gap: 14, paddingTop: 8 },
+  back: { alignSelf: 'flex-start', marginBottom: 8 },
   note: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
   terms: { color: colors.muted, fontFamily: fonts.medium, fontSize: 13, lineHeight: 28, textAlign: 'center', marginBottom: 12 },
   termsLink: { color: colors.relation, fontFamily: fonts.bold, fontSize: 13, textDecorationLine: 'underline' },

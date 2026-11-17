@@ -8,7 +8,7 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { openDoNotDisturbAccess } from '@/pay/registerPush';
 import { Text } from '@/components/Text';
 import { Card, ConfirmDialog, ErrorText, Loading, Pills, PrimaryButton, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, deviceStore } from '@/lib/api';
 import { errorCode } from '@/lib/errors';
 import { callNow, dialEmergency } from '@/social/call';
 import { emergencyNumber } from '@/social/emergency';
@@ -36,6 +36,7 @@ const CHECK_AT_END_MS = 5_000;
 const RESUME_AGAIN_MS = 15_000;
 const DURATIONS = ['30', '60', '120', '240'] as const;
 type Duration = (typeof DURATIONS)[number];
+const SOS_MINUTES = 'aywo.sosMinutes';
 
 class StartTimeout extends Error {}
 
@@ -138,7 +139,25 @@ export default function SosScreen() {
   const autoStarted = useRef(false);
   const client = useQueryClient();
   const showName = useName();
-  const [duration, setDuration] = useState<Duration>('60');
+  // How long to share the place is remembered on this phone, so an SOS started from Home uses the same choice.
+  const [duration, setDurationState] = useState<Duration>('60');
+  const durationKnown = useRef<Promise<Duration>>(
+    deviceStore
+      .get(SOS_MINUTES)
+      .then((saved) => (DURATIONS.find((d) => d === saved) ?? '60') as Duration)
+      .catch(() => '60' as Duration),
+  );
+  const picked = useRef<Duration | null>(null);
+  useEffect(() => {
+    void durationKnown.current.then((saved) => {
+      if (!picked.current) setDurationState(saved);
+    });
+  }, []);
+  const setDuration = (value: Duration) => {
+    picked.current = value;
+    setDurationState(value);
+    void deviceStore.set(SOS_MINUTES, value).catch(() => undefined);
+  };
   const [holding, setHolding] = useState(false);
   const [alerted, setAlerted] = useState<{ apps: number; texts: number } | null>(null);
   const [callPhone, setCallPhone] = useState<string | null>(null);
@@ -234,7 +253,9 @@ export default function SosScreen() {
         quickPlace().catch(() => null),
         new Promise<null>((resolve) => setTimeout(() => resolve(null), PLACE_WAIT_MS)),
       ]);
-      const request = api.post<SosStart>('/sos/start', { minutes: Number(duration), lat: place?.lat ?? null, lng: place?.lng ?? null });
+      // An SOS that starts as the screen opens must not go out before the saved choice has been read.
+      const minutes = Number(picked.current ?? (await durationKnown.current));
+      const request = api.post<SosStart>('/sos/start', { minutes, lat: place?.lat ?? null, lng: place?.lng ?? null });
       let timer: ReturnType<typeof setTimeout> | undefined;
       const tooLong = new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new StartTimeout()), START_TIMEOUT_MS);

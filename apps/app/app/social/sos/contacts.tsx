@@ -6,11 +6,11 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { DownIcon, UpIcon } from '@/components/Icons';
 import { PhoneField } from '@/components/PhoneField';
 import { Text } from '@/components/Text';
-import { Card, ErrorText, Field, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
+import { Card, ConfirmDialog, ErrorText, Field, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { toE164 } from '@/lib/phone';
 import { usePeople } from '@/social/AudiencePicker';
-import { ActionError, Gate, Note, Page, Row, useName } from '@/social/parts';
+import { ActionError, Gate, Note, Page, Row, useListSearch, useName } from '@/social/parts';
 import type { SosContact } from '@/social/types';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 
@@ -20,9 +20,13 @@ export default function SosContacts() {
   const { t } = useTranslation();
   const client = useQueryClient();
   const showName = useName();
+  // A big family is a long list: a search box appears once it is.
+  const search = useListSearch<{ profile_id: string; name: string }>((p) => showName(p.name));
   const [typedName, setTypedName] = useState('');
   const [typedPhone, setTypedPhone] = useState('');
   const [badPhone, setBadPhone] = useState(false);
+  // One "are you sure" for the small removals on this screen: what is asked, and what Yes does.
+  const [asking, setAsking] = useState<{ title: string; yes: string; run: () => void } | null>(null);
   const contacts = useQuery({ queryKey: ['sos-contacts'], queryFn: () => api.rpc<SosContact[]>('sos_contacts_list') });
   const people = usePeople();
   const refresh = () => client.invalidateQueries({ queryKey: ['sos-contacts'] });
@@ -94,13 +98,24 @@ export default function SosContacts() {
                 >
                   <DownIcon color={colors.text} size={18} />
                 </Pressable>
-                <TextButton label={t('social.remove')} danger onPress={() => remove.mutate(c.id)} />
+                <TextButton label={t('social.remove')} danger onPress={() => setAsking({ title: t('social.groups.removeTitle', { name: showName(c.name || c.phone) }), yes: t('social.remove'), run: () => remove.mutate(c.id) })} />
               </Card>
             ))}
           </>
         )}
       </Gate>
       <ActionError error={add.error ?? remove.error ?? reorder.error} />
+      <ConfirmDialog
+        visible={!!asking}
+        title={asking?.title ?? ''}
+        confirmLabel={asking?.yes ?? ''}
+        danger
+        onConfirm={() => {
+          asking?.run();
+          setAsking(null);
+        }}
+        onCancel={() => setAsking(null)}
+      />
 
       {full ? (
         <Note>{t('social.sos.fullList', { count: MOST })}</Note>
@@ -113,7 +128,9 @@ export default function SosContacts() {
               if (open.length === 0) return <Note>{t('social.audience.nobody')}</Note>;
               return (
                 <>
-                  {open.map((p) => (
+                  {search.box(open)}
+                  {search.nothing(open) ? <Note>{t('search.nothing')}</Note> : null}
+                  {search.filter(open).map((p) => (
                     <Row key={p.profile_id} title={showName(p.name)} subtitle={t('social.sos.tapToAdd')} onPress={() => add.mutate({ profile: p.profile_id })} />
                   ))}
                 </>
@@ -138,6 +155,7 @@ export default function SosContacts() {
           />
           {badPhone ? <ErrorText>{t('errors.phone_not_valid')}</ErrorText> : null}
           <SecondaryButton label={t('social.sos.addNumber')} disabled={!typedPhone.trim() || add.isPending} onPress={addTyped} />
+          {!typedPhone.trim() ? <Note>{t('social.sos.needNumber')}</Note> : null}
         </>
       )}
     </Page>

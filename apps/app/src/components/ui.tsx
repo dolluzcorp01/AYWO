@@ -58,9 +58,9 @@ export function TextButton({ label, onPress, disabled, danger }: { label: string
 }
 
 /** The small pill on activity cards and the Undo button. */
-export function SmallButton({ label, onPress, kind = 'solid', disabled }: { label: string; onPress: () => void; kind?: 'solid' | 'plain' | 'yellow' | 'dark'; disabled?: boolean }) {
+export function SmallButton({ label, onPress, kind = 'solid', disabled, accessibilityLabel }: { label: string; onPress: () => void; kind?: 'solid' | 'plain' | 'yellow' | 'dark'; disabled?: boolean; accessibilityLabel?: string }) {
   const inner = <Text style={[styles.smallText, (kind === 'plain' || kind === 'yellow') && styles.smallTextDark]}>{label}</Text>;
-  const a11y = { accessibilityRole: 'button' as const, onPress, disabled, style: { opacity: disabled ? 0.5 : 1, cursor: disabled ? ('default' as const) : ('pointer' as const) } };
+  const a11y = { accessibilityRole: 'button' as const, accessibilityLabel, onPress, disabled, style: { opacity: disabled ? 0.5 : 1, cursor: disabled ? ('default' as const) : ('pointer' as const) } };
   if (kind === 'plain') {
     return (
       <Pressable {...a11y}>

@@ -1,4 +1,5 @@
 // Staff dashboard. The work queue first, then each area this person is granted. The server sends only those groups.
+import { MENU, useAdminAccess } from '@/admin/access';
 import { MyAccess } from '@/admin/MyAccess';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -16,6 +17,10 @@ export default function AdminDashboard() {
   const query = useQuery({ queryKey: ['admin', 'dashboard'], queryFn: () => api.get<Dashboard>('/admin/dashboard') });
   const twoStep = useQuery({ queryKey: ['admin', 'two-step'], queryFn: () => api.get<{ set_up: boolean; required: boolean }>('/admin/two-step') });
   const [settingUp, setSettingUp] = useState(false);
+  // The queue counts come for every staff member, but the page itself opens only with one of its permissions:
+  // a card that leads to "You don't have permission" is worse than no card.
+  const access = useAdminAccess();
+  const canWork = access.can(MENU.find((item) => item.key === 'work')?.gates ?? []);
 
   if (settingUp) return <TwoStepSetup onDone={() => { setSettingUp(false); twoStep.refetch(); }} onCancel={() => setSettingUp(false)} />;
 
@@ -29,16 +34,16 @@ export default function AdminDashboard() {
           </Actions>
         </Panel>
       ) : null}
-      <QueryState query={query} isEmpty={(data) => Object.keys(data).length === 0} emptyText={t('admin.dashboard.empty')}>
+      <QueryState query={query} isEmpty={(data) => Object.keys(data).filter((key) => key !== 'work' || canWork).length === 0} emptyText={t('admin.dashboard.empty')}>
         {(data) => (
           <>
-            {data.work ? (
+            {data.work && canWork ? (
               <Section title={t('admin.menu.work')}>
                 <StatRow>
-                  <StatCard label={t('admin.work.views.mine')} value={data.work.mine} onPress={() => router.navigate('/admin/work')} />
-                  <StatCard label={t('admin.work.views.open')} value={data.work.open} onPress={() => router.navigate('/admin/work')} />
-                  <StatCard label={t('admin.work.views.unassigned')} value={data.work.unassigned} onPress={() => router.navigate('/admin/work')} />
-                  <StatCard label={t('admin.work.views.overdue')} value={data.work.overdue} onPress={() => router.navigate('/admin/work')} />
+                  <StatCard label={t('admin.work.views.mine')} value={data.work.mine} onPress={() => router.navigate({ pathname: '/admin/work', params: { view: 'mine' } })} />
+                  <StatCard label={t('admin.work.views.open')} value={data.work.open} onPress={() => router.navigate({ pathname: '/admin/work', params: { view: 'open' } })} />
+                  <StatCard label={t('admin.work.views.unassigned')} value={data.work.unassigned} onPress={() => router.navigate({ pathname: '/admin/work', params: { view: 'unassigned' } })} />
+                  <StatCard label={t('admin.work.views.overdue')} value={data.work.overdue} onPress={() => router.navigate({ pathname: '/admin/work', params: { view: 'overdue' } })} />
                 </StatRow>
               </Section>
             ) : null}
@@ -60,9 +65,9 @@ export default function AdminDashboard() {
             {data.orders ? (
               <Section title={t('admin.menu.orders')}>
                 <StatRow>
-                  <StatCard label={t('admin.orders.steps.queued')} value={data.orders.queued} onPress={() => router.navigate('/admin/orders')} />
-                  <StatCard label={t('admin.orders.steps.printing')} value={data.orders.printing} onPress={() => router.navigate('/admin/orders')} />
-                  <StatCard label={t('admin.orders.steps.shipped')} value={data.orders.shipped} onPress={() => router.navigate('/admin/orders')} />
+                  <StatCard label={t('admin.orders.steps.queued')} value={data.orders.queued} onPress={() => router.navigate({ pathname: '/admin/orders', params: { step: 'queued' } })} />
+                  <StatCard label={t('admin.orders.steps.printing')} value={data.orders.printing} onPress={() => router.navigate({ pathname: '/admin/orders', params: { step: 'printing' } })} />
+                  <StatCard label={t('admin.orders.steps.shipped')} value={data.orders.shipped} onPress={() => router.navigate({ pathname: '/admin/orders', params: { step: 'shipped' } })} />
                 </StatRow>
               </Section>
             ) : null}

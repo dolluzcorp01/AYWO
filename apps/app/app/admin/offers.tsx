@@ -5,13 +5,14 @@ import { DateField } from '@/components/DateTimeField';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { checkDays, dayToIso, isoToDay, todayInIndia } from '@/admin/dates';
 import type { DayProblem } from '@/admin/dates';
 import type { Announcement, Campaign, Coupon } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Facts, Field, FilterChips, formatDate, FormDialog, Message, Missing, money, Pill, QueryState, SecondaryButton, useAction, useErrorText, useRefreshAfter } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Facts, Field, FilterChips, formatDate, formatDay, FormDialog, Message, Missing, money, Pill, QueryState, SecondaryButton, useAction, useErrorText, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
+import { colors, fonts } from '@/theme/tokens';
 
 type Tab = 'coupons' | 'banners' | 'messages';
 const PRODUCTS = ['tree_poster', 'family_book', 'premium_invite'] as const;
@@ -21,6 +22,8 @@ const LANGUAGES = ['en', 'ta'] as const;
 type Language = (typeof LANGUAGES)[number];
 /** From this percentage up, the second look before saving a coupon warns about the size of the discount. */
 const BIG_PERCENT = 50;
+/** A coupon row. can_delete: nobody ever paid with the code, so removing it changes no order. */
+type CouponRow = Coupon & { can_delete?: boolean };
 
 /** The words under a day box that was typed wrongly. Days are year-month-day and mean that day in India (@/admin/dates). */
 function useDayErrors(starts: string, ends: string) {
@@ -70,14 +73,35 @@ export default function AdminOffers() {
 }
 
 // ===== Coupons =====
+// The pages a banner or message usually opens, so nobody has to remember and type "/family-plan".
+const PAGES = ['/offers', '/shop', '/plus', '/invite-friends', '/calendar', '/social/memories', '/home'] as const;
+
+function PageChoices({ onPick }: { onPick: (path: string) => void }) {
+  const { t } = useTranslation();
+  return (
+    <View style={{ gap: 6 }}>
+      <Text style={adminStyles.cellMuted}>{t('admin.offers.pickPage')}</Text>
+      <Actions>
+        {PAGES.map((path) => (
+          <SecondaryButton key={path} label={t(`admin.offers.pages.${path.slice(1).replace('/', '_').replace('-', '_')}`)} onPress={() => onPick(path)} />
+        ))}
+      </Actions>
+    </View>
+  );
+}
+
 function Coupons() {
   const { t, i18n } = useTranslation();
   const [view, setView] = useState<'active' | 'ended' | 'all'>('active');
   const [editing, setEditing] = useState<Coupon | 'new' | null>(null);
-  const query = useQuery({ queryKey: ['admin', 'coupons', view], queryFn: () => api.get<Coupon[]>(`/admin/coupons?view=${view}`) });
+  const [deleting, setDeleting] = useState<CouponRow | null>(null);
+  const [switchingOff, setSwitchingOff] = useState<CouponRow | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  const refreshAfter = useRefreshAfter();
+  const query = useQuery({ queryKey: ['admin', 'coupons', view], queryFn: () => api.get<CouponRow[]>(`/admin/coupons?view=${view}`) });
 
   const off = (c: Coupon) => (c.kind === 'percent' ? `${c.value}%` : money(c.value, c.currency ?? 'INR', i18n.language));
-  const columns: Column<Coupon>[] = [
+  const columns: Column<CouponRow>[] = [
     {
       key: 'code',
       label: t('admin.offers.code'),
@@ -94,7 +118,7 @@ function Coupons() {
     {
       key: 'when',
       label: t('admin.offers.when'),
-      render: (c) => `${isoToDay(c.starts_at)} - ${c.ends_at ? isoToDay(c.ends_at) : t('admin.offers.noEnd')}`,
+      render: (c) => `${formatDay(c.starts_at, i18n.language)} - ${c.ends_at ? formatDay(c.ends_at, i18n.language) : t('admin.offers.noEnd')}`,
     },
     {
       key: 'used',
@@ -118,12 +142,31 @@ function Coupons() {
         </Actions>
       ),
     },
-    { key: 'edit', label: t('admin.common.actions'), flex: 0.7, render: (c) => <SecondaryButton label={t('admin.staff.change')} onPress={() => setEditing(c)} /> },
+    {
+      key: 'edit',
+      label: t('admin.common.actions'),
+      flex: 1.3,
+      render: (c) => (
+        <View style={{ gap: 6 }}>
+          <Actions>
+            <SecondaryButton label={t('admin.staff.change')} onPress={() => setEditing(c)} />
+            {c.can_delete ? (
+              <SecondaryButton label={t('admin.offers.delete')} danger onPress={() => setDeleting(c)} />
+            ) : c.active ? (
+              <SecondaryButton label={t('admin.offers.switchOff')} onPress={() => setSwitchingOff(c)} />
+            ) : null}
+          </Actions>
+          {/* Why there is no Delete here: the code took money off a real order, and that order must still read true. */}
+          {c.can_delete === false ? <Text style={adminStyles.cellMuted}>{t('admin.offers.cantDeleteUsed')}</Text> : null}
+        </View>
+      ),
+    },
   ];
 
   return (
     <>
       <Text style={adminStyles.cellMuted}>{t('admin.offers.couponsHelp')}</Text>
+      {done ? <Message text={done} good /> : null}
       <Actions>
         <FilterChips
           value={view}
@@ -140,6 +183,36 @@ function Coupons() {
         {(rows) => <DataTable columns={columns} rows={rows} rowKey={(c) => c.id} />}
       </QueryState>
       {editing ? <CouponDialog coupon={editing === 'new' ? null : editing} onClose={() => setEditing(null)} /> : null}
+      {deleting ? (
+        <FormDialog
+          title={t('admin.offers.deleteCouponTitle', { code: deleting.code })}
+          text={t('admin.offers.deleteCouponText')}
+          confirmLabel={t('admin.offers.delete')}
+          cancelLabel={t('admin.offers.keepIt')}
+          danger
+          onCancel={() => setDeleting(null)}
+          onConfirm={async () => {
+            await api.del(`/admin/coupons/${deleting.id}`);
+            setDone(t('admin.offers.deletedCoupon', { code: deleting.code }));
+            setDeleting(null);
+            await refreshAfter('coupons');
+          }}
+        />
+      ) : null}
+      {switchingOff ? (
+        <FormDialog
+          title={t('admin.offers.switchOffTitle', { code: switchingOff.code })}
+          text={t('admin.offers.switchOffText')}
+          confirmLabel={t('admin.offers.switchOff')}
+          onCancel={() => setSwitchingOff(null)}
+          onConfirm={async () => {
+            await api.patch(`/admin/coupons/${switchingOff.id}`, { active: false });
+            setDone(t('admin.offers.switchedOff', { code: switchingOff.code }));
+            setSwitchingOff(null);
+            await refreshAfter('coupons');
+          }}
+        />
+      ) : null}
     </>
   );
 }
@@ -221,7 +294,7 @@ function CouponDialog({ coupon, onClose }: { coupon: Coupon | null; onClose: () 
           items={[
             [t('admin.offers.off'), offText],
             [t('admin.offers.on'), products.map((p) => t(`admin.orders.products.${p}`)).join(', ')],
-            [t('admin.offers.when'), `${isoToDay(dayToIso(starts, false))} - ${endDay || t('admin.offers.noEnd')}`],
+            [t('admin.offers.when'), `${formatDay(dayToIso(starts, false), i18n.language)} - ${ends ? formatDay(dayToIso(ends, true), i18n.language) : t('admin.offers.noEnd')}`],
             [t('admin.offers.maxUses'), maxUses || t('admin.offers.noLimit')],
             [t('admin.offers.perUser'), perUser],
             [t('admin.offers.shown'), shown ? t('admin.user360.yes') : t('admin.user360.no')],
@@ -274,10 +347,82 @@ function CouponDialog({ coupon, onClose }: { coupon: Coupon | null; onClose: () 
 }
 
 // ===== Banners =====
-function Banners() {
+// The colours members see, the same as in the app (@/ops/Announcements).
+const TONES: Record<Announcement['style'], { bg: string; fg: string }> = {
+  offer: { bg: colors.logoIndigo, fg: colors.white },
+  info: { bg: colors.tint, fg: colors.text },
+  celebration: { bg: colors.celebrationTint, fg: colors.text },
+  warning: { bg: colors.alertTint, fg: colors.alert },
+};
+
+/** The banner as members will see it: the slim strip at the top, and the card on Home, for the places that are ticked. */
+function BannerPreview({
+  title,
+  body,
+  linkLabel,
+  style,
+  placements,
+  dismissible,
+}: {
+  title: string;
+  body: string;
+  linkLabel: string;
+  style: Announcement['style'];
+  placements: Announcement['placements'];
+  dismissible: boolean;
+}) {
   const { t } = useTranslation();
+  const tone = TONES[style];
+  const strip = placements.includes('app_banner') || placements.includes('web_banner');
+  return (
+    <View style={{ gap: 8 }}>
+      <Text style={adminStyles.fieldLabel}>{t('admin.offers.previewTitle')}</Text>
+      {strip ? (
+        <>
+          <Text style={adminStyles.cellMuted}>{t('admin.offers.previewStrip')}</Text>
+          <View style={[preview.strip, { backgroundColor: tone.bg }]}>
+            <Text style={[preview.stripText, { color: tone.fg }]}>{linkLabel ? `${title}  ·  ${linkLabel}` : title}</Text>
+            {dismissible ? <Text style={[preview.close, { color: tone.fg }]}>×</Text> : null}
+          </View>
+          {body ? <Text style={adminStyles.cellMuted}>{t('admin.offers.previewStripNoBody')}</Text> : null}
+        </>
+      ) : null}
+      {placements.includes('home_card') ? (
+        <>
+          <Text style={adminStyles.cellMuted}>{t('admin.offers.previewCard')}</Text>
+          <View style={[preview.card, { backgroundColor: tone.bg }]}>
+            <Text style={[preview.cardTitle, { color: tone.fg }]}>{title}</Text>
+            {body ? <Text style={[preview.cardBody, { color: tone.fg }]}>{body}</Text> : null}
+            {linkLabel ? <Text style={[preview.cardLink, { color: tone.fg }]}>{linkLabel} ›</Text> : null}
+          </View>
+        </>
+      ) : null}
+    </View>
+  );
+}
+
+/** A promotional message as it lands on a phone: the app name, then the heading and the words. */
+function MessagePreview({ title, body }: { title: string; body: string }) {
+  const { t } = useTranslation();
+  return (
+    <View style={{ gap: 8 }}>
+      <Text style={adminStyles.fieldLabel}>{t('admin.offers.previewTitle')}</Text>
+      <View style={preview.push}>
+        <Text style={adminStyles.cellMuted}>{t('admin.offers.previewPushFrom')}</Text>
+        <Text style={adminStyles.cellStrong}>{title}</Text>
+        <Text style={preview.pushBody}>{body}</Text>
+      </View>
+    </View>
+  );
+}
+
+function Banners() {
+  const { t, i18n } = useTranslation();
   const [view, setView] = useState<'active' | 'ended' | 'all'>('active');
   const [editing, setEditing] = useState<Announcement | 'new' | null>(null);
+  const [deleting, setDeleting] = useState<Announcement | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  const refreshAfter = useRefreshAfter();
   const query = useQuery({ queryKey: ['admin', 'announcements', view], queryFn: () => api.get<Announcement[]>(`/admin/announcements?view=${view}`) });
 
   const columns: Column<Announcement>[] = [
@@ -294,7 +439,7 @@ function Banners() {
     },
     { key: 'where', label: t('admin.offers.where'), render: (a) => a.placements.map((p) => t(`admin.offers.placements.${p}`)).join(', ') },
     { key: 'who', label: t('admin.offers.who'), flex: 0.8, render: (a) => t(`admin.offers.audiences.${a.audience}`) },
-    { key: 'when', label: t('admin.offers.when'), render: (a) => `${isoToDay(a.starts_at)} - ${a.ends_at ? isoToDay(a.ends_at) : t('admin.offers.noEnd')}` },
+    { key: 'when', label: t('admin.offers.when'), render: (a) => `${formatDay(a.starts_at, i18n.language)} - ${a.ends_at ? formatDay(a.ends_at, i18n.language) : t('admin.offers.noEnd')}` },
     {
       key: 'stats',
       label: t('admin.offers.reach'),
@@ -310,12 +455,23 @@ function Banners() {
       flex: 0.8,
       render: (a) => <Pill label={a.running ? t('admin.offers.running') : a.active ? t('admin.offers.scheduled') : t('admin.offers.off_')} alert={!a.active} />,
     },
-    { key: 'edit', label: t('admin.common.actions'), flex: 0.7, render: (a) => <SecondaryButton label={t('admin.staff.change')} onPress={() => setEditing(a)} /> },
+    {
+      key: 'edit',
+      label: t('admin.common.actions'),
+      flex: 1.2,
+      render: (a) => (
+        <Actions>
+          <SecondaryButton label={t('admin.staff.change')} onPress={() => setEditing(a)} />
+          <SecondaryButton label={t('admin.offers.delete')} danger onPress={() => setDeleting(a)} />
+        </Actions>
+      ),
+    },
   ];
 
   return (
     <>
       <Text style={adminStyles.cellMuted}>{t('admin.offers.bannersHelp')}</Text>
+      {done ? <Message text={done} good /> : null}
       <Actions>
         <FilterChips
           value={view}
@@ -332,12 +488,30 @@ function Banners() {
         {(rows) => <DataTable columns={columns} rows={rows} rowKey={(a) => a.id} />}
       </QueryState>
       {editing ? <BannerDialog item={editing === 'new' ? null : editing} onClose={() => setEditing(null)} /> : null}
+      {deleting ? (
+        <FormDialog
+          title={t('admin.offers.deleteBannerTitle')}
+          text={t(deleting.running ? 'admin.offers.deleteBannerRunningText' : 'admin.offers.deleteBannerText')}
+          confirmLabel={t('admin.offers.delete')}
+          cancelLabel={t('admin.offers.keepIt')}
+          danger
+          onCancel={() => setDeleting(null)}
+          onConfirm={async () => {
+            await api.del(`/admin/announcements/${deleting.id}`);
+            setDone(t('admin.offers.deletedBanner', { title: deleting.title }));
+            setDeleting(null);
+            await refreshAfter('announcements');
+          }}
+        >
+          <Text style={adminStyles.cellStrong}>{deleting.title}</Text>
+        </FormDialog>
+      ) : null}
     </>
   );
 }
 
 function BannerDialog({ item, onClose }: { item: Announcement | null; onClose: () => void }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const refreshAfter = useRefreshAfter();
   // A banner can hold several languages, or one this page has no chip for. 'keep' leaves that list exactly as it is.
   const before = item?.languages?.length ? item.languages : null;
@@ -407,10 +581,11 @@ function BannerDialog({ item, onClose }: { item: Announcement | null; onClose: (
             [t('admin.offers.bannerTitle'), title.trim()],
             [t('admin.offers.where'), placements.map((p) => t(`admin.offers.placements.${p}`)).join(', ')],
             [t('admin.offers.who'), `${t(`admin.offers.audiences.${audience}`)} · ${t(`admin.offers.regions.${region}`)} · ${languageText}`],
-            [t('admin.offers.when'), `${isoToDay(dayToIso(starts, false))} - ${endDay || t('admin.offers.noEnd')}`],
+            [t('admin.offers.when'), `${formatDay(dayToIso(starts, false), i18n.language)} - ${ends ? formatDay(dayToIso(ends, true), i18n.language) : t('admin.offers.noEnd')}`],
             [t('admin.offers.link'), link.trim() || '-'],
           ]}
         />
+        <BannerPreview title={title.trim()} body={body.trim()} linkLabel={linkLabel.trim()} style={style} placements={placements} dismissible={dismissible} />
         {!endDay ? <Message text={t('admin.offers.warnBannerNoEnd')} alert /> : null}
         {endDay && endDay < todayInIndia() ? <Message text={t('admin.offers.warnEnded')} alert /> : null}
         {action.failure ? <Message text={action.failure} alert /> : null}
@@ -427,6 +602,7 @@ function BannerDialog({ item, onClose }: { item: Announcement | null; onClose: (
       <Field label={t('admin.offers.bannerTitle')} value={title} onChange={setTitle} maxLength={80} help={t('admin.offers.bannerTitleHelp')} />
       <Field label={t('admin.offers.bannerBody')} value={body} onChange={setBody} multiline maxLength={200} />
       <Field label={t('admin.offers.link')} value={link} onChange={setLink} maxLength={300} placeholder="/offers" help={t('admin.offers.linkHelp')} error={linkOk ? null : t('admin.offers.linkBad')} />
+      <PageChoices onPick={setLink} />
       <Field label={t('admin.offers.linkLabel')} value={linkLabel} onChange={setLinkLabel} maxLength={30} />
       <Text style={adminStyles.fieldLabel}>{t('admin.offers.style')}</Text>
       <FilterChips value={style} onChange={setStyle} options={(['offer', 'info', 'celebration', 'warning'] as const).map((s) => ({ value: s, label: t(`admin.offers.styles.${s}`) }))} />
@@ -512,6 +688,7 @@ function Messages() {
       <Field label={t('admin.broadcast.heading')} value={title} onChange={setTitle} maxLength={60} />
       <Field label={t('admin.broadcast.body')} value={body} onChange={setBody} multiline maxLength={180} />
       <Field label={t('admin.offers.opens')} value={link} onChange={setLink} maxLength={100} help={t('admin.offers.opensHelp')} error={linkOk ? null : t('admin.offers.opensBad')} />
+      <PageChoices onPick={setLink} />
       <FilterChips value={audience} onChange={setAudience} options={(['everyone', 'plus', 'free'] as const).map((a) => ({ value: a, label: t(`admin.offers.audiences.${a}`) }))} />
       <FilterChips value={region} onChange={setRegion} options={(['all', 'india', 'overseas'] as const).map((r) => ({ value: r, label: t(`admin.offers.regions.${r}`) }))} />
       <FilterChips
@@ -559,8 +736,23 @@ function Messages() {
             setAsking(false);
             await refreshAfter('campaigns');
           }}
-        />
+        >
+          <MessagePreview title={title.trim()} body={body.trim()} />
+          {link.trim() ? <Text style={adminStyles.cellMuted}>{t('admin.offers.previewOpens', { page: link.trim() })}</Text> : null}
+        </FormDialog>
       ) : null}
     </>
   );
 }
+
+const preview = StyleSheet.create({
+  strip: { minHeight: 40, flexDirection: 'row', alignItems: 'center', borderRadius: 14, paddingLeft: 14, overflow: 'hidden' },
+  stripText: { flex: 1, fontFamily: fonts.bold, fontSize: 14 },
+  close: { width: 40, textAlign: 'center', fontFamily: fonts.bold, fontSize: 22, lineHeight: 24 },
+  card: { borderRadius: 20, padding: 18, gap: 6 },
+  cardTitle: { fontFamily: fonts.extrabold, fontSize: 17 },
+  cardBody: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, opacity: 0.92 },
+  cardLink: { fontFamily: fonts.bold, fontSize: 14, marginTop: 2 },
+  push: { gap: 2, padding: 14, borderRadius: 16, borderWidth: 1, borderColor: colors.cardBorder, backgroundColor: colors.background },
+  pushBody: { color: colors.text, fontFamily: fonts.medium, fontSize: 14, lineHeight: 20 },
+});

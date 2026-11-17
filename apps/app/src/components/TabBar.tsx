@@ -82,7 +82,7 @@ function Tab({ label, active, badge, onPress, icon }: TabProps) {
 }
 
 interface TabBarProps {
-  active: 'home' | 'family' | 'chat' | 'me' | 'activity';
+  active: 'home' | 'family' | 'chat' | 'me' | 'activity' | 'none';
   /** The tree on screen, so Family and + stay in it. Without one they use the person's first tree. */
   treeId?: string;
   /** The person the gold + adds a relative to. */

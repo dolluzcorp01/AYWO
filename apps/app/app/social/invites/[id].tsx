@@ -10,13 +10,17 @@ import { Card, ConfirmDialog, Field, Pills, PrimaryButton, SecondaryButton, Sect
 import { api } from '@/lib/api';
 import { startOrder } from '@/pay/order';
 import { InviteCard } from '@/social/InviteCard';
-import { ActionError, Gate, Note, Page, parseDateTime, Row, useName, useWhen } from '@/social/parts';
+import { PeoplePicker } from '@/social/AudiencePicker';
+import { ActionError, Gate, Note, Page, parseDateTime, readDateOption, Row, todayIso, useDateOption, useName, useWhen } from '@/social/parts';
 import { FREE_DESIGNS, PREMIUM_DESIGNS } from '@/social/types';
 import type { Design, EventDetail, PollRow, RsvpAnswer } from '@/social/types';
 import { colors, fonts } from '@/theme/tokens';
 
 function PollCard({ poll, onVote, busy }: { poll: PollRow; onVote: (option: string) => void; busy: boolean }) {
   const { t } = useTranslation();
+  const showDate = useDateOption();
+  // A date choice picked from the calendar reads in the reader's own language.
+  const label = (text: string) => (poll.topic === 'date' ? showDate(text) : text);
   const most = Math.max(...poll.options.map((o) => o.votes), 0);
   return (
     <Card style={styles.card}>
@@ -25,7 +29,7 @@ function PollCard({ poll, onVote, busy }: { poll: PollRow; onVote: (option: stri
       {poll.options.map((o) => (
         <Row
           key={o.id}
-          title={poll.my_option === o.id ? t('social.pop.yourVote', { label: o.label }) : o.label}
+          title={poll.my_option === o.id ? t('social.pop.yourVote', { label: label(o.label) }) : label(o.label)}
           subtitle={`${t('social.pop.votes', { count: o.votes })}${most > 0 && o.votes === most ? ` · ${t('social.pop.leading')}` : ''}`}
           onPress={poll.closed || busy ? undefined : () => onVote(o.id)}
         />
@@ -45,11 +49,16 @@ export default function InviteDetail() {
   const [guestsSaved, setGuestsSaved] = useState(false);
   const me = useQuery({ queryKey: ['social-me'], queryFn: () => api.get<{ id: string }>('/me') });
   const [cancelling, setCancelling] = useState(false);
-  const [canva, setCanva] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [place, setPlace] = useState('');
-  const [menu, setMenu] = useState('');
+  // Null until the host types: then the box shows the link already saved.
+  const [canvaTyped, setCanva] = useState<string | null>(null);
+  // Someone forgotten: more people can be invited after sending.
+  const [more, setMore] = useState<string[] | null>(null);
+  // Settling a Pop Party. Null until the host changes a box: until then it shows the choice with the most votes.
+  const [dateTyped, setDate] = useState<string | null>(null);
+  const [timeTyped, setTime] = useState<string | null>(null);
+  const [placeTyped, setPlace] = useState<string | null>(null);
+  const [menuTyped, setMenu] = useState<string | null>(null);
+  const [clearingCanva, setClearingCanva] = useState(false);
   const [paymentNote, setPaymentNote] = useState(false);
   // The host fixes a wrong date, title or place, and takes off someone invited by mistake.
   const [details, setDetails] = useState<{ title: string; date: string; time: string; place: string; note: string } | null>(null);
@@ -61,7 +70,36 @@ export default function InviteDetail() {
     client.invalidateQueries({ queryKey: key });
     client.invalidateQueries({ queryKey: ['events'] });
     client.invalidateQueries({ queryKey: ['social-home'] });
+    // The family calendar shows invitations too: a new date, or a cancelled one, must show there at once.
+    client.invalidateQueries({ queryKey: ['calendar'] });
   };
+  // A date already gone is almost always a slip. A past event can still have its title or place fixed, so the
+  // edit box only objects when the date itself was moved to the past.
+  const isPast = (d: string, c: string) => (parseDateTime(d, c)?.getTime() ?? Infinity) < Date.now();
+  const detailsAt = details ? parseDateTime(details.date, details.time) : null;
+  const savedAt = event.data?.starts_at ? new Date(event.data.starts_at).getTime() : null;
+  const movedToPast = !!detailsAt && detailsAt.getTime() < Date.now() && (savedAt === null || Math.abs(savedAt - detailsAt.getTime()) > 60_000);
+
+  const canva = canvaTyped ?? event.data?.canva_url ?? '';
+  // The choice with the most votes in a poll (the first one on a tie). Nothing while nobody has voted.
+  const leading = (topic: 'date' | 'venue' | 'menu') => {
+    const options = event.data?.polls.find((p) => p.topic === topic)?.options ?? [];
+    const most = Math.max(...options.map((o) => o.votes), 0);
+    return most > 0 ? (options.find((o) => o.votes === most)?.label ?? '') : '';
+  };
+  // A date choice typed as words in an older party cannot be read back: the host picks the date by hand then.
+  const leadDate = readDateOption(leading('date'));
+  const date = dateTyped ?? leadDate?.date ?? '';
+  const time = timeTyped ?? leadDate?.time ?? '';
+  const place = (placeTyped ?? leading('venue')).slice(0, 200);
+  const menu = (menuTyped ?? leading('menu')).slice(0, 200);
+  const addGuests = useMutation({
+    mutationFn: () => api.rpc('event_add_invitees', { p_event: id, p_audience: { type: 'people', profile_ids: more ?? [] } }),
+    onSuccess: () => {
+      setMore(null);
+      refresh();
+    },
+  });
 
   const rsvp = useMutation({
     mutationFn: async (input: { answer: RsvpAnswer; onlyGuests?: boolean }) => {
@@ -116,7 +154,16 @@ export default function InviteDetail() {
   const saveCanva = useMutation({
     mutationFn: () => api.rpc('event_update', { p_event: id, p_canva_url: canva.trim() }),
     onSuccess: () => {
-      setCanva('');
+      // Back to showing what is saved.
+      setCanva(null);
+      refresh();
+    },
+  });
+  const clearCanva = useMutation({
+    mutationFn: () => api.rpc('event_clear_canva', { p_event: id }),
+    onSuccess: () => {
+      setCanva(null);
+      setClearingCanva(false);
       refresh();
     },
   });
@@ -211,6 +258,7 @@ export default function InviteDetail() {
                   ) : guests ? (
                     <Note>{t('social.invites.guestsAnswerFirst')}</Note>
                   ) : null}
+                  {e.my_answer && !guestsChanged && !guestsSaved && !rsvp.isPending ? <Note>{t('social.invites.guestsSame')}</Note> : null}
                   {guestsSaved ? <Note>{t('social.invites.guestsSaved')}</Note> : null}
                   <ActionError error={rsvp.error} />
                 </Card>
@@ -224,12 +272,15 @@ export default function InviteDetail() {
               {isPop && e.is_mine && !e.decided && !e.cancelled ? (
                 <Card style={styles.card}>
                   <SectionTitle>{t('social.pop.decide')}</SectionTitle>
-                  <DateField label={t('social.dateLabel')} value={date} onChange={setDate} />
+                  {e.polls.some((p) => p.options.some((o) => o.votes > 0)) ? <Note>{t('social.pop.filledFromVotes')}</Note> : null}
+                  <DateField label={t('social.dateLabel')} value={date} onChange={setDate} min={todayIso()} invalid={isPast(date, time)} />
                   <TimeField label={t('social.timeLabel')} value={time} onChange={setTime} />
+                  {isPast(date, time) ? <Note>{t('social.missing.future')}</Note> : null}
                   <Field label={t('social.invites.place')} value={place} onChangeText={setPlace} maxLength={200} />
                   <Field label={t('social.pop.menu')} value={menu} onChangeText={setMenu} maxLength={200} />
                   <ActionError error={decide.error} />
-                  <SmallButton label={t('social.pop.settle')} disabled={!parseDateTime(date, time) || decide.isPending} onPress={() => decide.mutate()} />
+                  <SmallButton label={t('social.pop.settle')} disabled={!parseDateTime(date, time) || isPast(date, time) || decide.isPending} onPress={() => decide.mutate()} />
+                  {!parseDateTime(date, time) ? <Note>{t('social.missing.when')}</Note> : null}
                 </Card>
               ) : null}
 
@@ -245,6 +296,25 @@ export default function InviteDetail() {
                   onPress={e.is_mine && !e.cancelled ? () => setUninviting({ id: p.profile_id, name: showName(p.name) }) : undefined}
                 />
               ))}
+
+              {e.is_mine && !e.cancelled ? (
+                more ? (
+                  <Card style={styles.card}>
+                    <SectionTitle>{t('social.invites.inviteMore')}</SectionTitle>
+                    <PeoplePicker chosen={more} onChange={setMore} exclude={e.people.map((p) => p.profile_id)} />
+                    <ActionError error={addGuests.error} />
+                    <PrimaryButton
+                      label={addGuests.isPending ? t('social.sending') : t('social.invites.sendToThem')}
+                      disabled={addGuests.isPending}
+                      missing={more.length === 0 ? t('social.missing.tickSomeone') : null}
+                      onPress={() => addGuests.mutate()}
+                    />
+                    <TextButton label={t('social.cancel')} onPress={() => setMore(null)} />
+                  </Card>
+                ) : (
+                  <SecondaryButton label={t('social.invites.inviteMore')} onPress={() => setMore([])} />
+                )
+              ) : null}
 
               {e.is_mine && !e.cancelled ? (
                 <>
@@ -273,7 +343,13 @@ export default function InviteDetail() {
                       <ActionError error={setDesign.error ?? buyDesign.error} />
                       <Field label={t('social.invites.canvaLink')} value={canva} onChangeText={setCanva} autoCapitalize="none" placeholder={t('social.invites.canvaPlaceholder')} />
                       <ActionError error={saveCanva.error} />
-                      <SmallButton label={t('social.invites.saveCanva')} kind="plain" disabled={!canva.trim() || saveCanva.isPending} onPress={() => saveCanva.mutate()} />
+                      <SmallButton label={t('social.invites.saveCanva')} kind="plain" disabled={!canva.trim() || canva.trim() === (e.canva_url ?? '') || saveCanva.isPending} onPress={() => saveCanva.mutate()} />
+                      {!canva.trim() ? (
+                        <Note>{t('social.invites.canvaEmpty')}</Note>
+                      ) : canva.trim() === (e.canva_url ?? '') ? (
+                        <Note>{t('social.invites.canvaSame')}</Note>
+                      ) : null}
+                      {e.canva_url ? <TextButton label={t('social.invites.removeCanva')} danger onPress={() => setClearingCanva(true)} /> : null}
                     </Card>
                   ) : null}
                   {!isPop || e.starts_at ? (
@@ -304,7 +380,7 @@ export default function InviteDetail() {
         title={t('social.invites.editDetails')}
         confirmLabel={t('common.save')}
         busy={saveDetails.isPending}
-        onConfirm={() => details && details.title.trim() && parseDateTime(details.date, details.time) && saveDetails.mutate(details)}
+        onConfirm={() => details && details.title.trim() && parseDateTime(details.date, details.time) && !movedToPast && saveDetails.mutate(details)}
         onCancel={() => setDetails(null)}
       >
         {details ? (
@@ -314,6 +390,7 @@ export default function InviteDetail() {
             <TimeField label={t('social.timeLabel')} value={details.time} onChange={(v) => setDetails({ ...details, time: v })} />
             {!details.title.trim() ? <Note>{t('social.missing.title')}</Note> : null}
             {!parseDateTime(details.date, details.time) ? <Note>{t('social.missing.when')}</Note> : null}
+            {movedToPast ? <Note>{t('social.missing.future')}</Note> : null}
             <Field label={t('social.invites.place')} value={details.place} onChangeText={(v) => setDetails({ ...details, place: v })} maxLength={200} />
             <Field label={t('social.invites.note')} value={details.note} onChangeText={(v) => setDetails({ ...details, note: v })} multiline maxLength={1000} />
             <Note>{t('social.invites.editTellsEveryone')}</Note>
@@ -332,6 +409,18 @@ export default function InviteDetail() {
         onCancel={() => setUninviting(null)}
       >
         <ActionError error={uninvite.error} />
+      </ConfirmDialog>
+      <ConfirmDialog
+        visible={clearingCanva}
+        title={t('social.invites.removeCanvaTitle')}
+        message={t('social.invites.removeCanvaMessage')}
+        confirmLabel={t('social.invites.removeCanva')}
+        danger
+        busy={clearCanva.isPending}
+        onConfirm={() => clearCanva.mutate()}
+        onCancel={() => setClearingCanva(false)}
+      >
+        <ActionError error={clearCanva.error} />
       </ConfirmDialog>
       <ConfirmDialog
         visible={cancelling}

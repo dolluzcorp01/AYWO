@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, TopBar } from '@/components/ui';
+import { Card, PrimaryButton, TopBar } from '@/components/ui';
 import { LegalLinks } from '@/legal/LegalLinks';
 import { LEGAL_DRAFT, LEGAL_VERSION, PUBLISHER } from '@/legal/publisher';
 import { colors, fonts } from '@/theme/tokens';
@@ -31,12 +31,22 @@ export function LegalPage({ kind }: { kind: LegalKind }) {
             <Text accessibilityRole="alert" style={styles.draft}>{t('legal.draft')}</Text>
           </Card>
         ) : null}
-        {SECTIONS[kind].map((section) => (
-          <View key={section} style={styles.section}>
-            <Text accessibilityRole="header" style={styles.heading}>{t(`legal.${kind}.${section}Title`)}</Text>
-            <Text style={styles.body}>{t(`legal.${kind}.${section}Body`, { ...PUBLISHER })}</Text>
-          </View>
-        ))}
+        {SECTIONS[kind].map((section) => {
+          // A detail not filled in yet (see publisher.ts) is left out: "Phone: XXX" helps nobody.
+          const body = t(`legal.${kind}.${section}Body`, { ...PUBLISHER })
+            .split('\n')
+            .filter((line) => !line.includes('XXX'))
+            .join('\n')
+            .trim();
+          if (!body) return null;
+          return (
+            <View key={section} style={styles.section}>
+              <Text accessibilityRole="header" style={styles.heading}>{t(`legal.${kind}.${section}Title`)}</Text>
+              <Text style={styles.body}>{body}</Text>
+            </View>
+          );
+        })}
+        {kind === 'contact' ? <PrimaryButton label={t('ops.help.ask')} onPress={() => router.push('/help')} /> : null}
         <LegalLinks current={kind} />
       </ScrollView>
     </Screen>

@@ -13,7 +13,8 @@
     "privacyNote": "Only for signing in. Never shown to anyone.",
     "terms": "By continuing you agree to the <terms>Terms</terms> and <privacy>Privacy policy</privacy>.",
     "send": "Send code",
-    "sendFailed": "We couldn't send the code. Check the number and try again."
+    "sendFailed": "We couldn't send the code. Check the number and try again.",
+    "needNumber": "Type your full mobile number to continue."
   },
   "otp": {
     "title": "Enter the 6-digit code",
@@ -22,7 +23,8 @@
     "resend": "Send the code again",
     "resendIn": "Resend code in {{seconds}} seconds",
     "wrongCode": "That code didn't work. Try again.",
-    "changeNumber": "Wrong number? Change it"
+    "changeNumber": "Wrong number? Change it",
+    "needCode": "Type all 6 digits of the code."
   },
   "home": {
     "noTrees": "No family tree yet."
@@ -99,7 +101,7 @@
     "namesOnly": "Names only",
     "myView": "My view",
     "seeAs": "See as...",
-    "myViewHelp": "Tap anyone to centre them.",
+    "myViewHelp": "Tap someone to bring them to the middle. Tap them again to open their card.",
     "namesHelp": "Pinch to zoom, drag to move.",
     "seeingAs": "Seeing the tree from {{name}}'s place.",
     "seeAsTitle": "See the tree as...",

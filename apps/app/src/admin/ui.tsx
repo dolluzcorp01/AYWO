@@ -1,6 +1,7 @@
 // Shared pieces of the admin panel: page frame, table, search, paging, dialogs. Web only, using the frozen tokens.
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +11,7 @@ import { Card, Heading, Muted } from '@/components/ui';
 import { ApiFailure, api } from '@/lib/api';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 import { useAdminAccess } from './access';
+import { AdminNames } from './AdminNames';
 import type { Page, Permission } from './types';
 
 export const PAGE_SIZE = 25;
@@ -63,12 +65,24 @@ export function AdminPage({
 }) {
   const { t } = useTranslation();
   const access = useAdminAccess();
+  const router = useRouter();
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.pageBody}>
       <View style={styles.pageInner}>
         <Heading>{title}</Heading>
         {subtitle ? <Muted>{subtitle}</Muted> : null}
-        {access.can(gates) ? children : <Message text={t('admin.common.notAllowed')} alert />}
+        {access.can(gates) ? (
+          children
+        ) : (
+          <>
+            <Message text={t('admin.common.notAllowed')} alert />
+            <Text style={styles.cellMuted}>{t('admin.common.notAllowedHelp', { needs: gates.map((g) => t(`admin.permissions.${g}`, { defaultValue: g })).join(', ') })}</Text>
+            <AdminNames />
+            <View style={styles.actions}>
+              <SecondaryButton main label={t('admin.common.backToDashboard')} onPress={() => router.navigate('/admin')} />
+            </View>
+          </>
+        )}
       </View>
     </ScrollView>
   );
@@ -240,9 +254,9 @@ export function Pager({ page, total, onPage }: { page: number; total: number; on
 }
 
 /** Searches when Enter or the button is pressed, so a half-typed word is never sent. */
-export function SearchBox({ placeholder, onSearch }: { placeholder: string; onSearch: (q: string) => void }) {
+export function SearchBox({ placeholder, onSearch, initial = '' }: { placeholder: string; onSearch: (q: string) => void; initial?: string }) {
   const { t } = useTranslation();
-  const [text, setText] = useState('');
+  const [text, setText] = useState(initial);
   return (
     <View style={styles.search}>
       <TextInput
@@ -333,7 +347,13 @@ export function Pill({ label, alert }: { label: string; alert?: boolean }) {
   );
 }
 
-export function StatCard({ label, value, onPress }: { label: string; value: number; onPress?: () => void }) {
+/** A date with no time, as people read it: 17 Nov 2026. For offer and banner dates, which are whole days in India. */
+export function formatDay(iso: string | null | undefined, language: string): string {
+  if (!iso) return '-';
+  return new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(new Date(iso));
+}
+
+export function StatCard({ label, value, onPress }: { label: string; value: number | string; onPress?: () => void }) {
   const body = (
     <Card>
       <Text style={styles.statValue}>{value}</Text>
@@ -389,6 +409,7 @@ export function FormDialog({
   confirmLabel,
   cancelLabel,
   danger,
+  blocked,
   onCancel,
   onConfirm,
   children,
@@ -399,6 +420,8 @@ export function FormDialog({
   confirmLabel: string;
   cancelLabel?: string;
   danger?: boolean;
+  /** Why the confirm button must stay off for a reason outside the fields, such as nobody picked yet. */
+  blocked?: string | null;
   /** Extra warnings, shown above the fields. */
   children?: ReactNode;
   onCancel: () => void;
@@ -413,7 +436,7 @@ export function FormDialog({
   const [failure, setFailure] = useState<string | null>(null);
   const watchTwoStep = useTwoStepWatch();
   const short = fields.find((field) => (values[field.name] ?? '').trim().length < (field.minLength ?? 0));
-  const ready = !short;
+  const ready = !short && !blocked;
 
   async function confirm() {
     setBusy(true);
@@ -444,7 +467,7 @@ export function FormDialog({
         </View>
       ))}
       {failure ? <Message text={failure} alert /> : null}
-      <Missing reasons={[short ? t('admin.common.needsText', { field: short.label, count: short.minLength ?? 1 }) : null]} />
+      <Missing reasons={[blocked, short ? t('admin.common.needsText', { field: short.label, count: short.minLength ?? 1 }) : null]} />
       <View style={styles.dialogActions}>
         <SecondaryButton label={cancelLabel ?? t('admin.common.cancel')} onPress={onCancel} disabled={busy} />
         <SecondaryButton main label={confirmLabel} onPress={confirm} disabled={busy || !ready} danger={danger} />

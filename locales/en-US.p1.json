@@ -4,7 +4,8 @@
     "save": "Save",
     "continue": "Continue",
     "done": "Done",
-    "close": "Close"
+    "close": "Close",
+    "saved": "Saved"
   },
   "phoneField": {
     "placeholder": "Mobile number",
@@ -111,7 +112,9 @@
     "version_conflict": "Someone else changed this just now. Load the latest and make your change again.",
     "already_in_tree": "You already have a card in this tree.",
     "plan_cancel_first": "Your AYWO Plus is still running. Cancel it first, or confirm that you understand it will go on being charged.",
-    "offline": "You're offline. This needs the internet, so try again when you're connected."
+    "offline": "You're offline. This needs the internet, so try again when you're connected.",
+    "phone_taken": "Another AYWO account already uses that number.",
+    "phone_same": "That is already your number."
   },
   "language": {
     "title": "Choose your language",
@@ -136,17 +139,32 @@
     "addPhoto": "Choose a photo",
     "photoHelp": "A photo helps elders recognise you",
     "yourName": "Your name",
-    "lookedNote": "No tree has your number yet. Start your own, or wait for an invite."
+    "lookedNote": "No tree has your number yet. Start your own, or wait for an invite.",
+    "removePhoto": "Remove photo",
+    "email": "Email (optional)",
+    "emailHelp": "Only used for the notices you switch on \"By email\". AYWO asks you to confirm it under Notifications.",
+    "emailBad": "That does not look like an email address.",
+    "changeNumber": "Change my mobile number",
+    "changeNumberHelp": "Got a new SIM? Type the new number. We text it a code, and tell your old number that it was changed. Your trees and everything else stay as they are.",
+    "newNumber": "New mobile number",
+    "codeSentTo": "Code sent to {{phone}}",
+    "confirmNumber": "Use this number from now on",
+    "numberChanged": "Your number was changed. Sign in with the new one from now on."
   },
   "start": {
     "title": "Hey {{name}}, let's bring your family together",
     "titleNoName": "Let's bring your family together",
     "fastest": "FASTEST",
     "haveTree": "I already have a tree",
-    "haveTreeHelp": "From Lighten, Ancestry, MyHeritage, FamilySearch or GEDCOM.",
+    "haveTreeHelp": "Bring it in from another family-tree app or a family-tree file.",
     "fromMe": "Start from me",
     "fromMeHelp": "Add your parents, then grow one person at a time.",
-    "treeName": "{{name}} family"
+    "treeName": "{{name}} family",
+    "anotherTitle": "Start another family tree?",
+    "anotherText": "You already have a tree. This makes a new, separate one. To add people to the tree you have, go back and open it.",
+    "anotherYes": "Start the new tree",
+    "anotherName": "Name of the new tree",
+    "anotherPlaceholder": "For example: Mother's side"
   },
   "import": {
     "title": "Bring in your tree",
@@ -221,7 +239,12 @@
     "partnerOf": "Partner of {{names}}",
     "inFamilyPeople_one": "In {{tree}} · {{count}} person",
     "inFamilyPeople_other": "In {{tree}} · {{count}} people",
-    "explainBy": "Your number matches the one {{name}} saved. {{first}} will be told."
+    "explainBy": "Your number matches the one {{name}} saved. {{first}} will be told.",
+    "notMeTitle": "Sure this is not you?",
+    "notMeText": "AYWO will stop asking about this person. If you tapped by mistake, you can turn the question back on under Me > Privacy and account.",
+    "notMeYes": "Yes, not me",
+    "askAgain": "Ask me \"Is this you?\" again",
+    "askAgainDone": "Done. You will be asked again the next time you sign in."
   },
   "home": {
     "hey": "Hey {{name}}",
@@ -266,7 +289,10 @@
     "comment": "Comment",
     "history": "History",
     "edit": "Edit",
-    "openFailed": "That didn't open on this device. Check that the app for it is installed."
+    "openFailed": "That didn't open on this device. Check that the app for it is installed.",
+    "born": "Born",
+    "passedAway": "Passed away",
+    "aboutDate": "About {{date}}"
   },
   "add": {
     "title": "Add a relative",
@@ -317,7 +343,7 @@
     "born": "Born (year is fine)",
     "bornPlaceholder": "e.g. 1968",
     "died": "Passed away (year is fine)",
-    "badDate": "Type a year like 1968, a month like 03/1968, or a full date like 21/03/1968.",
+    "badDate": "Type just the year, like 1968, or tap the calendar button to pick the full date.",
     "childNumber": "Child number",
     "notSet": "Not set",
     "earlier": "Earlier in the family",
@@ -344,7 +370,14 @@
     "weddingDate": "Wedding date (optional)",
     "weddingWith": "Wedding date with {{name}}",
     "weddingPlaceholder": "e.g. 21/03/1995",
-    "badWeddingDate": "Type the full wedding date, like 21/03/1995. It can't be in the future."
+    "badWeddingDate": "Type the full wedding date, like 21/03/1995. It can't be in the future.",
+    "pickBorn": "Pick the date of birth from a calendar",
+    "pickDied": "Pick the date of passing from a calendar",
+    "leaveTitle": "Leave without saving?",
+    "leaveText": "What you typed here will be lost.",
+    "leaveYes": "Leave, don't save",
+    "approvalAddNote": "Your addition goes to the tree's Creator to approve first. A photo and phone numbers can be added once the person is in the tree.",
+    "approvalEditNote": "Your changes go to the tree's Creator to approve first. Phone numbers and email cannot be changed this way."
   },
   "picker": {
     "hour": "Hour",
@@ -445,7 +478,13 @@
     "anyoneWithLink": "Anyone with the link",
     "revoke": "Remove",
     "revokeTitle": "Remove this access?",
-    "revokeHelp": "Their link stops working straight away."
+    "revokeHelp": "Their link stops working straight away.",
+    "whoFor": "Who is this for?",
+    "whoForHelp": "Pick them from the tree and AYWO uses the mobile number already saved on their card. They also see the tree from their own place.",
+    "pickPerson": "Choose from the tree",
+    "changePerson": "Change",
+    "endsOn": "until {{date}}",
+    "changeRole": "Change what they can do"
   },
   "activity": {
     "title": "Activity",
@@ -507,7 +546,12 @@
       "contacts": "{{name}} changed contact details for {{person}}",
       "added": "{{name}} added {{person}}",
       "changed": "{{name}} changed {{person}}"
-    }
+    },
+    "newPhoto": "A new photo",
+    "declineTitle": "Decline this request?",
+    "declineText": "A decline cannot be changed later. They would have to ask again.",
+    "showMore": "Show more",
+    "olderInHistory": "These are the latest 200. Older changes are in each tree's History."
   },
   "merge": {
     "title": "Same person?",
@@ -548,13 +592,16 @@
       "change": "{{name}} changed {{person}}",
       "contact": "{{name}} changed contact details",
       "link": "{{name}} changed a family link"
-    }
+    },
+    "showMore": "Show older changes",
+    "end": "That is every change in this tree."
   },
   "comments": {
     "title": "Comments",
     "empty": "No comments yet.",
     "placeholder": "Write a comment",
-    "send": "Send"
+    "send": "Send",
+    "stopEditing": "Stop changing this note"
   },
   "search": {
     "title": "Search",
@@ -611,7 +658,14 @@
     "noSuccessor": "Not set",
     "successorsSet_one": "{{count}} of {{total}} set",
     "successorsSet_other": "{{count}} of {{total}} set",
-    "help": "Help and legal"
+    "help": "Help and legal",
+    "treeSettings": "Rename or delete a tree",
+    "treeName": "Name of the tree",
+    "saveTreeName": "Save the name",
+    "deleteTree": "Delete this tree",
+    "deleteTreeText": "Deleting \"{{name}}\" removes it for everyone it is shared with. This cannot be undone here. To go ahead, type the word {{word}}.",
+    "deleteTreeYes": "Delete \"{{name}}\" for everyone",
+    "treeDeleted": "The tree was deleted."
   },
   "settings": {
     "language": "Language",
@@ -655,7 +709,8 @@
     "deleteBookedHelp": "You asked to delete it. Changed your mind? Keep it with one tap.",
     "keepAccount": "Keep my account",
     "simpleMode": "Simple mode for elders",
-    "simpleModeHelp": "A few big buttons on Home, larger text and bigger buttons everywhere."
+    "simpleModeHelp": "A few big buttons on Home, larger text and bigger buttons everywhere.",
+    "deletedNote": "Your account is set to be deleted in 30 days. Sign in again before then to keep it."
   },
   "time": {
     "justNow": "Just now",
@@ -676,7 +731,10 @@
     "note": "Used only to answer this request.",
     "send": "Send request",
     "sending": "Sending...",
-    "done": "We have your request. An AYWO Admin will look at it and reply to you."
+    "done": "We have your request. An AYWO Admin will look at it and reply to you.",
+    "needName": "Still needed: the person's name.",
+    "needContact": "Still needed: a phone number or email where we can reach you.",
+    "needReason": "Still needed: the reason, in a sentence or two."
   },
   "legal": {
     "termsLink": "Terms of use",

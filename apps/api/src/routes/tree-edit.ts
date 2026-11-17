@@ -249,6 +249,21 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
     return asCaller(userId, (db) => call(db, 'comment_add($1, $2)', [id, body.body]));
   });
 
+  // The writer corrects or takes back their own note; the tree's Creator may delete any.
+  app.patch('/comments/:id', async (req) => {
+    const userId = await requireUser(req);
+    const { id } = idParam.parse(req.params);
+    const body = z.object({ body: z.string().trim().min(1).max(2000) }).parse(req.body);
+    await asCaller(userId, (db) => call(db, 'person_comment_update($1, $2)', [id, body.body]));
+    return { ok: true };
+  });
+  app.delete('/comments/:id', async (req) => {
+    const userId = await requireUser(req);
+    const { id } = idParam.parse(req.params);
+    await asCaller(userId, (db) => call(db, 'person_comment_delete($1)', [id]));
+    return { ok: true };
+  });
+
   // ===== Sharing =====
 
   app.get('/trees/:id/shares', async (req) => {
@@ -311,8 +326,11 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
 
   app.get('/activity', async (req) => {
     const userId = await requireUser(req);
-    const { tab } = z.object({ tab: z.enum(['needs_you', 'changes', 'access', 'all']).default('all') }).parse(req.query);
-    return asCaller(userId, (db) => call(db, 'activity_feed($1)', [tab]));
+    // limit: "Show more" on the Activity page asks for a longer list (activity_feed itself stops at 200).
+    const { tab, limit } = z
+      .object({ tab: z.enum(['needs_you', 'changes', 'access', 'all']).default('all'), limit: z.coerce.number().int().min(1).max(200).default(50) })
+      .parse(req.query);
+    return asCaller(userId, (db) => call(db, 'activity_feed($1, $2)', [tab, limit]));
   });
 
   app.post('/requests/:id/decide', async (req) => {

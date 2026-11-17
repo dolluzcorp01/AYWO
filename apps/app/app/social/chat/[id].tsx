@@ -19,6 +19,7 @@ import { showPhone } from '@/lib/phone';
 import { useTimeAgo } from '@/lib/time';
 import { BlockDialog, ReportDialog } from '@/ops/Report';
 import { pickPhotos } from '@/social/media';
+import { PeoplePicker } from '@/social/AudiencePicker';
 import { ActionError, Gate, newClientId, Note, useGoBack, useName } from '@/social/parts';
 import type { ChatPage, Message } from '@/social/types';
 import { FETCH_WHEN_OFFLINE_MS, useChatSocket } from '@/social/useChatSocket';
@@ -58,6 +59,8 @@ export default function ChatRoom() {
   const [recording, setRecording] = useState(false);
   const [micDenied, setMicDenied] = useState(false);
   const [toDelete, setToDelete] = useState<Message | null>(null);
+  // One "are you sure" for the small removals on this screen: what is asked, and what Yes does.
+  const [asking, setAsking] = useState<{ title: string; yes: string; run: () => void } | null>(null);
   const [toReport, setToReport] = useState<Message | null>(null);
   const [blocking, setBlocking] = useState(false);
   const [people, setPeople] = useState(false);
@@ -66,6 +69,7 @@ export default function ChatRoom() {
   const [editing, setEditing] = useState<Message | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const [hiding, setHiding] = useState(false);
   // One id for each thing being sent, kept until that send succeeds: trying the same words or the same photo again after
   // a dropped connection cannot post twice, and two different things sent close together never share an id (the server
   // answers a repeated id with the first message, so sharing one would silently lose the second).
@@ -192,6 +196,16 @@ export default function ChatRoom() {
       client.invalidateQueries({ queryKey: ['chats'] });
     },
   });
+  // A one-to-one chat cannot be left, but it can be taken off my own list. A new message brings it back.
+  const hide = useMutation({
+    mutationFn: () => api.rpc('chat_hide', { p_chat: id }),
+    onSuccess: () => {
+      setHiding(false);
+      client.invalidateQueries({ queryKey: ['chats'] });
+      client.invalidateQueries({ queryKey: ['social-home'] });
+      goBack();
+    },
+  });
   const leave = useMutation({
     mutationFn: () => api.rpc('chat_leave', { p_chat: id }),
     onSuccess: () => {
@@ -209,9 +223,11 @@ export default function ChatRoom() {
     },
   });
 
+  // A picked photo waits here for a look and a tap on Send: a wrong tap in the gallery no longer goes to everyone.
+  const [photoToSend, setPhotoToSend] = useState<PickedFile | null>(null);
   async function sendPhoto() {
     const [photo] = await pickPhotos(1);
-    if (photo) send.mutate({ file: photo, kind: 'photo' });
+    if (photo) setPhotoToSend(photo);
   }
 
   const first = chat.data?.pages[0];
@@ -230,6 +246,16 @@ export default function ChatRoom() {
     ? t('social.chat.memberCount', { count: first.chat.members })
     : direct && otherNumber.data ? showPhone(otherNumber.data) : undefined;
   const iMadeIt = !!myId && !!members.data?.some((m) => m.creator && m.profile_id === myId);
+  // Null while the list of members shows; a list (even empty) while people are being ticked to add.
+  const [adding, setAdding] = useState<string[] | null>(null);
+  const addMembers = useMutation({
+    mutationFn: () => api.rpc('chat_add_members', { p_chat: id, p_members: adding ?? [] }),
+    onSuccess: () => {
+      setAdding(null);
+      void members.refetch();
+      client.invalidateQueries({ queryKey: ['chats'] });
+    },
+  });
   const removeMember = useMutation({
     mutationFn: (profileId: string) => api.rpc('chat_remove_member', { p_chat: id, p_profile: profileId }),
     onSuccess: () => {
@@ -283,6 +309,7 @@ export default function ChatRoom() {
         {first ? (
           <View style={styles.tools}>
             {first.chat.kind === 'direct' && other ? <TextButton label={t('ops.block.short')} onPress={() => setBlocking(true)} /> : null}
+            {first.chat.kind === 'direct' ? <TextButton label={t('social.chat.hide')} onPress={() => setHiding(true)} /> : null}
             {first.chat.kind === 'group' && first.chat.can_rename ? (
               <TextButton label={t('social.chat.rename')} onPress={() => setRenaming(first.chat.name ?? '')} />
             ) : null}
@@ -457,6 +484,17 @@ export default function ChatRoom() {
         <ActionError error={rename.error} />
       </ConfirmDialog>
       <ConfirmDialog
+        visible={hiding}
+        title={t('social.chat.hideTitle')}
+        message={t('social.chat.hideMessage')}
+        confirmLabel={t('social.chat.hideYes')}
+        busy={hide.isPending}
+        onConfirm={() => hide.mutate()}
+        onCancel={() => setHiding(false)}
+      >
+        <ActionError error={hide.error} />
+      </ConfirmDialog>
+      <ConfirmDialog
         visible={leaving}
         title={t('social.chat.leaveTitle')}
         message={t('social.chat.leaveMessage')}
@@ -467,6 +505,29 @@ export default function ChatRoom() {
         onCancel={() => setLeaving(false)}
       >
         <ActionError error={leave.error} />
+      </ConfirmDialog>
+      <ConfirmDialog
+        visible={!!asking}
+        title={asking?.title ?? ''}
+        confirmLabel={asking?.yes ?? ''}
+        danger
+        onConfirm={() => {
+          asking?.run();
+          setAsking(null);
+        }}
+        onCancel={() => setAsking(null)}
+      />
+      <ConfirmDialog
+        visible={!!photoToSend}
+        title={t('social.chat.sendPhotoTitle')}
+        confirmLabel={t('social.chat.sendPhotoYes')}
+        onConfirm={() => {
+          if (photoToSend) send.mutate({ file: photoToSend, kind: 'photo' });
+          setPhotoToSend(null);
+        }}
+        onCancel={() => setPhotoToSend(null)}
+      >
+        {photoToSend ? <Image source={{ uri: photoToSend.uri }} style={styles.photoPreview} resizeMode="contain" accessibilityLabel={t('social.chat.photo')} /> : null}
       </ConfirmDialog>
       <ConfirmDialog
         visible={!!toDelete}
@@ -501,7 +562,7 @@ export default function ChatRoom() {
           <View key={m.profile_id} style={styles.member}>
             <Text style={styles.memberName}>{showName(m.name)}{m.creator ? ` · ${t('ops.chat.madeIt')}` : ''}</Text>
             {iMadeIt && m.profile_id !== myId ? (
-              <TextButton label={t('ops.chat.remove')} danger disabled={removeMember.isPending} onPress={() => removeMember.mutate(m.profile_id)} />
+              <TextButton label={t('ops.chat.remove')} danger disabled={removeMember.isPending} onPress={() => setAsking({ title: t('social.groups.removeTitle', { name: showName(m.name) }), yes: t('ops.chat.remove'), run: () => removeMember.mutate(m.profile_id) })} />
             ) : null}
           </View>
         ))}
@@ -512,12 +573,24 @@ export default function ChatRoom() {
           </>
         ) : null}
         <ActionError error={removeMember.error} />
+        {adding ? (
+          <>
+            <PeoplePicker chosen={adding} onChange={setAdding} exclude={(members.data ?? []).map((m) => m.profile_id)} />
+            <ActionError error={addMembers.error} />
+            <SmallButton label={t('social.groups.addChosen')} disabled={adding.length === 0 || addMembers.isPending} onPress={() => addMembers.mutate()} />
+            {adding.length === 0 ? <Note>{t('social.missing.tickSomeone')}</Note> : null}
+            <TextButton label={t('social.cancel')} onPress={() => setAdding(null)} />
+          </>
+        ) : (
+          <SmallButton kind="plain" label={t('social.groups.addPeople')} onPress={() => setAdding([])} />
+        )}
       </ConfirmDialog>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  photoPreview: { width: '100%', height: 260, borderRadius: 12 },
   fill: { flex: 1 },
   unflip: { transform: [{ scaleY: -1 }] },
   tools: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12 },

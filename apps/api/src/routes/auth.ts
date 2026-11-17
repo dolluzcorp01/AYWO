@@ -3,7 +3,7 @@ import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { z } from 'zod';
-import { hashToken, newRefreshToken, REFRESH_DAYS, signAccessToken } from '../auth-tokens.ts';
+import { hashToken, newRefreshToken, REFRESH_DAYS, requireUser, signAccessToken } from '../auth-tokens.ts';
 import { config, isReviewerLogin } from '../config.ts';
 import { asServer } from '../db.ts';
 import { ApiError } from '../errors.ts';
@@ -119,6 +119,76 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     });
     if (!userId) throw new ApiError(422, 'otp_wrong');
     return issueTokens(userId);
+  });
+
+  // ----- Change the sign-in number (a new SIM). The person is signed in, so the old number is already proven:
+  // a code goes to the new number, and the old number is told afterwards, so it cannot happen behind someone's back.
+  app.post('/me/phone/send', strict, async (req) => {
+    const userId = await requireUser(req);
+    const phone = e164(z.object({ phone: z.string() }).parse(req.body).phone);
+    if (isReviewerLogin(phone)) throw new ApiError(422, 'not_allowed');
+    const recent = await asServer(async (db) => {
+      const taken = await db.query(`select 1 from auth.users where phone = $1 and id <> $2`, [phone, userId]);
+      if (taken.rows[0]) throw new ApiError(409, 'phone_taken');
+      const mine = await db.query(`select 1 from auth.users where phone = $1 and id = $2`, [phone, userId]);
+      if (mine.rows[0]) throw new ApiError(422, 'phone_same');
+      const { rows } = await db.query(
+        `select count(*) filter (where created_at > now() - interval '10 minutes')::int as window, count(*)::int as day
+         from auth.otp_codes where phone = $1 and created_at > now() - interval '1 day'`,
+        [phone],
+      );
+      return rows[0] as { window: number; day: number };
+    });
+    if (recent.window >= MAX_SENDS_PER_WINDOW || recent.day >= MAX_SENDS_PER_DAY) throw new ApiError(429, 'otp_too_many');
+    const code = String(randomInt(100000, 1000000));
+    await asServer((db) =>
+      db.query(
+        `insert into auth.otp_codes (phone, code_hash, expires_at) values ($1, $2, now() + make_interval(mins => $3))`,
+        [phone, hashCode(phone, code), OTP_MINUTES],
+      ),
+    );
+    await sendSms(phone, `${code} is your AYWO code to change your number. It works for ${OTP_MINUTES} minutes.`, code);
+    return { ok: true };
+  });
+
+  app.post('/me/phone/verify', strict, async (req) => {
+    const userId = await requireUser(req);
+    const body = z.object({ phone: z.string(), code: z.string().regex(/^\d{6}$/) }).parse(req.body);
+    const phone = e164(body.phone);
+    if (isReviewerLogin(phone)) throw new ApiError(422, 'not_allowed');
+    const oldPhone = await asServer(async (db) => {
+      const wrong = await db.query(
+        `select coalesce(sum(attempts), 0)::int as n from auth.otp_codes where phone = $1 and created_at > now() - interval '1 hour'`,
+        [phone],
+      );
+      if (wrong.rows[0].n >= MAX_WRONG_PER_HOUR) return null;
+      const { rows } = await db.query(
+        `select id, code_hash, attempts from auth.otp_codes
+         where phone = $1 and used_at is null and expires_at > now()
+         order by created_at desc limit 1 for update`,
+        [phone],
+      );
+      const row = rows[0];
+      if (!row || row.attempts >= MAX_ATTEMPTS) return null;
+      if (!sameHash(row.code_hash, hashCode(phone, body.code))) {
+        await db.query(`update auth.otp_codes set attempts = attempts + 1 where id = $1`, [row.id]);
+        return null;
+      }
+      await db.query(`update auth.otp_codes set used_at = now() where id = $1`, [row.id]);
+      // Someone may have signed up with the number between the two steps.
+      const taken = await db.query(`select 1 from auth.users where phone = $1 and id <> $2`, [phone, userId]);
+      if (taken.rows[0]) throw new ApiError(409, 'phone_taken');
+      const before = await db.query(`select phone from auth.users where id = $1 for update`, [userId]);
+      await db.query(`update auth.users set phone = $1, phone_confirmed_at = now() where id = $2`, [phone, userId]);
+      await db.query(`update profiles set login_phone = $1 where id = $2`, [phone, userId]);
+      return (before.rows[0]?.phone ?? '') as string;
+    });
+    if (oldPhone === null) throw new ApiError(422, 'otp_wrong');
+    // The old number hears about it. A failed text must not undo a change that has already happened.
+    if (oldPhone && oldPhone !== phone) {
+      await sendSms(oldPhone.startsWith('+') ? oldPhone : `+${oldPhone}`, 'Your AYWO sign-in number was changed. If this was not you, open AYWO Help at once.').catch(() => undefined);
+    }
+    return { ok: true, phone };
   });
 
   app.post('/auth/refresh', async (req) => {

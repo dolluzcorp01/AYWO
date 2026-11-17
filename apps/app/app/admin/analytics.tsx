@@ -34,7 +34,16 @@ export default function AdminAnalytics() {
       </Panel>
       <QueryState query={query}>
         {(data) => {
-          const dayLabels = data.daily.map((d) => d.day.slice(5, 10));
+          // "17 Nov", not "11-17", which reads as a month first.
+          const dayLabels = data.daily.map((d) => new Date(`${d.day.slice(0, 10)}T12:00:00`).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' }));
+          const languageName = (code: string) => {
+            try {
+              return new Intl.DisplayNames([i18n.language], { type: 'language' }).of(code) ?? code;
+            } catch {
+              return code;
+            }
+          };
+          const DEVICE: Record<string, string> = { ios: 'iPhone', android: 'Android', web: t('admin.analytics.webBrowser') };
           const series = (key: keyof Analytics['daily'][number]) => data.daily.map((d) => Number(d[key]));
           const pct = (part: number) => (data.funnel.signed_up ? `${Math.round((100 * part) / data.funnel.signed_up)}%` : '0%');
           return (
@@ -78,8 +87,8 @@ export default function AdminAnalytics() {
                     [t('admin.analytics.optIn'), `${data.totals.marketing_opt_in}`],
                     [t('admin.analytics.referrals'), `${data.totals.referrals}`],
                     [t('admin.analytics.plans'), Object.entries(data.plans).map(([s, n]) => `${t(`admin.payments.store.${s}`)} ${n}`).join(', ') || '0'],
-                    [t('admin.analytics.languages'), Object.entries(data.languages).map(([l, n]) => `${l} ${n}`).join(', ') || '-'],
-                    [t('admin.analytics.devices'), Object.entries(data.devices).map(([p, n]) => `${p} ${n}`).join(', ') || '-'],
+                    [t('admin.analytics.languages'), Object.entries(data.languages).map(([l, n]) => `${languageName(l)} ${n}`).join(', ') || '-'],
+                    [t('admin.analytics.devices'), Object.entries(data.devices).map(([p, n]) => `${DEVICE[p] ?? p} ${n}`).join(', ') || '-'],
                   ]}
                 />
               </Panel>

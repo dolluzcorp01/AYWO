@@ -57,7 +57,8 @@ export default function HelpCentre() {
           <ActionError error={create.error} />
           <PrimaryButton
             label={t('ops.help.send')}
-            disabled={!category || subject.trim().length < 3 || !body.trim() || create.isPending}
+            disabled={create.isPending}
+            missing={!category ? t('ops.help.needTopic') : subject.trim().length < 3 ? t('ops.help.needSubject') : !body.trim() ? t('ops.help.needBody') : null}
             onPress={() => create.mutate()}
           />
           <TextButton label={t('social.cancel')} onPress={() => setWriting(false)} />

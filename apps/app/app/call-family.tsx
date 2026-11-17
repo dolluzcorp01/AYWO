@@ -15,6 +15,7 @@ import { mainTree, useTrees } from '@/lib/account';
 import { useErrorText } from '@/lib/errors';
 import { goBack } from '@/lib/nav';
 import { callNow } from '@/social/call';
+import { Note, useListSearch } from '@/social/parts';
 import { useTreeView } from '@/tree/useTreeView';
 import { colors, fonts, radius, shadows } from '@/theme/tokens';
 
@@ -28,11 +29,13 @@ export default function CallFamily() {
 
   const failed = trees.error ?? tree.error;
   const people = tree.data ? callList(tree.data.nodes, tree.data.contacts, tree.data.viewer_person_id) : [];
+  // A big family is a long list: a search box appears once it is.
+  const search = useListSearch<(typeof people)[number]>((person) => person.name);
 
   return (
     <Screen>
       <TopBar title={t('elder.callTitle')} subtitle={t('elder.callSubtitle')} onBack={() => goBack(router)} />
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {failed ? (
           <LoadFailed message={errorText(failed)} onRetry={() => (trees.error ? trees.refetch() : tree.refetch())} />
         ) : !tree.data ? (
@@ -43,7 +46,10 @@ export default function CallFamily() {
             {main ? <SecondaryButton label={t('elder.openTree')} onPress={() => router.push({ pathname: '/tree/[id]', params: { id: main.id } })} /> : null}
           </>
         ) : (
-          people.map((person) => {
+          <>
+          {search.box(people)}
+          {search.nothing(people) ? <Note>{t('search.nothing')}</Note> : null}
+          {search.filter(people).map((person) => {
             const relation = relationText(tree.data?.labels[person.id]);
             const openCard = () => router.push({ pathname: '/person/[personId]', params: { personId: person.id, treeId: main?.id ?? '' } });
             return (
@@ -92,7 +98,8 @@ export default function CallFamily() {
                 )}
               </View>
             );
-          })
+          })}
+          </>
         )}
       </ScrollView>
     </Screen>

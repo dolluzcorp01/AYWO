@@ -78,7 +78,18 @@ export default function Takedown() {
         </Card>
         {send.isError ? <ErrorText>{errorText(send.error)}</ErrorText> : null}
       </ScrollView>
-      <PrimaryButton label={send.isPending ? t('takedown.sending') : t('takedown.send')} onPress={() => send.mutate()} disabled={!ready || send.isPending} />
+      <PrimaryButton label={send.isPending ? t('takedown.sending') : t('takedown.send')} onPress={() => send.mutate()}
+        disabled={send.isPending}
+        missing={
+          ready
+            ? null
+            : !personId && !name.trim()
+              ? t('takedown.needName')
+              : contact.trim().length < MIN_CONTACT
+                ? t('takedown.needContact')
+                : t('takedown.needReason')
+        }
+      />
     </Screen>
   );
 }

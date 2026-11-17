@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
-import { Card, SmallButton } from '@/components/ui';
+import { Card, SecondaryButton, SmallButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { HomeOfferCards } from '@/ops/Announcements';
 import { formatMoney } from '@/ops/types';
@@ -43,7 +43,7 @@ export default function Offers() {
                   {o.description ? <Text style={styles.body}>{o.description}</Text> : null}
                   <Note>
                     {o.products.map((p) => t(`ops.shop.products.${p}`)).join(', ')}
-                    {o.ends_at ? ` · ${t('ops.offers.until', { date: new Date(o.ends_at).toLocaleDateString(i18n.language) })}` : ''}
+                    {o.ends_at ? ` · ${t('ops.offers.until', { date: new Date(o.ends_at).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' }) })}` : ''}
                   </Note>
                   <View style={styles.actions}>
                     <SmallButton
@@ -62,6 +62,9 @@ export default function Offers() {
           )
         }
       </Gate>
+      {/* The side menu opens this page for "Offers and shop": the shop and the orders must be one tap from here. */}
+      <SecondaryButton label={t('ops.me.shop')} onPress={() => router.push('/shop')} />
+      <SecondaryButton label={t('ops.orders.title')} onPress={() => router.push('/orders')} />
     </Page>
   );
 }
