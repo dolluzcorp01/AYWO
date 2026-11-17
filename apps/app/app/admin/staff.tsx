@@ -12,6 +12,7 @@ import type { Grantable, StaffInvite, StaffPage, StaffRole, StaffRow, TeamRole }
 import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Field, FilterChips, FormDialog, formatDate, Message, Missing, Pager, Panel, Pill, QueryState, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
+import { RolesGrid } from '@/admin/RolesGrid';
 
 export default function AdminStaff() {
   const { t, i18n } = useTranslation();
@@ -82,22 +83,6 @@ export default function AdminStaff() {
     },
   ];
 
-  const roleColumns: Column<TeamRole>[] = [
-    {
-      key: 'name',
-      label: t('admin.staff.teamRole'),
-      flex: 1.2,
-      render: (r) => (
-        <View>
-          <Text style={adminStyles.cellStrong}>{r.name}</Text>
-          {r.description ? <Text style={adminStyles.cellMuted}>{r.description}</Text> : null}
-        </View>
-      ),
-    },
-    { key: 'perms', label: t('admin.staff.permissions'), flex: 2.2, render: (r) => r.permissions.map((p) => t(`admin.permissions.${p}`)).join(', ') },
-    { key: 'members', label: t('admin.staff.members'), flex: 0.6, render: (r) => `${r.members}` },
-    { key: 'edit', label: t('admin.common.actions'), flex: 0.7, render: (r) => <SecondaryButton label={t('admin.staff.change')} onPress={() => setRole(r)} /> },
-  ];
 
   return (
     <AdminPage title={t('admin.staff.title')} subtitle={t('admin.staff.subtitle')} gates={['staff']}>
@@ -130,7 +115,7 @@ export default function AdminStaff() {
       <Panel title={t('admin.staff.teamRoles')} actions={<SecondaryButton label={t('admin.staff.newRole')} onPress={() => setRole('new')} />}>
         <Text style={adminStyles.cellMuted}>{t('admin.staff.teamRolesHelp')}</Text>
         <QueryState query={roles} isEmpty={(rows) => rows.length === 0}>
-          {(rows) => <DataTable columns={roleColumns} rows={rows} rowKey={(r) => r.id} />}
+          {(rows) => <RolesGrid roles={rows} editable onSaved={refresh} onEditRole={(r) => setRole(r)} />}
         </QueryState>
       </Panel>
 

@@ -1,5 +1,35 @@
 {
   "admin": {
+    "rolesGrid": {
+      "permission": "Permission",
+      "everything": "Everything",
+      "people_one": "{{count}} person",
+      "people_other": "{{count}} people",
+      "helpEdit": "Tick or untick a box to change what a team role can do, then Save. Changed boxes turn yellow. Click a role's name to rename or delete it.",
+      "helpView": "What each team role can do.",
+      "adminOnlyNote": "The last two rows are for AYWO Admins only and can't be given to a team role.",
+      "unsaved_one": "{{count}} change not saved yet",
+      "unsaved_other": "{{count}} changes not saved yet",
+      "needOne": "{{name}} needs at least one ticked box.",
+      "discard": "Undo changes",
+      "save": "Save changes",
+      "confirmTitle": "Save these changes?",
+      "confirmText": "They apply at once to everyone in these roles.",
+      "roleLine_one": "{{name}} ({{count}} person)",
+      "roleLine_other": "{{name}} ({{count}} people)",
+      "saved": "Saved. Everyone in these roles has the new access now.",
+      "yes": "can",
+      "no": "can't"
+    },
+    "myAccess": {
+      "title": "My access",
+      "yourRole": "Your role: {{name}}",
+      "custom": "Your access was picked for you, box by box.",
+      "can": "You can",
+      "cannot": "You can't",
+      "askAdmin": "Need more? Ask an AYWO Admin to change your role (Staff page).",
+      "admin": "You are an AYWO Admin: you can do everything in this panel."
+    },
     "common": {
       "loading": "Loading",
       "failed": "That didn't work. Check your connection and try again.",
@@ -52,6 +82,8 @@
       "settings": "App settings"
     },
     "permissions": {
+      "staff": "Staff and notices",
+      "audit": "Audit log",
       "dictionary": "Dictionary",
       "takedowns": "Takedowns",
       "users": "Users",
@@ -65,6 +97,8 @@
       "settings": "App settings"
     },
     "permissionHelp": {
+      "staff": "add and remove staff, change team roles, send notices to every member",
+      "audit": "read the record of every staff action",
       "dictionary": "approve new words, decide wrong-word reports",
       "takedowns": "decide takedown requests",
       "users": "find accounts, block and unblock them",
