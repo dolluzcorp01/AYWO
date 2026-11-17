@@ -16,7 +16,7 @@ export const PAGE_SIZE = 25;
 
 export function formatDate(iso: string | null | undefined, language: string): string {
   if (!iso) return '-';
-  return new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
+  return new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeStyle: 'short', hour12: true }).format(new Date(iso));
 }
 
 export function useErrorText() {

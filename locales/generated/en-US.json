@@ -571,6 +571,10 @@
     "badWeddingDate": "Type the full wedding date, like 21/03/1995. It can't be in the future."
   },
   "picker": {
+    "hour": "Hour",
+    "minute": "Minute",
+    "am": "AM",
+    "pm": "PM",
     "pickDate": "Pick a date",
     "pickTime": "Pick a time",
     "clear": "Clear",
