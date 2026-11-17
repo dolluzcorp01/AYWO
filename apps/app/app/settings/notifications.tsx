@@ -8,6 +8,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { showToast } from '@/components/Toast';
 import { Card, ErrorText, Field, Loading, LoadFailed, SmallButton, Switch, TopBar } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useMe } from '@/lib/account';
@@ -32,8 +33,13 @@ export default function Notifications() {
   const extras = useQuery({ queryKey: ['my-extras'], queryFn: () => api.rpc<MyExtras>('my_extras') });
   const marketing = useMutation({
     mutationFn: (on: boolean) => api.rpc('marketing_set', { p_on: on }),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['my-extras'] }),
+    onSuccess: () => {
+      showToast('success', t('common.saved'));
+      return client.invalidateQueries({ queryKey: ['my-extras'] });
+    },
   });
+  // A switch saves the moment it is flipped: say so, or people look for a Save button.
+  const saved = { onSuccess: () => showToast('success', t('common.saved')) };
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const sendCode = useMutation({ mutationFn: () => api.post('/me/email/send-code'), onSuccess: () => setCodeSent(true) });
@@ -65,8 +71,8 @@ export default function Notifications() {
               <Card key={kind} style={styles.card}>
                 <Text accessibilityRole="header" style={styles.title}>{t(`settings.kind.${kind}`)}</Text>
                 <View style={styles.switches}>
-                  <Switch label={t('settings.push')} on={pref.push} onChange={(push) => save.mutate({ ...pref, push })} />
-                  <Switch label={t('settings.email')} on={pref.email} onChange={(email) => save.mutate({ ...pref, email })} />
+                  <Switch label={t('settings.push')} on={pref.push} onChange={(push) => save.mutate({ ...pref, push }, saved)} />
+                  <Switch label={t('settings.email')} on={pref.email} onChange={(email) => save.mutate({ ...pref, email }, saved)} />
                 </View>
               </Card>
             );

@@ -250,6 +250,7 @@ export default function MemoryDetail() {
                     <SmallButton kind="plain" label={t('common.cancel')} onPress={() => setEditing(false)} />
                   </View>
                   {!draftDateOk ? <Note>{t('social.missing.date')}</Note> : null}
+                  {!draftBody.trim() && data.media.length === 0 ? <Note>{t('social.missing.words')}</Note> : null}
                 </>
               ) : (
                 <>

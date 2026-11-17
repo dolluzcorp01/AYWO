@@ -2,7 +2,7 @@
 // Someone new can also type the code of the person who invited them, within 14 days of joining.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Share, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -20,6 +20,12 @@ export default function InviteFriends() {
   const mine = useQuery({ queryKey: ['referral'], queryFn: () => api.rpc<Referral>('referral_my') });
   const [copied, setCopied] = useState(false);
   const [theirs, setTheirs] = useState('');
+  // "Copied" goes back to "Copy" after a moment, so a second tap later still shows that it worked.
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 3000);
+    return () => clearTimeout(timer);
+  }, [copied]);
   const claim = useMutation({
     mutationFn: () => api.rpc<{ by: string }>('referral_claim', { p_code: theirs.trim() }),
     onSuccess: () => client.invalidateQueries({ queryKey: ['referral'] }),

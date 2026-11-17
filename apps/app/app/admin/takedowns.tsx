@@ -1,11 +1,12 @@
 // S-20 Takedown requests from people added to a tree by others.
 import { useQuery } from '@tanstack/react-query';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { Actions, AdminPage, adminStyles, DataTable, FilterChips, FormDialog, formatDate, Message, Pager, QueryState, SearchBox, SecondaryButton, usePagedList, useRefreshAfter } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, DataTable, FilterChips, FormDialog, formatDate, Message, Pager, Panel, QueryState, SearchBox, SecondaryButton, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column, DialogField } from '@/admin/ui';
-import type { TakedownMatch, TakedownRow } from '@/admin/types';
+import type { Page, TakedownMatch, TakedownRow } from '@/admin/types';
 import { api } from '@/lib/api';
 
 type Status = TakedownRow['status'];
@@ -22,6 +23,17 @@ export default function AdminTakedowns() {
     setActing({ item, decision });
   };
   const { query, page, setPage } = usePagedList<TakedownRow>(['admin', 'takedowns'], '/admin/takedowns', { status });
+  const [reopening, setReopening] = useState<TakedownRow | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  // Opened from the work queue (?open=<request id>): that one request is shown on top, whatever list it is in now.
+  const params = useLocalSearchParams<{ open?: string }>();
+  const openId = /^[0-9a-f-]{36}$/i.test(params.open ?? '') ? (params.open as string) : null;
+  const [closedOpen, setClosedOpen] = useState<string | null>(null);
+  const opened = useQuery({
+    queryKey: ['admin', 'takedowns', 'only', openId],
+    queryFn: () => api.get<Page<TakedownRow>>(`/admin/takedowns?only=${openId}`),
+    enabled: !!openId,
+  });
 
   const columns: Column<TakedownRow>[] = [
     {
@@ -38,31 +50,33 @@ export default function AdminTakedowns() {
     { key: 'contact', label: t('admin.takedowns.askedBy'), render: (item) => item.requester_contact },
     { key: 'reason', label: t('admin.takedowns.reason'), flex: 2, render: (item) => item.reason },
     { key: 'when', label: t('admin.takedowns.when'), render: (item) => formatDate(item.created_at, i18n.language) },
-    status === 'open'
-      ? {
-          key: 'actions',
-          label: t('admin.common.actions'),
-          flex: 1.3,
-          render: (item) => (
-            <Actions>
-              <SecondaryButton label={t('admin.takedowns.remove')} danger onPress={() => start(item, 'remove')} />
-              <SecondaryButton label={t('admin.takedowns.dismiss')} onPress={() => start(item, 'dismiss')} />
-            </Actions>
-          ),
-        }
-      : {
-          key: 'decision',
-          label: t('admin.takedowns.decision'),
-          flex: 1.5,
-          render: (item) => (
-            <View>
-              <Text style={adminStyles.cellStrong}>{item.decision_note ?? '-'}</Text>
-              <Text style={adminStyles.cellMuted}>
-                {t('admin.takedowns.decidedBy', { name: item.decided_by_name ?? '-', when: formatDate(item.decided_at, i18n.language) })}
-              </Text>
-            </View>
-          ),
-        },
+    {
+      // What can be done depends on the row, not the tab: the row opened from the work queue can be in any state.
+      key: 'actions',
+      label: status === 'open' ? t('admin.common.actions') : t('admin.takedowns.decision'),
+      flex: 1.5,
+      render: (item) =>
+        item.status === 'open' ? (
+          <Actions>
+            <SecondaryButton label={t('admin.takedowns.remove')} danger onPress={() => start(item, 'remove')} />
+            <SecondaryButton label={t('admin.takedowns.dismiss')} onPress={() => start(item, 'dismiss')} />
+          </Actions>
+        ) : (
+          <View style={{ gap: 6 }}>
+            <Text style={adminStyles.cellStrong}>{item.decision_note ?? '-'}</Text>
+            <Text style={adminStyles.cellMuted}>
+              {t('admin.takedowns.decidedBy', { name: item.decided_by_name ?? '-', when: formatDate(item.decided_at, i18n.language) })}
+            </Text>
+            {item.status === 'dismissed' ? (
+              <Actions>
+                <SecondaryButton label={t('admin.takedowns.reopen')} onPress={() => setReopening(item)} />
+              </Actions>
+            ) : (
+              <Text style={adminStyles.cellMuted}>{t('admin.takedowns.finalRemoved')}</Text>
+            )}
+          </View>
+        ),
+    },
   ];
 
   const dialogFields: DialogField[] = [{ name: 'note', label: t('admin.takedowns.note'), minLength: 5, multiline: true }];
@@ -79,6 +93,19 @@ export default function AdminTakedowns() {
           { value: 'dismissed', label: t('admin.takedowns.dismissed') },
         ]}
       />
+      {done ? <Message text={done} good /> : null}
+      {openId && closedOpen !== openId ? (
+        <Panel title={t('admin.common.openedFromWork')} actions={<SecondaryButton label={t('admin.work.close')} onPress={() => setClosedOpen(openId)} />}>
+          <QueryState query={opened} isEmpty={(data) => data.rows.length === 0} emptyText={t('admin.common.openedGone')}>
+            {(data) => (
+              <>
+                <Text style={adminStyles.cellMuted}>{t('admin.common.openedState', { state: t(`admin.takedowns.${data.rows[0].status}`) })}</Text>
+                <DataTable columns={columns} rows={data.rows} rowKey={(item) => item.id} />
+              </>
+            )}
+          </QueryState>
+        </Panel>
+      ) : null}
       <QueryState query={query} isEmpty={(data) => data.rows.length === 0} emptyText={t('admin.takedowns.empty')}>
         {(data) => (
           <>
@@ -110,6 +137,22 @@ export default function AdminTakedowns() {
         >
           {needsPick ? <PersonPick request={acting.item} picked={picked} onPick={setPicked} /> : null}
         </FormDialog>
+      ) : null}
+      {reopening ? (
+        <FormDialog
+          title={t('admin.takedowns.reopenTitle', { name: reopening.person_name ?? reopening.subject_name ?? '-' })}
+          text={t('admin.takedowns.reopenText')}
+          fields={[{ name: 'reason', label: t('admin.common.reason'), minLength: 5, multiline: true }]}
+          confirmLabel={t('admin.takedowns.reopen')}
+          onCancel={() => setReopening(null)}
+          onConfirm={async ({ reason }) => {
+            await api.post(`/admin/takedowns/${reopening.id}/reopen`, { reason });
+            setReopening(null);
+            setDone(t('admin.takedowns.reopened'));
+            // It is back in the work queue too, so the menu badge and the dashboard change.
+            await refreshAfter('takedowns', 'work');
+          }}
+        />
       ) : null}
     </AdminPage>
   );

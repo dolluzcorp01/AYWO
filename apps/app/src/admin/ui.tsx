@@ -11,6 +11,7 @@ import { Card, Heading, Muted } from '@/components/ui';
 import { ApiFailure, api } from '@/lib/api';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 import { useAdminAccess } from './access';
+import { AdminNames } from './AdminNames';
 import type { Page, Permission } from './types';
 
 export const PAGE_SIZE = 25;
@@ -76,6 +77,7 @@ export function AdminPage({
           <>
             <Message text={t('admin.common.notAllowed')} alert />
             <Text style={styles.cellMuted}>{t('admin.common.notAllowedHelp', { needs: gates.map((g) => t(`admin.permissions.${g}`, { defaultValue: g })).join(', ') })}</Text>
+            <AdminNames />
             <View style={styles.actions}>
               <SecondaryButton main label={t('admin.common.backToDashboard')} onPress={() => router.navigate('/admin')} />
             </View>

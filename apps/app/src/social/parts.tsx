@@ -147,6 +147,28 @@ export function parseDateTime(date: string, time: string): Date | null {
   return value;
 }
 
+/**
+ * A Pop Party date choice picked from the calendar is stored as '2026-12-25' or '2026-12-25 18:30'. That way every
+ * reader sees it in their own language, and the host's "settle" boxes can be filled from the leading choice.
+ * Null for anything else: older parties have choices typed as words ("Saturday evening").
+ */
+export function readDateOption(label: string): { date: string; time: string } | null {
+  const m = label.trim().match(/^(\d{4}-\d{2}-\d{2})(?: (\d{2}:\d{2}))?$/);
+  if (!m) return null;
+  return { date: m[1], time: m[2] ?? '' };
+}
+
+/** How a Pop Party date choice reads on screen. Words typed by hand are shown as they are. */
+export function useDateOption() {
+  const when = useWhen();
+  return (label: string) => {
+    const read = readDateOption(label);
+    if (!read) return label;
+    const shown = read.time ? when(parseDateTime(read.date, read.time)?.toISOString()) : when(read.date);
+    return shown || label;
+  };
+}
+
 // Today as "2026-12-25": the earliest day an event can be planned for.
 export { todayIso } from '@/lib/time';
 

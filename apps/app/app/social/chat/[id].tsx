@@ -69,6 +69,7 @@ export default function ChatRoom() {
   const [editing, setEditing] = useState<Message | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const [hiding, setHiding] = useState(false);
   // One id for each thing being sent, kept until that send succeeds: trying the same words or the same photo again after
   // a dropped connection cannot post twice, and two different things sent close together never share an id (the server
   // answers a repeated id with the first message, so sharing one would silently lose the second).
@@ -195,6 +196,16 @@ export default function ChatRoom() {
       client.invalidateQueries({ queryKey: ['chats'] });
     },
   });
+  // A one-to-one chat cannot be left, but it can be taken off my own list. A new message brings it back.
+  const hide = useMutation({
+    mutationFn: () => api.rpc('chat_hide', { p_chat: id }),
+    onSuccess: () => {
+      setHiding(false);
+      client.invalidateQueries({ queryKey: ['chats'] });
+      client.invalidateQueries({ queryKey: ['social-home'] });
+      goBack();
+    },
+  });
   const leave = useMutation({
     mutationFn: () => api.rpc('chat_leave', { p_chat: id }),
     onSuccess: () => {
@@ -298,6 +309,7 @@ export default function ChatRoom() {
         {first ? (
           <View style={styles.tools}>
             {first.chat.kind === 'direct' && other ? <TextButton label={t('ops.block.short')} onPress={() => setBlocking(true)} /> : null}
+            {first.chat.kind === 'direct' ? <TextButton label={t('social.chat.hide')} onPress={() => setHiding(true)} /> : null}
             {first.chat.kind === 'group' && first.chat.can_rename ? (
               <TextButton label={t('social.chat.rename')} onPress={() => setRenaming(first.chat.name ?? '')} />
             ) : null}
@@ -470,6 +482,17 @@ export default function ChatRoom() {
       >
         <Field label={t('social.chat.chatName')} value={renaming ?? ''} onChangeText={setRenaming} maxLength={80} />
         <ActionError error={rename.error} />
+      </ConfirmDialog>
+      <ConfirmDialog
+        visible={hiding}
+        title={t('social.chat.hideTitle')}
+        message={t('social.chat.hideMessage')}
+        confirmLabel={t('social.chat.hideYes')}
+        busy={hide.isPending}
+        onConfirm={() => hide.mutate()}
+        onCancel={() => setHiding(false)}
+      >
+        <ActionError error={hide.error} />
       </ConfirmDialog>
       <ConfirmDialog
         visible={leaving}

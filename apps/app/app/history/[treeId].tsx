@@ -1,5 +1,6 @@
 // E6 / S-12 History: every change and who made it, for a tree or one person. Undo puts it back.
 // The server lists single rows; one action on the screen is one batch, so rows are gathered here.
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,12 +8,13 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, ConfirmDialog, EmptyState, ErrorText, Loading, LoadFailed, NeonPanel, SmallButton, TopBar } from '@/components/ui';
+import { Card, ConfirmDialog, EmptyState, ErrorText, Loading, LoadFailed, NeonPanel, SmallButton, TextButton, TopBar } from '@/components/ui';
 import { useMe } from '@/lib/account';
+import { api } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
 import { useTimeAgo } from '@/lib/time';
 import { shownName } from '@/tree/personName';
-import { useHistory, useRevert } from '@/tree/useEdit';
+import { useRevert } from '@/tree/useEdit';
 import type { HistoryItem } from '@/tree/useEdit';
 import { colors, fonts } from '@/theme/tokens';
 
@@ -36,6 +38,9 @@ function batchesOf(rows: HistoryItem[]): Batch[] {
   return out;
 }
 
+// How many single rows come at a time. A full page means there may be older ones: "Show more" fetches them.
+const PAGE_ROWS = 100;
+
 export default function HistoryScreen() {
   const { treeId, personId } = useLocalSearchParams<{ treeId: string; personId?: string }>();
   const { t } = useTranslation();
@@ -43,9 +48,19 @@ export default function HistoryScreen() {
   const errorText = useErrorText();
   const timeAgo = useTimeAgo();
   const me = useMe();
-  const history = useHistory(treeId, personId);
+  // Older changes come a page at a time: each page asks for the rows before the last one already shown.
+  // The key starts like the old one, so an Undo (which refreshes ['history', treeId]) refreshes this list too.
+  const history = useInfiniteQuery({
+    queryKey: ['history', treeId, personId ?? null, 'pages'],
+    initialPageParam: null as number | null,
+    queryFn: ({ pageParam }) => {
+      const query = [`limit=${PAGE_ROWS}`, personId ? `person_id=${encodeURIComponent(personId)}` : '', pageParam ? `before=${pageParam}` : ''].filter(Boolean).join('&');
+      return api.get<HistoryItem[]>(`/trees/${treeId}/history?${query}`);
+    },
+    getNextPageParam: (last) => (last.length >= PAGE_ROWS ? last[last.length - 1].id : undefined),
+  });
   const revert = useRevert(treeId);
-  const batches = useMemo(() => batchesOf(history.data ?? []), [history.data]);
+  const batches = useMemo(() => batchesOf(history.data?.pages.flat() ?? []), [history.data]);
   // The change about to be undone, shown back to the person before anything happens.
   const [asking, setAsking] = useState<Batch | null>(null);
 
@@ -83,6 +98,17 @@ export default function HistoryScreen() {
           keyExtractor={(batch) => batch.id}
           contentContainerStyle={styles.list}
           ListEmptyComponent={<EmptyState message={t('history.empty')} />}
+          ListFooterComponent={
+            history.hasNextPage ? (
+              <TextButton
+                label={history.isFetchingNextPage ? t('tree.loading') : t('history.showMore')}
+                disabled={history.isFetchingNextPage}
+                onPress={() => void history.fetchNextPage()}
+              />
+            ) : batches.length > 0 && (history.data?.pages.length ?? 0) > 1 ? (
+              <Text style={styles.end}>{t('history.end')}</Text>
+            ) : undefined
+          }
           renderItem={({ item, index }) => {
             const undone = item.rows.every((r) => r.reverted_by !== null);
             // A contact's history holds no value, so it cannot come back. One such row blocks undoing the batch.
@@ -147,5 +173,6 @@ const styles = StyleSheet.create({
   text: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 19 },
   when: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 12 },
   undone: { color: colors.muted, fontFamily: fonts.bold, fontSize: 12 },
+  end: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 13, textAlign: 'center', paddingVertical: 8 },
   promise: { color: colors.white, fontFamily: fonts.bold, fontSize: 15, lineHeight: 21 },
 });

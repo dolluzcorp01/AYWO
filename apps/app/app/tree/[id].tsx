@@ -8,6 +8,7 @@ import { SearchIcon, ShareIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { TabBar } from '@/components/TabBar';
 import { Text } from '@/components/Text';
+import { TextButton } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
 import { canShare } from '@/tree/roles';
 import { FamilyGuideCard } from '@/tree/FamilyGuideCard';
@@ -111,9 +112,7 @@ export default function TreeScreen() {
       {query.isError ? (
         <View style={styles.centre}>
           <Text style={styles.message}>{errorText(query.error)}</Text>
-          <Pressable accessibilityRole="button" onPress={() => query.refetch()} style={styles.retry}>
-            <Text style={styles.retryText}>{t('tree.tryAgain')}</Text>
-          </Pressable>
+          <TextButton label={t('tree.tryAgain')} onPress={() => void query.refetch()} />
         </View>
       ) : !data ? (
         <View style={styles.centre}>
@@ -183,6 +182,4 @@ const styles = StyleSheet.create({
   },
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   message: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15, textAlign: 'center' },
-  retry: { minHeight: minTapSize, justifyContent: 'center', paddingHorizontal: 16 },
-  retryText: { color: colors.relation, fontFamily: fonts.extrabold, fontSize: 15 },
 });

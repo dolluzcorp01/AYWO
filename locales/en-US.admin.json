@@ -5,7 +5,7 @@
       "everything": "Everything",
       "people_one": "{{count}} person",
       "people_other": "{{count}} people",
-      "helpEdit": "Tick or untick a box to change what a team role can do, then Save. Changed boxes turn yellow. Click a role's name to rename or delete it.",
+      "helpEdit": "Tick or untick a box to change what a team role can do, then Save. Changed boxes are shaded. Click a role's name to rename or delete it.",
       "helpView": "What each team role can do.",
       "adminOnlyNote": "The last two rows are for AYWO Admins only and can't be given to a team role.",
       "unsaved_one": "{{count}} change not saved yet",
@@ -19,7 +19,9 @@
       "roleLine_other": "{{name}} ({{count}} people)",
       "saved": "Saved. Everyone in these roles has the new access now.",
       "yes": "can",
-      "no": "can't"
+      "no": "can't",
+      "handPicked": "hand-picked",
+      "handPickedNote": "Columns marked \"hand-picked\" are staff with no team role, whose permissions were chosen one by one. To change them, use \"Change\" on that person's row above."
     },
     "myAccess": {
       "title": "My access",
@@ -28,7 +30,9 @@
       "can": "You can",
       "cannot": "You can't",
       "askAdmin": "Need more? Ask an AYWO Admin to change your role (Staff page).",
-      "admin": "You are an AYWO Admin: you can do everything in this panel."
+      "admin": "You are an AYWO Admin: you can do everything in this panel.",
+      "admins_one": "AYWO Admin: {{names}}",
+      "admins_other": "AYWO Admins: {{names}}"
     },
     "common": {
       "loading": "Loading",
@@ -51,7 +55,13 @@
       "needsText_other": "Still needed: {{field}}, at least {{count}} characters.",
       "moreThan": "{{max}}+",
       "notAllowedHelp": "This page needs: {{needs}}. Ask an AYWO Admin if you should have it.",
-      "backToDashboard": "Back to the dashboard"
+      "backToDashboard": "Back to the dashboard",
+      "downloadCsv": "Download this list (CSV)",
+      "downloadCsvHelp_one": "A spreadsheet file of the {{count}} row shown on this page.",
+      "downloadCsvHelp_other": "A spreadsheet file of the {{count}} rows shown on this page. Go to the next page to download the rest.",
+      "openedFromWork": "Opened from the work queue",
+      "openedGone": "This item wasn't found. It may have been deleted.",
+      "openedState": "It is now in the list: {{state}}"
     },
     "gate": {
       "webOnly": "The admin panel opens only on the web.",
@@ -161,12 +171,26 @@
       "blockTitle": "Block {{name}}?",
       "blockText": "This signs the account out everywhere and stops new sign-ins.",
       "unblockTitle": "Unblock {{name}}?",
-      "unblockText": "This account will be able to sign in again."
+      "unblockText": "This account will be able to sign in again.",
+      "filters": {
+        "all": "All",
+        "blocked": "Blocked",
+        "plus": "AYWO Plus",
+        "staff": "Staff"
+      },
+      "sortBy": "Sort by",
+      "sorts": {
+        "newest": "Newest first",
+        "active": "Last active",
+        "name": "Name"
+      },
+      "copyId": "Copy id",
+      "idCopied": "Id copied"
     },
     "trees": {
       "title": "Trees",
       "subtitle": "Names and counts only. Seeing a tree's people needs a reason, and every look is recorded.",
-      "search": "Tree name, tree id or Creator's id",
+      "search": "Tree name or the Creator's name",
       "empty": "No trees match.",
       "name": "Tree",
       "creator": "Creator",
@@ -190,7 +214,10 @@
       },
       "account": "Account",
       "hasAccount": "Claimed",
-      "personId": "Person id"
+      "personId": "Person id",
+      "copyId": "Copy id",
+      "idCopied": "Id copied",
+      "csvState": "State"
     },
     "dictionary": {
       "title": "Dictionary",
@@ -226,7 +253,26 @@
       "dismissTitle": "Dismiss this report about \"{{word}}\"?",
       "dismissText": "The word stays as it is.",
       "takeBackTitle": "Take \"{{word}}\" back out of the dictionary?",
-      "takeBackText": "It was approved, and people see it now. Taking it back removes it from the dictionary for everyone. You can approve it again from the Rejected list."
+      "takeBackText": "It was approved, and people see it now. Taking it back removes it from the dictionary for everyone. You can approve it again from the Rejected list.",
+      "correct": "Correct spelling",
+      "search": "Word, relationship or language",
+      "searchingFor": "Showing words that match \"{{q}}\". Search with an empty box to see all.",
+      "noMatch": "No words match.",
+      "needWord": "Type the word.",
+      "changeFirst": "Change the spelling first.",
+      "correctTitle": "Correct the spelling of \"{{word}}\"",
+      "correctText": "The word stays approved. Everyone sees the new spelling at once.",
+      "approveFixText": "It joins the dictionary for everyone. If the spelling has a small mistake, put it right here before you approve.",
+      "wordLatin": "Word, in Latin letters",
+      "wordNative": "Word, in its own script",
+      "wordNativeHelp": "Leave empty if there is none.",
+      "willSaveCorrected": "The word will be saved with your spelling.",
+      "saveCorrection": "Save the spelling",
+      "accepted": "Accepted",
+      "dismissed": "Dismissed",
+      "decided": "Decided",
+      "decidedHelp": "Reports already decided, the newest first. The word is shown as it reads now.",
+      "noDecided": "No reports have been decided yet."
     },
     "takedowns": {
       "title": "Takedown requests",
@@ -258,7 +304,12 @@
       "pickAnother": "Pick someone else",
       "needPerson": "Still needed: pick which person to remove.",
       "born": "Born {{year}}",
-      "madeBy": "Tree made by {{name}}"
+      "madeBy": "Tree made by {{name}}",
+      "reopen": "Reopen",
+      "reopenTitle": "Reopen the request about {{name}}?",
+      "reopenText": "For a request dismissed by mistake. It goes back to Open and into the work queue, due in 72 hours. Your reason is kept in the audit log.",
+      "reopened": "The request is open again. You will find it under Open and in the work queue.",
+      "finalRemoved": "Final: the person was removed from the tree and can't be brought back."
     },
     "payments": {
       "title": "Payments",
@@ -296,7 +347,17 @@
         "google": "Google Play",
         "razorpay": "Razorpay",
         "stripe": "Stripe"
-      }
+      },
+      "search": "Payer's name or phone number",
+      "searchingFor": "Showing plans that match \"{{q}}\".",
+      "clearSearch": "Show all",
+      "noMatch": "No plans match.",
+      "period": {
+        "monthly": "AYWO Plus, monthly",
+        "yearly": "AYWO Plus, yearly"
+      },
+      "csvPhone": "Phone (partly hidden)",
+      "csvStore": "Paid through"
     },
     "staff": {
       "title": "Staff",
@@ -446,7 +507,17 @@
         "campaign_sent": "Sent a promotional message",
         "config_changed": "Changed app settings",
         "takedown_person_search": "Searched for a person for a takedown",
-        "staff_invite_changed": "Changed a staff invite"
+        "staff_invite_changed": "Changed a staff invite",
+        "user_plus_taken_back": "Took back free Plus days",
+        "ticket_reopened": "Reopened a help ticket",
+        "ticket_closed": "Closed a help ticket without an answer",
+        "order_tracking_corrected": "Corrected an order's tracking details",
+        "order_step_undone": "Took an order one step back",
+        "coupon_deleted": "Deleted a coupon",
+        "announcement_deleted": "Deleted a banner",
+        "report_reopened": "Reopened an abuse report",
+        "takedown_reopened": "Reopened a takedown request",
+        "kin_term_corrected": "Corrected a word's spelling"
       },
       "from": "From this day",
       "to": "Up to this day",
@@ -471,7 +542,17 @@
       "sent_one": "Sent to {{count}} account.",
       "sent_other": "Sent to {{count}} accounts.",
       "preview": "Everyone will read this",
-      "limitNote": "It goes to every member at once and cannot be taken back. At most 3 notices can be sent in a day."
+      "limitNote": "It goes to every member at once and cannot be taken back. At most 3 notices can be sent in a day.",
+      "notice": "Notice",
+      "sentWhen": "Sent",
+      "sentBy": "Sent by",
+      "reached": "Accounts reached",
+      "willReach_one": "{{count}} account will get this notice.",
+      "willReach_other": "{{count}} accounts will get this notice.",
+      "usedToday": "{{used}} of the {{limit}} notices allowed in 24 hours have already been sent.",
+      "usedUp": "All {{limit}} notices allowed in 24 hours have been sent. Please wait before sending another.",
+      "history": "Notices sent before",
+      "noHistory": "No notice has been sent yet."
     },
     "menuGroup": {
       "work": "Work",
@@ -550,7 +631,22 @@
       "noteFirst": "Add your note, or clear it, before leaving this item.",
       "needNote": "Write a note to add it.",
       "doneHelp": "\"Done\" only ticks this off the work queue. The ticket, report or request itself is answered on its own page: use \"Go to the page to decide\". Deciding it there marks this done by itself.",
-      "dueDay": "Due on"
+      "dueDay": "Due on",
+      "titles": {
+        "takedown": "Takedown request",
+        "term_report": "Wrong-word report",
+        "poster": "Print a family tree poster",
+        "book": "Print a family book",
+        "report": "Abuse report: {{reason}} ({{type}})"
+      },
+      "changed": {
+        "status": "Status: {{value}}",
+        "priority": "Priority: {{value}}",
+        "due": "Due: {{when}}",
+        "owner": "Owner: {{name}}",
+        "ownerSomeone": "Owner changed",
+        "noOwner": "Owner removed"
+      }
     },
     "reports": {
       "title": "Abuse reports",
@@ -590,7 +686,13 @@
       "removeText": "It disappears for everyone. Every open report about it closes, and the people who reported it are told action was taken.",
       "removeProfileText": "The account is blocked: signed out everywhere and unable to sign in.",
       "dismissText": "Nothing changes. The person who reported it is told it was looked at.",
-      "alsoBlock": "Also block {{name}}'s account"
+      "alsoBlock": "Also block {{name}}'s account",
+      "kept": "Kept",
+      "reopen": "Reopen",
+      "reopenTitle": "Reopen this report?",
+      "reopenText": "For a \"Keep it\" pressed by mistake. The report goes back to Open and into the work queue, due in 24 hours. Your reason is kept in the audit log.",
+      "reopened": "The report is open again. You will find it under Open and in the work queue.",
+      "finalRemoved": "Final: the content was removed and can't be put back from here."
     },
     "tickets": {
       "title": "Help tickets",
@@ -609,8 +711,20 @@
       "replyHelp": "The person gets a notification and reads it in the app.",
       "send": "Send",
       "sendClose": "Send and close",
-      "isClosed": "This ticket is closed. A reply from the person opens it again.",
-      "needReply": "Write your answer first."
+      "isClosed": "This ticket is closed. A reply from the person opens it again, or reopen it yourself to answer.",
+      "needReply": "Write your answer first.",
+      "search": "Customer name or subject",
+      "all": "All",
+      "searching": "Showing tickets that match \"{{q}}\". Search with the box empty to see every ticket again.",
+      "emptySearch": "No tickets match your search here. Try \"All\", or fewer letters.",
+      "account": "Open the customer's account",
+      "answerFirst": "Send your answer, or clear it, before leaving this ticket.",
+      "closeOnly": "Close without answering",
+      "closeOnlySure": "Close this ticket without an answer? The person gets no message. If they write again, it opens again.",
+      "closeOnlyYes": "Yes, close it",
+      "keepOpen": "Keep it open",
+      "closeOnlyBlocked": "You have written an answer: use \"Send and close\", or clear it first.",
+      "reopen": "Reopen ticket"
     },
     "orders": {
       "title": "Orders",
@@ -640,7 +754,7 @@
         "shipped": "Mark shipped",
         "delivered": "Mark delivered"
       },
-      "search": "Order id, tracking number or buyer id",
+      "search": "Buyer's name or phone, city, order number, tracking number or payment reference",
       "empty": "No orders here.",
       "cancelTitle": "Cancel this order?",
       "cancelText": "The buyer gets a notification that the order is cancelled.",
@@ -674,7 +788,26 @@
       "refundDone": "Refunded {{amount}}. The buyer has been told.",
       "needTracking": "Type the tracking number to mark it shipped.",
       "trackingUrlBad": "The tracking link must start with https://",
-      "carrierExample": "For example India Post"
+      "carrierExample": "For example India Post",
+      "orderNo": "Order no. {{number}}",
+      "correctTracking": "Correct tracking",
+      "undoStep": "Undo last step",
+      "correctTrackingTitle": "Correct the tracking details",
+      "correctTrackingText": "For a tracking number or courier that was typed wrongly. The buyer is told the order changed and sees the new details. Your reason is kept in the audit log.",
+      "trackingSame": "Nothing is changed yet.",
+      "saveTracking": "Save the correction",
+      "trackingDone": "Tracking details corrected. The buyer has been told.",
+      "undoTitle": "Take this order one step back?",
+      "undoText": "It goes from \"{{from}}\" back to \"{{to}}\". The buyer is told the order changed. Your reason is kept in the audit log.",
+      "undoClearsTracking": "The courier and tracking number are taken off the order, because it has not shipped. You type them again when you mark it shipped.",
+      "undoDone": "Done. The order is back at: {{step}}. The buyer has been told.",
+      "csv": {
+        "number": "Order no.",
+        "buyer": "Buyer",
+        "amount": "Amount paid",
+        "currency": "Currency",
+        "coupon": "Coupon"
+      }
     },
     "offers": {
       "title": "Offers",
@@ -831,7 +964,27 @@
         "calendar": "Family calendar",
         "social_memories": "Memories",
         "home": "Home"
-      }
+      },
+      "delete": "Delete",
+      "keepIt": "Keep it",
+      "switchOff": "Switch off",
+      "cantDeleteUsed": "Used on an order, so it can't be deleted. It can only be switched off.",
+      "deleteCouponTitle": "Delete the coupon {{code}}?",
+      "deleteCouponText": "Nobody has used this code. It is removed for good and stops working at once. This is recorded in the audit log.",
+      "deletedCoupon": "Coupon {{code}} deleted.",
+      "switchOffTitle": "Switch off {{code}}?",
+      "switchOffText": "The code stops working at once. Orders already paid with it keep their discount. You can switch it on again with Change.",
+      "switchedOff": "Coupon {{code}} is switched off.",
+      "deleteBannerTitle": "Delete this banner?",
+      "deleteBannerText": "It is removed for good, with its view counts. This is recorded in the audit log.",
+      "deleteBannerRunningText": "This banner is showing to people right now. Deleting it takes it off at once and removes it for good, with its view counts. This is recorded in the audit log.",
+      "deletedBanner": "Banner \"{{title}}\" deleted.",
+      "previewTitle": "How people will see it",
+      "previewStrip": "The strip at the top of the app or website",
+      "previewStripNoBody": "The strip shows the title and the button text only. The longer text shows on the Home card.",
+      "previewCard": "The card on Home",
+      "previewPushFrom": "AYWO · now",
+      "previewOpens": "A tap opens: {{page}}"
     },
     "analytics": {
       "title": "Analytics",
@@ -941,7 +1094,7 @@
       "subtitle": "Everything staff may see about one account. Family details stay private.",
       "back": "Back to Users",
       "askTitle": "Why are you opening this account?",
-      "askText": "Your name and reason go in the audit log, and the account's history shows it.",
+      "askText": "Your name and reason go in the audit log, and the account's history shows it. You are asked once for each account; the reason is reused until you close this browser tab.",
       "open": "Open",
       "yes": "Yes",
       "no": "No",
@@ -984,13 +1137,15 @@
         "block": "Block {{name}}?",
         "unblock": "Unblock {{name}}?",
         "end": "Sign {{name}} out everywhere?",
-        "plus": "Give {{name}} free Plus days?"
+        "plus": "Give {{name}} free Plus days?",
+        "minus": "Take free Plus days back from {{name}}?"
       },
       "confirmText": {
         "block": "Signed out everywhere, and new sign-ins stop.",
         "unblock": "The account can sign in again.",
         "end": "Every phone and browser is signed out. The account stays open.",
-        "plus": "Added on top of any free days they already have. They get a notification."
+        "plus": "Added on top of any free days they already have. They get a notification.",
+        "minus": "For days given by mistake. The days come off the free Plus this account has left, including days earned by inviting people. Asking for more than is left ends free Plus today, never earlier. A paid plan is not touched, and the person gets no notification."
       },
       "days": "Days (1 to 365)",
       "reloadFailed": "Your change may be saved, but this page couldn't be reloaded, so it may show old details. {{why}}",
@@ -999,10 +1154,15 @@
         "block": "{{name}} is blocked.",
         "unblock": "{{name}} is unblocked.",
         "end": "{{name}} is signed out everywhere.",
-        "plus": "Free Plus days added for {{name}}."
+        "plus": "Free Plus days added for {{name}}.",
+        "minus": "Free Plus days taken back from {{name}}."
       },
       "daysBad": "Days must be a whole number from 1 to 365.",
-      "makeStaff": "Make staff"
+      "makeStaff": "Make staff",
+      "reasonKept": "Opened for your reason: {{reason}}. Each time this page loads, a look is recorded with it.",
+      "changeReason": "Change reason",
+      "takePlus": "Take back free Plus days",
+      "takeDays": "Days to take back (1 to 365)"
     },
     "funnel": {
       "title": "Step by step: devices that first opened the app in the last {{count}} days",
@@ -1090,6 +1250,11 @@
     "order_tracking_required": "Add a tracking number to mark it shipped.",
     "order_not_refundable": "This order can't be refunded here. It may be unpaid or already refunded.",
     "payment_provider_error": "The payment provider didn't answer. Please try again in a minute.",
-    "use_store_billing": "This was bought through Apple or Google. Refund it in their console."
+    "use_store_billing": "This was bought through Apple or Google. Refund it in their console.",
+    "admin_no_free_plus": "This account has no free Plus days left to take back.",
+    "coupon_used_no_delete": "This code was used on an order, so it can't be deleted. Switch it off instead.",
+    "admin_decision_final": "This decision removed something, so it is final and can't be reopened.",
+    "admin_already_open": "This is already open.",
+    "kin_term_exists": "That spelling is already in the dictionary for this relationship and language."
   }
 }

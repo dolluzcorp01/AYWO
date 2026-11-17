@@ -20,7 +20,7 @@ import { BackIcon, ContactIcon, LockIcon } from '@/components/ContactIcon';
 import { CommentIcon, HistoryIcon, PencilIcon, PlusIcon, ShareIcon } from '@/components/Icons';
 import { Text } from '@/components/Text';
 import { showToast } from '@/components/Toast';
-import { Card, ErrorText, PrimaryButton, SmallButton } from '@/components/ui';
+import { Card, ErrorText, PrimaryButton, SmallButton, TextButton } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
 import { showPhone } from '@/lib/phone';
 import { canComment, canSeeHistory, canShare } from '@/tree/roles';
@@ -62,19 +62,14 @@ export default function PersonCard() {
     return (
       <View style={styles.centre}>
         <Text style={styles.message}>{errorText(tree.error ?? card.error)}</Text>
-        <Pressable
-          accessibilityRole="button"
+        <TextButton
+          label={t('tree.tryAgain')}
           onPress={() => {
             if (tree.isError) void tree.refetch();
             if (card.isError) void card.refetch();
           }}
-          style={styles.textButton}
-        >
-          <Text style={styles.link}>{t('tree.tryAgain')}</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" onPress={() => goBack(router)} style={styles.textButton}>
-          <Text style={styles.link}>{t('card.goBack')}</Text>
-        </Pressable>
+        />
+        <TextButton label={t('card.goBack')} onPress={() => goBack(router)} />
       </View>
     );
   }
@@ -83,12 +78,8 @@ export default function PersonCard() {
       <View style={styles.centre}>
         <Text style={styles.message}>{t('errors.person_not_found')}</Text>
         {/* In place of this card, so Back from the tree never comes here again. */}
-        <Pressable accessibilityRole="button" onPress={() => router.dismissTo({ pathname: '/tree/[id]', params: { id: treeId } })} style={styles.textButton}>
-          <Text style={styles.link}>{t('guide.openTree')}</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" onPress={() => goBack(router)} style={styles.textButton}>
-          <Text style={styles.link}>{t('card.goBack')}</Text>
-        </Pressable>
+        <TextButton label={t('guide.openTree')} onPress={() => router.dismissTo({ pathname: '/tree/[id]', params: { id: treeId } })} />
+        <TextButton label={t('card.goBack')} onPress={() => goBack(router)} />
       </View>
     );
   }
@@ -97,9 +88,7 @@ export default function PersonCard() {
     return (
       <View style={styles.centre}>
         <Text style={styles.message}>{t('errors.person_not_found')}</Text>
-        <Pressable accessibilityRole="button" onPress={() => router.replace('/home')} style={styles.textButton}>
-          <Text style={styles.link}>{t('card.goBack')}</Text>
-        </Pressable>
+        <TextButton label={t('card.goBack')} onPress={() => router.replace('/home')} />
       </View>
     );
   }

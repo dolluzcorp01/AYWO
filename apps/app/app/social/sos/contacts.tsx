@@ -10,7 +10,7 @@ import { Card, ConfirmDialog, ErrorText, Field, SecondaryButton, SectionTitle, T
 import { api } from '@/lib/api';
 import { toE164 } from '@/lib/phone';
 import { usePeople } from '@/social/AudiencePicker';
-import { ActionError, Gate, Note, Page, Row, useName } from '@/social/parts';
+import { ActionError, Gate, Note, Page, Row, useListSearch, useName } from '@/social/parts';
 import type { SosContact } from '@/social/types';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 
@@ -20,6 +20,8 @@ export default function SosContacts() {
   const { t } = useTranslation();
   const client = useQueryClient();
   const showName = useName();
+  // A big family is a long list: a search box appears once it is.
+  const search = useListSearch<{ profile_id: string; name: string }>((p) => showName(p.name));
   const [typedName, setTypedName] = useState('');
   const [typedPhone, setTypedPhone] = useState('');
   const [badPhone, setBadPhone] = useState(false);
@@ -126,7 +128,9 @@ export default function SosContacts() {
               if (open.length === 0) return <Note>{t('social.audience.nobody')}</Note>;
               return (
                 <>
-                  {open.map((p) => (
+                  {search.box(open)}
+                  {search.nothing(open) ? <Note>{t('search.nothing')}</Note> : null}
+                  {search.filter(open).map((p) => (
                     <Row key={p.profile_id} title={showName(p.name)} subtitle={t('social.sos.tapToAdd')} onPress={() => add.mutate({ profile: p.profile_id })} />
                   ))}
                 </>

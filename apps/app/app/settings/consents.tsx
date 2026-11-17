@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
+import { showToast } from '@/components/Toast';
 import { Card, ConfirmDialog, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
 import { PUBLISHER } from '@/legal/publisher';
 import { api } from '@/lib/api';
@@ -35,9 +36,17 @@ export default function MyConsentsScreen() {
     onSuccess: () => {
       setWithdrawing(false);
       refresh();
+      showToast('success', t('common.saved'));
     },
   });
-  const marketing = useMutation({ mutationFn: (on: boolean) => api.rpc('marketing_set', { p_on: on }), onSuccess: refresh });
+  const marketing = useMutation({
+    mutationFn: (on: boolean) => api.rpc('marketing_set', { p_on: on }),
+    onSuccess: () => {
+      refresh();
+      // The choice is saved the moment it is pressed: say so.
+      showToast('success', t('common.saved'));
+    },
+  });
 
   function status(item: ConsentItem) {
     if (!item.agreed_version) return t('ops.myConsents.notGiven');

@@ -22,6 +22,8 @@ export const socialRpc: RpcList = {
   chat_create_group: { args: ['p_name', 'p_audience'] },
   chat_add_members: { args: ['p_chat', 'p_members'] },
   chat_leave: { args: ['p_chat'] },
+  // Takes a one-to-one chat off the caller's own list until a new message arrives (0033).
+  chat_hide: { args: ['p_chat'] },
   chat_list: { args: [] },
   chat_members_list: { args: ['p_chat'] },
   profile_number: { args: ['p_profile'] },
@@ -49,6 +51,7 @@ export const socialRpc: RpcList = {
   event_create: { args: ['p_kind', 'p_title', 'p_starts_at', 'p_audience', 'p_place', 'p_note', 'p_canva_url', 'p_design'] },
   event_update: { args: ['p_event', 'p_title', 'p_starts_at', 'p_place', 'p_note', 'p_canva_url'] },
   event_cancel: { args: ['p_event'] },
+  event_clear_canva: { args: ['p_event'] },
   event_remove_invitee: { args: ['p_event', 'p_profile'] },
   event_add_invitees: { args: ['p_event', 'p_audience'] },
   event_list: { args: [] },
@@ -64,6 +67,7 @@ export const socialRpc: RpcList = {
   alert_mark_seen: { args: ['p_alert'] },
   alert_close: { args: ['p_alert', 'p_closed'] },
   alert_delete: { args: ['p_alert'] },
+  alert_update: { args: ['p_alert', 'p_body'] },
 
   sos_contacts_list: { args: [] },
   sos_contact_add: { args: ['p_contact_profile', 'p_phone', 'p_name'] },

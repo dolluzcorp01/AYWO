@@ -326,8 +326,11 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
 
   app.get('/activity', async (req) => {
     const userId = await requireUser(req);
-    const { tab } = z.object({ tab: z.enum(['needs_you', 'changes', 'access', 'all']).default('all') }).parse(req.query);
-    return asCaller(userId, (db) => call(db, 'activity_feed($1)', [tab]));
+    // limit: "Show more" on the Activity page asks for a longer list (activity_feed itself stops at 200).
+    const { tab, limit } = z
+      .object({ tab: z.enum(['needs_you', 'changes', 'access', 'all']).default('all'), limit: z.coerce.number().int().min(1).max(200).default(50) })
+      .parse(req.query);
+    return asCaller(userId, (db) => call(db, 'activity_feed($1, $2)', [tab, limit]));
   });
 
   app.post('/requests/:id/decide', async (req) => {

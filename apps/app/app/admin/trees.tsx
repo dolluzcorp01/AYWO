@@ -1,4 +1,5 @@
-// Find trees by name or id. Counts only, until someone gives a reason to look at the people. Every look is audited.
+// Find trees by name or by who made them. Counts only, until someone gives a reason to look at the people. Every look is audited.
+import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +7,7 @@ import { Text, View } from 'react-native';
 import { Actions, AdminPage, adminStyles, DataTable, FormDialog, formatDate, Message, Pager, PAGE_SIZE, Pill, QueryState, SearchBox, SecondaryButton, Section, usePagedList } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import type { Page, TreePersonRow, TreeRow } from '@/admin/types';
+import { csvDay, downloadCsv } from '@/admin/csv';
 import { api } from '@/lib/api';
 
 interface Look {
@@ -23,6 +25,13 @@ export default function AdminTrees() {
   const [asking, setAsking] = useState<TreeRow | null>(null);
   const [look, setLook] = useState<Look | null>(null);
   const [pageFailed, setPageFailed] = useState(false);
+  // The tree whose id was just copied, so its button can say so.
+  const [copied, setCopied] = useState<string | null>(null);
+  // Ids are long and mean nothing to read, so they stay off the screen. Engineering sometimes asks for one: copy it.
+  const copyId = async (tree: TreeRow) => {
+    await Clipboard.setStringAsync(tree.id);
+    setCopied(tree.id);
+  };
   const { query, page, setPage } = usePagedList<TreeRow>(['admin', 'trees'], '/admin/trees', { q });
 
   const fetchPeople = (tree: TreeRow, reason: string, nextPage: number) =>
@@ -51,7 +60,7 @@ export default function AdminTrees() {
       render: (tree) => (
         <View>
           <Text style={adminStyles.cellStrong}>{tree.name}</Text>
-          <Text style={adminStyles.cellMuted}>{tree.id}</Text>
+          {tree.deleted ? <Pill label={t('admin.users.deleted')} /> : null}
         </View>
       ),
     },
@@ -62,10 +71,11 @@ export default function AdminTrees() {
     {
       key: 'actions',
       label: t('admin.common.actions'),
+      flex: 1.4,
       render: (tree) => (
         <Actions>
-          {tree.deleted ? <Pill label={t('admin.users.deleted')} /> : null}
           <SecondaryButton label={t('admin.trees.seePeople')} onPress={() => setAsking(tree)} />
+          <SecondaryButton label={copied === tree.id ? t('admin.trees.idCopied') : t('admin.trees.copyId')} onPress={() => void copyId(tree)} />
         </Actions>
       ),
     },
@@ -75,7 +85,6 @@ export default function AdminTrees() {
     { key: 'name', label: t('admin.trees.personName'), flex: 2, render: (person) => (person.name_unknown ? t('admin.trees.nameNotKnown') : person.display_name) },
     { key: 'living', label: t('admin.trees.living'), render: (person) => t(`admin.trees.livingState.${person.living}`) },
     { key: 'account', label: t('admin.trees.account'), render: (person) => (person.has_account ? t('admin.trees.hasAccount') : '-') },
-    { key: 'id', label: t('admin.trees.personId'), flex: 2, render: (person) => <Text style={adminStyles.cellMuted}>{person.id}</Text> },
   ];
 
   return (
@@ -105,6 +114,26 @@ export default function AdminTrees() {
           <>
             <DataTable columns={columns} rows={data.rows} rowKey={(tree) => tree.id} />
             <Pager page={page} total={data.total} onPage={setPage} />
+            <Actions>
+              <SecondaryButton
+                label={t('admin.common.downloadCsv')}
+                onPress={() =>
+                  downloadCsv(
+                    `aywo-trees-${csvDay()}`,
+                    [t('admin.trees.name'), t('admin.trees.creator'), t('admin.trees.people'), t('admin.trees.shares'), t('admin.trees.created'), t('admin.trees.csvState')],
+                    data.rows.map((tree) => [
+                      tree.name,
+                      tree.creator_name ?? '',
+                      String(tree.people),
+                      String(tree.shares),
+                      formatDate(tree.created_at, i18n.language),
+                      tree.deleted ? t('admin.users.deleted') : '',
+                    ]),
+                  )
+                }
+              />
+            </Actions>
+            <Text style={adminStyles.cellMuted}>{t('admin.common.downloadCsvHelp', { count: data.rows.length })}</Text>
           </>
         )}
       </QueryState>

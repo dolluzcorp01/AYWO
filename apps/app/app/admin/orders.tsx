@@ -8,9 +8,14 @@ import { useAdminAccess } from '@/admin/access';
 import type { Fulfilment, OrderAddress, OrderPage, OrderRow } from '@/admin/types';
 import { Actions, AdminPage, adminStyles, DataTable, DialogFrame, Facts, Field, FilterChips, formatDate, FormDialog, Message, Missing, money, Pager, Pill, QueryState, SearchBox, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
+import { csvDay, downloadCsv } from '@/admin/csv';
 import { api } from '@/lib/api';
 
 const NEXT: Partial<Record<Fulfilment, Fulfilment>> = { queued: 'printing', printing: 'shipped', shipped: 'delivered' };
+// One step back, for a step clicked by mistake. Cancelled and refunded orders never go back.
+const BACK: Partial<Record<Fulfilment, Fulfilment>> = { printing: 'queued', shipped: 'printing', delivered: 'shipped' };
+/** The list row, with the short number staff read out to a customer and the tracking link. */
+type Order = OrderRow & { order_no?: string; tracking_url?: string | null };
 
 export default function AdminOrders() {
   const { t, i18n } = useTranslation();
@@ -25,19 +30,21 @@ export default function AdminOrders() {
   }, [asked]);
   const [q, setQ] = useState('');
   const [moving, setMoving] = useState<OrderRow | null>(null);
+  const [correcting, setCorrecting] = useState<Order | null>(null);
+  const [undoing, setUndoing] = useState<Order | null>(null);
   const [address, setAddress] = useState<OrderRow | null>(null);
   // afterCancel: the refund offered straight after a cancel, so a paid order is not left cancelled and unrefunded.
   const [refunding, setRefunding] = useState<{ row: OrderRow; afterCancel: boolean } | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<OrderRow | null>(null);
-  const { query, page, setPage } = usePagedList<OrderRow>(['admin', 'orders'], '/admin/orders', { fulfilment: step === 'all' ? undefined : step, q });
+  const { query, page, setPage } = usePagedList<Order>(['admin', 'orders'], '/admin/orders', { fulfilment: step === 'all' ? undefined : step, q });
   const counts = (query.data as OrderPage | undefined)?.counts ?? {};
   const canShip = access.can(['orders']);
   const canRefund = access.can(['payments']);
   // An order step or a refund also moves the work queue and its badge, the dashboard, and the Payments totals.
   const refresh = () => refreshAfter('orders', 'work', 'payments');
 
-  const columns: Column<OrderRow>[] = [
+  const columns: Column<Order>[] = [
     {
       key: 'what',
       label: t('admin.orders.order'),
@@ -48,6 +55,7 @@ export default function AdminOrders() {
             {t(`admin.orders.products.${row.product}`)} {row.quantity > 1 ? `x ${row.quantity}` : ''}
           </Text>
           <Text style={adminStyles.cellMuted}>{row.buyer_name ?? '-'} · {[row.city, row.country].filter(Boolean).join(', ') || '-'}</Text>
+          {row.order_no ? <Text style={adminStyles.cellMuted}>{t('admin.orders.orderNo', { number: row.order_no })}</Text> : null}
         </View>
       ),
     },
@@ -82,7 +90,13 @@ export default function AdminOrders() {
           {canShip && row.status === 'paid' && NEXT[row.fulfilment] ? (
             <SecondaryButton label={t(`admin.orders.moveTo.${NEXT[row.fulfilment]}`)} onPress={() => setMoving(row)} />
           ) : null}
+          {canShip && row.status === 'paid' && row.fulfilment === 'shipped' ? (
+            <SecondaryButton label={t('admin.orders.correctTracking')} onPress={() => setCorrecting(row)} />
+          ) : null}
           {canShip && row.product !== 'premium_invite' ? <SecondaryButton label={t('admin.orders.address')} onPress={() => setAddress(row)} /> : null}
+          {canShip && row.status === 'paid' && BACK[row.fulfilment] ? (
+            <SecondaryButton label={t('admin.orders.undoStep')} onPress={() => setUndoing(row)} />
+          ) : null}
           {canShip && row.status === 'paid' && ['queued', 'printing', 'shipped'].includes(row.fulfilment) ? (
             <SecondaryButton label={t('admin.orders.cancel')} danger onPress={() => setCancelling(row)} />
           ) : null}
@@ -97,6 +111,32 @@ export default function AdminOrders() {
     label: value === 'all' ? t('admin.payments.all') : `${t(`admin.orders.steps.${value}`)}${counts[value] !== undefined ? ` (${counts[value]})` : ''}`,
   });
 
+  // The rows on the screen now, as a spreadsheet. Only what the list already shows: never the street address.
+  const exportRows = (rows: Order[]) =>
+    downloadCsv(
+      `aywo-orders-${csvDay()}`,
+      [
+        t('admin.orders.csv.number'), t('admin.orders.order'), t('admin.orders.quantity'), t('admin.orders.csv.buyer'), t('admin.orders.cityState'),
+        t('admin.orders.country'), t('admin.orders.csv.amount'), t('admin.orders.csv.currency'), t('admin.orders.csv.coupon'), t('admin.orders.step'),
+        t('admin.orders.carrier'), t('admin.orders.tracking'), t('admin.orders.paid'),
+      ],
+      rows.map((row) => [
+        row.order_no ?? row.id,
+        t(`admin.orders.products.${row.product}`),
+        String(row.quantity),
+        row.buyer_name ?? '',
+        row.city ?? '',
+        row.country ?? '',
+        String(row.amount_minor / 100),
+        row.currency,
+        row.coupon ?? '',
+        row.status === 'refunded' ? t('admin.payments.orderStatus.refunded') : t(`admin.orders.steps.${row.fulfilment}`),
+        row.carrier ?? '',
+        row.tracking_number ?? '',
+        row.paid_at ? formatDate(row.paid_at, i18n.language) : '',
+      ]),
+    );
+
   return (
     <AdminPage title={t('admin.orders.title')} subtitle={t('admin.orders.subtitle')} gates={['orders', 'payments']}>
       <FilterChips value={step} onChange={setStep} options={[chip('queued'), chip('printing'), chip('shipped'), chip('delivered'), chip('cancelled'), chip('all')]} />
@@ -107,6 +147,10 @@ export default function AdminOrders() {
           <>
             <DataTable columns={columns} rows={data.rows} rowKey={(row) => row.id} />
             <Pager page={page} total={data.total} onPage={setPage} />
+            <Actions>
+              <SecondaryButton label={t('admin.common.downloadCsv')} onPress={() => exportRows(data.rows)} />
+            </Actions>
+            <Text style={adminStyles.cellMuted}>{t('admin.common.downloadCsvHelp', { count: data.rows.length })}</Text>
           </>
         )}
       </QueryState>
@@ -120,6 +164,33 @@ export default function AdminOrders() {
           }}
           onClose={() => setMoving(null)}
         />
+      ) : null}
+      {correcting ? (
+        <TrackingDialog
+          row={correcting}
+          onDone={async () => {
+            setDone(t('admin.orders.trackingDone'));
+            await refresh();
+          }}
+          onClose={() => setCorrecting(null)}
+        />
+      ) : null}
+      {undoing ? (
+        <FormDialog
+          title={t('admin.orders.undoTitle')}
+          text={t('admin.orders.undoText', { from: t(`admin.orders.steps.${undoing.fulfilment}`), to: t(`admin.orders.steps.${BACK[undoing.fulfilment]}`) })}
+          fields={[{ name: 'reason', label: t('admin.common.reason'), minLength: 5, multiline: true }]}
+          confirmLabel={t('admin.orders.undoStep')}
+          onCancel={() => setUndoing(null)}
+          onConfirm={async ({ reason }) => {
+            await api.post(`/admin/orders/${undoing.id}/step-back`, { reason });
+            setDone(t('admin.orders.undoDone', { step: t(`admin.orders.steps.${BACK[undoing.fulfilment]}`) }));
+            setUndoing(null);
+            await refresh();
+          }}
+        >
+          {undoing.fulfilment === 'shipped' ? <Message text={t('admin.orders.undoClearsTracking')} alert /> : null}
+        </FormDialog>
       ) : null}
       {address ? <AddressDialog row={address} onClose={() => setAddress(null)} /> : null}
       {cancelling ? (
@@ -209,6 +280,54 @@ function StepDialog({ row, to, onDone, onClose }: { row: OrderRow; to: Fulfilmen
       <Actions>
         <SecondaryButton label={t('admin.common.cancel')} onPress={onClose} disabled={action.busy} />
         <SecondaryButton main label={t(`admin.orders.moveTo.${to}`)} onPress={save} disabled={action.busy || missing.some(Boolean)} />
+      </Actions>
+    </DialogFrame>
+  );
+}
+
+/** A shipped order whose tracking number or courier was typed wrongly. Saved with a reason; the buyer is told. */
+function TrackingDialog({ row, onDone, onClose }: { row: Order; onDone: () => Promise<void>; onClose: () => void }) {
+  const { t } = useTranslation();
+  const [carrier, setCarrier] = useState(row.carrier ?? '');
+  const [tracking, setTracking] = useState(row.tracking_number ?? '');
+  const [url, setUrl] = useState(row.tracking_url ?? '');
+  const [reason, setReason] = useState('');
+  const action = useAction();
+  const urlOk = !url.trim() || /^https:\/\/\S+$/.test(url.trim());
+  const same = carrier.trim() === (row.carrier ?? '') && tracking.trim() === (row.tracking_number ?? '') && url.trim() === (row.tracking_url ?? '');
+  const missing = [
+    !tracking.trim() && t('admin.orders.needTracking'),
+    !urlOk && t('admin.orders.trackingUrlBad'),
+    same && t('admin.orders.trackingSame'),
+    reason.trim().length < 5 && t('admin.common.needsText', { field: t('admin.common.reason'), count: 5 }),
+  ];
+
+  async function save() {
+    const ok = await action.run(() =>
+      api.post(`/admin/orders/${row.id}/tracking`, {
+        carrier: carrier.trim() || undefined,
+        tracking_number: tracking.trim(),
+        tracking_url: url.trim() || undefined,
+        reason: reason.trim(),
+      }),
+    );
+    if (ok) {
+      await onDone();
+      onClose();
+    }
+  }
+
+  return (
+    <DialogFrame title={t('admin.orders.correctTrackingTitle')} text={t('admin.orders.correctTrackingText')}>
+      <Field label={t('admin.orders.carrier')} value={carrier} onChange={setCarrier} maxLength={60} placeholder={t('admin.orders.carrierExample')} />
+      <Field label={t('admin.orders.tracking')} value={tracking} onChange={setTracking} maxLength={80} />
+      <Field label={t('admin.orders.trackingUrl')} value={url} onChange={setUrl} maxLength={300} placeholder="https://" error={urlOk ? null : t('admin.orders.trackingUrlBad')} />
+      <Field label={t('admin.common.reason')} value={reason} onChange={setReason} multiline maxLength={500} />
+      {action.failure ? <Message text={action.failure} alert /> : null}
+      <Missing reasons={missing} />
+      <Actions>
+        <SecondaryButton label={t('admin.common.cancel')} onPress={onClose} disabled={action.busy} />
+        <SecondaryButton main label={t('admin.orders.saveTracking')} onPress={save} disabled={action.busy || missing.some(Boolean)} />
       </Actions>
     </DialogFrame>
   );

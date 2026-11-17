@@ -375,7 +375,9 @@
     "pickDied": "Pick the date of passing from a calendar",
     "leaveTitle": "Leave without saving?",
     "leaveText": "What you typed here will be lost.",
-    "leaveYes": "Leave, don't save"
+    "leaveYes": "Leave, don't save",
+    "approvalAddNote": "Your addition goes to the tree's Creator to approve first. A photo and phone numbers can be added once the person is in the tree.",
+    "approvalEditNote": "Your changes go to the tree's Creator to approve first. Phone numbers and email cannot be changed this way."
   },
   "picker": {
     "hour": "Hour",
@@ -547,7 +549,9 @@
     },
     "newPhoto": "A new photo",
     "declineTitle": "Decline this request?",
-    "declineText": "A decline cannot be changed later. They would have to ask again."
+    "declineText": "A decline cannot be changed later. They would have to ask again.",
+    "showMore": "Show more",
+    "olderInHistory": "These are the latest 200. Older changes are in each tree's History."
   },
   "merge": {
     "title": "Same person?",
@@ -588,7 +592,9 @@
       "change": "{{name}} changed {{person}}",
       "contact": "{{name}} changed contact details",
       "link": "{{name}} changed a family link"
-    }
+    },
+    "showMore": "Show older changes",
+    "end": "That is every change in this tree."
   },
   "comments": {
     "title": "Comments",

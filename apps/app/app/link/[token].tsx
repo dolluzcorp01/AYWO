@@ -2,16 +2,16 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { PageLoader } from '@/components/Loaders';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, LoadFailed, PrimaryButton, TextButton } from '@/components/ui';
+import { Card, LoadFailed, PrimaryButton, SecondaryButton, TextButton } from '@/components/ui';
 import { hasSession } from '@/lib/api';
 import { goBack } from '@/lib/nav';
 import { NamesTree } from '@/tree/NamesTree';
 import { useLinkView } from '@/tree/useLinkView';
-import { colors, fonts, minTapSize } from '@/theme/tokens';
+import { colors, fonts } from '@/theme/tokens';
 
 export default function LinkTree() {
   const { token, look } = useLocalSearchParams<{ token: string; look?: string }>();
@@ -70,13 +70,7 @@ export default function LinkTree() {
       </View>
       <View style={styles.footer}>
         {signedIn ? null : (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push({ pathname: '/phone', params: { next: `/link/${token}` } })}
-            style={styles.secondary}
-          >
-            <Text style={styles.secondaryText}>{t('link.inThisFamily')}</Text>
-          </Pressable>
+          <SecondaryButton label={t('link.inThisFamily')} onPress={() => router.push({ pathname: '/phone', params: { next: `/link/${token}` } })} />
         )}
         <View style={styles.primary}>
           <PrimaryButton label={t('link.makeOwn')} onPress={() => router.push(signedIn ? '/start' : '/')} />
@@ -94,16 +88,5 @@ const styles = StyleSheet.create({
   note: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
   tree: { flex: 1 },
   footer: { flexDirection: 'row', gap: 10, padding: 16, alignItems: 'center' },
-  secondary: {
-    minHeight: 56,
-    paddingHorizontal: 18,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    backgroundColor: colors.card,
-    justifyContent: 'center',
-    minWidth: minTapSize,
-  },
-  secondaryText: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
   primary: { flex: 1 },
 });

@@ -155,7 +155,21 @@
       "paidSlow": "This is taking longer than usual. If you paid, your order will show here as soon as the payment service tells us. If you did not finish paying, nothing was charged and no order was made.",
       "checkAgain": "Check again now",
       "checking": "Checking…",
-      "trackFailed": "The tracking page could not open. Use the tracking number above on the courier's website."
+      "trackFailed": "The tracking page could not open. Use the tracking number above on the courier's website.",
+      "paidLine": "Paid {{amount}} on {{date}}",
+      "discountLine": "You saved {{amount}} with an offer code.",
+      "orderNo": "Order number: {{ref}}",
+      "paymentRef": "Payment reference: {{ref}}",
+      "sendingTo": "Delivering to",
+      "cancelAsk": "Ask to cancel this order",
+      "cancelTitle": "Ask to cancel this order?",
+      "cancelText": "Printing has not started, so this order can usually be stopped. We will send your request to AYWO Support. They cancel the order and send your money back the way you paid, then reply to you in Help.",
+      "cancelYes": "Yes, ask to cancel",
+      "cancelAsked": "You asked to cancel this order. AYWO Support will reply in Help.",
+      "cancelSee": "See your request",
+      "cancelTooLate": "Printing has started, so this order can no longer be cancelled here. If something is wrong, use \"Need help with an order?\" below.",
+      "cancelSubject": "Please cancel my order {{ref}}",
+      "cancelBody": "Please cancel this order and refund me. Printing has not started.\n\nOrder: {{id}}\nItem: {{product}} x {{quantity}}\nPaid: {{amount}} on {{date}}"
     },
     "shop": {
       "title": "Order a poster or book",

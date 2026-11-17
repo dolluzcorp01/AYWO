@@ -1,13 +1,32 @@
 // One account, everything staff may see about it: plan, trees, orders, tickets, reports, devices and staff history.
 // Opening it needs a reason, which is recorded. Phone and email stay partly hidden; family details stay private.
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';
 import type { UserDetail } from '@/admin/types';
 import { Actions, AdminPage, adminStyles, Facts, Field, formatDate, FormDialog, Message, Missing, money, Panel, Pill, SecondaryButton, useAction, useRefreshAfter } from '@/admin/ui';
 import { ApiFailure, api } from '@/lib/api';
+
+// The reason typed for one account is kept until the browser tab is closed, so a refresh or coming back from another
+// page does not ask for it again. The server still records every look, each with this reason.
+const reasonKey = (id: string) => `aywo.admin.viewReason.${id}`;
+function recallReason(id: string): string {
+  try {
+    return globalThis.sessionStorage?.getItem(reasonKey(id)) ?? '';
+  } catch {
+    return '';
+  }
+}
+function keepReason(id: string, reason: string | null) {
+  try {
+    if (reason) globalThis.sessionStorage?.setItem(reasonKey(id), reason);
+    else globalThis.sessionStorage?.removeItem(reasonKey(id));
+  } catch {
+    // A browser that refuses storage just asks for the reason again.
+  }
+}
 
 export default function AdminUser() {
   const { t, i18n } = useTranslation();
@@ -17,13 +36,30 @@ export default function AdminUser() {
   const refreshAfter = useRefreshAfter();
   const [reason, setReason] = useState('');
   const [user, setUser] = useState<UserDetail | null>(null);
-  const [doing, setDoing] = useState<'block' | 'unblock' | 'end' | 'plus' | null>(null);
+  const [doing, setDoing] = useState<'block' | 'unblock' | 'end' | 'plus' | 'minus' | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const action = useAction();
   // The server lets only an AYWO Admin block a staff account or sign it out, so the buttons are not offered to others.
   const staffLocked = !!user?.staff_role && !access.can(['staff']);
+  // Free days can be taken back only while some are left.
+  const hasFreeDays = !!user?.plus_bonus_until && Date.parse(user.plus_bonus_until) > Date.now();
 
-  const open = () => action.run(async () => setUser(await api.post<UserDetail>(`/admin/users/${id}/view`, { reason: reason.trim() })));
+  const openWith = (why: string) =>
+    action.run(async () => {
+      setUser(await api.post<UserDetail>(`/admin/users/${id}/view`, { reason: why }));
+      keepReason(id, why);
+    });
+  const open = () => openWith(reason.trim());
+  // Back on an account already opened in this tab: its reason is reused. A different account asks afresh.
+  useEffect(() => {
+    setUser(null);
+    setDone(null);
+    const kept = recallReason(id);
+    setReason(kept);
+    if (kept.length >= 5) void openWith(kept);
+    // Only the account in the address decides this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
   // The server has no way to read an account without recording a view, so the reload after an action is a second
   // audited view with the same reason.
   const reload = open;
@@ -53,6 +89,19 @@ export default function AdminUser() {
             {user.staff_role ? <Pill label={t(`admin.roles.${user.staff_role}`)} /> : null}
             {user.is_minor ? <Pill label={t('admin.user360.minor')} alert /> : null}
           </Actions>
+          {/* Says that the reason is being reused, and gives the way to type a new one. */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
+            <Text style={[adminStyles.cellMuted, { flexShrink: 1 }]}>{t('admin.user360.reasonKept', { reason: reason.trim() })}</Text>
+            <SecondaryButton
+              label={t('admin.user360.changeReason')}
+              onPress={() => {
+                keepReason(id, null);
+                setReason('');
+                setDone(null);
+                setUser(null);
+              }}
+            />
+          </View>
           {done ? <Message text={done} good /> : null}
           {action.failure ? (
             <>
@@ -76,6 +125,7 @@ export default function AdminUser() {
                 ) : null}
                 {access.can(['users']) && !staffLocked ? <SecondaryButton label={t('admin.user360.endSessions')} onPress={() => setDoing('end')} /> : null}
                 {access.can(['payments', 'support']) ? <SecondaryButton label={t('admin.user360.givePlus')} onPress={() => setDoing('plus')} /> : null}
+                {access.can(['payments', 'support']) && hasFreeDays ? <SecondaryButton label={t('admin.user360.takePlus')} onPress={() => setDoing('minus')} /> : null}
                 {access.can(['staff']) && !user.staff_role && !user.deleted && !user.blocked_at ? (
                   <SecondaryButton label={t('admin.user360.makeStaff')} onPress={() => router.navigate({ pathname: '/admin/staff', params: { add: user.id, name: user.display_name } })} />
                 ) : null}
@@ -123,7 +173,12 @@ export default function AdminUser() {
           <Panel title={t('admin.user360.orders')}>
             {user.orders.length === 0 ? <Text style={adminStyles.cellMuted}>{t('admin.user360.none')}</Text> : null}
             {user.orders.map((o) => (
-              <Text key={o.id} style={adminStyles.cellStrong}>
+              <Text
+                key={o.id}
+                style={[adminStyles.cellStrong, access.can(['orders']) && { textDecorationLine: 'underline' }]}
+                accessibilityRole={access.can(['orders']) ? 'link' : undefined}
+                onPress={access.can(['orders']) ? () => router.navigate({ pathname: '/admin/orders', params: { open: o.id } }) : undefined}
+              >
                 {t(`admin.orders.products.${o.product}`)} · {money(o.amount_minor, o.currency, i18n.language)} · {t(`admin.payments.orderStatus.${o.status}`)}
                 {o.fulfilment !== 'none' ? ` · ${t(`admin.orders.steps.${o.fulfilment}`)}` : ''} · {formatDate(o.created_at, i18n.language)}
               </Text>
@@ -132,7 +187,12 @@ export default function AdminUser() {
           <Panel title={t('admin.user360.tickets')}>
             {user.tickets.length === 0 ? <Text style={adminStyles.cellMuted}>{t('admin.user360.none')}</Text> : null}
             {user.tickets.map((tk) => (
-              <Text key={tk.id} style={adminStyles.cellStrong}>
+              <Text
+                key={tk.id}
+                style={[adminStyles.cellStrong, access.can(['support']) && { textDecorationLine: 'underline' }]}
+                accessibilityRole={access.can(['support']) ? 'link' : undefined}
+                onPress={access.can(['support']) ? () => router.navigate({ pathname: '/admin/tickets', params: { open: tk.id } }) : undefined}
+              >
                 {tk.subject} · {t(`admin.tickets.${tk.status}`)} · {formatDate(tk.updated_at, i18n.language)}
               </Text>
             ))}
@@ -157,17 +217,22 @@ export default function AdminUser() {
           text={t(`admin.user360.confirmText.${doing}`)}
           fields={[
             ...(doing === 'plus' ? [{ name: 'days', label: t('admin.user360.days'), minLength: 1, initial: '30' }] : []),
+            // No ready number here: the days to take back are whatever was given by mistake.
+            ...(doing === 'minus' ? [{ name: 'days', label: t('admin.user360.takeDays'), minLength: 1 }] : []),
             { name: 'reason', label: t('admin.common.reason'), minLength: 5, multiline: true },
           ]}
           // The button says what it does. "Save" on a box that blocks someone tells nobody anything.
-          confirmLabel={t(doing === 'block' ? 'admin.users.block' : doing === 'unblock' ? 'admin.users.unblock' : doing === 'end' ? 'admin.user360.endSessions' : 'admin.user360.givePlus')}
+          confirmLabel={t(
+            doing === 'block' ? 'admin.users.block' : doing === 'unblock' ? 'admin.users.unblock' : doing === 'end' ? 'admin.user360.endSessions' : doing === 'minus' ? 'admin.user360.takePlus' : 'admin.user360.givePlus',
+          )}
           danger={doing === 'block'}
           onCancel={() => setDoing(null)}
           onConfirm={async ({ reason: why, days }) => {
             setDone(null);
-            if (doing === 'plus' && !(Number.isInteger(Number(days)) && Number(days) >= 1 && Number(days) <= 365)) {
+            if ((doing === 'plus' || doing === 'minus') && !(Number.isInteger(Number(days)) && Number(days) >= 1 && Number(days) <= 365)) {
               throw new ApiFailure(422, 'admin_days_bad', 'admin.user360.daysBad');
             }
+            if (doing === 'minus') await api.post(`/admin/users/${user.id}/take-plus`, { reason: why, days: Number(days) });
             if (doing === 'block') await api.post(`/admin/users/${user.id}/block`, { reason: why });
             if (doing === 'unblock') await api.post(`/admin/users/${user.id}/unblock`, { reason: why });
             if (doing === 'end') await api.post(`/admin/users/${user.id}/end-sessions`, { reason: why });

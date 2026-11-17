@@ -5,6 +5,7 @@ import {
   PlusJakartaSans_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/plus-jakarta-sans';
+import { useQuery } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import type { Href } from 'expo-router';
 import { Stack, useGlobalSearchParams, usePathname, useRouter, useSegments } from 'expo-router';
@@ -52,7 +53,12 @@ function AppFrame({ children, signedIn }: { children: ReactNode; signedIn: boole
   useEffect(() => setCrashRoute(pathname), [pathname]);
   const search = useGlobalSearchParams<{ edit?: string }>();
   const editingProfile = first === 'profile' && search.edit === '1';
-  const keepMenu = signedIn && IN_APP_WHEN_SIGNED_IN.has(first ?? '') && (first !== 'profile' || editingProfile);
+  // The Start page is the first step for someone with no tree, and also "add another tree" for someone who has
+  // one. The second kind came from Home or Me and must keep the side menu. Asked only on that page; the page
+  // itself asks the same question, so this is one request, not two.
+  const trees = useQuery({ queryKey: ['trees'], queryFn: () => api.get<{ id: string }[]>('/trees'), enabled: signedIn && first === 'start' });
+  const startWithTree = first === 'start' && (trees.data?.length ?? 0) > 0;
+  const keepMenu = signedIn && (startWithTree || (IN_APP_WHEN_SIGNED_IN.has(first ?? '') && (first !== 'profile' || editingProfile)));
   const section =
     first === 'admin' ? 'admin' : keepMenu ? 'app' : first === undefined || PUBLIC_ROUTES.has(first) || ONBOARDING.has(first) ? 'public' : 'app';
   return (

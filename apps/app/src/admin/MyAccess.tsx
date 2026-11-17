@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { CheckIcon } from '@/components/Icons';
 import { useAdminAccess } from '@/admin/access';
+import { AdminNames } from '@/admin/AdminNames';
 import { GRANTABLE } from '@/admin/types';
 import { adminStyles, Panel } from '@/admin/ui';
 import { colors, fonts } from '@/theme/tokens';
@@ -52,6 +53,7 @@ export function MyAccess() {
         </View>
       </View>
       <Text style={adminStyles.cellMuted}>{t('admin.myAccess.askAdmin')}</Text>
+      <AdminNames />
     </Panel>
   );
 }

@@ -101,7 +101,9 @@ export default function Start() {
       >
         <Field label={t('start.anotherName')} value={naming ?? ''} onChangeText={setNaming} maxLength={80} placeholder={t('start.anotherPlaceholder')} />
       </ConfirmDialog>
-      <TabBar active="home" />
+      {/* With a tree already, this page is not Home: no tab is lit, so the Home tab takes the person home. (The
+          tab bar does nothing for the tab it thinks is open. It only compares names, so 'none' lights no tab.) */}
+      <TabBar active={hasTree ? 'none' : 'home'} />
     </Screen>
   );
 }

@@ -4,11 +4,10 @@ import qrcode from 'qrcode-generator';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Linking, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
-import { PrimaryButton } from '@/components/ui';
 import { api, saveStaffProof } from '@/lib/api';
 import { logOut } from '@/lib/logout';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
-import { Message, SecondaryButton, useAction } from './ui';
+import { Message, Missing, SecondaryButton, useAction } from './ui';
 
 function CodeBox({ value, onChange, onSubmit, label }: { value: string; onChange: (v: string) => void; onSubmit: () => void; label: string }) {
   return (
@@ -50,7 +49,11 @@ export function TwoStepCode({ onDone, text }: { onDone: () => void; text?: strin
         <Text style={styles.text}>{text ?? t('admin.twoStep.codeText')}</Text>
         <CodeBox value={code} onChange={setCode} onSubmit={submit} label={t('admin.twoStep.codeLabel')} />
         {action.failure ? <Message text={action.failure} alert /> : null}
-        <PrimaryButton label={t('admin.twoStep.continue')} onPress={submit} disabled={action.busy} missing={code.length !== 6 ? t('admin.twoStep.needsCode') : null} />
+        {/* The admin panel's own main button, so this screen looks like the pages behind it. */}
+        <View style={styles.main}>
+          <SecondaryButton main label={t('admin.twoStep.continue')} onPress={submit} disabled={action.busy || code.length !== 6} />
+        </View>
+        <Missing reasons={[code.length !== 6 && t('admin.twoStep.needsCode')]} />
         <Text style={styles.small}>{t('admin.twoStep.lost')}</Text>
         {/* Without the phone at hand nobody should be stuck on this screen. */}
         <View style={styles.ways}>
@@ -115,12 +118,17 @@ export function TwoStepSetup({ onDone, onCancel }: { onDone: () => void; onCance
             <Text style={styles.step}>{t('admin.twoStep.step2')}</Text>
             <CodeBox value={code} onChange={setCode} onSubmit={confirm} label={t('admin.twoStep.codeLabel')} />
             {action.failure ? <Message text={action.failure} alert /> : null}
-            <PrimaryButton label={t('admin.twoStep.turnOn')} onPress={confirm} disabled={action.busy} missing={code.length !== 6 ? t('admin.twoStep.needsCode') : null} />
+            <View style={styles.main}>
+              <SecondaryButton main label={t('admin.twoStep.turnOn')} onPress={confirm} disabled={action.busy || code.length !== 6} />
+            </View>
+            <Missing reasons={[code.length !== 6 && t('admin.twoStep.needsCode')]} />
           </>
         ) : (
           <>
             {action.failure ? <Message text={action.failure} alert /> : null}
-            <PrimaryButton label={t('admin.twoStep.begin')} onPress={start} disabled={action.busy} />
+            <View style={styles.main}>
+              <SecondaryButton main label={t('admin.twoStep.begin')} onPress={start} disabled={action.busy} />
+            </View>
           </>
         )}
         {onCancel ? <SecondaryButton label={t('admin.common.cancel')} onPress={onCancel} /> : null}
@@ -132,6 +140,8 @@ export function TwoStepSetup({ onDone, onCancel }: { onDone: () => void; onCance
 const styles = StyleSheet.create({
   qr: { width: 220, height: 220, alignSelf: 'center' },
   ways: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  // Keeps the main button its own width; alone in the card it would stretch from edge to edge.
+  main: { flexDirection: 'row' },
   page: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.background },
   card: { width: '100%', maxWidth: 460, gap: 14, padding: 28, borderRadius: 24, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.cardBorder },
   title: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 24, letterSpacing: -0.4 },

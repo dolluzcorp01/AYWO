@@ -14,6 +14,7 @@ import { TAB_BAR_SPACE } from '@/components/TabBar';
 import { DESKTOP_MIN } from '@/components/WebFrame';
 import { firstName } from '@/lib/account';
 import { Text } from '@/components/Text';
+import { SmallButton } from '@/components/ui';
 import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
 import type { TreeNode, TreeViewAnswer } from './useTreeView';
 
@@ -303,9 +304,7 @@ export function MyView({ data, viewerId, focusId, seeingAs, onFocus, onOpenPerso
 
       <View style={styles.actions}>
         {onAdd ? (
-          <Pressable accessibilityRole="button" onPress={() => onAdd(focus.id)} style={({ hovered }: { hovered?: boolean }) => [styles.addButton, hovered && styles.addHover]}>
-            <Text style={styles.addText}>{t('tree.addTo', { name: nameOf(focus) })}</Text>
-          </Pressable>
+          <SmallButton label={t('tree.addTo', { name: nameOf(focus) })} kind="plain" onPress={() => onAdd(focus.id)} />
         ) : null}
         {children}
         {!isViewer ? (
@@ -346,20 +345,6 @@ const styles = StyleSheet.create({
   ask: { color: colors.ask },
   focusWord: { color: colors.logoOrange, fontFamily: fonts.extrabold, fontSize: 12 },
   actions: { alignItems: 'center', gap: 2, paddingHorizontal: 16 },
-  addButton: {
-    minHeight: minTapSize,
-    paddingHorizontal: 20,
-    borderRadius: 999,
-    backgroundColor: colors.tint,
-    borderWidth: 1.5,
-    borderColor: colors.logoIndigo,
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    ...shadows.card,
-  },
-  addHover: { backgroundColor: colors.tintDeep },
-  addText: { color: colors.logoIndigo, fontFamily: fonts.bold, fontSize: 14 },
   link: { minHeight: minTapSize, justifyContent: 'center', paddingHorizontal: 16 },
   linkText: { color: colors.relation, fontFamily: fonts.bold, fontSize: 14 },
 });

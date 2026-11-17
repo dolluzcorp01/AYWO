@@ -9,12 +9,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { PageLoader, Spinner } from '@/components/Loaders';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Spinner } from '@/components/Loaders';
 import Svg, { Path } from 'react-native-svg';
+import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { PrimaryButton } from '@/components/ui';
-import { api } from '@/lib/api';
+import { BackButton, Loading, LoadFailed, PrimaryButton, TextButton, TopBar } from '@/components/ui';
+import { api, deviceStore } from '@/lib/api';
 import { clearPending, readPending, rememberPending } from '@/pay/pending';
 import { buyStorePlan, loadStorePackages, restoreStorePurchases, storeAvailable } from '@/pay/store';
 import { hasPlusNow, onBonusOnly, PLAN_KEY, PRODUCT_OF, payErrorText, usePlan } from '@/pay/usePlan';
@@ -34,7 +34,6 @@ const BENEFITS = [
 export default function Plus() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ checkout?: string; order?: string }>();
   // Old links: a paid shop order used to come back here. It belongs in My orders, not in front of a Plus offer.
@@ -55,6 +54,15 @@ export default function Plus() {
 
   const plan = usePlan(waiting);
   const data = plan.data;
+  // A Razorpay plan cancelled on this phone still reads "renews" on the server until the period ends (see
+  // family-plan.tsx, which leaves this mark). Without it this page would promise a payment that will not come.
+  const [cancelledUntil, setCancelledUntil] = useState<{ profile: string; renews_at: string | null } | null>(null);
+  useEffect(() => {
+    void deviceStore
+      .get('aywo.planCancelled')
+      .then((saved) => (saved ? setCancelledUntil(JSON.parse(saved) as { profile: string; renews_at: string | null }) : undefined))
+      .catch(() => undefined);
+  }, []);
 
   const packages = useQuery({
     queryKey: ['store-packages', data?.profile_id],
@@ -107,20 +115,19 @@ export default function Plus() {
   }
 
   if (plan.isError && !data) {
+    // With the shared top bar there is a way out even when the page cannot load.
     return (
-      <View style={styles.centre}>
-        <Text style={styles.message}>{payErrorText(t, plan.error)}</Text>
-        <Pressable accessibilityRole="button" onPress={() => plan.refetch()} style={styles.textButton}>
-          <Text style={styles.link}>{t('pay.tryAgain')}</Text>
-        </Pressable>
-      </View>
+      <Screen>
+        <TopBar title={t('pay.kicker')} onBack={close} close />
+        <LoadFailed message={payErrorText(t, plan.error)} onRetry={() => plan.refetch()} />
+      </Screen>
     );
   }
   if (!data || !pendingChecked || shopReturn) {
     return (
-      <View style={styles.centre}>
-        <PageLoader label={t('pay.loading')} />
-      </View>
+      <Screen>
+        <Loading label={t('pay.loading')} />
+      </Screen>
     );
   }
 
@@ -203,17 +210,31 @@ export default function Plus() {
     ? new Date(data.bonus_until).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })
     : '';
 
+  // Someone who already has Plus is told what their plan is, in words, instead of only "You already have Plus".
+  const day = (value: string | null) => (value ? new Date(value).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+  const yearlyNow = data.product_id === 'aywo_plus_yearly';
+  const priceNow = yearlyNow ? yearlyPrice : monthlyPrice;
+  const payerName = data.members.find((m) => m.is_payer)?.display_name ?? '';
+  const cancelledHere = !!cancelledUntil && data.store === 'razorpay' && cancelledUntil.profile === data.profile_id && cancelledUntil.renews_at === data.renews_at;
+  const nowLine = !data.is_payer
+    ? payerName
+      ? t('pay.now.member', { name: payerName })
+      : t('pay.now.memberNoName')
+    : data.status === 'trial'
+      ? t(yearlyNow ? 'pay.now.trialYearly' : 'pay.now.trialMonthly', { date: day(data.trial_ends_at), price: priceNow })
+      : data.status === 'grace'
+        ? t('pay.family.paymentProblem')
+        : data.will_renew && !cancelledHere
+          ? t(yearlyNow ? 'pay.now.yearly' : 'pay.now.monthly', { price: priceNow, date: day(data.renews_at) })
+          : t('pay.now.ending', { date: day(data.renews_at) });
+
   return (
-    <View style={styles.page}>
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 22 }]}>
-        <LinearGradient colors={gradients.neon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 16 }]}>
+    <Screen flush>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <LinearGradient colors={gradients.neon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
           <View style={styles.heroTop}>
             <Text style={styles.kicker}>{t('pay.kicker')}</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel={t('pay.close')} onPress={close} style={styles.close}>
-              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={colors.white} strokeWidth={2.2}>
-                <Path d="M6 6l12 12M18 6L6 18" />
-              </Svg>
-            </Pressable>
+            <BackButton close onPress={close} />
           </View>
           <Text style={styles.title} accessibilityRole="header">{t('pay.title')}</Text>
           <View style={styles.benefits}>
@@ -233,7 +254,9 @@ export default function Plus() {
         <View style={styles.body}>
           {data.plus ? (
             <>
-              <Text style={styles.sectionTitle}>{t('pay.alreadyPlus')}</Text>
+              <Text style={styles.sectionTitle}>{t('pay.now.title')}</Text>
+              <Text style={styles.nowLine}>{nowLine}</Text>
+              <Text style={styles.freeNote}>{t('pay.now.manageHint')}</Text>
               <PrimaryButton label={t('pay.seeFamilyPlan')} onPress={() => router.replace('/family-plan')} />
             </>
           ) : bonus ? (
@@ -251,12 +274,8 @@ export default function Plus() {
                 <>
                   <Text style={styles.freeNote}>{t('pay.confirmSlow')}</Text>
                   <Text style={styles.freeNote}>{t('pay.pendingWhy')}</Text>
-                  <Pressable accessibilityRole="button" onPress={() => plan.refetch()} style={styles.textButton}>
-                    <Text style={styles.link}>{plan.isFetching ? t('pay.pleaseWait') : t('pay.checkAgain')}</Text>
-                  </Pressable>
-                  <Pressable accessibilityRole="link" onPress={() => router.push('/help')} style={styles.textButton}>
-                    <Text style={styles.link}>{t('pay.pendingHelp')}</Text>
-                  </Pressable>
+                  <TextButton label={plan.isFetching ? t('pay.pleaseWait') : t('pay.checkAgain')} disabled={plan.isFetching} onPress={() => void plan.refetch()} />
+                  <TextButton label={t('pay.pendingHelp')} onPress={() => router.push('/help')} />
                 </>
               ) : null}
             </View>
@@ -308,25 +327,17 @@ export default function Plus() {
           )}
 
           {!isWeb && !hasPlusNow(data) && !waiting ? (
-            <Pressable accessibilityRole="button" onPress={restore} disabled={busy} style={styles.textButton}>
-              <Text style={styles.link}>{t('pay.restore')}</Text>
-            </Pressable>
+            <TextButton label={t('pay.restore')} onPress={() => void restore()} disabled={busy} />
           ) : null}
 
           <View style={styles.legal}>
-            <Pressable accessibilityRole="link" onPress={() => router.push('/terms')} style={styles.textButton}>
-              <Text style={styles.link}>{t('legal.termsLink')}</Text>
-            </Pressable>
-            <Pressable accessibilityRole="link" onPress={() => router.push('/privacy')} style={styles.textButton}>
-              <Text style={styles.link}>{t('legal.privacyLink')}</Text>
-            </Pressable>
-            <Pressable accessibilityRole="link" onPress={() => router.push('/refunds')} style={styles.textButton}>
-              <Text style={styles.link}>{t('legal.refundsLink')}</Text>
-            </Pressable>
+            <TextButton label={t('legal.termsLink')} onPress={() => router.push('/terms')} />
+            <TextButton label={t('legal.privacyLink')} onPress={() => router.push('/privacy')} />
+            <TextButton label={t('legal.refundsLink')} onPress={() => router.push('/refunds')} />
           </View>
         </View>
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
@@ -360,24 +371,13 @@ function PlanOption(props: {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
-  scroll: { flexGrow: 1 },
-  centre: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.background, gap: 12 },
-  message: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15, textAlign: 'center' },
-  textButton: { minHeight: minTapSize, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 },
-  link: { color: colors.logoPurple, fontFamily: fonts.bold, fontSize: 13, textDecorationLine: 'underline' },
+  // Screen keeps the page clear of the phone's status bar and home bar; this is the room below the last link.
+  scroll: { flexGrow: 1, paddingBottom: 22 },
+  nowLine: { color: colors.text, fontFamily: fonts.bold, fontSize: 15, lineHeight: 22 },
 
-  hero: { borderBottomLeftRadius: 34, borderBottomRightRadius: 34, paddingHorizontal: 20, paddingBottom: 22, gap: 12 },
+  hero: { borderBottomLeftRadius: 34, borderBottomRightRadius: 34, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 22, gap: 12 },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   kicker: { color: colors.logoYellow, fontFamily: fonts.extrabold, fontSize: 13, letterSpacing: 1.5 },
-  close: {
-    width: minTapSize,
-    height: minTapSize,
-    borderRadius: minTapSize / 2,
-    backgroundColor: colors.glass,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   title: { color: colors.white, fontFamily: fonts.extrabold, fontSize: 30, lineHeight: 34, letterSpacing: -0.8 },
   benefits: { gap: 9 },
   benefit: { flexDirection: 'row', alignItems: 'center', gap: 12 },

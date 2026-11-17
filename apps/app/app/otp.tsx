@@ -95,7 +95,9 @@ export default function Otp() {
       {wait > 0 ? (
         <Text style={styles.resend}>{t('otp.resendIn', { seconds: wait })}</Text>
       ) : (
-        <Text accessibilityRole="button" onPress={resend} style={[styles.resend, styles.resendOn]}>{t('otp.resend')}</Text>
+        <View style={styles.resendButton}>
+          <TextButton label={t('otp.resend')} onPress={() => void resend()} />
+        </View>
       )}
       <PrimaryButton label={t('otp.verify')} onPress={() => void verify()} disabled={busy} missing={code.length === 6 ? null : t('otp.needCode')} />
     </Screen>
@@ -118,5 +120,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   resend: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14, textAlign: 'center', marginBottom: 12, minHeight: 44, textAlignVertical: 'center' },
-  resendOn: { color: colors.logoPurple },
+  // Same room under it as the countdown line it replaces, so the Verify button does not jump.
+  resendButton: { marginBottom: 12 },
 });

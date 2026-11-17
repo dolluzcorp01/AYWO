@@ -1,4 +1,5 @@
 // E4 / S-11 Activity: what needs a decision, what changed, who has access.
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
@@ -10,6 +11,7 @@ import { Screen } from '@/components/Screen';
 import { TAB_BAR_SPACE, TabBar } from '@/components/TabBar';
 import { Text } from '@/components/Text';
 import { Card, ConfirmDialog, EmptyState, ErrorText, Field, Heading, Loading, LoadFailed, NeonPanel, SmallButton, TextButton } from '@/components/ui';
+import { api } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
 import { useTimeAgo } from '@/lib/time';
 import { useActivityText } from '@/tree/activityText';
@@ -24,11 +26,25 @@ const TABS: { key: ActivityTab; labelKey: string }[] = [
   { key: 'all', labelKey: 'activity.all' },
 ];
 
+// The list comes 50 lines at a time. "Show more" asks for a longer one, up to the most the server gives.
+const PAGE = 50;
+const MOST = 200;
+
 export default function Activity() {
   const { t } = useTranslation();
   const errorText = useErrorText();
   const [tab, setTab] = useState<ActivityTab>('needs_you');
-  const feed = useActivity(tab);
+  const [limit, setLimit] = useState(PAGE);
+  // The key starts with 'activity', so every action that refreshes the feed refreshes this list too. The lines
+  // already on screen stay while the longer list loads.
+  const feed = useQuery({
+    queryKey: ['activity', tab, limit],
+    queryFn: () => api.get<ActivityItem[]>(`/activity?tab=${tab}&limit=${limit}`),
+    // Only within one tab: another tab's lines must never show under this tab's name.
+    placeholderData: (previous, previousQuery) => (previousQuery?.queryKey[1] === tab ? previous : undefined),
+  });
+  // A full list means there may be older lines the server left out.
+  const full = !feed.isPlaceholderData && (feed.data?.length ?? 0) >= limit;
   const needs = useActivity('needs_you');
   const needCount = needs.data?.filter((item) => item.needs_you).length ?? 0;
 
@@ -44,7 +60,10 @@ export default function Activity() {
                 key={item.key}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: on }}
-                onPress={() => setTab(item.key)}
+                onPress={() => {
+                  setTab(item.key);
+                  setLimit(PAGE);
+                }}
                 style={[styles.tab, on && styles.tabOn]}
               >
                 <Text style={[styles.tabText, on && styles.tabTextOn]}>
@@ -70,6 +89,15 @@ export default function Activity() {
           refreshing={feed.isRefetching}
           onRefresh={() => feed.refetch()}
           ListEmptyComponent={<EmptyState message={t(tab === 'needs_you' ? 'activity.emptyNeeds' : 'activity.empty')} />}
+          ListFooterComponent={
+            feed.isPlaceholderData ? (
+              <TextButton label={t('tree.loading')} disabled onPress={() => undefined} />
+            ) : full && limit < MOST ? (
+              <TextButton label={t('activity.showMore')} onPress={() => setLimit((now) => Math.min(now + PAGE, MOST))} />
+            ) : full ? (
+              <Text style={styles.about}>{t('activity.olderInHistory')}</Text>
+            ) : undefined
+          }
           renderItem={({ item }) => <Row item={item} />}
         />
       )}

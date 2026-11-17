@@ -171,6 +171,7 @@ export interface AlertRow {
   recipients: number | null;
   seen: boolean;
   closed?: boolean;
+  edited?: boolean;
 }
 
 // ===== SOS =====

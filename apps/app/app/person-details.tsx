@@ -2,8 +2,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { ContactsIcon, PlusIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
@@ -111,6 +113,9 @@ export default function PersonDetails() {
 
   const tree = useTreeView(treeId, 'mine', i18n.language, null);
   const stored = useContactsForEdit(personId);
+  // Adding: the same question about the person this relative hangs on. The server answers only for those who may
+  // write there directly, so a refusal means this add will go to the Creator as a request.
+  const anchorRights = useContactsForEdit(editing ? undefined : params.anchor);
   const add = useAddRelative(treeId);
   const node = personId ? tree.data?.nodes.find((n) => n.id === personId) : undefined;
   const anchorNode = params.anchor ? tree.data?.nodes.find((n) => n.id === params.anchor) : undefined;
@@ -128,6 +133,12 @@ export default function PersonDetails() {
   const [failure, setFailure] = useState<string | null>(null);
   // The box the last problem was about, outlined in red until it is changed.
   const [badField, setBadField] = useState<BadField | null>(null);
+  // Where each box sits in the scrolling form, so the one with a problem can be brought into view.
+  const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
+  const fieldY = useRef<Partial<Record<BadField, number>>>({});
+  const mark = (field: BadField) => (event: LayoutChangeEvent) => {
+    fieldY.current[field] = event.nativeEvent.layout.y;
+  };
   // WhatsApp on the same number as the mobile: one tick instead of typing it twice.
   const [sameWhatsapp, setSameWhatsapp] = useState(false);
   const [clash, setClash] = useState(false);
@@ -163,6 +174,18 @@ export default function PersonDetails() {
     setSameWhatsapp(same);
     if ((next.whatsapp && !same) || next.email) setMore(true);
   }, [stored.data]);
+
+  // A problem with one box is written once, right under that box, and the form scrolls to it. (It used to show
+  // at the foot of the form and again in the popup at the top: the same words twice.) A short wait lets a box
+  // that was folded away under "More" take its place first.
+  useEffect(() => {
+    if (!badField) return;
+    const timer = setTimeout(() => {
+      const y = fieldY.current[badField];
+      if (y !== undefined) scroller.current?.scrollTo({ y: Math.max(0, y - 16), animated: true });
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [badField]);
 
   function changeContact(kind: ContactKind, value: string) {
     touched.current = true;
@@ -462,8 +485,21 @@ export default function PersonDetails() {
   }
 
   // Only those who may write directly get these rows back. Anyone else's edit goes as a request, which never carries numbers.
-  const contactsOpen = !editing || !stored.isError;
-  const hidden = (kind: ContactKind) => stored.data?.some((c) => c.kind === kind && c.value === null);
+  // Adding as a viewer, or as an editor whose changes are approved first: the request carries neither numbers nor
+  // a photo, so those boxes are not offered at all (they used to be thrown away after "Add").
+  const addByRequest = !editing && errorCode(anchorRights.error) === 'not_allowed';
+  // Those who run the tree always write directly, so their boxes show at once instead of after the answer comes.
+  const runsTree = tree.data.role === 'creator' || tree.data.role === 'co_creator';
+  const contactsOpen = editing ? !stored.isError : runsTree || (!anchorRights.isPending && !addByRequest);
+  const photoOpen = editing || contactsOpen;
+  /** The problem with one box, written under it. */
+  const problemFor = (field: BadField) =>
+    failure && badField === field ? (
+      <Text accessibilityRole="alert" style={styles.problem}>
+        {failure}
+      </Text>
+    ) : null;
+  const hidden =(kind: ContactKind) => stored.data?.some((c) => c.kind === kind && c.value === null);
 
   const anchorName = anchorNode ? (anchorNode.nameUnknown ? t('tree.nameNotKnown') : anchorNode.name) : '';
   const hasParents = editing ? tree.data.links.some((l) => l.child_id === personId) : params.relation === 'child' || params.relation === 'sibling';
@@ -494,7 +530,7 @@ export default function PersonDetails() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scroller} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <TopBar title={title} subtitle={subtitle} onBack={() => (touched.current ? setLeaving(true) : leave())} />
         <ConfirmDialog
           visible={leaving}
@@ -509,17 +545,19 @@ export default function PersonDetails() {
           onCancel={() => setLeaving(false)}
         />
 
-        <View style={styles.nameRow}>
-          <Pressable accessibilityRole="button" accessibilityLabel={t('profile.addPhoto')} onPress={choosePhoto}>
-            {photo ? (
-              <Image source={{ uri: photo.uri }} style={styles.photo} accessibilityIgnoresInvertColors />
-            ) : (
-              <Avatar personId={personId ?? 'new'} size={76} photoUrl={noPhoto ? null : node?.photoUrl} />
-            )}
-            <View style={styles.photoPlus}>
-              <PlusIcon color={colors.white} size={14} width={3} />
-            </View>
-          </Pressable>
+        <View style={styles.nameRow} onLayout={mark('name')}>
+          {photoOpen ? (
+            <Pressable accessibilityRole="button" accessibilityLabel={t('profile.addPhoto')} onPress={choosePhoto}>
+              {photo ? (
+                <Image source={{ uri: photo.uri }} style={styles.photo} accessibilityIgnoresInvertColors />
+              ) : (
+                <Avatar personId={personId ?? 'new'} size={76} photoUrl={noPhoto ? null : node?.photoUrl} />
+              )}
+              <View style={styles.photoPlus}>
+                <PlusIcon color={colors.white} size={14} width={3} />
+              </View>
+            </Pressable>
+          ) : null}
           <View style={styles.nameField}>
             <Field
               label={t('details.name')}
@@ -533,6 +571,8 @@ export default function PersonDetails() {
             />
           </View>
         </View>
+        {problemFor('name')}
+        {addByRequest || (editing && stored.isError) ? <Text style={styles.approvalNote}>{t(editing ? 'details.approvalEditNote' : 'details.approvalAddNote')}</Text> : null}
         {photo || (node?.photoUrl && !noPhoto) ? (
           <TextButton
             label={t('profile.removePhoto')}
@@ -576,7 +616,7 @@ export default function PersonDetails() {
           ]}
         />
 
-        <View style={styles.pair}>
+        <View style={styles.pair} onLayout={mark('born')}>
           <View style={styles.half}>
             <Field
               label={t('details.born')}
@@ -599,7 +639,10 @@ export default function PersonDetails() {
             </View>
           ) : null}
         </View>
+        {problemFor('born')}
 
+        {weddingBoxes.length === 0 ? null : (
+        <View style={styles.group} onLayout={mark('wedding')}>
         {weddingBoxes.map((box) => (
           <DateField
             key={box.id}
@@ -615,9 +658,12 @@ export default function PersonDetails() {
             invalid={badField === 'wedding'}
           />
         ))}
+        {problemFor('wedding')}
+        </View>
+        )}
 
         {contactsOpen ? (
-          <>
+          <View style={styles.group} onLayout={mark('mobile')}>
             <PhoneField
               label={t('details.mobile')}
               value={contacts.mobile}
@@ -626,10 +672,11 @@ export default function PersonDetails() {
               invalid={badField === 'mobile'}
               onPickContact={editing ? undefined : (picked) => applyPicked(picked, null)}
             />
+            {problemFor('mobile')}
             {contacts.mobile.trim() ? (
               <Checkbox label={t('details.sameAsMobile')} on={sameWhatsapp} onChange={setWhatsappSame} />
             ) : null}
-          </>
+          </View>
         ) : null}
 
         {more ? (
@@ -637,14 +684,18 @@ export default function PersonDetails() {
             {contactsOpen ? (
               <>
                 {sameWhatsapp ? null : (
-                  <PhoneField
-                    label={t('card.whatsapp')}
-                    value={contacts.whatsapp}
-                    onChangeText={(v) => changeContact('whatsapp', v)}
-                    placeholder={hidden('whatsapp') ? t('details.contactHidden') : t('details.mobilePlaceholder')}
-                    invalid={badField === 'whatsapp'}
-                  />
+                  <View style={styles.group} onLayout={mark('whatsapp')}>
+                    <PhoneField
+                      label={t('card.whatsapp')}
+                      value={contacts.whatsapp}
+                      onChangeText={(v) => changeContact('whatsapp', v)}
+                      placeholder={hidden('whatsapp') ? t('details.contactHidden') : t('details.mobilePlaceholder')}
+                      invalid={badField === 'whatsapp'}
+                    />
+                    {problemFor('whatsapp')}
+                  </View>
                 )}
+                <View style={styles.group} onLayout={mark('email')}>
                 <Field
                   label={t('card.email')}
                   value={contacts.email}
@@ -654,11 +705,14 @@ export default function PersonDetails() {
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
+                {problemFor('email')}
+                </View>
               </>
             ) : null}
             <Field label={t('details.birthPlace')} value={form.birthPlace} onChangeText={(v) => change('birthPlace', v)} />
             {form.living === 'deceased' ? (
               <>
+                <View style={styles.group} onLayout={mark('died')}>
                 <Field
                   label={t('details.died')}
                   value={form.died}
@@ -668,6 +722,8 @@ export default function PersonDetails() {
                   invalid={badField === 'died'}
                   accessory={<DatePickButton label={t('details.pickDied')} value={form.died} max={todayText()} onChange={(v) => change('died', v)} />}
                 />
+                {problemFor('died')}
+                </View>
                 <Field label={t('details.deathPlace')} value={form.deathPlace} onChangeText={(v) => change('deathPlace', v)} />
               </>
             ) : null}
@@ -691,7 +747,8 @@ export default function PersonDetails() {
           onChange={(ids) => setUnticked(alsoPeople.map((p) => p.id).filter((id) => !ids.includes(id)))}
         />
 
-        {failure ? <ErrorText>{failure}</ErrorText> : null}
+        {/* A problem that belongs to one box is already written under that box. */}
+        {failure && !badField ? <ErrorText>{failure}</ErrorText> : null}
         {notice ? (
           <Card style={styles.clash}>
             <Text style={styles.noticeText}>{notice}</Text>
@@ -756,6 +813,9 @@ const styles = StyleSheet.create({
   moreLink: { minHeight: minTapSize, justifyContent: 'center' },
   moreText: { color: colors.relation, fontFamily: fonts.extrabold, fontSize: 14, textDecorationLine: 'underline' },
   notes: { minHeight: 90, paddingTop: 12, textAlignVertical: 'top' },
+  group: { gap: 10 },
+  problem: { color: colors.alert, fontFamily: fonts.bold, fontSize: 14, lineHeight: 20 },
+  approvalNote: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
   clash: { gap: 10, alignItems: 'flex-start' },
   noticeText: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
 });

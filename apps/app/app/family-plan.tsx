@@ -11,14 +11,17 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { PageLoader, Spinner } from '@/components/Loaders';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { relationText } from '@aywo/layout';
+import { Spinner } from '@/components/Loaders';
 import Svg, { Path } from 'react-native-svg';
 import { Avatar } from '@/components/Avatar';
-import { BackIcon } from '@/components/ContactIcon';
-import { Text, TextInput } from '@/components/Text';
-import { NeonPanel, PrimaryButton } from '@/components/ui';
+import { PhoneField } from '@/components/PhoneField';
+import { Screen } from '@/components/Screen';
+import { Text } from '@/components/Text';
+import { Field, Loading, LoadFailed, NeonPanel, Pills, PrimaryButton, SmallButton, TextButton, TopBar } from '@/components/ui';
 import { api, deviceStore } from '@/lib/api';
+import { toE164 } from '@/lib/phone';
+import type { TreeViewAnswer } from '@/tree/useTreeView';
 import { FAMILY_PLAN_MAX, onBonusOnly, PLAN_KEY, payErrorText, usePlan } from '@/pay/usePlan';
 import type { PlanInfo, PlanMember } from '@/pay/usePlan';
 import { colors, fonts, gradients, minTapSize } from '@/theme/tokens';
@@ -34,16 +37,21 @@ interface CancelMark {
 
 interface TreeRow {
   id: string;
+  name: string;
 }
 interface SearchRow {
   id: string;
   name: string;
 }
+/** One person offered in "From my tree": the tree and the relation word tell two people of the same name apart. */
+interface FoundPerson extends SearchRow {
+  treeName: string;
+  relation: string | null;
+}
 
 export default function FamilyPlan() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   // After asking to cancel, the plan changes only when Razorpay's webhook arrives: keep asking for a while.
   const [trialCancelSent, setTrialCancelSent] = useState(false);
@@ -124,37 +132,24 @@ export default function FamilyPlan() {
     else router.replace('/home');
   }
 
-  const header = (
-    <View style={styles.header}>
-      <Pressable accessibilityRole="button" accessibilityLabel={t('pay.back')} onPress={back} style={styles.round}>
-        <BackIcon color={colors.text} />
-      </Pressable>
-      <Text style={styles.headerTitle} accessibilityRole="header">{t('pay.family.title')}</Text>
-    </View>
-  );
+  // The same top bar as every other page. Screen (below) also brings the "no internet" bar.
+  const header = <TopBar title={t('pay.family.title')} onBack={back} />;
 
   const data = plan.data;
   if (plan.isError && !data) {
     return (
-      <View style={[styles.page, { paddingTop: insets.top + 12 }]}>
+      <Screen>
         {header}
-        <View style={styles.centre}>
-          <Text style={styles.message}>{payErrorText(t, plan.error)}</Text>
-          <Pressable accessibilityRole="button" onPress={() => plan.refetch()} style={styles.textButton}>
-            <Text style={styles.link}>{t('pay.tryAgain')}</Text>
-          </Pressable>
-        </View>
-      </View>
+        <LoadFailed message={payErrorText(t, plan.error)} onRetry={() => plan.refetch()} />
+      </Screen>
     );
   }
   if (!data) {
     return (
-      <View style={[styles.page, { paddingTop: insets.top + 12 }]}>
+      <Screen>
         {header}
-        <View style={styles.centre}>
-          <PageLoader label={t('pay.loading')} />
-        </View>
-      </View>
+        <Loading label={t('pay.loading')} />
+      </Screen>
     );
   }
 
@@ -165,36 +160,43 @@ export default function FamilyPlan() {
   // Free Plus days with no plan behind them: Plus is on, but there is no family plan to manage.
   if (onBonusOnly(data)) {
     return (
-      <View style={[styles.page, styles.pad, { paddingTop: insets.top + 12 }]}>
+      <Screen>
         {header}
-        <NeonPanel style={styles.panel}>
-          <Text style={styles.kicker}>{t('pay.kicker')}</Text>
-          <Text style={styles.panelTitle}>{t('pay.bonus.title', { date: dateText(data.bonus_until) })}</Text>
-          <Text style={styles.panelSub}>{t('pay.bonus.why')}</Text>
-        </NeonPanel>
-        <Text style={styles.note}>{t('pay.bonus.noFamily', { date: dateText(data.bonus_until) })}</Text>
-        {trialCancelSent ? <Text style={styles.note} accessibilityLiveRegion="polite">{t('pay.family.cancelDoneTrial')}</Text> : null}
-      </View>
+        <View style={styles.pad}>
+          <NeonPanel style={styles.panel}>
+            <Text style={styles.kicker}>{t('pay.kicker')}</Text>
+            <Text style={styles.panelTitle}>{t('pay.bonus.title', { date: dateText(data.bonus_until) })}</Text>
+            <Text style={styles.panelSub}>{t('pay.bonus.why')}</Text>
+          </NeonPanel>
+          <Text style={styles.note}>{t('pay.bonus.noFamily', { date: dateText(data.bonus_until) })}</Text>
+          {trialCancelSent ? <Text style={styles.note} accessibilityLiveRegion="polite">{t('pay.family.cancelDoneTrial')}</Text> : null}
+        </View>
+      </Screen>
     );
   }
 
   // Nothing yet, or a plan that has ended: the way forward is the plans screen.
   if (!data.plus) {
     return (
-      <View style={[styles.page, styles.pad, { paddingTop: insets.top + 12 }]}>
+      <Screen>
         {header}
-        <NeonPanel style={styles.panel}>
-          <Text style={styles.kicker}>{t('pay.kicker')}</Text>
-          <Text style={styles.panelTitle}>{data.status ? t('pay.family.ended') : t('pay.family.none')}</Text>
-          <Text style={styles.panelSub}>{t('pay.alwaysFree')}</Text>
-        </NeonPanel>
-        {trialCancelSent ? <Text style={styles.note} accessibilityLiveRegion="polite">{t('pay.family.cancelDoneTrial')}</Text> : null}
-        <PrimaryButton label={t('pay.family.seePlans')} onPress={() => router.push('/plus')} />
-      </View>
+        <View style={styles.pad}>
+          <NeonPanel style={styles.panel}>
+            <Text style={styles.kicker}>{t('pay.kicker')}</Text>
+            <Text style={styles.panelTitle}>{data.status ? t('pay.family.ended') : t('pay.family.none')}</Text>
+            <Text style={styles.panelSub}>{t('pay.alwaysFree')}</Text>
+          </NeonPanel>
+          {trialCancelSent ? <Text style={styles.note} accessibilityLiveRegion="polite">{t('pay.family.cancelDoneTrial')}</Text> : null}
+          <PrimaryButton label={t('pay.family.seePlans')} onPress={() => router.push('/plus')} />
+        </View>
+      </Screen>
     );
   }
 
   const willRenew = data.will_renew && !cancelledHere;
+  // Cancelled, with paid days still to run. Plus stays on until the date, and nothing can be bought before it
+  // (the plans page would only say "You already have Plus"), so this state says so plainly and offers no link there.
+  const endingOn = !willRenew && data.status !== 'trial' && data.status !== 'grace' ? dateText(data.renews_at) : null;
   const used = data.members.length;
   const left = Math.max(0, FAMILY_PLAN_MAX - used);
   const yearly = data.product_id === 'aywo_plus_yearly';
@@ -213,8 +215,8 @@ export default function FamilyPlan() {
   const subline = data.status === 'trial' && willRenew ? `${t(yearly ? 'pay.family.thenYearly' : 'pay.family.thenMonthly', { price })} · ${places}` : places;
 
   return (
-    <View style={styles.page}>
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 24 }]}>
+    <Screen>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {header}
 
         <NeonPanel style={styles.panel}>
@@ -259,44 +261,37 @@ export default function FamilyPlan() {
         {cancelPending ? (
           <Text style={styles.note} accessibilityLiveRegion="polite">{t('pay.family.cancelAskedTrial')}</Text>
         ) : null}
-        {cancelledHere && data.is_payer ? (
-          <Text style={styles.note} accessibilityLiveRegion="polite">
-            {t('pay.family.cancelDone', { date: dateText(data.renews_at) })}
+        {endingOn ? (
+          <Text style={styles.ending} accessibilityLiveRegion="polite">
+            {t(!data.is_payer ? 'pay.family.endingMember' : data.store === 'razorpay' ? 'pay.family.endingPayer' : 'pay.family.endingPayerStore', { date: endingOn })}
           </Text>
         ) : null}
 
         <View style={styles.footer}>
-          <Pressable accessibilityRole="link" onPress={() => router.push('/plus')} style={styles.textButton}>
-            <Text style={styles.footerLink}>{t('pay.family.seePlans')}</Text>
-          </Pressable>
+          {/* Not while a cancelled plan runs out: nothing can be bought until it ends, so the link led nowhere. */}
+          {endingOn ? null : <TextButton label={t('pay.family.seePlans')} onPress={() => router.push('/plus')} />}
           {data.is_payer && data.store === 'razorpay' && (!willRenew || cancelPending) ? null : data.is_payer && data.store ? (
             data.store === 'razorpay' && cancelAsked ? (
               <View style={styles.confirmRow}>
                 <Text style={styles.note}>{data.status === 'trial' ? t('pay.family.cancelTrialConfirm') : t('pay.family.cancelConfirm')}</Text>
-                <Pressable accessibilityRole="button" onPress={() => manage.mutate('razorpay')} disabled={manage.isPending} style={styles.textButton}>
-                  <Text style={styles.footerLink}>{t('pay.family.cancelYes')}</Text>
-                </Pressable>
-                <Pressable accessibilityRole="button" onPress={() => setCancelAsked(false)} style={styles.textButton}>
-                  <Text style={styles.footerLink}>{t('pay.family.cancelNo')}</Text>
-                </Pressable>
+                <View style={styles.confirmButtons}>
+                  <SmallButton label={t('pay.family.cancelNo')} onPress={() => setCancelAsked(false)} />
+                  <SmallButton label={manage.isPending ? t('pay.pleaseWait') : t('pay.family.cancelYes')} kind="plain" onPress={() => manage.mutate('razorpay')} disabled={manage.isPending} />
+                </View>
               </View>
             ) : (
-              <Pressable
-                accessibilityRole="button"
+              <TextButton
+                label={data.store === 'razorpay' ? t('pay.family.cancel') : t('pay.family.manage')}
+                danger={data.store === 'razorpay'}
                 onPress={() => (data.store === 'razorpay' ? setCancelAsked(true) : manage.mutate(data.store))}
                 disabled={manage.isPending}
-                style={styles.textButton}
-              >
-                <Text style={styles.footerLink}>
-                  {data.store === 'razorpay' ? t('pay.family.cancel') : t('pay.family.manage')}
-                </Text>
-              </Pressable>
+              />
             )
           ) : null}
           {data.store ? <Text style={styles.billed}>{t(`pay.family.billedBy.${data.store}`)}</Text> : null}
         </View>
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
@@ -326,46 +321,75 @@ function MemberRow(props: {
         </LinearGradient>
       ) : null}
       {canAct && !props.confirming ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={mine ? actionWord : t('pay.family.removeNamed', { name: shownName })}
-          onPress={props.onAsk}
-          style={styles.textButton}
-        >
-          <Text style={styles.removeText}>{actionWord}</Text>
-        </Pressable>
+        <SmallButton label={actionWord} kind="plain" accessibilityLabel={mine ? actionWord : t('pay.family.removeNamed', { name: shownName })} onPress={props.onAsk} />
       ) : null}
       {canAct && props.confirming ? (
         <View style={styles.confirmInline}>
-          <Pressable accessibilityRole="button" accessibilityLabel={t('pay.family.confirmNamed', { action: actionWord, name: shownName })} onPress={props.onConfirm} disabled={props.busy} style={styles.textButton}>
-            <Text style={styles.removeConfirm}>{t('pay.family.yes')}</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" onPress={props.onCancel} style={styles.textButton}>
-            <Text style={styles.removeText}>{t('pay.family.no')}</Text>
-          </Pressable>
+          <SmallButton
+            label={t('pay.family.yes')}
+            kind="plain"
+            accessibilityLabel={t('pay.family.confirmNamed', { action: actionWord, name: shownName })}
+            onPress={props.onConfirm}
+            disabled={props.busy}
+          />
+          <SmallButton label={t('pay.family.no')} onPress={props.onCancel} />
         </View>
       ) : null}
     </View>
   );
 }
 
-/** One box: a name searches the payer's trees; digits are read as a phone number. */
+/**
+ * Two plain ways to add someone: from the payer's own trees by name, or by mobile number with the same country
+ * box as everywhere else in the app.
+ */
 function AddMember({ onDone, onClose }: { onDone: () => void; onClose: () => void }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
+  const [way, setWay] = useState<'tree' | 'phone'>('tree');
   const [text, setText] = useState('');
+  const [phone, setPhone] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
   const query = text.trim();
-  const looksLikePhone = /^\+?[\d\s()-]{5,}$/.test(query);
+  const fullNumber = toE164(phone);
 
   const results = useQuery({
-    queryKey: ['plan-add-search', query],
-    enabled: query.length >= 2 && !looksLikePhone,
+    queryKey: ['plan-add-search', query, i18n.language],
+    enabled: way === 'tree' && query.length >= 2,
     queryFn: async () => {
       const trees = await api.get<TreeRow[]>('/trees');
+      let notJoined = 0;
       const found = await Promise.all(
-        trees.map((tree) => api.get<SearchRow[]>(`/trees/${tree.id}/search?q=${encodeURIComponent(query)}`)),
+        trees.map(async (tree) => {
+          const [hits, view] = await Promise.all([
+            api.get<SearchRow[]>(`/trees/${tree.id}/search?q=${encodeURIComponent(query)}`),
+            // The tree itself says who has joined AYWO and what each person is to the payer. Same key as the tree
+            // screen, so an open tree is not fetched twice. If it cannot load, the names are still offered.
+            queryClient
+              .fetchQuery({
+                queryKey: ['tree-view', tree.id, 'mine', i18n.language, null],
+                queryFn: () => api.post<TreeViewAnswer>('/tree-view', { tree_id: tree.id, mode: 'mine', lang: i18n.language }),
+                staleTime: 60_000,
+              })
+              .catch(() => null),
+          ]);
+          const people: FoundPerson[] = [];
+          for (const hit of hits) {
+            // The payer is on the plan already.
+            if (view?.viewer_person_id === hit.id) continue;
+            const node = view?.nodes.find((n) => n.id === hit.id);
+            // Only people with their own AYWO account can be on a plan: the rest are counted and explained, not offered.
+            if (node && !node.joined) {
+              notJoined += 1;
+              continue;
+            }
+            const relation = relationText(view?.labels[hit.id]);
+            people.push({ ...hit, treeName: tree.name, relation: relation.kind === 'word' ? relation.word : null });
+          }
+          return people;
+        }),
       );
-      return found.flat();
+      return { people: found.flat(), notJoined };
     },
   });
 
@@ -378,32 +402,38 @@ function AddMember({ onDone, onClose }: { onDone: () => void; onClose: () => voi
 
   return (
     <View style={styles.addPanel}>
-      <TextInput
-        value={text}
-        onChangeText={setText}
-        placeholder={t('pay.family.addPlaceholder')}
-        placeholderTextColor={colors.muted}
-        accessibilityLabel={t('pay.family.addPlaceholder')}
-        style={styles.input}
-        autoCorrect={false}
-        autoFocus
+      <Pills
+        value={way}
+        onChange={(next) => {
+          setWay(next);
+          setProblem(null);
+        }}
+        options={[
+          { value: 'tree', label: t('pay.family.fromTree') },
+          { value: 'phone', label: t('pay.family.byNumber') },
+        ]}
       />
-      {looksLikePhone ? (
-        <PrimaryButton
-          label={t('pay.family.addNumber')}
-          disabled={add.isPending}
-          onPress={() => add.mutate({ phone: query })}
-        />
-      ) : null}
-      {!looksLikePhone && results.isFetching ? <Spinner size={24} label={t('pay.loading')} /> : null}
-      {!looksLikePhone && results.isError ? <Text style={styles.problem}>{payErrorText(t, results.error)}</Text> : null}
-      {!looksLikePhone && results.data && results.data.length === 0 && !results.isFetching ? (
-        <Text style={styles.note}>{t('pay.family.noMatch')}</Text>
-      ) : null}
-      {!looksLikePhone
-        ? results.data?.map((row) => (
+      {way === 'phone' ? (
+        <>
+          <PhoneField label={t('pay.family.numberLabel')} value={phone} onChangeText={setPhone} />
+          <PrimaryButton
+            label={add.isPending ? t('pay.pleaseWait') : t('pay.family.addNumber')}
+            disabled={add.isPending}
+            missing={fullNumber ? null : t('pay.family.needNumber')}
+            onPress={() => (fullNumber ? add.mutate({ phone: fullNumber }) : undefined)}
+          />
+        </>
+      ) : (
+        <>
+          <Field label={t('pay.family.nameLabel')} value={text} onChangeText={setText} placeholder={t('pay.family.namePlaceholder')} autoCorrect={false} autoFocus />
+          {results.isFetching ? <Spinner size={24} label={t('pay.loading')} /> : null}
+          {results.isError ? <Text style={styles.problem}>{payErrorText(t, results.error)}</Text> : null}
+          {results.data && results.data.people.length === 0 && results.data.notJoined === 0 && !results.isFetching ? (
+            <Text style={styles.note}>{t('pay.family.noMatch')}</Text>
+          ) : null}
+          {results.data?.people.map((row) => (
             <Pressable
-              key={row.id}
+              key={`${row.treeName}:${row.id}`}
               accessibilityRole="button"
               accessibilityLabel={t('pay.family.addNamed', { name: row.name })}
               onPress={() => add.mutate({ person_id: row.id })}
@@ -411,39 +441,25 @@ function AddMember({ onDone, onClose }: { onDone: () => void; onClose: () => voi
               style={styles.result}
             >
               <Avatar personId={row.id} size={36} />
-              <Text style={styles.resultName}>{row.name}</Text>
+              <View style={styles.resultWords}>
+                <Text style={styles.resultName}>{row.name}</Text>
+                <Text style={styles.resultAbout}>{row.relation ? `${row.relation} · ${row.treeName}` : row.treeName}</Text>
+              </View>
             </Pressable>
-          ))
-        : null}
+          ))}
+          {results.data && results.data.notJoined > 0 ? <Text style={styles.note}>{t('pay.family.notJoined', { count: results.data.notJoined })}</Text> : null}
+        </>
+      )}
       {problem ? <Text style={styles.problem} accessibilityLiveRegion="polite">{problem}</Text> : null}
-      <Pressable accessibilityRole="button" onPress={onClose} style={styles.textButton}>
-        <Text style={styles.removeText}>{t('pay.family.closeAdd')}</Text>
-      </Pressable>
+      <TextButton label={t('pay.family.closeAdd')} onPress={onClose} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
-  pad: { paddingHorizontal: 18, gap: 13 },
-  scroll: { flexGrow: 1, paddingHorizontal: 18, gap: 13 },
-  centre: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
-  message: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15, textAlign: 'center' },
-  textButton: { minHeight: minTapSize, minWidth: minTapSize, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  link: { color: colors.logoPurple, fontFamily: fonts.bold, fontSize: 14, textDecorationLine: 'underline' },
-
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  round: {
-    width: minTapSize,
-    height: minTapSize,
-    borderRadius: minTapSize / 2,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 24, letterSpacing: -0.5 },
+  // Screen gives the side padding; these only space the blocks.
+  pad: { gap: 13 },
+  scroll: { flexGrow: 1, gap: 13 },
 
   panel: { gap: 6 },
   kicker: { color: colors.logoYellow, fontFamily: fonts.extrabold, fontSize: 12, letterSpacing: 1 },
@@ -464,9 +480,7 @@ const styles = StyleSheet.create({
   memberName: { flex: 1, color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
   pays: { borderRadius: 9, paddingHorizontal: 9, paddingVertical: 3 },
   paysText: { color: colors.white, fontFamily: fonts.extrabold, fontSize: 12 },
-  removeText: { color: colors.muted, fontFamily: fonts.bold, fontSize: 13, textDecorationLine: 'underline' },
-  removeConfirm: { color: colors.alert, fontFamily: fonts.bold, fontSize: 13, textDecorationLine: 'underline' },
-  confirmInline: { flexDirection: 'row', gap: 4 },
+  confirmInline: { flexDirection: 'row', gap: 6 },
 
   addRow: {
     flexDirection: 'row',
@@ -482,23 +496,17 @@ const styles = StyleSheet.create({
   addIcon: { width: minTapSize, height: minTapSize, borderRadius: minTapSize / 2, alignItems: 'center', justifyContent: 'center' },
   addText: { flex: 1, color: colors.text, fontFamily: fonts.extrabold, fontSize: 14 },
   addPanel: { gap: 10, padding: 12, borderRadius: 20, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.cardBorder },
-  input: {
-    minHeight: minTapSize,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    paddingHorizontal: 14,
-    color: colors.text,
-    fontFamily: fonts.semibold,
-    fontSize: 15,
-  },
   result: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: minTapSize },
-  resultName: { flex: 1, color: colors.text, fontFamily: fonts.bold, fontSize: 14 },
+  resultWords: { flex: 1, minWidth: 0 },
+  resultName: { color: colors.text, fontFamily: fonts.bold, fontSize: 14 },
+  resultAbout: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 12 },
 
   problem: { color: colors.alert, fontFamily: fonts.semibold, fontSize: 13 },
   note: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 13, lineHeight: 19, textAlign: 'center' },
+  // The cancelled plan's end date: the one thing to read on the page, so darker and larger than a note.
+  ending: { color: colors.text, fontFamily: fonts.bold, fontSize: 14, lineHeight: 21, textAlign: 'center' },
   footer: { marginTop: 'auto', alignItems: 'center', gap: 2, paddingTop: 12 },
-  footerLink: { color: colors.logoPurple, fontFamily: fonts.extrabold, fontSize: 14, textDecorationLine: 'underline' },
-  confirmRow: { alignItems: 'center' },
+  confirmRow: { alignItems: 'center', gap: 8 },
+  confirmButtons: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 },
   billed: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 12, textAlign: 'center' },
 });

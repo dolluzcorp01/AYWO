@@ -167,7 +167,7 @@ export default function AdminStaff() {
       <Panel title={t('admin.staff.teamRoles')} actions={<SecondaryButton main label={t('admin.staff.newRole')} onPress={() => setRole('new')} />}>
         <Text style={adminStyles.cellMuted}>{t('admin.staff.teamRolesHelp')}</Text>
         <QueryState query={roles} isEmpty={(rows) => rows.length === 0}>
-          {(rows) => <RolesGrid roles={rows} editable onSaved={refresh} onEditRole={(r) => setRole(r)} />}
+          {(rows) => <RolesGrid roles={rows} staff={query.data?.rows ?? []} editable onSaved={refresh} onEditRole={(r) => setRole(r)} />}
         </QueryState>
       </Panel>
 

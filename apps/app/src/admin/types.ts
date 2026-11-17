@@ -235,8 +235,18 @@ export interface WorkPage extends Page<WorkItem> {
   counts: { open: number; mine: number; unassigned: number; overdue: number };
 }
 
+/** One change to a work item. `assignee: null` means the owner was taken off. */
+export interface WorkChanges {
+  status?: WorkStatus;
+  priority?: WorkPriority;
+  due_at?: string;
+  assignee?: string | null;
+  assignee_name?: string | null;
+}
+
 export interface WorkDetail extends WorkItem {
-  history: { id: number; author_name: string | null; body: string; created_at: string }[];
+  /** `changes` is set on lines the system wrote: what changed, as data, so the screen can say it in any language. */
+  history: { id: number; author_name: string | null; body: string; created_at: string; changes?: WorkChanges | null }[];
   assignable: { profile_id: string; name: string }[];
 }
 
