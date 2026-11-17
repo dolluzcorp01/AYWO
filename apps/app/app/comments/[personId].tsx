@@ -6,11 +6,12 @@ import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, View } from 'reac
 import { goBack } from '@/lib/nav';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, EmptyState, ErrorText, Field, Loading, LoadFailed, SmallButton, TopBar } from '@/components/ui';
+import { Card, ConfirmDialog, EmptyState, ErrorText, Field, Loading, LoadFailed, SmallButton, TextButton, TopBar } from '@/components/ui';
+import { useMe } from '@/lib/account';
 import { useErrorText } from '@/lib/errors';
 import { useTimeAgo } from '@/lib/time';
 import { shownName } from '@/tree/personName';
-import { useAddComment, useComments } from '@/tree/useEdit';
+import { useAddComment, useChangeComment, useComments } from '@/tree/useEdit';
 import { useTreeView } from '@/tree/useTreeView';
 import { colors, fonts } from '@/theme/tokens';
 
@@ -27,10 +28,20 @@ export default function Comments() {
   const tree = useTreeView(treeId, 'mine', i18n.language, null);
   const node = tree.data?.nodes.find((n) => n.id === personId);
   const [body, setBody] = useState('');
+  const me = useMe();
+  const change = useChangeComment(personId);
+  // The note being reworded (its text goes into the box at the bottom), and the one about to be deleted.
+  const [editing, setEditing] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const iMadeTheTree = tree.data?.role === 'creator';
 
   function send() {
     const text = body.trim();
     if (!text) return;
+    if (editing) {
+      change.mutate({ id: editing, body: text }, { onSuccess: () => { setBody(''); setEditing(null); } });
+      return;
+    }
     add.mutate(text, { onSuccess: () => setBody('') });
   }
 
@@ -54,11 +65,32 @@ export default function Comments() {
                 <Text style={styles.author}>{item.author_name ?? t('activity.someone')}</Text>
                 <Text style={styles.body}>{item.body}</Text>
                 <Text style={styles.when}>{timeAgo(item.created_at)}</Text>
+                {item.author_id === me.data?.id || iMadeTheTree ? (
+                  <View style={styles.own}>
+                    {item.author_id === me.data?.id ? (
+                      <TextButton label={t('social.edit')} onPress={() => { setEditing(item.id); setBody(item.body); }} />
+                    ) : null}
+                    <TextButton label={t('social.delete')} danger onPress={() => setDeleting(item.id)} />
+                  </View>
+                ) : null}
               </Card>
             )}
           />
         )}
         {add.isError ? <ErrorText>{errorText(add.error)}</ErrorText> : null}
+        {change.isError ? <ErrorText>{errorText(change.error)}</ErrorText> : null}
+        {editing ? <TextButton label={t('comments.stopEditing')} onPress={() => { setEditing(null); setBody(''); }} /> : null}
+        <ConfirmDialog
+          visible={!!deleting}
+          title={t('social.memories.deleteCommentTitle')}
+          confirmLabel={t('social.delete')}
+          danger
+          onConfirm={() => {
+            if (deleting) change.mutate({ id: deleting });
+            setDeleting(null);
+          }}
+          onCancel={() => setDeleting(null)}
+        />
         <View style={styles.compose}>
           <View style={styles.flex}>
             <Field
@@ -78,6 +110,7 @@ export default function Comments() {
 }
 
 const styles = StyleSheet.create({
+  own: { flexDirection: 'row', gap: 16 },
   flex: { flex: 1 },
   list: { flexGrow: 1, gap: 10, paddingVertical: 14 },
   comment: { gap: 4, padding: 12 },

@@ -249,6 +249,21 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
     return asCaller(userId, (db) => call(db, 'comment_add($1, $2)', [id, body.body]));
   });
 
+  // The writer corrects or takes back their own note; the tree's Creator may delete any.
+  app.patch('/comments/:id', async (req) => {
+    const userId = await requireUser(req);
+    const { id } = idParam.parse(req.params);
+    const body = z.object({ body: z.string().trim().min(1).max(2000) }).parse(req.body);
+    await asCaller(userId, (db) => call(db, 'person_comment_update($1, $2)', [id, body.body]));
+    return { ok: true };
+  });
+  app.delete('/comments/:id', async (req) => {
+    const userId = await requireUser(req);
+    const { id } = idParam.parse(req.params);
+    await asCaller(userId, (db) => call(db, 'person_comment_delete($1)', [id]));
+    return { ok: true };
+  });
+
   // ===== Sharing =====
 
   app.get('/trees/:id/shares', async (req) => {

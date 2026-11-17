@@ -157,6 +157,15 @@ export function useAddComment(personId: string) {
   });
 }
 
+export function useChangeComment(personId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: string; body?: string }) =>
+      input.body === undefined ? api.del<unknown>(`/comments/${input.id}`) : api.patch<unknown>(`/comments/${input.id}`, { body: input.body }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['comments', personId] }),
+  });
+}
+
 // ----- Sharing -----
 
 export interface ShareInput {

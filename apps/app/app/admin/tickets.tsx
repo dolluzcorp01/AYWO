@@ -11,6 +11,15 @@ import { colors, fonts } from '@/theme/tokens';
 
 type Status = TicketRow['status'];
 
+/** "Tamil", not "ta": the language the customer uses, in the staff member's own language. */
+function languageName(code: string, shownIn: string): string {
+  try {
+    return new Intl.DisplayNames([shownIn], { type: 'language' }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
 export default function AdminTickets() {
   const { t, i18n } = useTranslation();
   const [status, setStatus] = useState<Status>('open');
@@ -85,7 +94,7 @@ function TicketDialog({ id, onClose }: { id: string; onClose: () => void }) {
         {(data) => (
           <View style={{ gap: 10 }}>
             <Text style={adminStyles.cellMuted}>
-              {data.name ?? '-'} · {t(`help.categories.${data.category}`)} · {data.plus ? t('admin.users.plus') : t('admin.tickets.free')} · {data.language}
+              {data.name ?? '-'} · {t(`help.categories.${data.category}`)} · {data.plus ? t('admin.users.plus') : t('admin.tickets.free')} · {languageName(data.language, i18n.language)}
             </Text>
             {data.messages.map((m) => (
               <View key={m.id} style={[styles.bubble, m.from_staff ? styles.ours : styles.theirs]}>
