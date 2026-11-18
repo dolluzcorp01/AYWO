@@ -24,6 +24,15 @@ const HEAD_ROW = 5;
 /** '#2F3379' as Excel wants it: FF2F3379. */
 const paint = (hex: string) => `FF${hex.replace('#', '').toUpperCase()}`;
 
+/**
+ * A plain amount or count ("799", "1,598" is not one, "12.5") goes in as a number, so Excel can add it up and sort it.
+ * Anything else stays words. Leading zeros (PIN-like codes, "007") and very long digit runs (ids) stay words too, so
+ * nothing is changed by the conversion. A number can never run as a formula.
+ */
+export function cellValue(value: string): string | number {
+  return /^-?(0|[1-9]\d{0,11})(\.\d{1,4})?$/.test(value) ? Number(value) : value;
+}
+
 /** Wide enough for the longest value in the column, within reason. Tamil and other wide scripts get extra room. */
 export function columnWidth(values: string[]): number {
   const longest = Math.max(0, ...values.map((value) => [...(value ?? '')].reduce((sum, ch) => sum + (ch.charCodeAt(0) > 0x2ff ? 1.6 : 1), 0)));
@@ -73,14 +82,15 @@ export function fillWorkbook(workbook: Workbook, sheet: Sheet, logo?: ArrayBuffe
     cell.alignment = { vertical: 'middle', wrapText: true };
   });
 
-  // The rows. Every value goes in as plain words, so a name that starts with = can never run as a formula.
+  // The rows. Words go in as plain words, so a name that starts with = can never run as a formula; plain amounts and
+  // counts go in as numbers (cellValue).
   const edge = { style: 'thin' as const, color: { argb: paint(colors.line) } };
   sheet.rows.forEach((values, r) => {
     const row = page.getRow(HEAD_ROW + 1 + r);
     row.height = 20;
     for (let i = 0; i < columns; i += 1) {
       const cell = row.getCell(i + 1);
-      cell.value = values[i] ?? '';
+      cell.value = cellValue(values[i] ?? '');
       cell.font = { name: 'Calibri', size: 11, color: { argb: paint(colors.text) } };
       cell.alignment = { vertical: 'middle' };
       cell.border = { bottom: edge };

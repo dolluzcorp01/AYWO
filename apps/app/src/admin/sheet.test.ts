@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-native', () => ({ Platform: { OS: 'web', select: (options: Record<string, unknown>) => options.web ?? options.default } }));
 
-import { columnWidth, fillWorkbook } from './sheet';
+import { cellValue, columnWidth, fillWorkbook } from './sheet';
 
 const sheet = {
   title: 'Orders',
@@ -58,6 +58,25 @@ describe('the branded Excel download', () => {
     const plain = await roundTrip();
     expect(plain.getImages()).toHaveLength(0);
     expect(plain.getCell('A1').value).toBe('AYWO');
+  });
+
+  it('writes plain amounts as numbers so Excel can add them up', async () => {
+    const page = await roundTrip();
+    expect(page.getCell('C6').type).toBe(ExcelJS.ValueType.Number);
+    expect(page.getCell('C6').value).toBe(799);
+    expect(page.getCell('A6').type).toBe(ExcelJS.ValueType.String);
+  });
+
+  it('turns only plain numbers into numbers', () => {
+    expect(cellValue('799')).toBe(799);
+    expect(cellValue('12.5')).toBe(12.5);
+    expect(cellValue('0')).toBe(0);
+    expect(cellValue('-3')).toBe(-3);
+    expect(cellValue('600001')).toBe(600001);
+    // Kept as words: leading zeros, long ids, commas, phone numbers, dates, words.
+    for (const words of ['007', '1234567890123', '1,598', '+91*****5079', '2026-11-18', 'A-1', '', '1e5', '=1+1']) {
+      expect(cellValue(words)).toBe(words);
+    }
   });
 
   it('makes columns wide enough to read, within limits', () => {
