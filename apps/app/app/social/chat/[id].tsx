@@ -63,6 +63,8 @@ export default function ChatRoom() {
   const [asking, setAsking] = useState<{ title: string; yes: string; run: () => void } | null>(null);
   const [toReport, setToReport] = useState<Message | null>(null);
   const [blocking, setBlocking] = useState(false);
+  // The person being reported (not one message): from the top of a one-to-one chat, or the people list of a group.
+  const [reportingPerson, setReportingPerson] = useState<{ id: string; name: string } | null>(null);
   const [people, setPeople] = useState(false);
   // Tapping a message opens its choices (reply, edit, delete, report): easy to find with a mouse or a finger.
   const [chosen, setChosen] = useState<Message | null>(null);
@@ -309,6 +311,9 @@ export default function ChatRoom() {
         {first ? (
           <View style={styles.tools}>
             {first.chat.kind === 'direct' && other ? <TextButton label={t('ops.block.short')} onPress={() => setBlocking(true)} /> : null}
+            {first.chat.kind === 'direct' && other ? (
+              <TextButton label={t('ops.report.short')} onPress={() => setReportingPerson({ id: other.profile_id, name: showName(other.name) })} />
+            ) : null}
             {first.chat.kind === 'direct' ? <TextButton label={t('social.chat.hide')} onPress={() => setHiding(true)} /> : null}
             {first.chat.kind === 'group' && first.chat.can_rename ? (
               <TextButton label={t('social.chat.rename')} onPress={() => setRenaming(first.chat.name ?? '')} />
@@ -548,6 +553,16 @@ export default function ChatRoom() {
           onClose={() => setToReport(null)}
         />
       ) : null}
+      {reportingPerson ? (
+        <ReportDialog
+          visible
+          type="profile"
+          id={reportingPerson.id}
+          ownerId={reportingPerson.id}
+          ownerName={reportingPerson.name}
+          onClose={() => setReportingPerson(null)}
+        />
+      ) : null}
       {blocking && other ? (
         <BlockDialog visible profileId={other.profile_id} name={showName(other.name)} blocked={false} onClose={(changed) => { setBlocking(false); if (changed) goBack(); }} />
       ) : null}
@@ -561,6 +576,9 @@ export default function ChatRoom() {
         {(members.data ?? []).map((m) => (
           <View key={m.profile_id} style={styles.member}>
             <Text style={styles.memberName}>{showName(m.name)}{m.creator ? ` · ${t('ops.chat.madeIt')}` : ''}</Text>
+            {myId && m.profile_id !== myId ? (
+              <TextButton label={t('ops.report.short')} onPress={() => { setPeople(false); setReportingPerson({ id: m.profile_id, name: showName(m.name) }); }} />
+            ) : null}
             {iMadeIt && m.profile_id !== myId ? (
               <TextButton label={t('ops.chat.remove')} danger disabled={removeMember.isPending} onPress={() => setAsking({ title: t('social.groups.removeTitle', { name: showName(m.name) }), yes: t('ops.chat.remove'), run: () => removeMember.mutate(m.profile_id) })} />
             ) : null}

@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   needIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.tint, alignItems: 'center', justifyContent: 'center' },
-  needIconWarm: { backgroundColor: '#FFF1E6' },
+  needIconWarm: { backgroundColor: colors.celebrationTint },
   needTitle: { color: colors.text, fontFamily: fonts.bold, fontSize: 15, lineHeight: 20 },
   section: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 18, letterSpacing: -0.3 },
   list: { padding: 0, overflow: 'hidden' },

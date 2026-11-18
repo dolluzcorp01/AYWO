@@ -10,6 +10,7 @@ import { Card, ConfirmDialog, EmptyState, ErrorText, Field, Loading, LoadFailed,
 import { useMe } from '@/lib/account';
 import { useErrorText } from '@/lib/errors';
 import { useTimeAgo } from '@/lib/time';
+import { ReportDialog } from '@/ops/Report';
 import { shownName } from '@/tree/personName';
 import { useAddComment, useChangeComment, useComments } from '@/tree/useEdit';
 import { useTreeView } from '@/tree/useTreeView';
@@ -33,6 +34,7 @@ export default function Comments() {
   // The note being reworded (its text goes into the box at the bottom), and the one about to be deleted.
   const [editing, setEditing] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [reporting, setReporting] = useState<{ id: string; ownerId: string; ownerName: string } | null>(null);
   const iMadeTheTree = tree.data?.role === 'creator';
 
   function send() {
@@ -73,6 +75,12 @@ export default function Comments() {
                     <TextButton label={t('social.delete')} danger onPress={() => setDeleting(item.id)} />
                   </View>
                 ) : null}
+                {/* Someone else's note can be reported to AYWO staff. Your own you can simply edit or delete. */}
+                {me.data && item.author_id && item.author_id !== me.data.id ? (
+                  <View style={styles.own}>
+                    <TextButton label={t('ops.report.short')} onPress={() => setReporting({ id: item.id, ownerId: item.author_id, ownerName: item.author_name ?? t('activity.someone') })} />
+                  </View>
+                ) : null}
               </Card>
             )}
           />
@@ -91,6 +99,16 @@ export default function Comments() {
           }}
           onCancel={() => setDeleting(null)}
         />
+        {reporting ? (
+          <ReportDialog
+            visible
+            type="person_comment"
+            id={reporting.id}
+            ownerId={reporting.ownerId}
+            ownerName={reporting.ownerName}
+            onClose={() => setReporting(null)}
+          />
+        ) : null}
         <View style={styles.compose}>
           <View style={styles.flex}>
             <Field

@@ -37,13 +37,21 @@ export async function rpcRoutes(app: FastifyInstance): Promise<void> {
     // Both the function name and the argument names were checked against the list above.
     const call = `public.${req.params.name}(${names.map((n, i) => `${n} => $${i + 1}`).join(', ')})`;
 
-    return asCaller(userId, async (db) => {
-      if (entry.rows) {
-        const { rows } = await db.query(`select * from ${call}`, params);
-        return rows;
-      }
-      const { rows } = await db.query(`select ${call} as result`, params);
-      return rows[0].result ?? null;
-    });
+    try {
+      return await asCaller(userId, async (db) => {
+        if (entry.rows) {
+          const { rows } = await db.query(`select * from ${call}`, params);
+          return rows;
+        }
+        const { rows } = await db.query(`select ${call} as result`, params);
+        return rows[0].result ?? null;
+      });
+    } catch (error) {
+      // A required argument was left out, so the database finds no function of that shape. That is the sender's
+      // mistake (422), not a server fault: it must not count toward the server errors that alert staff.
+      const e = error as { code?: unknown; message?: unknown };
+      if (e?.code === '42883' && String(e.message).startsWith(`function public.${req.params.name}(`)) throw new ApiError(422, 'bad_input');
+      throw error;
+    }
   });
 }

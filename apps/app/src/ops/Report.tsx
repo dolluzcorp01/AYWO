@@ -91,7 +91,7 @@ export function ReportDialog({
         <Pills options={REASONS.map((r) => ({ value: r, label: t(`ops.report.reasons.${r}`) }))} value={reason} onChange={setReason} />
         {reason === 'self_harm' ? <Text style={styles.urgent}>{t('ops.report.selfHarm')}</Text> : null}
         <Field label={t('ops.report.note')} value={note} onChangeText={setNote} maxLength={1000} multiline />
-        {ownerId && type !== 'profile' ? (
+        {ownerId ? (
           <Checkbox label={t('ops.report.alsoBlock', { name: ownerName ?? '' })} help={t('ops.report.blockHelp')} on={block} onChange={setBlock} />
         ) : null}
         {!reason ? <Text style={styles.hint}>{t('ops.report.pick')}</Text> : null}
