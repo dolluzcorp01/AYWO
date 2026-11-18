@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import type { ComponentRef, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AccessibilityInfo, Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AccessibilityInfo, Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { Spinner } from '@/components/Loaders';
 import { Card, Heading, Muted } from '@/components/ui';
 import { ApiFailure, api } from '@/lib/api';
@@ -29,6 +29,10 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
 }
 
 export const PAGE_SIZE = 25;
+// Below this window width the admin pages use a phone's thinner edges.
+const PHONE_WIDTH = 600;
+// The narrowest a table can be and still be read. With less room each row becomes a card instead.
+const TABLE_MIN = 680;
 
 export function formatDate(iso: string | null | undefined, language: string): string {
   if (!iso) return '-';
@@ -83,6 +87,8 @@ export function AdminPage({
   const pathname = usePathname();
   const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
   const windowHeight = useRef(0);
+  // A phone has no room to give away: a thinner edge leaves more for the page.
+  const phone = useWindowDimensions().width < PHONE_WIDTH;
   // Where to return to, decided once when the page opens. The lists arrive a moment later, so the jump waits until
   // the page is tall enough, and gives up after a few seconds rather than pulling someone back mid-read.
   const returnTo = useRef(cameBack ? scrolledTo.get(pathname) ?? 0 : 0);
@@ -96,7 +102,7 @@ export function AdminPage({
     <ScrollView
       ref={scroller}
       style={styles.page}
-      contentContainerStyle={styles.pageBody}
+      contentContainerStyle={[styles.pageBody, phone && styles.pageBodyPhone]}
       scrollEventThrottle={100}
       onLayout={(event) => {
         windowHeight.current = event.nativeEvent.layout.height;
@@ -303,9 +309,47 @@ function TableRow({ marked, children }: { marked: boolean; children: ReactNode }
   );
 }
 
+/** One piece of a row's content: plain text gets the table's text style, anything else is shown as it is. */
+function cellContent(content: ReactNode): ReactNode {
+  return typeof content === 'string' || typeof content === 'number' ? <Text style={styles.cellText}>{content}</Text> : content;
+}
+
+/**
+ * A table on a wide screen. Where there is not room for one (a phone, a tablet, a small laptop window) every row
+ * becomes a card with each value under its heading, so nothing, least of all the action buttons, sits off the edge
+ * waiting for a sideways scroll nobody knows to make.
+ */
 export function DataTable<T>({ columns, rows, rowKey, marked }: { columns: Column<T>[]; rows: T[]; rowKey: (row: T) => string; marked?: (row: T) => boolean }) {
+  const windowWidth = useWindowDimensions().width;
+  // The room the table really has. Until it is measured, guess from the window: the side menu and the page edges.
+  const [room, setRoom] = useState<number | null>(null);
+  const stacked = (room ?? windowWidth - (windowWidth >= 820 ? 256 : 0) - 56) < TABLE_MIN;
+  if (stacked) {
+    return (
+      <View role="list" style={styles.cards} onLayout={(event) => setRoom(event.nativeEvent.layout.width)}>
+        {rows.map((row) => (
+          <View key={rowKey(row)} role="listitem" style={[styles.rowCard, marked?.(row) && styles.rowCardMarked]}>
+            {columns.map((column, index) => {
+              const content = column.render(row);
+              if (content === null || content === undefined || content === '') return null;
+              // The last column holds the buttons on nearly every list: it gets the whole width.
+              const whole = index === columns.length - 1 || (column.flex ?? 1) >= 2;
+              return (
+                <View key={column.key} style={[styles.cardField, whole && styles.cardFieldWhole]}>
+                  {column.label ? <Text style={styles.headText}>{column.label}</Text> : null}
+                  {cellContent(content)}
+                </View>
+              );
+            })}
+          </View>
+        ))}
+      </View>
+    );
+  }
+  // With room for a table it takes exactly the width it is given and long text wraps inside its column. It used to
+  // sit in a sideways scroller and grow as wide as its content liked, which hid the last column on a laptop.
   return (
-    <ScrollView horizontal contentContainerStyle={styles.tableScroll}>
+    <View onLayout={(event) => setRoom(event.nativeEvent.layout.width)}>
       <View role="table" style={styles.table}>
         <View role="row" style={[styles.row, styles.headRow]}>
           {columns.map((column) => (
@@ -320,18 +364,14 @@ export function DataTable<T>({ columns, rows, rowKey, marked }: { columns: Colum
               const content = column.render(row);
               return (
                 <View key={column.key} role="cell" style={[styles.cell, { flex: column.flex ?? 1 }]}>
-                  {typeof content === 'string' || typeof content === 'number' ? (
-                    <Text style={styles.cellText}>{content}</Text>
-                  ) : (
-                    content
-                  )}
+                  {cellContent(content)}
                 </View>
               );
             })}
           </TableRow>
         ))}
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -507,6 +547,7 @@ export function DialogFrame({ title, text, children }: { title: string; text?: s
     <Modal transparent animationType="fade" visible>
       <View style={styles.backdrop}>
         <View style={styles.scrim} />
+        {/* Never taller than the screen: on a short phone the inside scrolls, and the title stays in view. */}
         <View role="dialog" aria-label={title} style={styles.dialog}>
           <Text accessibilityRole="header" style={styles.dialogTitle}>
             {title}
@@ -763,6 +804,7 @@ export const adminStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
   pageBody: { padding: 28 },
+  pageBodyPhone: { padding: 16 },
   pageInner: { width: '100%', maxWidth: 1240, gap: 16 },
   section: { gap: 10, marginTop: 8 },
   sectionTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 18 },
@@ -773,10 +815,8 @@ const styles = StyleSheet.create({
   missing: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 13 },
   guard: { gap: 8 },
   inputBad: { borderColor: colors.alert },
-  tableScroll: { flexGrow: 1 },
   table: {
-    flex: 1,
-    minWidth: 820,
+    width: '100%',
     backgroundColor: colors.card,
     borderColor: colors.cardBorder,
     borderWidth: 1,
@@ -787,6 +827,21 @@ const styles = StyleSheet.create({
   headRow: { backgroundColor: colors.background },
   // A row the dashboard pointed at: warm tint and an orange edge, above its neighbours while it pops.
   rowMarked: { backgroundColor: colors.warmTint, borderLeftWidth: 4, borderLeftColor: colors.logoOrange, zIndex: 1 },
+  cards: { gap: 10 },
+  rowCard: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: 16,
+    rowGap: 12,
+    padding: 14,
+    backgroundColor: colors.card,
+    borderColor: colors.cardBorder,
+    borderWidth: 1,
+    borderRadius: 14,
+  },
+  rowCardMarked: { backgroundColor: colors.warmTint, borderLeftWidth: 4, borderLeftColor: colors.logoOrange },
+  cardField: { flexGrow: 1, flexBasis: 120, minWidth: 0, gap: 3 },
+  cardFieldWhole: { flexBasis: '100%' },
   download: { gap: 8 },
   cell: { paddingHorizontal: 12, paddingVertical: 10, justifyContent: 'center', minWidth: 0 },
   headText: { color: colors.muted, fontFamily: fonts.bold, fontSize: 12 },
@@ -854,6 +909,7 @@ const styles = StyleSheet.create({
   dialog: {
     width: '100%',
     maxWidth: 560,
+    maxHeight: '100%',
     gap: 12,
     padding: 22,
     borderRadius: 18,
@@ -862,7 +918,7 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
   },
   dialogTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 20 },
-  dialogScroll: { maxHeight: 640 },
+  dialogScroll: { maxHeight: 640, flexShrink: 1 },
   dialogBody: { gap: 12 },
   dialogActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 4 },
   field: adminStyles.field,

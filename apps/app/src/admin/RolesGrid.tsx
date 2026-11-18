@@ -3,7 +3,7 @@
 // reach. AYWO Admin's own column and the AYWO-Admin-only rows (staff, audit) are locked: the server never grants those.
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CheckIcon } from '@/components/Icons';
 import { GRANTABLE } from '@/admin/types';
 import type { Grantable, StaffRow, TeamRole } from '@/admin/types';
@@ -73,7 +73,10 @@ export function RolesGrid({ roles, staff = [], editable, onSaved, onEditRole }: 
         <Text style={adminStyles.cellMuted}>{editable ? t('admin.rolesGrid.helpEdit') : t('admin.rolesGrid.helpView')}</Text>
       </View>
 
-      <View style={styles.table}>
+      {/* A grid cannot fold into cards. On a small screen it keeps every column at a readable width and slides
+          sideways inside its own box, so the page itself never does. */}
+      <ScrollView horizontal contentContainerStyle={styles.slide}>
+      <View style={[styles.table, { minWidth: FIRST_WIDTH + COLUMN_WIDTH * (1 + roles.length + handPicked.length) }]}>
         <View style={[styles.tr, styles.head]}>
           <View style={styles.first}>
             <Text style={styles.headText}>{t('admin.rolesGrid.permission')}</Text>
@@ -155,6 +158,7 @@ export function RolesGrid({ roles, staff = [], editable, onSaved, onEditRole }: 
           </View>
         ))}
       </View>
+      </ScrollView>
       <Text style={adminStyles.cellMuted}>{t('admin.rolesGrid.adminOnlyNote')}</Text>
       {handPicked.length > 0 ? <Text style={adminStyles.cellMuted}>{t('admin.rolesGrid.handPickedNote')}</Text> : null}
 
@@ -231,10 +235,15 @@ function Box({ on, locked, label, onPress }: { on: boolean; locked?: boolean; la
   );
 }
 
+// The least room the permission names and one column of boxes need.
+const FIRST_WIDTH = 220;
+const COLUMN_WIDTH = 96;
+
 const styles = StyleSheet.create({
   wrap: { gap: 10 },
   legend: { gap: 4 },
-  table: { borderWidth: 1, borderColor: colors.cardBorder, borderRadius: 12, overflow: 'hidden' },
+  slide: { flexGrow: 1 },
+  table: { flex: 1, borderWidth: 1, borderColor: colors.cardBorder, borderRadius: 12, overflow: 'hidden' },
   tr: { flexDirection: 'row', alignItems: 'center', minHeight: 54 },
   head: { backgroundColor: colors.background, borderBottomWidth: 1, borderBottomColor: colors.cardBorder, minHeight: 60 },
   striped: { backgroundColor: colors.background },

@@ -199,7 +199,7 @@ function Top({ treeId, name }: { treeId: string; name: string | null }) {
           </Pressable>
         </>
       )}
-      <Pressable accessibilityRole="button" accessibilityLabel={t('tabs.me')} onPress={() => router.replace('/me')}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('tabs.me')} onPress={() => router.replace('/me')} style={styles.meTap}>
         <Avatar personId={own?.id ?? me.data?.id ?? 'me'} size={40} photoUrl={own?.photoUrl} name={own?.name ?? me.data?.display_name ?? undefined} />
       </Pressable>
     </View>
@@ -462,6 +462,7 @@ const styles = StyleSheet.create({
   leftColumn: { flex: 3, minWidth: 0, gap: 16 },
   rightColumn: { flex: 2, minWidth: 0, gap: 16 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  meTap: { minWidth: minTapSize, minHeight: minTapSize, alignItems: 'center', justifyContent: 'center' },
   topText: { flex: 1, minWidth: 0 },
   eyebrow: { color: colors.muted, fontFamily: fonts.bold, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase' },
   hey: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 30, letterSpacing: -1, lineHeight: 36 },

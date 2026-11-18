@@ -846,7 +846,13 @@
         "languageQ": "Can I use it in my language?",
         "languageA": "Choose your language on the first screen, and change it any time from your profile. Relationship words, such as what you call an aunt, appear in your language too.",
         "importingQ": "I already have a family tree. Can I bring it in?",
-        "importingA": "Yes. AYWO can import a Lighten file or a GEDCOM file, the common format most family tree programs can save."
+        "importingA": "Yes. AYWO can import a Lighten file or a GEDCOM file, the common format most family tree programs can save.",
+        "whatK": "about meaning app purpose family tree relatives",
+        "freeK": "cost charge money price paid payment fee",
+        "signInK": "login log in otp code password register sign up signup account phone number sms",
+        "devicesK": "android iphone ios phone mobile web browser computer laptop install download app play store",
+        "languageK": "tamil hindi english telugu malayalam kannada translate change language",
+        "importingK": "import gedcom upload file ancestry existing move transfer"
       },
       "tree": {
         "title": "Your family tree",
@@ -861,7 +867,13 @@
         "outsiderQ": "What does someone see from a shared link?",
         "outsiderA": "Names and photos only. Contact details are never shown on a shared link.",
         "downloadQ": "Can I download my tree?",
-        "downloadA": "Yes, at any time, as a PDF picture of the tree or a GEDCOM file, depending on your role in that tree."
+        "downloadA": "Yes, at any time, as a PDF picture of the tree or a GEDCOM file, depending on your role in that tree.",
+        "whoSeesK": "privacy private public visible view share access members",
+        "rolesK": "role permission rights admin owner access edit change who can",
+        "noAccountK": "add relative person member invite without account dead late passed away child",
+        "wrongK": "mistake error incorrect fix correct edit change name spelling relation duplicate report",
+        "outsiderK": "link share invite public stranger guest whatsapp",
+        "downloadK": "export pdf print poster picture image save copy backup book"
       },
       "safety": {
         "title": "Privacy and safety",
@@ -874,7 +886,12 @@
         "sellQ": "Do you sell my data or show ads?",
         "sellA": "No. We don't sell your data, and we don't show advertising. See the Privacy policy for the details.",
         "childrenQ": "Can children be in the tree?",
-        "childrenA": "Families may record children in a tree. Anyone under 18 needs a parent or guardian's consent to use AYWO, and a parent or guardian can ask us to change or remove a child's details."
+        "childrenA": "Families may record children in a tree. Anyone under 18 needs a parent or guardian's consent to use AYWO, and a parent or guardian can ask us to change or remove a child's details.",
+        "numberK": "phone contact privacy hide hidden show visible whatsapp email",
+        "removeK": "take down takedown delete my name details permission consent complaint",
+        "sosK": "emergency help danger alert urgent location police accident",
+        "sellK": "privacy advertisement ads advertising share third party safe secure security information",
+        "childrenK": "child kid kids minor age baby son daughter under 18"
       },
       "plus": {
         "title": "AYWO Plus and payments",
@@ -893,7 +910,15 @@
         "refundQ": "Can I get a refund?",
         "refundA": "Yes, in the situations listed in our Return and refund policy. A payment made through Apple or Google is refunded by them.",
         "failedQ": "I paid, but I don't see Plus. Should I pay again?",
-        "failedA": "No. It can take a few minutes to confirm. If Plus has not appeared after that, write to {{email}} with your payment details."
+        "failedA": "No. It can take a few minutes to confirm. If Plus has not appeared after that, write to {{email}} with your payment details.",
+        "includesK": "premium subscription features benefits upgrade chat reactions",
+        "priceK": "price fee charge money rupees monthly yearly subscription amount rate",
+        "trialK": "try test demo free days",
+        "familyK": "members share sharing whole family one subscription everyone",
+        "payK": "payment upi card gpay phonepe paytm netbanking razorpay stripe credit debit",
+        "cancelK": "stop unsubscribe end subscription auto renew renewal",
+        "refundK": "refund money back return cashback charged twice wrong payment",
+        "failedK": "payment failed deducted debited charged not working pending stuck twice money gone showing show missing activated active"
       },
       "orders": {
         "title": "Posters, books and invites",
@@ -902,15 +927,26 @@
         "deliveryQ": "How long does delivery take?",
         "deliveryA": "Usually within {{deliveryDays}} days of payment.",
         "damagedQ": "My order arrived damaged or wrong. What now?",
-        "damagedA": "Tell us within {{damageDays}} days of delivery, with a photo. We will reprint it or refund you, at no cost. See the Return and refund policy."
+        "damagedA": "Tell us within {{damageDays}} days of delivery, with a photo. We will reprint it or refund you, at no cost. See the Return and refund policy.",
+        "whatK": "shop buy purchase poster book print invite design product",
+        "deliveryK": "shipping ship courier track tracking arrive days late where is my order",
+        "damagedK": "broken torn missing replace replacement return refund complaint wrong item"
       },
       "account": {
         "title": "Your account",
         "deleteQ": "How do I delete my account?",
         "deleteA": "Open your profile, then Privacy and account, then Delete. You are signed out, and the account is deleted 30 days later. Sign in before then and tap Keep my account if you change your mind. Download a copy first if you want one, and cancel any subscription. Your name, number and photo are removed. Entries you added to a tree stay with that tree.",
         "helpQ": "How do I get help?",
-        "helpA": "Write to {{email}} or call {{phone}}. Hours: {{supportHours}}."
-      }
+        "helpA": "Write to {{email}} or call {{phone}}. Hours: {{supportHours}}.",
+        "deleteK": "remove close deactivate erase leave profile quit data",
+        "helpK": "support contact customer care call email phone complaint ticket question problem issue"
+      },
+      "search": "Search the questions",
+      "searchHint": "Type a word or two, such as refund or sign in",
+      "clear": "Clear",
+      "results": "Questions that fit your search",
+      "noMatch": "No question fits that. Try a different or shorter word, or ask us directly.",
+      "showAll": "Show all questions"
     }
   },
   "calendar": {

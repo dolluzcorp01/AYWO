@@ -1,5 +1,5 @@
 // 'My view', drawn (Warm Daylight): grandparents and parents above, the centre person with brothers and sisters
-// beside them and partner on the right, then two levels down: children with their partners, and under each couple
+// beside them and their partner (husband on the left, wife on the right), then two levels down: children with their partners, and under each couple
 // their children. Joined by lines. Tap anyone to bring them to the centre; tap the centre card to open it.
 // Wide families scroll sideways.
 import { focusView, graphFromApi, relationText } from '@aywo/layout';
@@ -76,10 +76,32 @@ function fitting(ids: string[], room: number, more: string, all: boolean): strin
   return more === MORE_SIBLINGS ? [more, ...ids.slice(ids.length - (fit - 1))] : [...ids.slice(0, fit - 1), more];
 }
 
-function layout(view: ReturnType<typeof focusView>, width: number, expanded: { siblings: boolean; children: boolean }) {
-  const grand = view.grandparents.flatMap((g) => g.ids).slice(0, 4);
-  const parents = view.parents.slice(0, 2);
+/**
+ * A couple always stands the same way round: husband on the left, wife on the right, whoever is in the centre.
+ * Before, the centre person was always on the left, so tapping the wife made the two swap places. Where the genders
+ * do not settle it (the same, or not known) the ids do, so the answer is still the same from both sides.
+ */
+function coupleOrder(a: string, b: string, genderOf: (id: string) => string | undefined): [string, string] {
+  const ga = genderOf(a);
+  const gb = genderOf(b);
+  if (ga !== gb) {
+    if (ga === 'male' || gb === 'female') return [a, b];
+    if (gb === 'male' || ga === 'female') return [b, a];
+  }
+  return a < b ? [a, b] : [b, a];
+}
+
+function layout(view: ReturnType<typeof focusView>, width: number, expanded: { siblings: boolean; children: boolean }, genderOf: (id: string) => string | undefined) {
+  const pair = (ids: string[]) => (ids.length === 2 ? coupleOrder(ids[0], ids[1], genderOf) : ids);
+  const parents = pair(view.parents.slice(0, 2));
+  // Each pair of grandparents stands over their own child, so they follow the parents' order.
+  const grand = [...view.grandparents]
+    .sort((x, y) => parents.indexOf(x.viaParentId) - parents.indexOf(y.viaParentId))
+    .flatMap((g) => pair(g.ids.slice(0, 2)))
+    .slice(0, 4);
   const partners = view.partners.slice(0, 1);
+  // The centre person and their partner, left to right.
+  const centreCouple = partners.length ? coupleOrder(view.focusId, partners[0], genderOf) : [view.focusId];
   const room = width - 2 * EDGE;
   const besideFocus = room - FOCUS_W - (partners.length ? PARTNER_GAP + CARD_W : 0) - GAP;
   const siblings = fitting(view.siblings, besideFocus, MORE_SIBLINGS, expanded.siblings);
@@ -89,13 +111,13 @@ function layout(view: ReturnType<typeof focusView>, width: number, expanded: { s
   const shown = new Set(siblings);
   const inOrder = view.siblingRow.filter((id) => id === view.focusId || shown.has(id));
   const bloodRow = [...(shown.has(MORE_SIBLINGS) ? [MORE_SIBLINGS] : []), ...inOrder];
-  const middle = bloodRow.flatMap((id) => (id === view.focusId ? [id, ...partners] : [id]));
+  const middle = bloodRow.flatMap((id) => (id === view.focusId ? centreCouple : [id]));
 
   // Two levels down: each child is a small family of their own (child, partner, and their children below).
   const partnerOfChild = (id: string) => view.childPartners.find((g) => g.childId === id)?.ids.slice(0, 1) ?? [];
   const kidsOf = (id: string) => view.grandchildren.find((g) => g.childId === id)?.ids.slice(0, MAX_GRANDCHILDREN) ?? [];
   const units = children.map((id) => {
-    const couple = id === MORE_CHILDREN ? [id] : [id, ...partnerOfChild(id)];
+    const couple = id === MORE_CHILDREN ? [id] : pair([id, ...partnerOfChild(id)]);
     const kids = id === MORE_CHILDREN ? [] : kidsOf(id);
     return { child: id, couple, kids, w: Math.max(rowWidth(couple, null, couple.length - 1), rowWidth(kids, null)) };
   });
@@ -119,7 +141,8 @@ function layout(view: ReturnType<typeof focusView>, width: number, expanded: { s
       const focus = id === view.focusId;
       const w = focus ? FOCUS_W : CARD_W;
       const h = focus ? FOCUS_H : CARD_H;
-      if (ids === middle && partners.includes(id)) x += PARTNER_GAP - GAP;
+      // A little more room between the two of the centre couple than between brothers and sisters.
+      if (ids === middle && id === centreCouple[1]) x += PARTNER_GAP - GAP;
       placed.set(id, { id, x, y: top + (ids === middle ? (rows[2].h - h) / 2 : 0), w, h, focus });
       x += w + GAP;
     });
@@ -196,9 +219,9 @@ function layout(view: ReturnType<typeof focusView>, width: number, expanded: { s
     const startY = parents.length === 2 ? box(parents[0]).y + box(parents[0]).h / 2 : box(parents[0]).y + box(parents[0]).h;
     bar(blood, mid, startY);
   }
-  if (partners.length) pairLine(view.focusId, partners[0]);
+  const coupleLineX = partners.length ? pairLine(view.focusId, partners[0]) : null;
   if (children.length) {
-    const fromX = partners.length ? (box(view.focusId).x + box(view.focusId).w + box(partners[0]).x) / 2 : centreX(view.focusId);
+    const fromX = coupleLineX ?? centreX(view.focusId);
     const fromY = partners.length ? box(view.focusId).y + box(view.focusId).h / 2 : box(view.focusId).y + box(view.focusId).h;
     bar(children, fromX, fromY);
   }
@@ -223,7 +246,7 @@ export function MyView({ data, viewerId, focusId, seeingAs, onFocus, onOpenPerso
   const view = useMemo(() => focusView(graphFromApi(data), focusId), [data, focusId]);
   const [expanded, setExpanded] = useState({ siblings: false, children: false });
   useEffect(() => setExpanded({ siblings: false, children: false }), [focusId]);
-  const drawn = useMemo(() => layout(view, width, expanded), [view, width, expanded]);
+  const drawn = useMemo(() => layout(view, width, expanded, (id) => byId.get(id)?.gender), [view, width, expanded, byId]);
   const sideways = useRef<ComponentRef<typeof ScrollView>>(null);
 
   // A wide family scrolls sideways; it always opens with the centre person in the middle of the screen.

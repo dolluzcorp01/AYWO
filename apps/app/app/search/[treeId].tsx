@@ -3,7 +3,7 @@ import { relationText } from '@aywo/layout';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';
 import { Avatar } from '@/components/Avatar';
 import { SearchIcon } from '@/components/Icons';
@@ -81,7 +81,7 @@ export default function Search() {
             accessibilityLabel={t('search.placeholder')}
             style={styles.input}
           />
-          <VoiceButton voice={searchVoice} size={40} />
+          <VoiceButton voice={searchVoice} size={minTapSize} />
         </View>
       </View>
       <View style={styles.help}>
@@ -152,7 +152,8 @@ const styles = StyleSheet.create({
     borderColor: colors.logoPurple,
     backgroundColor: colors.card,
   },
-  input: { flex: 1, minHeight: minTapSize, color: colors.text, fontFamily: fonts.bold, fontSize: 16 },
+  // The purple pill around it already shows where the typing goes; the browser's own square outline inside it is noise.
+  input: { flex: 1, minWidth: 0, minHeight: minTapSize, color: colors.text, fontFamily: fonts.bold, fontSize: 16, ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : {}) },
   help: { marginTop: 10, marginBottom: 6 },
   failed: { alignItems: 'flex-start', gap: 4 },
   list: { gap: 10, paddingVertical: 8 },

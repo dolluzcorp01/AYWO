@@ -145,7 +145,8 @@ export function TimeField({ label, value, onChange, invalid, help, error }: Date
         onChange: (e: { target: { value: string } }) => e.target.value !== '' && pick(Number(e.target.value)),
         style: {
           minHeight: 54,
-          minWidth: 0,
+          // Wide enough for the words Hour and Minute; on a narrow phone AM / PM drops to the next line instead.
+          minWidth: 96,
           flex: 1,
           boxSizing: 'border-box',
           borderRadius: radius.button,
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
   clear: { minHeight: 44, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: colors.line, justifyContent: 'center', cursor: 'pointer' },
   clearHover: { backgroundColor: colors.tint },
   clearText: { color: colors.relation, fontFamily: fonts.bold, fontSize: 14 },
-  timeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  timeRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   colon: { color: colors.text, fontFamily: fonts.bold, fontSize: 20 },
   ampm: { flexDirection: 'row', borderRadius: radius.button, borderWidth: 1, borderColor: colors.cardBorder, overflow: 'hidden', backgroundColor: colors.card },
   ampmButton: { minHeight: 52, minWidth: 64, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },

@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   tabOn: { backgroundColor: colors.logoIndigo, borderColor: colors.logoIndigo },
   tabText: { color: colors.text, fontFamily: fonts.bold, fontSize: 13 },
   tabTextOn: { color: colors.white },
-  list: { flexGrow: 1, paddingHorizontal: 16, paddingBottom: TAB_BAR_SPACE, gap: 12 },
+  list: { flexGrow: 1, paddingHorizontal: 16, paddingTop: 12, paddingBottom: TAB_BAR_SPACE, gap: 12 },
   card: { gap: 10, borderRadius: 22 },
   rowTop: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   rowText: { flex: 1, minWidth: 0, gap: 2 },

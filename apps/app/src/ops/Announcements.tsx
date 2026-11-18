@@ -10,7 +10,7 @@ import type { LayoutChangeEvent } from 'react-native';
 import { useReducedMotion } from '@/components/Loaders';
 import { Text } from '@/components/Text';
 import { api, API_URL } from '@/lib/api';
-import { colors, fonts, radius, shadows } from '@/theme/tokens';
+import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
 
 export interface Banner {
   id: string;
@@ -182,14 +182,14 @@ export function HomeOfferCards() {
 }
 
 const styles = StyleSheet.create({
-  strip: { minHeight: 40, flexDirection: 'row', alignItems: 'center', borderRadius: 14, overflow: 'hidden' },
-  stripTap: { flex: 1, minHeight: 40, justifyContent: 'center', paddingHorizontal: 14 },
+  strip: { minHeight: minTapSize, flexDirection: 'row', alignItems: 'center', borderRadius: 14, overflow: 'hidden' },
+  stripTap: { flex: 1, minWidth: 0, minHeight: minTapSize, justifyContent: 'center', paddingHorizontal: 14 },
   marquee: { overflow: 'hidden' },
   track: { flexDirection: 'row', alignSelf: 'flex-start' },
   // On the web a line also needs nowrap; phones keep a row child on one line by themselves.
   line: { fontFamily: fonts.bold, fontSize: 14, flexShrink: 0, ...(Platform.OS === 'web' ? ({ whiteSpace: 'nowrap' } as object) : {}) },
   gap: { marginLeft: 48 },
-  close: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  close: { width: minTapSize, height: minTapSize, alignItems: 'center', justifyContent: 'center' },
   closeText: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 24 },
   card: { borderRadius: radius.card, padding: 18, gap: 6, ...shadows.card },
   cardTitle: { fontFamily: fonts.extrabold, fontSize: 17 },

@@ -23,6 +23,8 @@ import { ApiFailure, api } from '@/lib/api';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 
 const NARROW = 820;
+// Narrower than this, the top bar shows its two buttons as icons only.
+const PHONE = 520;
 // Below this height the whole menu does not fit, so groups start closed.
 const SHORT = 960;
 
@@ -148,6 +150,8 @@ function NavRow({
   role = 'link',
   expanded,
   heading,
+  touch,
+  iconOnly,
 }: {
   label: string;
   icon: (color: string) => ReactNode;
@@ -159,6 +163,10 @@ function NavRow({
   role?: 'link' | 'button';
   expanded?: boolean;
   heading?: boolean;
+  /** On a phone or tablet: tall enough for a finger. */
+  touch?: boolean;
+  /** Where there is no room for the words. The label is still read out. */
+  iconOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const [hover, setHover] = useState(false);
@@ -172,12 +180,14 @@ function NavRow({
       onPress={onPress}
       onHoverIn={() => setHover(true)}
       onHoverOut={() => setHover(false)}
-      style={[styles.item, indent && styles.itemIndent, hover && !active && styles.itemHover, active && styles.itemOn]}
+      style={[styles.item, touch && styles.itemTouch, iconOnly && styles.itemIconOnly, indent && styles.itemIndent, hover && !active && styles.itemHover, active && styles.itemOn]}
     >
       {icon(color)}
-      <Text numberOfLines={1} style={[styles.itemText, { color }, heading && styles.itemTextHeading, active && styles.itemTextOn]}>
-        {label}
-      </Text>
+      {iconOnly ? null : (
+        <Text numberOfLines={1} style={[styles.itemText, { color }, heading && styles.itemTextHeading, active && styles.itemTextOn]}>
+          {label}
+        </Text>
+      )}
       {badge ? (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{badge > 99 ? t('admin.common.moreThan', { max: 99 }) : badge}</Text>
@@ -244,6 +254,7 @@ function Frame({
       active={isOn(item)}
       indent={indent}
       badge={item.key === 'work' ? openWork : undefined}
+      touch={narrow}
       onPress={() => router.navigate(item.href)}
     />
   );
@@ -271,8 +282,9 @@ function Frame({
             <LogoLink label={t('admin.menu.dashboard')} onPress={() => router.navigate('/admin')} height={26} width={90} />
             <Text style={styles.brandTitle}>{t('nav.adminPanel')}</Text>
             <View style={styles.spacer} />
-            <NavRow label={t('nav.backToApp')} icon={backIcon} onPress={goHome} />
-            <NavRow label={t('settings.signOut')} icon={(c) => <SignOutIcon color={c} size={18} width={1.8} />} role="button" onPress={() => setSigningOut(true)} />
+            {/* On a phone the two words do not fit beside the logo and pushed the whole page sideways. */}
+            <NavRow touch iconOnly={width < PHONE} label={t('nav.backToApp')} icon={backIcon} onPress={goHome} />
+            <NavRow touch iconOnly={width < PHONE} label={t('settings.signOut')} icon={(c) => <SignOutIcon color={c} size={18} width={1.8} />} role="button" onPress={() => setSigningOut(true)} />
           </View>
           <ScrollView horizontal contentContainerStyle={styles.menuNarrow}>
             {items.map((item) => row(item, false))}
@@ -358,6 +370,8 @@ const styles = StyleSheet.create({
   groupBox: { gap: 1, marginTop: 4 },
   // 36 px rows: the whole menu fits a laptop screen without scrolling.
   item: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, borderRadius: 10 },
+  itemTouch: { minHeight: minTapSize },
+  itemIconOnly: { minWidth: minTapSize, justifyContent: 'center', paddingHorizontal: 0 },
   itemIndent: { marginLeft: 18, paddingLeft: 10, borderLeftWidth: 0 },
   itemHover: { backgroundColor: colors.background },
   itemOn: { backgroundColor: colors.tint },
