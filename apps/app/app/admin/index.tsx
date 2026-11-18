@@ -21,6 +21,7 @@ export default function AdminDashboard() {
   // a card that leads to "You don't have permission" is worse than no card.
   const access = useAdminAccess();
   const canWork = access.can(MENU.find((item) => item.key === 'work')?.gates ?? []);
+  const canUsers = access.can(MENU.find((item) => item.key === 'users')?.gates ?? []);
 
   if (settingUp) return <TwoStepSetup onDone={() => { setSettingUp(false); twoStep.refetch(); }} onCancel={() => setSettingUp(false)} />;
 
@@ -56,7 +57,7 @@ export default function AdminDashboard() {
                   {data.dictionary ? (
                     <>
                       <StatCard label={t('admin.dashboard.pendingTerms')} value={data.dictionary.pending_terms} onPress={() => router.navigate('/admin/dictionary')} />
-                      <StatCard label={t('admin.dashboard.openReports')} value={data.dictionary.open_reports} onPress={() => router.navigate('/admin/dictionary')} />
+                      <StatCard label={t('admin.dashboard.openReports')} value={data.dictionary.open_reports} onPress={() => router.navigate({ pathname: '/admin/dictionary', params: { tab: 'reports' } })} />
                     </>
                   ) : null}
                 </StatRow>
@@ -75,9 +76,9 @@ export default function AdminDashboard() {
               <Section title={t('admin.menu.users')}>
                 <StatRow>
                   <StatCard label={t('admin.dashboard.usersTotal')} value={data.users.total} onPress={() => router.navigate('/admin/users')} />
-                  <StatCard label={t('admin.dashboard.usersActive')} value={data.users.active_30d} />
-                  <StatCard label={t('admin.dashboard.usersNew')} value={data.users.new_7d} />
-                  <StatCard label={t('admin.dashboard.usersBlocked')} value={data.users.blocked} />
+                  <StatCard label={t('admin.dashboard.usersActive')} value={data.users.active_30d} onPress={() => router.navigate({ pathname: '/admin/users', params: { filter: 'active30' } })} />
+                  <StatCard label={t('admin.dashboard.usersNew')} value={data.users.new_7d} onPress={() => router.navigate({ pathname: '/admin/users', params: { filter: 'new7' } })} />
+                  <StatCard label={t('admin.dashboard.usersBlocked')} value={data.users.blocked} onPress={() => router.navigate({ pathname: '/admin/users', params: { filter: 'blocked' } })} />
                 </StatRow>
               </Section>
             ) : null}
@@ -86,7 +87,12 @@ export default function AdminDashboard() {
                 <StatRow>
                   <StatCard label={t('admin.dashboard.couponsRunning')} value={data.marketing.coupons_running} onPress={() => router.navigate('/admin/offers')} />
                   <StatCard label={t('admin.dashboard.bannersRunning')} value={data.marketing.banners_running} onPress={() => router.navigate('/admin/offers')} />
-                  <StatCard label={t('admin.dashboard.optedIn')} value={data.marketing.opted_in} />
+                  {/* The accounts themselves for staff who may open Users; the promotions page for the rest. */}
+                  <StatCard
+                    label={t('admin.dashboard.optedIn')}
+                    value={data.marketing.opted_in}
+                    onPress={() => (canUsers ? router.navigate({ pathname: '/admin/users', params: { filter: 'offers' } }) : router.navigate('/admin/offers'))}
+                  />
                 </StatRow>
               </Section>
             ) : null}
@@ -94,16 +100,16 @@ export default function AdminDashboard() {
               <Section title={t('admin.menu.trees')}>
                 <StatRow>
                   <StatCard label={t('admin.dashboard.treesTotal')} value={data.trees.total} onPress={() => router.navigate('/admin/trees')} />
-                  <StatCard label={t('admin.dashboard.people')} value={data.trees.people} />
+                  <StatCard label={t('admin.dashboard.people')} value={data.trees.people} onPress={() => router.navigate('/admin/trees')} />
                 </StatRow>
               </Section>
             ) : null}
             {data.payments ? (
               <Section title={t('admin.menu.payments')}>
                 <StatRow>
-                  <StatCard label={t('admin.dashboard.plansActive')} value={data.payments.active} onPress={() => router.navigate('/admin/payments')} />
-                  <StatCard label={t('admin.dashboard.plansTrial')} value={data.payments.trial} />
-                  <StatCard label={t('admin.dashboard.plansGrace')} value={data.payments.grace} />
+                  <StatCard label={t('admin.dashboard.plansActive')} value={data.payments.active} onPress={() => router.navigate({ pathname: '/admin/payments', params: { status: 'active' } })} />
+                  <StatCard label={t('admin.dashboard.plansTrial')} value={data.payments.trial} onPress={() => router.navigate({ pathname: '/admin/payments', params: { status: 'trial' } })} />
+                  <StatCard label={t('admin.dashboard.plansGrace')} value={data.payments.grace} onPress={() => router.navigate({ pathname: '/admin/payments', params: { status: 'grace' } })} />
                 </StatRow>
               </Section>
             ) : null}
@@ -118,9 +124,9 @@ export default function AdminDashboard() {
             {data.staff ? (
               <Section title={t('admin.menu.staff')}>
                 <StatRow>
-                  <StatCard label={t('admin.dashboard.admins')} value={data.staff.admins} onPress={() => router.navigate('/admin/staff')} />
-                  <StatCard label={t('admin.dashboard.subAdmins')} value={data.staff.sub_admins} />
-                  <StatCard label={t('admin.dashboard.withoutTwoStep')} value={data.staff.without_two_step} onPress={() => router.navigate('/admin/staff')} />
+                  <StatCard label={t('admin.dashboard.admins')} value={data.staff.admins} onPress={() => router.navigate({ pathname: '/admin/staff', params: { show: 'aywo_admin' } })} />
+                  <StatCard label={t('admin.dashboard.subAdmins')} value={data.staff.sub_admins} onPress={() => router.navigate({ pathname: '/admin/staff', params: { show: 'sub_admin' } })} />
+                  <StatCard label={t('admin.dashboard.withoutTwoStep')} value={data.staff.without_two_step} onPress={() => router.navigate({ pathname: '/admin/staff', params: { show: 'no_two_step' } })} />
                 </StatRow>
               </Section>
             ) : null}

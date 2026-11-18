@@ -4,7 +4,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { Actions, AdminPage, adminStyles, DataTable, FilterChips, FormDialog, formatDate, Message, Pager, Panel, QueryState, SearchBox, SecondaryButton, usePagedList, useRefreshAfter } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, DataTable, FilterChips, FormDialog, formatDate, Message, Pager, Panel, QueryState, SearchBox, SecondaryButton, useKept, usePagedList, useRefreshAfter } from '@/admin/ui';
 import type { Column, DialogField } from '@/admin/ui';
 import type { Page, TakedownMatch, TakedownRow } from '@/admin/types';
 import { api } from '@/lib/api';
@@ -14,7 +14,7 @@ type Status = TakedownRow['status'];
 export default function AdminTakedowns() {
   const { t, i18n } = useTranslation();
   const refreshAfter = useRefreshAfter();
-  const [status, setStatus] = useState<Status>('open');
+  const [status, setStatus] = useKept<Status>('status', 'open');
   const [acting, setActing] = useState<{ item: TakedownRow; decision: 'remove' | 'dismiss' } | null>(null);
   // A request with only a name: the person staff picked from the matches.
   const [picked, setPicked] = useState<TakedownMatch | null>(null);

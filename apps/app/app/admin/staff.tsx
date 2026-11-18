@@ -28,7 +28,11 @@ export default function AdminStaff() {
   // An account that already exists: someone removed from staff, or picked on their page under Users.
   const [person, setPerson] = useState<Picked | null>(null);
   const router = useRouter();
-  const params = useLocalSearchParams<{ add?: string; name?: string }>();
+  const params = useLocalSearchParams<{ add?: string; name?: string; show?: string }>();
+  // A dashboard card opens this page pointing at some of the team: those rows are marked and pop once.
+  const show = (['no_two_step', 'sub_admin', 'aywo_admin'] as const).find((value) => value === params.show);
+  const isMarked = (row: StaffRow) => (show === 'no_two_step' ? !row.two_step : show ? row.role === show : false);
+  const markLabel = { no_two_step: 'admin.dashboard.withoutTwoStep', sub_admin: 'admin.dashboard.subAdmins', aywo_admin: 'admin.dashboard.admins' } as const;
   useEffect(() => {
     if (params.add) {
       setPerson({ profile_id: params.add, display_name: params.name ?? null });
@@ -107,7 +111,13 @@ export default function AdminStaff() {
       <QueryState query={query} isEmpty={(data) => data.rows.length === 0} emptyText={t('admin.staff.empty')}>
         {(data) => (
           <>
-            <DataTable columns={columns} rows={data.rows} rowKey={(row) => row.profile_id} />
+            {show ? (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
+                <Text style={adminStyles.cellStrong}>{t('admin.staff.marked', { what: t(markLabel[show]), count: data.rows.filter(isMarked).length })}</Text>
+                <SecondaryButton label={t('admin.staff.clearMark')} onPress={() => router.replace('/admin/staff')} />
+              </View>
+            ) : null}
+            <DataTable columns={columns} rows={data.rows} rowKey={(row) => row.profile_id} marked={show ? isMarked : undefined} />
             <Pager page={page} total={data.total} onPage={setPage} />
           </>
         )}

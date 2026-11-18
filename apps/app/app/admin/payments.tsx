@@ -1,12 +1,10 @@
 // Plans and orders overview. Read only: webhooks alone change plans, and refunds happen at the store or gateway.
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';
-import { csvDay, downloadCsv } from '@/admin/csv';
-import { Actions, AdminPage, adminStyles, DataTable, FilterChips, formatDate, money, Pager, PAGE_SIZE, QueryState, SearchBox, SecondaryButton, Section, StatCard, StatRow } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, DataTable, DownloadList, FilterChips, formatDate, money, Pager, PAGE_SIZE, QueryState, SearchBox, SecondaryButton, Section, StatCard, StatRow, useKept } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import type { PaymentsOverview, PlanRow } from '@/admin/types';
 import { api } from '@/lib/api';
@@ -25,13 +23,26 @@ function planPeriod(productId: string): 'monthly' | 'yearly' | null {
 
 export default function AdminPayments() {
   const { t, i18n } = useTranslation();
-  const [status, setStatus] = useState<Filter>('all');
-  const [page, setPage] = useState(0);
-  const [q, setQ] = useState('');
-  useEffect(() => setPage(0), [status, q]);
+  // A dashboard card opens this page already narrowed, such as ?status=trial.
+  const params = useLocalSearchParams<{ status?: string }>();
+  const asked = STATUSES.find((value) => value === params.status);
+  const [status, setStatusOnly] = useKept<Filter>('status', 'all', asked);
+  const [page, setPage] = useKept('page', 0);
+  const [q, setQOnly] = useKept('q', '');
+  // A new filter or search starts again at the first page.
+  const setStatus = (value: Filter) => {
+    setStatusOnly(value);
+    setPage(0);
+  };
+  const setQ = (value: string) => {
+    setQOnly(value);
+    setPage(0);
+  };
   const router = useRouter();
   // The payer's name opens their account page, for the people who may open accounts.
-  const canOpenAccount = useAdminAccess().can(['users', 'support']);
+  const access = useAdminAccess();
+  const canOpenAccount = access.can(['users', 'support']);
+  const canOpenOrders = access.can(['orders', 'payments']);
 
   const query = useQuery({
     queryKey: ['admin', 'payments', status, q, page],
@@ -100,7 +111,7 @@ export default function AdminPayments() {
             {data.orders ? (
               <Section title={t('admin.payments.orders')}>
                 <StatRow>
-                  <StatCard label={t('admin.payments.ordersTotal')} value={data.orders.total} />
+                  <StatCard label={t('admin.payments.ordersTotal')} value={data.orders.total} onPress={canOpenOrders ? () => router.navigate({ pathname: '/admin/orders', params: { step: 'all' } }) : undefined} />
                   {Object.entries(data.orders.by_status).map(([state, count]) => (
                     <StatCard key={state} label={t(`admin.payments.orderStatus.${state}`, { defaultValue: state })} value={count} />
                   ))}
@@ -133,31 +144,24 @@ export default function AdminPayments() {
                 <>
                   <DataTable columns={columns} rows={data.rows} rowKey={(plan) => plan.id} />
                   <Pager page={page} total={data.total} onPage={setPage} />
-                  <Actions>
-                    <SecondaryButton
-                      label={t('admin.common.downloadCsv')}
-                      onPress={() =>
-                        downloadCsv(
-                          `aywo-plans-${csvDay()}`,
-                          [
-                            t('admin.payments.payer'), t('admin.payments.csvPhone'), t('admin.payments.plan'), t('admin.payments.csvStore'), t('admin.payments.statusLabel'),
-                            t('admin.payments.members'), t('admin.payments.renews'), t('admin.payments.externalId'),
-                          ],
-                          data.rows.map((plan) => [
-                            plan.payer_name ?? '',
-                            plan.payer_phone_masked ?? '',
-                            planName(plan.product_id),
-                            t(`admin.payments.store.${plan.store}`, { defaultValue: plan.store }),
-                            planStatus(plan.status),
-                            String(plan.members),
-                            formatDate(plan.renews_at ?? plan.trial_ends_at, i18n.language),
-                            plan.external_id,
-                          ]),
-                        )
-                      }
-                    />
-                  </Actions>
-                  <Text style={adminStyles.cellMuted}>{t('admin.common.downloadCsvHelp', { count: data.rows.length })}</Text>
+                  <DownloadList
+                    fileName="aywo-plans"
+                    title={t('admin.payments.title')}
+                    headers={[
+                      t('admin.payments.payer'), t('admin.payments.csvPhone'), t('admin.payments.plan'), t('admin.payments.csvStore'), t('admin.payments.statusLabel'),
+                      t('admin.payments.members'), t('admin.payments.renews'), t('admin.payments.externalId'),
+                    ]}
+                    rows={data.rows.map((plan) => [
+                      plan.payer_name ?? '',
+                      plan.payer_phone_masked ?? '',
+                      planName(plan.product_id),
+                      t(`admin.payments.store.${plan.store}`, { defaultValue: plan.store }),
+                      planStatus(plan.status),
+                      String(plan.members),
+                      formatDate(plan.renews_at ?? plan.trial_ends_at, i18n.language),
+                      plan.external_id,
+                    ])}
+                  />
                 </>
               )}
             </Section>

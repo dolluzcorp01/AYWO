@@ -1,19 +1,24 @@
 // Growth and use, in counts only. No one's family details appear here.
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { Funnel } from '@/admin/Funnel';
 import type { FunnelAnswer } from '@/admin/Funnel';
 import type { Analytics } from '@/admin/types';
-import { AdminPage, Bars, Facts, FilterChips, money, Panel, QueryState, Section, StatCard, StatRow } from '@/admin/ui';
+import { useAdminAccess } from '@/admin/access';
+import { AdminPage, Bars, Facts, FilterChips, money, Panel, QueryState, Section, StatCard, StatRow, useKept } from '@/admin/ui';
 import { api } from '@/lib/api';
 import { colors, fonts } from '@/theme/tokens';
 
 export default function AdminAnalytics() {
   const { t, i18n } = useTranslation();
-  const [days, setDays] = useState<'7' | '30' | '90'>('30');
+  const [days, setDays] = useKept<'7' | '30' | '90'>('days', '30');
+  const router = useRouter();
+  // The counts that have a list behind them open it, for staff who may open Users.
+  const canUsers = useAdminAccess().can(['users', 'support']);
+  const users = (filter?: 'active30' | 'plus') => (canUsers ? () => router.navigate({ pathname: '/admin/users', params: filter ? { filter } : {} }) : undefined);
   const query = useQuery({ queryKey: ['admin', 'analytics', days], queryFn: () => api.get<Analytics>(`/admin/analytics?days=${days}`) });
   const funnel = useQuery({ queryKey: ['admin', 'funnel', days], queryFn: () => api.get<FunnelAnswer>(`/admin/funnel?days=${days}`) });
 
@@ -49,11 +54,11 @@ export default function AdminAnalytics() {
           return (
             <>
               <StatRow>
-                <StatCard label={t('admin.analytics.users')} value={data.totals.users} />
+                <StatCard label={t('admin.analytics.users')} value={data.totals.users} onPress={users()} />
                 <StatCard label={t('admin.analytics.active1')} value={data.totals.active_1d} />
                 <StatCard label={t('admin.analytics.active7')} value={data.totals.active_7d} />
-                <StatCard label={t('admin.analytics.active30')} value={data.totals.active_30d} />
-                <StatCard label={t('admin.analytics.plus')} value={data.totals.plus} />
+                <StatCard label={t('admin.analytics.active30')} value={data.totals.active_30d} onPress={users('active30')} />
+                <StatCard label={t('admin.analytics.plus')} value={data.totals.plus} onPress={users('plus')} />
               </StatRow>
               <Section title={t('admin.analytics.everyDay')}>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>

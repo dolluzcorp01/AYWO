@@ -1,17 +1,16 @@
 // AYWO Admin only: the record of every staff action. Nothing here can be changed.
-import { useState } from 'react';
 import { DateField } from '@/components/DateTimeField';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { AdminPage, adminStyles, DataTable, formatDate, Pager, QueryState, SearchBox, usePagedList } from '@/admin/ui';
+import { AdminPage, adminStyles, DataTable, formatDate, Pager, QueryState, SearchBox, usePagedList, useKept } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import type { AuditRow } from '@/admin/types';
 
 export default function AdminAudit() {
   const { t, i18n } = useTranslation();
-  const [action, setAction] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const [action, setAction] = useKept('action', '');
+  const [from, setFrom] = useKept('from', '');
+  const [to, setTo] = useKept('to', '');
   // What is typed is matched against the words in the Action column ("Removed staff"), not only the hidden codes:
   // the codes whose label contains it go to the server, which also looks in the staff name and the reason.
   const labels = t('admin.audit.actions', { returnObjects: true }) as Record<string, string>;
@@ -83,7 +82,7 @@ export default function AdminAudit() {
 
   return (
     <AdminPage title={t('admin.audit.title')} subtitle={t('admin.audit.subtitle')} gates={['audit']}>
-      <SearchBox placeholder={t('admin.audit.search')} onSearch={setAction} />
+      <SearchBox placeholder={t('admin.audit.search')} onSearch={setAction} initial={action} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
         <View style={{ minWidth: 220 }}>
           <DateField label={t('admin.audit.from')} value={from} onChange={setFrom} max={to || undefined} optional />

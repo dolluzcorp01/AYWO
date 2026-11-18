@@ -204,7 +204,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const q = z
       .object({
         q: z.string().trim().max(200).optional(),
-        filter: z.enum(['all', 'blocked', 'plus', 'staff']).default('all'),
+        filter: z.enum(['all', 'blocked', 'plus', 'staff', 'active30', 'new7', 'offers']).default('all'),
         sort: z.enum(['newest', 'active', 'name']).default('newest'),
         ...paging,
       })

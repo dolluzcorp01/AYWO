@@ -4,10 +4,9 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { Actions, AdminPage, adminStyles, DataTable, FormDialog, formatDate, Message, Pager, PAGE_SIZE, Pill, QueryState, SearchBox, SecondaryButton, Section, usePagedList } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, DataTable, DownloadList, FormDialog, formatDate, Message, Pager, PAGE_SIZE, Pill, QueryState, SearchBox, SecondaryButton, Section, usePagedList, useKept } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import type { Page, TreePersonRow, TreeRow } from '@/admin/types';
-import { csvDay, downloadCsv } from '@/admin/csv';
 import { api } from '@/lib/api';
 
 interface Look {
@@ -21,7 +20,7 @@ export default function AdminTrees() {
   const { t, i18n } = useTranslation();
   // Opened from an account's page: that tree is searched for straight away.
   const params = useLocalSearchParams<{ q?: string }>();
-  const [q, setQ] = useState(params.q ?? '');
+  const [q, setQ] = useKept('q', '', params.q || undefined);
   const [asking, setAsking] = useState<TreeRow | null>(null);
   const [look, setLook] = useState<Look | null>(null);
   const [pageFailed, setPageFailed] = useState(false);
@@ -89,7 +88,7 @@ export default function AdminTrees() {
 
   return (
     <AdminPage title={t('admin.trees.title')} subtitle={t('admin.trees.subtitle')} gates={['trees']}>
-      <SearchBox placeholder={t('admin.trees.search')} onSearch={setQ} initial={params.q ?? ''} />
+      <SearchBox key={params.q ?? ''} placeholder={t('admin.trees.search')} onSearch={setQ} initial={q} />
       {/* Right under the search box: below a full table nobody saw this list appear. */}
       {look ? (
         <Section title={t('admin.trees.peopleOf', { name: look.tree.name })}>
@@ -114,26 +113,19 @@ export default function AdminTrees() {
           <>
             <DataTable columns={columns} rows={data.rows} rowKey={(tree) => tree.id} />
             <Pager page={page} total={data.total} onPage={setPage} />
-            <Actions>
-              <SecondaryButton
-                label={t('admin.common.downloadCsv')}
-                onPress={() =>
-                  downloadCsv(
-                    `aywo-trees-${csvDay()}`,
-                    [t('admin.trees.name'), t('admin.trees.creator'), t('admin.trees.people'), t('admin.trees.shares'), t('admin.trees.created'), t('admin.trees.csvState')],
-                    data.rows.map((tree) => [
-                      tree.name,
-                      tree.creator_name ?? '',
-                      String(tree.people),
-                      String(tree.shares),
-                      formatDate(tree.created_at, i18n.language),
-                      tree.deleted ? t('admin.users.deleted') : '',
-                    ]),
-                  )
-                }
-              />
-            </Actions>
-            <Text style={adminStyles.cellMuted}>{t('admin.common.downloadCsvHelp', { count: data.rows.length })}</Text>
+            <DownloadList
+              fileName="aywo-trees"
+              title={t('admin.trees.title')}
+              headers={[t('admin.trees.name'), t('admin.trees.creator'), t('admin.trees.people'), t('admin.trees.shares'), t('admin.trees.created'), t('admin.trees.csvState')]}
+              rows={data.rows.map((tree) => [
+                tree.name,
+                tree.creator_name ?? '',
+                String(tree.people),
+                String(tree.shares),
+                formatDate(tree.created_at, i18n.language),
+                tree.deleted ? t('admin.users.deleted') : '',
+              ])}
+            />
           </>
         )}
       </QueryState>

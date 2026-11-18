@@ -5,11 +5,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
 import type { TFunction } from 'i18next';
 import { DateField } from '@/components/DateTimeField';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { WorkChanges, WorkDetail, WorkItem, WorkKind, WorkPage, WorkPriority, WorkStatus } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, CloseGuard, DataTable, DialogFrame, Field, FilterChips, formatDate, Message, Missing, Pager, Pill, QueryState, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, CloseGuard, DataTable, DialogFrame, Field, FilterChips, formatDate, Message, Missing, Pager, Pill, QueryState, SecondaryButton, useAction, usePagedList, useRefreshAfter, useKept } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
 
@@ -87,11 +87,8 @@ export default function AdminWork() {
   // A dashboard card opens the list it counted: "Late" opens the late ones, not everything.
   const params = useLocalSearchParams<{ view?: string }>();
   const asked = VIEWS.find((v) => v === params.view);
-  const [view, setView] = useState<View_>(asked ?? 'open');
-  useEffect(() => {
-    if (asked) setView(asked);
-  }, [asked]);
-  const [kind, setKind] = useState<WorkKind | 'all'>('all');
+  const [view, setView] = useKept<View_>('view', 'open', asked);
+  const [kind, setKind] = useKept<WorkKind | 'all'>('kind', 'all');
   const [open, setOpen] = useState<string | null>(null);
   const { query, page, setPage } = usePagedList<WorkItem>(['admin', 'work'], '/admin/work', { view, kind: kind === 'all' ? undefined : kind });
   const counts = (query.data as WorkPage | undefined)?.counts;

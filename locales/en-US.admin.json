@@ -56,12 +56,17 @@
       "moreThan": "{{max}}+",
       "notAllowedHelp": "This page needs: {{needs}}. Ask an AYWO Admin if you should have it.",
       "backToDashboard": "Back to the dashboard",
-      "downloadCsv": "Download this list (CSV)",
-      "downloadCsvHelp_one": "A spreadsheet file of the {{count}} row shown on this page.",
-      "downloadCsvHelp_other": "A spreadsheet file of the {{count}} rows shown on this page. Go to the next page to download the rest.",
       "openedFromWork": "Opened from the work queue",
       "openedGone": "This item wasn't found. It may have been deleted.",
-      "openedState": "It is now in the list: {{state}}"
+      "openedState": "It is now in the list: {{state}}",
+      "downloadList": "Download this list (Excel)",
+      "downloadListHelp_one": "An Excel file of the {{count}} row shown on this page.",
+      "downloadListHelp_other": "An Excel file of the {{count}} rows shown on this page. Go to the next page to download the rest.",
+      "downloading": "Making the file...",
+      "downloadFailed": "The file could not be made. Please try again.",
+      "sheetDetails_one": "Downloaded {{when}} · {{count}} row",
+      "sheetDetails_other": "Downloaded {{when}} · {{count}} rows",
+      "sheetFooter": "From the AYWO admin panel. Private: share only with people who need it."
     },
     "gate": {
       "webOnly": "The admin panel opens only on the web.",
@@ -176,7 +181,10 @@
         "all": "All",
         "blocked": "Blocked",
         "plus": "AYWO Plus",
-        "staff": "Staff"
+        "staff": "Staff",
+        "active30": "Active in 30 days",
+        "new7": "New in 7 days",
+        "offers": "Want offers"
       },
       "sortBy": "Sort by",
       "sorts": {
@@ -430,7 +438,11 @@
       "formerWas": "Was {{role}} · removed {{when}}",
       "addBack": "Add back",
       "addPersonTitle": "Make {{name}} staff",
-      "addPersonText": "This account already uses AYWO, so no phone number is needed. Choose what they can do."
+      "addPersonText": "This account already uses AYWO, so no phone number is needed. Choose what they can do.",
+      "marked_one": "{{what}}: {{count}} row is marked below.",
+      "marked_other": "{{what}}: {{count}} rows are marked below.",
+      "marked_zero": "{{what}}: nobody on this page.",
+      "clearMark": "Stop marking"
     },
     "audit": {
       "title": "Audit log",

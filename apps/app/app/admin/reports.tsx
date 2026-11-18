@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import type { Page, ReportRow } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Field, FilterChips, formatDate, FormDialog, Message, Missing, Pager, Panel, Pill, QueryState, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Field, FilterChips, formatDate, FormDialog, Message, Missing, Pager, Panel, Pill, QueryState, SecondaryButton, useAction, usePagedList, useRefreshAfter, useKept } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
 
@@ -14,7 +14,7 @@ type Status = ReportRow['status'];
 
 export default function AdminReports() {
   const { t, i18n } = useTranslation();
-  const [status, setStatus] = useState<Status>('open');
+  const [status, setStatus] = useKept<Status>('status', 'open');
   const [acting, setActing] = useState<{ row: ReportRow; decision: 'remove' | 'dismiss' } | null>(null);
   const [reopening, setReopening] = useState<ReportRow | null>(null);
   const [done, setDone] = useState<string | null>(null);

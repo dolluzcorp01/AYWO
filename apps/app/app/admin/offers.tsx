@@ -9,7 +9,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { checkDays, dayToIso, isoToDay, todayInIndia } from '@/admin/dates';
 import type { DayProblem } from '@/admin/dates';
 import type { Announcement, Campaign, Coupon } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Facts, Field, FilterChips, formatDate, formatDay, FormDialog, Message, Missing, money, Pill, QueryState, SecondaryButton, useAction, useErrorText, useRefreshAfter } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Facts, Field, FilterChips, formatDate, formatDay, FormDialog, Message, Missing, money, Pill, QueryState, SecondaryButton, useAction, useErrorText, useRefreshAfter, useKept } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
 import { colors, fonts } from '@/theme/tokens';
@@ -55,7 +55,7 @@ function dayChanges(starts: string, ends: string, before: { starts_at: string; e
 
 export default function AdminOffers() {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<Tab>('coupons');
+  const [tab, setTab] = useKept<Tab>('tab', 'coupons');
   return (
     <AdminPage title={t('admin.offers.title')} subtitle={t('admin.offers.subtitle')} gates={['marketing']}>
       <FilterChips

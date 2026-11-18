@@ -1,9 +1,10 @@
 // S-19 Dictionary review (LLD L5 no. 20): new words waiting for approval, and 'wrong word' reports.
 // Approved and rejected words can be looked at again and changed, so a wrong decision can be fixed.
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { Actions, AdminPage, adminStyles, DataTable, DialogFrame, Field, FilterChips, FormDialog, formatDate, Message, Missing, Pager, Pill, QueryState, SearchBox, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, DataTable, DialogFrame, Field, FilterChips, FormDialog, formatDate, Message, Missing, Pager, Pill, QueryState, SearchBox, SecondaryButton, useAction, usePagedList, useRefreshAfter, useKept } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import type { KinTermRow, TermReportRow } from '@/admin/types';
 import { api } from '@/lib/api';
@@ -14,7 +15,9 @@ type TermReport = TermReportRow & { decided_at?: string | null; decided_by_name?
 
 export default function AdminDictionary() {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<Tab>('words');
+  // The dashboard's "Wrong-word reports" card opens that tab, not the new words.
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const [tab, setTab] = useKept<Tab>('tab', 'words', (['words', 'reports'] as Tab[]).find((value) => value === params.tab));
   return (
     <AdminPage title={t('admin.dictionary.title')} subtitle={t('admin.dictionary.subtitle')} gates={['dictionary']}>
       <FilterChips
@@ -43,9 +46,9 @@ function NewWords() {
   const { t, i18n } = useTranslation();
   const refreshAfter = useRefreshAfter();
   const [acting, setActing] = useState<{ term: KinTermRow; decision: 'approve' | 'reject' } | null>(null);
-  const [status, setStatus] = useState<'pending' | 'verified' | 'rejected'>('pending');
+  const [status, setStatus] = useKept<'pending' | 'verified' | 'rejected'>('status', 'pending');
   // The approved and rejected lists grow for ever, so they can be searched. The waiting list is short and is not.
-  const [q, setQ] = useState('');
+  const [q, setQ] = useKept('q', '');
   const searching = status !== 'pending';
   const { query, page, setPage } = usePagedList<KinTermRow>(['admin', 'kin-terms', status], '/admin/kin-terms', { status, q: searching ? q : undefined });
   // Approve (with the spelling put right if needed), or correct the spelling of a word already approved.
@@ -171,7 +174,7 @@ function Reports() {
   const refreshAfter = useRefreshAfter();
   const [acting, setActing] = useState<{ report: TermReportRow; decision: 'accept' | 'dismiss' } | null>(null);
   // Open reports wait for a decision; Decided shows what was decided before, the newest first.
-  const [view, setView] = useState<'open' | 'decided'>('open');
+  const [view, setView] = useKept<'open' | 'decided'>('view', 'open');
   const { query, page, setPage } = usePagedList<TermReport>(['admin', 'term-reports'], '/admin/term-reports', { status: view });
 
   const columns: Column<TermReport>[] = [

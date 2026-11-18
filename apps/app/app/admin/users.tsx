@@ -1,15 +1,16 @@
 // Find accounts; open one account's full view; block and unblock. Phones and emails are masked by the server.
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';
-import { Actions, AdminPage, adminStyles, DataTable, FilterChips, FormDialog, formatDate, Pager, Pill, QueryState, SearchBox, SecondaryButton, usePagedList, useRefreshAfter } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, DataTable, FilterChips, FormDialog, formatDate, Pager, Pill, QueryState, SearchBox, SecondaryButton, usePagedList, useRefreshAfter, useKept } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import type { UserRow } from '@/admin/types';
 import { api } from '@/lib/api';
 
-type Filter = 'all' | 'blocked' | 'plus' | 'staff';
+const FILTERS = ['all', 'blocked', 'plus', 'staff', 'active30', 'new7', 'offers'] as const;
+type Filter = (typeof FILTERS)[number];
 type Sort = 'newest' | 'active' | 'name';
 
 export default function AdminUsers() {
@@ -17,10 +18,13 @@ export default function AdminUsers() {
   const access = useAdminAccess();
   const router = useRouter();
   const refreshAfter = useRefreshAfter();
-  const [q, setQ] = useState('');
+  const [q, setQ] = useKept('q', '');
   const [acting, setActing] = useState<{ user: UserRow; action: 'block' | 'unblock' } | null>(null);
-  const [filter, setFilter] = useState<Filter>('all');
-  const [sort, setSort] = useState<Sort>('newest');
+  // A dashboard card opens this page already narrowed, such as ?filter=blocked.
+  const params = useLocalSearchParams<{ filter?: string }>();
+  const asked = FILTERS.find((value) => value === params.filter);
+  const [filter, setFilter] = useKept<Filter>('filter', 'all', asked);
+  const [sort, setSort] = useKept<Sort>('sort', 'newest');
   const [copied, setCopied] = useState<string | null>(null);
   const { query, page, setPage } = usePagedList<UserRow>(['admin', 'users'], '/admin/users', { q, filter, sort });
   const canBlock = access.can(['users']);
@@ -91,11 +95,11 @@ export default function AdminUsers() {
 
   return (
     <AdminPage title={t('admin.users.title')} subtitle={t('admin.users.subtitle')} gates={['users', 'support']}>
-      <SearchBox placeholder={t('admin.users.search')} onSearch={setQ} />
+      <SearchBox placeholder={t('admin.users.search')} onSearch={setQ} initial={q} />
       <FilterChips
         value={filter}
         onChange={setFilter}
-        options={(['all', 'blocked', 'plus', 'staff'] as Filter[]).map((value) => ({ value, label: t(`admin.users.filters.${value}`) }))}
+        options={FILTERS.map((value) => ({ value, label: t(`admin.users.filters.${value}`) }))}
       />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
         <Text style={adminStyles.fieldLabel}>{t('admin.users.sortBy')}</Text>

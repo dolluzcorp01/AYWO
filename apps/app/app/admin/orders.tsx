@@ -1,14 +1,13 @@
 // Posters and books: print, ship with tracking, deliver. Refunds go back through Razorpay or Stripe.
 // The full shipping address opens only with a reason, which is recorded.
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';
 import type { Fulfilment, OrderAddress, OrderPage, OrderRow } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, DataTable, DialogFrame, Facts, Field, FilterChips, formatDate, FormDialog, Message, Missing, money, Pager, Pill, QueryState, SearchBox, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, DataTable, DialogFrame, DownloadList, Facts, Field, FilterChips, formatDate, FormDialog, Message, Missing, money, Pager, Pill, QueryState, SearchBox, SecondaryButton, useAction, usePagedList, useRefreshAfter, useKept } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
-import { csvDay, downloadCsv } from '@/admin/csv';
 import { api } from '@/lib/api';
 
 const NEXT: Partial<Record<Fulfilment, Fulfilment>> = { queued: 'printing', printing: 'shipped', shipped: 'delivered' };
@@ -23,12 +22,9 @@ export default function AdminOrders() {
   const refreshAfter = useRefreshAfter();
   // A dashboard card opens the step it counted.
   const params = useLocalSearchParams<{ step?: string }>();
-  const asked = (['queued', 'printing', 'shipped', 'delivered', 'cancelled'] as Fulfilment[]).find((s) => s === params.step);
-  const [step, setStep] = useState<Fulfilment | 'all'>(asked ?? 'queued');
-  useEffect(() => {
-    if (asked) setStep(asked);
-  }, [asked]);
-  const [q, setQ] = useState('');
+  const asked = (['queued', 'printing', 'shipped', 'delivered', 'cancelled', 'all'] as (Fulfilment | 'all')[]).find((s) => s === params.step);
+  const [step, setStep] = useKept<Fulfilment | 'all'>('step', 'queued', asked);
+  const [q, setQ] = useKept('q', '');
   const [moving, setMoving] = useState<OrderRow | null>(null);
   const [correcting, setCorrecting] = useState<Order | null>(null);
   const [undoing, setUndoing] = useState<Order | null>(null);
@@ -112,45 +108,39 @@ export default function AdminOrders() {
   });
 
   // The rows on the screen now, as a spreadsheet. Only what the list already shows: never the street address.
-  const exportRows = (rows: Order[]) =>
-    downloadCsv(
-      `aywo-orders-${csvDay()}`,
-      [
-        t('admin.orders.csv.number'), t('admin.orders.order'), t('admin.orders.quantity'), t('admin.orders.csv.buyer'), t('admin.orders.cityState'),
-        t('admin.orders.country'), t('admin.orders.csv.amount'), t('admin.orders.csv.currency'), t('admin.orders.csv.coupon'), t('admin.orders.step'),
-        t('admin.orders.carrier'), t('admin.orders.tracking'), t('admin.orders.paid'),
-      ],
-      rows.map((row) => [
-        row.order_no ?? row.id,
-        t(`admin.orders.products.${row.product}`),
-        String(row.quantity),
-        row.buyer_name ?? '',
-        row.city ?? '',
-        row.country ?? '',
-        String(row.amount_minor / 100),
-        row.currency,
-        row.coupon ?? '',
-        row.status === 'refunded' ? t('admin.payments.orderStatus.refunded') : t(`admin.orders.steps.${row.fulfilment}`),
-        row.carrier ?? '',
-        row.tracking_number ?? '',
-        row.paid_at ? formatDate(row.paid_at, i18n.language) : '',
-      ]),
-    );
+  const sheetHeaders = [
+    t('admin.orders.csv.number'), t('admin.orders.order'), t('admin.orders.quantity'), t('admin.orders.csv.buyer'), t('admin.orders.cityState'),
+    t('admin.orders.country'), t('admin.orders.csv.amount'), t('admin.orders.csv.currency'), t('admin.orders.csv.coupon'), t('admin.orders.step'),
+    t('admin.orders.carrier'), t('admin.orders.tracking'), t('admin.orders.paid'),
+  ];
+  const sheetRows = (rows: Order[]) =>
+    rows.map((row) => [
+      row.order_no ?? row.id,
+      t(`admin.orders.products.${row.product}`),
+      String(row.quantity),
+      row.buyer_name ?? '',
+      row.city ?? '',
+      row.country ?? '',
+      String(row.amount_minor / 100),
+      row.currency,
+      row.coupon ?? '',
+      row.status === 'refunded' ? t('admin.payments.orderStatus.refunded') : t(`admin.orders.steps.${row.fulfilment}`),
+      row.carrier ?? '',
+      row.tracking_number ?? '',
+      row.paid_at ? formatDate(row.paid_at, i18n.language) : '',
+    ]);
 
   return (
     <AdminPage title={t('admin.orders.title')} subtitle={t('admin.orders.subtitle')} gates={['orders', 'payments']}>
       <FilterChips value={step} onChange={setStep} options={[chip('queued'), chip('printing'), chip('shipped'), chip('delivered'), chip('cancelled'), chip('all')]} />
-      <SearchBox placeholder={t('admin.orders.search')} onSearch={setQ} />
+      <SearchBox placeholder={t('admin.orders.search')} onSearch={setQ} initial={q} />
       {done ? <Message text={done} good /> : null}
       <QueryState query={query} isEmpty={(data) => data.rows.length === 0} emptyText={t('admin.orders.empty')}>
         {(data) => (
           <>
             <DataTable columns={columns} rows={data.rows} rowKey={(row) => row.id} />
             <Pager page={page} total={data.total} onPage={setPage} />
-            <Actions>
-              <SecondaryButton label={t('admin.common.downloadCsv')} onPress={() => exportRows(data.rows)} />
-            </Actions>
-            <Text style={adminStyles.cellMuted}>{t('admin.common.downloadCsvHelp', { count: data.rows.length })}</Text>
+            <DownloadList fileName="aywo-orders" title={t('admin.orders.title')} headers={sheetHeaders} rows={sheetRows(data.rows)} />
           </>
         )}
       </QueryState>

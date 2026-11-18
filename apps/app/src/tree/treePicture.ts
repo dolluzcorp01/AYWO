@@ -3,6 +3,7 @@
 import { graphFromApi, layoutLineTree } from '@aywo/layout';
 import type { TFunction } from 'i18next';
 import type { TreeNode, TreeViewAnswer } from '@/tree/useTreeView';
+import { LOGO_ORANGE, LOGO_PURPLE, MARK_VIEW_BOX, WORDMARK_PATH, WORDMARK_WIDTH, type LogoPiece } from '@/components/logoArt';
 import { colors } from '@/theme/tokens';
 
 const CARD_WIDTH = 150;
@@ -95,7 +96,9 @@ export function treePicture(data: TreeViewAnswer, options: { includeLiving: bool
   html, body { margin: 0; padding: 0; background: ${colors.white}; }
   body { font-family: -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; color: ${colors.text}; }
   #page { position: relative; width: ${width}px; height: ${height}px; overflow: hidden; transform: scale(${scale}); transform-origin: top left; }
-  h1 { position: absolute; top: ${MARGIN}px; left: ${MARGIN}px; right: ${MARGIN}px; margin: 0; font-size: 26px; }
+  h1 { position: absolute; top: ${MARGIN}px; left: ${MARGIN}px; right: ${MARGIN}px; margin: 0; font-size: 26px; padding-inline-end: ${BRAND_WIDTH + 16}px; }
+  .brand { position: absolute; top: ${MARGIN - 4}px; inset-inline-end: ${MARGIN}px; display: flex; align-items: center; gap: 6px; }
+  .brand svg { position: static; }
   svg { position: absolute; top: 0; left: 0; }
   .card { position: absolute; width: ${CARD_WIDTH}px; height: ${CARD_HEIGHT}px; overflow: hidden; padding: 8px; text-align: center;
           background: ${colors.white}; border: 2px solid ${colors.logoPurple}; border-radius: 12px; }
@@ -106,6 +109,7 @@ export function treePicture(data: TreeViewAnswer, options: { includeLiving: bool
 </style></head>
 <body><div id="page">
   <h1 dir="auto">${escapeHtml(data.tree.name)}</h1>
+  <div class="brand" dir="ltr">${brandMark()}</div>
   <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">${lines}</svg>
   ${cards}
   <footer dir="auto">${escapeHtml(footer)}</footer>
@@ -113,6 +117,24 @@ export function treePicture(data: TreeViewAnswer, options: { includeLiving: bool
 
   return { html, width: pageWidth, height: pageHeight };
 }
+
+/** One piece of the logo mark, with its own colour run. */
+function logoPiece(piece: LogoPiece, id: string): string {
+  const [from, to] = [piece.from, piece.to];
+  return `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${from[0]}" y1="${from[1]}" x2="${to[0]}" y2="${to[1]}"><stop offset="0" stop-color="${piece.colours[0]}" /><stop offset="1" stop-color="${piece.colours[1]}" /></linearGradient><polygon points="${piece.points}" fill="url(#${id})" />`;
+}
+
+/** The AYWO logo for the corner of the page: the mark, then the name. Drawn, so it stays sharp at any print size. */
+function brandMark(): string {
+  const wordHeight = 15;
+  const wordWidth = Math.round((wordHeight * WORDMARK_WIDTH) / 511);
+  return (
+    `<svg width="34" height="34" viewBox="${MARK_VIEW_BOX}" xmlns="http://www.w3.org/2000/svg">${logoPiece(LOGO_PURPLE, 'aywo-a')}${logoPiece(LOGO_ORANGE, 'aywo-b')}</svg>` +
+    `<svg width="${wordWidth}" height="${wordHeight}" viewBox="0 0 ${WORDMARK_WIDTH} 511" xmlns="http://www.w3.org/2000/svg"><path d="${WORDMARK_PATH}" fill="${colors.text}" /></svg>`
+  );
+}
+/** Room kept free beside the title for the logo. */
+const BRAND_WIDTH = 34 + 6 + Math.round((15 * WORDMARK_WIDTH) / 511);
 
 /** The browser's own print window, from a frame nobody sees. The person chooses 'Save as PDF' there. */
 export async function printOnWeb(html: string): Promise<void> {

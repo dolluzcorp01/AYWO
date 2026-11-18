@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { TicketDetail, TicketRow } from '@/admin/types';
-import { Actions, AdminPage, adminStyles, CloseGuard, DataTable, DialogFrame, Field, FilterChips, formatDate, Message, Missing, Pager, Pill, QueryState, SearchBox, SecondaryButton, useAction, usePagedList, useRefreshAfter } from '@/admin/ui';
+import { Actions, AdminPage, adminStyles, CloseGuard, DataTable, DialogFrame, Field, FilterChips, formatDate, Message, Missing, Pager, Pill, QueryState, SearchBox, SecondaryButton, useAction, usePagedList, useRefreshAfter, useKept } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
 import { colors, fonts } from '@/theme/tokens';
@@ -24,8 +24,8 @@ function languageName(code: string, shownIn: string): string {
 export default function AdminTickets() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const [status, setStatus] = useState<Status | 'all'>('open');
-  const [q, setQ] = useState('');
+  const [status, setStatus] = useKept<Status | 'all'>('status', 'open');
+  const [q, setQ] = useKept('q', '');
   const [open, setOpen] = useState<string | null>(null);
   // The work queue and an account page send the ticket's id along: that ticket opens straight away.
   const params = useLocalSearchParams<{ open?: string }>();
@@ -65,6 +65,7 @@ export default function AdminTickets() {
     <AdminPage title={t('admin.tickets.title')} subtitle={t('admin.tickets.subtitle')} gates={['support']}>
       <SearchBox
         placeholder={t('admin.tickets.search')}
+        initial={q}
         onSearch={(text) => {
           setQ(text);
           // A search looks through every ticket: the one wanted may be closed or waiting for the person.

@@ -1,7 +1,7 @@
 -- AYWO Admin and Sub-admin: permissions, privacy and the audit log. Run: supabase test db
 begin;
 create extension if not exists pgtap;
-select plan(116);
+select plan(122);
 
 insert into languages (code, name_en) values ('en', 'English') on conflict (code) do nothing;
 insert into kin_paths (code, description_en, generation, blood) values ('T_ADMIN', 'test path', 0, true) on conflict (code) do nothing;
@@ -94,6 +94,13 @@ select is((admin_users_list('Target Person') ->> 'total')::int, 1, 'the search f
 select ok(admin_users_list('Target Person')::text not like '%9811100005%', 'no full phone number in the list');
 select ok(admin_users_list('Target Person')::text not like '%target6@%', 'no full email in the list');
 select is((admin_users_list('9811100005') ->> 'total')::int, 1, 'search works by the full number');
+-- The dashboard's cards open the list already narrowed (0036).
+select lives_ok($$ select admin_users_list(null, 25, 0, 'new7') $$, 'filter: new in 7 days');
+select lives_ok($$ select admin_users_list(null, 25, 0, 'active30') $$, 'filter: active in 30 days');
+select lives_ok($$ select admin_users_list(null, 25, 0, 'offers') $$, 'filter: people who want offers');
+select is((admin_users_list('Target Person', 25, 0, 'new7') ->> 'total')::int, 1, 'an account made just now counts as new');
+select is((admin_users_list('Target Person', 25, 0, 'offers') ->> 'total')::int, 0, 'an account that did not ask for offers is left out');
+select throws_ok($$ select admin_users_list(null, 25, 0, 'everyone-please') $$, 'PT422', 'bad_input', 'an unknown filter is refused');
 select is((admin_users_list('0005') ->> 'total')::int, 0, 'a few digits are not enough to search by number');
 select throws_ok($$ select admin_user_block('00000000-0000-0000-0000-0000000000e2', 'because of testing') $$, 'PT403', 'admin_staff_only', 'only an Admin blocks staff');
 select throws_ok($$ select admin_user_block('00000000-0000-0000-0000-0000000000e3', 'because of testing') $$, 'PT422', 'admin_cannot_block_self', 'nobody blocks themselves');

@@ -259,7 +259,9 @@ function FamilyCard({ tree }: { tree: TreeRow }) {
   const open = () => router.push({ pathname: '/tree/[id]', params: { id: tree.id } });
   return (
     <>
-    <Pressable accessibilityRole="button" onPress={open} style={styles.familyCard}>
+    {/* The whole card opens the tree by touch or mouse. It is not marked as a button itself: it holds the
+        "Open tree" button, and a button inside a button is not allowed on the web. */}
+    <Pressable accessible={false} onPress={open} style={styles.familyCard}>
       <View style={styles.familyHead}>
         <View style={styles.topText}>
           <Text style={styles.eyebrow}>{t('home.yourFamily')}</Text>

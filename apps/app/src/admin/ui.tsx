@@ -1,18 +1,32 @@
 // Shared pieces of the admin panel: page frame, table, search, paging, dialogs. Web only, using the frozen tokens.
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
+import { usePathname, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import type { ComponentRef, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AccessibilityInfo, Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Spinner } from '@/components/Loaders';
 import { Card, Heading, Muted } from '@/components/ui';
 import { ApiFailure, api } from '@/lib/api';
-import { colors, fonts, minTapSize } from '@/theme/tokens';
+import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
 import { useAdminAccess } from './access';
 import { AdminNames } from './AdminNames';
+import { downloadSheet, sheetDay } from './sheet';
 import type { Page, Permission } from './types';
+
+// How far down each admin page was scrolled, so the browser's Back button returns to the same place and not to
+// the top. Kept only while the panel is open. A page opened from the menu or a link starts at the top as usual.
+const scrolledTo = new Map<string, number>();
+let cameBack = false;
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  window.addEventListener('popstate', () => {
+    cameBack = true;
+    setTimeout(() => {
+      cameBack = false;
+    }, 2000);
+  });
+}
 
 export const PAGE_SIZE = 25;
 
@@ -66,8 +80,37 @@ export function AdminPage({
   const { t } = useTranslation();
   const access = useAdminAccess();
   const router = useRouter();
+  const pathname = usePathname();
+  const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
+  const windowHeight = useRef(0);
+  // Where to return to, decided once when the page opens. The lists arrive a moment later, so the jump waits until
+  // the page is tall enough, and gives up after a few seconds rather than pulling someone back mid-read.
+  const returnTo = useRef(cameBack ? scrolledTo.get(pathname) ?? 0 : 0);
+  useEffect(() => {
+    const giveUp = setTimeout(() => {
+      returnTo.current = 0;
+    }, 5000);
+    return () => clearTimeout(giveUp);
+  }, []);
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.pageBody}>
+    <ScrollView
+      ref={scroller}
+      style={styles.page}
+      contentContainerStyle={styles.pageBody}
+      scrollEventThrottle={100}
+      onLayout={(event) => {
+        windowHeight.current = event.nativeEvent.layout.height;
+      }}
+      onScroll={(event) => {
+        if (returnTo.current === 0) scrolledTo.set(pathname, event.nativeEvent.contentOffset.y);
+      }}
+      onContentSizeChange={(_, height) => {
+        if (returnTo.current > 0 && height - windowHeight.current >= returnTo.current - 4) {
+          scroller.current?.scrollTo({ y: returnTo.current, animated: false });
+          returnTo.current = 0;
+        }
+      }}
+    >
       <View style={styles.pageInner}>
         <Heading>{title}</Heading>
         {subtitle ? <Muted>{subtitle}</Muted> : null}
@@ -184,10 +227,37 @@ export function QueryState<T>({
 }
 
 /** A paged list from the server. Going back to the first page happens by itself when a filter changes. */
+/**
+ * A filter, search or page number that survives the browser's Back button. It works like useState, but the value is
+ * remembered for this page while the panel is open, and comes back only when the page is reached by Back or Forward.
+ * A page opened from the menu or a dashboard card starts fresh: `asked` (from the address) or else `initial`.
+ */
+const kept = new Map<string, unknown>();
+export function useKept<T>(name: string, initial: T, asked?: T): [T, (value: T) => void] {
+  const key = `${usePathname()}|${name}`;
+  const [value, setValue] = useState<T>(() => (cameBack && kept.has(key) ? (kept.get(key) as T) : asked ?? initial));
+  // Recorded on every render, so the starting value is remembered too.
+  kept.set(key, value);
+  // The address changed while the page stayed open (another dashboard card, say): follow it.
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) first.current = false;
+    else if (asked !== undefined) setValue(asked);
+  }, [asked]);
+  return [value, setValue];
+}
+
 export function usePagedList<T>(key: string[], path: string, filters: Record<string, string | undefined> = {}) {
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useKept(`page:${key.join('/')}`, 0);
   const filterKey = JSON.stringify(filters);
-  useEffect(() => setPage(0), [filterKey]);
+  // A changed filter starts again at the first page. Not when the page first opens: Back returns to the page left.
+  const lastFilters = useRef(filterKey);
+  useEffect(() => {
+    if (lastFilters.current !== filterKey) {
+      lastFilters.current = filterKey;
+      setPage(0);
+    }
+  }, [filterKey, setPage]);
   const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(page * PAGE_SIZE) });
   for (const [name, value] of Object.entries(filters)) {
     if (value) params.set(name, value);
@@ -207,7 +277,33 @@ export interface Column<T> {
   render: (row: T) => ReactNode;
 }
 
-export function DataTable<T>({ columns, rows, rowKey }: { columns: Column<T>[]; rows: T[]; rowKey: (row: T) => string }) {
+/** One row of a table. A marked row is tinted and pops twice, so the eye lands on it after a jump from the dashboard. */
+function TableRow({ marked, children }: { marked: boolean; children: ReactNode }) {
+  const pop = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!marked) return undefined;
+    let left = false;
+    // People who asked their device for less motion get the tint alone.
+    void AccessibilityInfo.isReduceMotionEnabled().then((reduced) => {
+      if (reduced || left) return;
+      const up = () => Animated.timing(pop, { toValue: 1, duration: 170, useNativeDriver: false });
+      const down = () => Animated.timing(pop, { toValue: 0, duration: 170, useNativeDriver: false });
+      Animated.sequence([Animated.delay(350), up(), down(), up(), down()]).start();
+    });
+    return () => {
+      left = true;
+      pop.stopAnimation();
+    };
+  }, [marked, pop]);
+  if (!marked) return <View role="row" style={styles.row}>{children}</View>;
+  return (
+    <Animated.View role="row" style={[styles.row, styles.rowMarked, { transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [1, 1.012] }) }] }]}>
+      {children}
+    </Animated.View>
+  );
+}
+
+export function DataTable<T>({ columns, rows, rowKey, marked }: { columns: Column<T>[]; rows: T[]; rowKey: (row: T) => string; marked?: (row: T) => boolean }) {
   return (
     <ScrollView horizontal contentContainerStyle={styles.tableScroll}>
       <View role="table" style={styles.table}>
@@ -219,7 +315,7 @@ export function DataTable<T>({ columns, rows, rowKey }: { columns: Column<T>[]; 
           ))}
         </View>
         {rows.map((row) => (
-          <View key={rowKey(row)} role="row" style={styles.row}>
+          <TableRow key={rowKey(row)} marked={!!marked?.(row)}>
             {columns.map((column) => {
               const content = column.render(row);
               return (
@@ -232,10 +328,43 @@ export function DataTable<T>({ columns, rows, rowKey }: { columns: Column<T>[]; 
                 </View>
               );
             })}
-          </View>
+          </TableRow>
         ))}
       </View>
     </ScrollView>
+  );
+}
+
+/**
+ * "Download this list": the rows on the screen as an Excel file with the AYWO logo and colours.
+ * Only what the list already shows goes in, so the file never holds more than the person may see.
+ */
+export function DownloadList({ fileName, title, headers, rows }: { fileName: string; title: string; headers: string[]; rows: string[][] }) {
+  const { t, i18n } = useTranslation();
+  const [state, setState] = useState<'idle' | 'busy' | 'failed'>('idle');
+  const save = async () => {
+    setState('busy');
+    try {
+      await downloadSheet(`${fileName}-${sheetDay()}`, {
+        title,
+        details: t('admin.common.sheetDetails', { count: rows.length, when: formatDate(new Date().toISOString(), i18n.language) }),
+        footer: t('admin.common.sheetFooter'),
+        headers,
+        rows,
+      });
+      setState('idle');
+    } catch {
+      setState('failed');
+    }
+  };
+  return (
+    <View style={styles.download}>
+      <View style={styles.actions}>
+        <SecondaryButton label={state === 'busy' ? t('admin.common.downloading') : t('admin.common.downloadList')} disabled={state === 'busy'} onPress={() => void save()} />
+      </View>
+      {state === 'failed' ? <Message text={t('admin.common.downloadFailed')} alert /> : null}
+      <Text style={styles.cellMuted}>{t('admin.common.downloadListHelp', { count: rows.length })}</Text>
+    </View>
   );
 }
 
@@ -361,7 +490,7 @@ export function StatCard({ label, value, onPress }: { label: string; value: numb
     </Card>
   );
   return onPress ? (
-    <Pressable accessibilityRole="link" onPress={onPress} style={styles.stat}>
+    <Pressable accessibilityRole="link" onPress={onPress} style={({ hovered }: { hovered?: boolean }) => [styles.stat, styles.statLink, hovered && styles.statHover]}>
       {body}
     </Pressable>
   ) : (
@@ -656,6 +785,9 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.cardBorder, minHeight: minTapSize, alignItems: 'center' },
   headRow: { backgroundColor: colors.background },
+  // A row the dashboard pointed at: warm tint and an orange edge, above its neighbours while it pops.
+  rowMarked: { backgroundColor: colors.warmTint, borderLeftWidth: 4, borderLeftColor: colors.logoOrange, zIndex: 1 },
+  download: { gap: 8 },
   cell: { paddingHorizontal: 12, paddingVertical: 10, justifyContent: 'center', minWidth: 0 },
   headText: { color: colors.muted, fontFamily: fonts.bold, fontSize: 12 },
   cellText: { color: colors.text, fontFamily: fonts.medium, fontSize: 14 },
@@ -712,6 +844,9 @@ const styles = StyleSheet.create({
   pillTextAlert: { color: colors.alert },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   stat: { minWidth: 190, flexGrow: 1, flexBasis: 190 },
+  // A number card that opens its list: the hand pointer, and it lifts a little under the mouse.
+  statLink: { cursor: 'pointer', borderRadius: radius.card },
+  statHover: { transform: [{ translateY: -2 }], ...shadows.raised },
   statValue: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 30, letterSpacing: -0.6 },
   statLabel: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14 },
   backdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
