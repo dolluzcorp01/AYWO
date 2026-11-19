@@ -1069,15 +1069,17 @@
     "nav": {
       "features": "Features",
       "how": "How it works",
-      "questions": "Questions"
+      "questions": "Questions",
+      "price": "Price"
     },
     "store": {
       "android": "Google Play",
       "ios": "App Store",
-      "get": "Get it on",
-      "soon": "Coming soon to",
       "getLabel": "Get AYWO on {{store}}",
-      "soonLabel": "AYWO is coming soon to {{store}}"
+      "soonLabel": "AYWO is coming soon to {{store}}",
+      "soonTag": "Soon",
+      "androidGet": "Get it on",
+      "iosGet": "Download on the"
     },
     "hero": {
       "badge": "The family tree that speaks your language",
@@ -1186,6 +1188,24 @@
       "rights": "AYWO: Across Years, We're One."
     },
     "backHome": "AYWO, back to the front page",
-    "openApp": "Open AYWO"
+    "openApp": "Open AYWO",
+    "price": {
+      "eyebrow": "Price",
+      "title": "The tree is free. Plus brings everyone closer.",
+      "freeName": "Free",
+      "forAlways": "for always",
+      "free": {
+        "one": "Your family tree, with every view",
+        "two": "Relationship words in your language",
+        "three": "Family calendar and invites",
+        "four": "Memories and alerts",
+        "five": "SOS for you and your family"
+      },
+      "startFree": "Start free",
+      "plusName": "AYWO Plus",
+      "perYearOrMonth": "a year, or {{monthly}} a month",
+      "plusAll": "Everything in Free",
+      "cancel": "Cancel any time."
+    }
   }
 }

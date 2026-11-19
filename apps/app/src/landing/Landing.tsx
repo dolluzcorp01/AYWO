@@ -3,6 +3,8 @@
 // link is empty that app shows as "Coming soon". Everything here is public: no account, no family data.
 // The look: a deep indigo opening with a drawn phone, a wall of relationship words, and a feature explorer where
 // tapping a name changes the panel beside it.
+import { pricesFor } from '@aywo/shared';
+import { getCalendars } from 'expo-localization';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
@@ -19,7 +21,11 @@ import { LandingBar, LandingFooter, useFrontDoor, WebButton } from './shared';
 
 const STEPS = ['one', 'two', 'three'] as const;
 const BAR_HEIGHT = 64;
-type SectionId = 'features' | 'how' | 'questions';
+type SectionId = 'features' | 'how' | 'price' | 'questions';
+const FREE = ['one', 'two', 'three', 'four', 'five'] as const;
+const PLUS = ['pay.benefitCall', 'pay.benefitChat', 'pay.benefitReact', 'pay.oneFamily'] as const;
+// A visitor in India sees rupees, everyone else US dollars: the same two price lists the Plus page charges from.
+const INDIA_ZONES = new Set(['Asia/Kolkata', 'Asia/Calcutta']);
 // How each word on the wall looks, in turn: size and colours.
 const WORD_LOOKS = [
   { size: 30, box: colors.logoIndigo, ink: colors.white },
@@ -45,13 +51,17 @@ export function Landing() {
     tops.current[id] = e.nativeEvent.layout.y;
   };
   const go = (id: SectionId) => scroll.current?.scrollTo({ y: Math.max(0, (tops.current[id] ?? 0) - BAR_HEIGHT), animated: true });
-  const links = (['features', 'how', 'questions'] as const).map((id) => ({ label: t(`landing.nav.${id}`), onPress: () => go(id) }));
+  const links = (['features', 'how', 'price', 'questions'] as const).map((id) => ({ label: t(`landing.nav.${id}`), onPress: () => go(id) }));
   const pad = narrow ? styles.padNarrow : null;
   const [shown, setShown] = useState(0);
   const feature = FEATURES[shown];
   const ShownIcon = feature.icon;
   // "Across years," stays white and "we're one." turns gold.
   const [first, ...rest] = t('welcome.title').split('\n');
+  const india = INDIA_ZONES.has(getCalendars()[0]?.timeZone ?? '');
+  const prices = pricesFor(india ? 'razorpay' : 'stripe');
+  // Plus is bought inside the app: signed in goes straight to it, a visitor signs in first.
+  const openPlus = () => (door.signedIn ? router.push('/plus') : door.openWeb());
   const cloud = t('landing.words.cloud').split(',').map((word) => word.trim()).filter(Boolean);
 
   return (
@@ -172,6 +182,45 @@ export function Landing() {
                   <Text style={styles.body}>{t(`landing.how.${key}Text`)}</Text>
                 </View>
               ))}
+            </View>
+          </View>
+        </View>
+
+        {/* Price: what is free, and what Plus adds */}
+        <View onLayout={mark('price')} style={[styles.band, styles.bandTint, pad]}>
+          <View style={styles.inner}>
+            <View style={styles.titleCentre}>
+              <Text style={styles.eyebrow}>{t('landing.price.eyebrow')}</Text>
+              <Text accessibilityRole="header" style={[styles.h2, styles.textCentre]}>{t('landing.price.title')}</Text>
+            </View>
+            <View style={[styles.pair, !wide && styles.stack]}>
+              <View style={[styles.plan, !wide && styles.noFlex]}>
+                <Text style={styles.planName}>{t('landing.price.freeName')}</Text>
+                <View style={styles.planPriceRow}>
+                  <Text style={styles.planPrice}>{india ? '₹0' : '$0'}</Text>
+                  <Text style={styles.planPer}>{t('landing.price.forAlways')}</Text>
+                </View>
+                {FREE.map((key) => <Tick key={key} text={t(`landing.price.free.${key}`)} />)}
+                <View style={styles.grow} />
+                <Pressable accessibilityRole="link" onPress={door.openWeb} style={({ hovered }: { hovered?: boolean }) => [styles.planButton, styles.planButtonQuiet, hovered && styles.lift]}>
+                  <Text style={[styles.planButtonText, { color: colors.logoIndigo }]}>{t('landing.price.startFree')}</Text>
+                </Pressable>
+              </View>
+              <View style={[styles.plan, styles.planPlus, !wide && styles.noFlex]}>
+                <View style={styles.planTag}><Text style={styles.planTagText}>{t('pay.firstTwoFree')}</Text></View>
+                <Text style={styles.planName}>{t('landing.price.plusName')}</Text>
+                <View style={styles.planPriceRow}>
+                  <Text style={styles.planPrice}>{prices.yearly.display}</Text>
+                  <Text style={styles.planPer}>{t('landing.price.perYearOrMonth', { monthly: prices.monthly.display })}</Text>
+                </View>
+                <Tick text={t('landing.price.plusAll')} />
+                {PLUS.map((key) => <Tick key={key} text={t(key)} />)}
+                <View style={styles.grow} />
+                <Pressable accessibilityRole="link" onPress={openPlus} style={({ hovered }: { hovered?: boolean }) => [styles.planButton, styles.planButtonGold, hovered && styles.lift]}>
+                  <Text style={[styles.planButtonText, { color: colors.text }]}>{t('pay.startFree')}</Text>
+                </Pressable>
+                <Text style={styles.planNote}>{t('landing.price.cancel')}</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -338,6 +387,22 @@ const styles = StyleSheet.create({
   products: { flex: 1.2, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   product: { flexGrow: 1, flexBasis: 220, minWidth: 0, backgroundColor: colors.card, borderRadius: radius.card, borderWidth: 1, borderColor: colors.cardBorder, overflow: 'hidden', ...shadows.card },
   productWords: { padding: 16, gap: 4 },
+
+  grow: { flex: 1 },
+  lift: { opacity: 0.9, transform: [{ translateY: -1 }] },
+  plan: { flex: 1, minWidth: 0, backgroundColor: colors.card, borderRadius: radius.hero, borderWidth: 1, borderColor: colors.cardBorder, padding: 28, gap: 12, ...shadows.card },
+  planPlus: { borderWidth: 2, borderColor: colors.logoIndigo },
+  planTag: { position: 'absolute', top: -14, right: 24, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 16, backgroundColor: colors.logoYellow },
+  planTagText: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 13 },
+  planName: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 24, lineHeight: 31 },
+  planPriceRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 10, marginBottom: 6 },
+  planPrice: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 48, lineHeight: 56, letterSpacing: -1.6 },
+  planPer: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 16 },
+  planButton: { minHeight: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, marginTop: 10, cursor: 'pointer' },
+  planButtonQuiet: { borderWidth: 1.5, borderColor: colors.logoIndigo, backgroundColor: colors.tint },
+  planButtonGold: { backgroundColor: colors.logoYellow },
+  planButtonText: { fontFamily: fonts.bold, fontSize: 16 },
+  planNote: { color: colors.muted, fontFamily: fonts.medium, fontSize: 13, lineHeight: 19, textAlign: 'center' },
 
   questions: { alignSelf: 'center', width: '100%', maxWidth: 760, gap: 10 },
   allQuestions: { minHeight: minTapSize, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
