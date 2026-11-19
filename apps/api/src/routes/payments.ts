@@ -23,16 +23,30 @@ import { requireUser } from '../auth-tokens.ts';
 import { config, isProduction, isReviewerLogin } from '../config.ts';
 import { asCaller, asServer } from '../db.ts';
 import { ApiError } from '../errors.ts';
+import { signedReadUrls } from '../services/storage.ts';
 import { staffCall } from '../staff.ts';
 
 const stripe = new Stripe(config.STRIPE_SECRET_KEY);
 
-// One-time prices, in paise and cents. The server alone sets them. FOUNDER TO CONFIRM: the PRD has no prices yet.
+// One-time prices, in paise and cents. Staff set them in Admin > Offers > Shop prices (table shop_prices); the app
+// never sets a price. The numbers here are only what a product falls back to if its row were ever missing.
 const ORDER_PRICES = {
   tree_poster: { inr: 79900, usd: 1999, label: 'AYWO family tree poster' },
   family_book: { inr: 149900, usd: 3999, label: 'AYWO family book' },
   premium_invite: { inr: 4900, usd: 199, label: 'AYWO premium invite' },
 } as const;
+type OrderProduct = keyof typeof ORDER_PRICES;
+type OrderPrices = Record<OrderProduct, { inr: number; usd: number; label: string }>;
+
+/** Today's prices, read fresh each time so a change by staff reaches the very next order. */
+async function loadOrderPrices(): Promise<OrderPrices> {
+  const rows = await asServer(async (db) => (await db.query(`select product, inr_minor, usd_minor from shop_prices`)).rows as { product: string; inr_minor: number; usd_minor: number }[]);
+  const prices: OrderPrices = { tree_poster: { ...ORDER_PRICES.tree_poster }, family_book: { ...ORDER_PRICES.family_book }, premium_invite: { ...ORDER_PRICES.premium_invite } };
+  for (const row of rows) {
+    if (row.product in prices) Object.assign(prices[row.product as OrderProduct], { inr: Number(row.inr_minor), usd: Number(row.usd_minor) });
+  }
+  return prices;
+}
 const STORE_INVITE_PRODUCT = 'aywo_premium_invite';
 const STRIPE_SHIP_COUNTRIES = ['US', 'GB', 'CA', 'AU', 'NZ', 'SG', 'MY', 'AE', 'DE', 'FR', 'NL', 'IE'] as const;
 
@@ -57,6 +71,9 @@ const orderBody = z.object({
   quantity: z.number().int().min(1).max(10).default(1),
   shipping: shipping.optional(),
   coupon: z.string().trim().max(20).optional(),
+  // The price of one, as the buyer's screen showed it. If staff changed the price since, the order is refused and
+  // the screen shows the new price, so nobody pays an amount they did not see.
+  expected_unit_minor: z.number().int().positive().optional(),
 });
 
 interface Buyer {
@@ -271,14 +288,19 @@ export async function paymentRoutes(app: FastifyInstance): Promise<void> {
     const userId = await requireUser(req);
     const provider = providerForPhone((await loadBuyer(userId)).phone);
     const inr = provider === 'razorpay';
+    // The pictures staff chose in Admin > Offers, main one first, as short-lived links.
+    const pictures = await asServer(async (db) => (await db.query(`select product, path from shop_images order by product, position, created_at`)).rows as { product: string; path: string }[]);
+    const urls = await signedReadUrls(pictures.map((p) => p.path));
+    const prices = await loadOrderPrices();
     return {
       provider,
       currency: inr ? 'INR' : 'USD',
       needs_address: inr,
       products: (Object.keys(ORDER_PRICES) as (keyof typeof ORDER_PRICES)[]).map((key) => ({
         product: key,
-        amount_minor: inr ? ORDER_PRICES[key].inr : ORDER_PRICES[key].usd,
+        amount_minor: inr ? prices[key].inr : prices[key].usd,
         physical: key !== 'premium_invite',
+        images: pictures.filter((p) => p.product === key).flatMap((p) => urls.get(p.path) ?? []),
       })),
     };
   });
@@ -303,9 +325,11 @@ export async function paymentRoutes(app: FastifyInstance): Promise<void> {
     const provider = providerForPhone(buyer.phone);
     if (provider === 'razorpay' && physical && !body.shipping) throw new ApiError(422, 'shipping_required');
 
-    const price = ORDER_PRICES[body.product];
+    const price = (await loadOrderPrices())[body.product];
     const quantity = physical ? body.quantity : 1;
-    const fullAmount = (provider === 'razorpay' ? price.inr : price.usd) * quantity;
+    const unit = provider === 'razorpay' ? price.inr : price.usd;
+    if (body.expected_unit_minor !== undefined && body.expected_unit_minor !== unit) throw new ApiError(409, 'price_changed');
+    const fullAmount = unit * quantity;
     const currency = provider === 'razorpay' ? 'INR' : 'USD';
     const details = { quantity, design_id: body.design_id ?? null, shipping: body.shipping ?? null };
 

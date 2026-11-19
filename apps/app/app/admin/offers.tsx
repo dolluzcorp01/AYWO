@@ -9,12 +9,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { checkDays, dayToIso, isoToDay, todayInIndia } from '@/admin/dates';
 import type { DayProblem } from '@/admin/dates';
 import type { Announcement, Campaign, Coupon } from '@/admin/types';
+import { ShopPictures } from '@/admin/ShopPictures';
+import { ShopPrices } from '@/admin/ShopPrices';
 import { Actions, AdminPage, adminStyles, Checkbox, DataTable, DialogFrame, Facts, Field, FilterChips, formatDate, formatDay, FormDialog, Message, Missing, money, Pill, QueryState, SecondaryButton, useAction, useErrorText, useRefreshAfter, useKept } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
 import { api } from '@/lib/api';
 import { colors, fonts } from '@/theme/tokens';
 
-type Tab = 'coupons' | 'banners' | 'messages';
+type Tab = 'coupons' | 'banners' | 'messages' | 'pictures' | 'prices';
 const PRODUCTS = ['tree_poster', 'family_book', 'premium_invite'] as const;
 const CURRENCIES = ['INR', 'USD'] as const;
 /** The languages a banner or message can be aimed at from this page. */
@@ -65,9 +67,11 @@ export default function AdminOffers() {
           { value: 'coupons', label: t('admin.offers.coupons') },
           { value: 'banners', label: t('admin.offers.banners') },
           { value: 'messages', label: t('admin.offers.messages') },
+          { value: 'pictures', label: t('admin.shopPictures.tab') },
+          { value: 'prices', label: t('admin.shopPrices.tab') },
         ]}
       />
-      {tab === 'coupons' ? <Coupons /> : tab === 'banners' ? <Banners /> : <Messages />}
+      {tab === 'coupons' ? <Coupons /> : tab === 'banners' ? <Banners /> : tab === 'pictures' ? <ShopPictures /> : tab === 'prices' ? <ShopPrices /> : <Messages />}
     </AdminPage>
   );
 }

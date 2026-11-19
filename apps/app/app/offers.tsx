@@ -6,11 +6,12 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
-import { Card, SecondaryButton, SmallButton } from '@/components/ui';
+import { Card, SecondaryButton, SectionTitle, SmallButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { HomeOfferCards } from '@/ops/Announcements';
 import { formatMoney } from '@/ops/types';
-import type { Offer } from '@/ops/types';
+import { ProductCard, ProductRow } from '@/ops/ProductPicture';
+import type { Offer, Products } from '@/ops/types';
 import { Gate, Note, Page } from '@/social/parts';
 import { colors, fonts } from '@/theme/tokens';
 
@@ -19,6 +20,8 @@ export default function Offers() {
   const router = useRouter();
   const offers = useQuery({ queryKey: ['offers'], queryFn: () => api.rpc<Offer[]>('offers_list') });
   const [copied, setCopied] = useState<string | null>(null);
+  // Prices for the product cards. The cards still show without them.
+  const products = useQuery({ queryKey: ['shop-products'], queryFn: () => api.get<Products>('/pay/products') });
 
   return (
     <Page title={t('ops.offers.title')} subtitle={t('ops.offers.subtitle')}>
@@ -63,7 +66,22 @@ export default function Offers() {
         }
       </Gate>
       {/* The side menu opens this page for "Offers and shop": the shop and the orders must be one tap from here. */}
-      <SecondaryButton label={t('ops.me.shop')} onPress={() => router.push('/shop')} />
+      {/* What can be ordered, with pictures; tapping one opens the shop on that product. */}
+      <SectionTitle>{t('ops.me.shop')}</SectionTitle>
+      <ProductRow>
+        {(['tree_poster', 'family_book'] as const).map((p) => {
+          const price = products.data?.products.find((x) => x.product === p);
+          return (
+            <ProductCard
+              key={p}
+              product={p}
+              image={price?.images?.[0]}
+              price={price && products.data ? formatMoney(price.amount_minor, products.data.currency, i18n.language) : undefined}
+              onPress={() => router.push({ pathname: '/shop', params: { product: p } })}
+            />
+          );
+        })}
+      </ProductRow>
       <SecondaryButton label={t('ops.orders.title')} onPress={() => router.push('/orders')} />
     </Page>
   );

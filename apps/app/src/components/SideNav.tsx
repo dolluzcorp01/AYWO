@@ -82,6 +82,12 @@ export function SideNav() {
   const target = mainTree(trees.data)?.id;
   const go = (href: Href) => router.replace(href);
   const on = (prefix: string) => path === prefix || path.startsWith(`${prefix}/`);
+  const onAny = (prefixes: string[]) => prefixes.some(on);
+  // Every signed-in page lights the menu item it belongs to, so it is always clear where you are. A page reached
+  // from inside another (a person's comments, the FAQ from Help) lights the item it was reached from.
+  const inFamily = onAny(['/tree', '/person', '/person-details', '/add', '/comments', '/kin-word', '/word', '/search', '/share', '/export', '/guide', '/history', '/merge', '/outsider', '/import', '/call-family']);
+  const inMe = onAny(['/me', '/settings', '/profile', '/invite-friends', '/social/sos']);
+  const inHelp = onAny(['/help', '/faq', '/roles', '/terms', '/privacy', '/refunds', '/contact', '/takedown']);
   const waiting = needs.data?.filter((item) => item.needs_you).length;
   const tight = useWindowDimensions().height < SHORT;
   const me = useMe();
@@ -106,7 +112,7 @@ export function SideNav() {
         <Item
           tight={tight}
           label={t('tabs.family')}
-          active={on('/tree') || on('/person')}
+          active={inFamily}
           onPress={() => (target ? go({ pathname: '/tree/[id]', params: { id: target } }) : go('/start'))}
           icon={(c) => <FamilyIcon color={c} />}
         />
@@ -115,17 +121,17 @@ export function SideNav() {
         <Text style={[styles.group, tight && styles.groupTight]}>{t('nav.together')}</Text>
         <Item tight={tight} label={t('social.home.chat')} active={on('/social/chat')} badge={counts.data?.unread_chats} onPress={() => go('/social/chat')} icon={(c) => <ChatIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('social.home.memories')} active={on('/social/memories')} onPress={() => go('/social/memories')} icon={(c) => <PhotoIcon color={c} size={20} width={1.8} />} />
-        <Item tight={tight} label={t('social.home.invites')} active={on('/social/invites') || on('/social/pop')} badge={counts.data?.open_invites} onPress={() => go('/social/invites')} icon={(c) => <InviteIcon color={c} size={20} width={1.8} />} />
+        <Item tight={tight} label={t('social.home.invites')} active={on('/social/invites')} badge={counts.data?.open_invites} onPress={() => go('/social/invites')} icon={(c) => <InviteIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('calendar.short')} active={on('/calendar')} onPress={() => go('/calendar')} icon={(c) => <CalendarIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('social.home.alerts')} active={on('/social/alerts')} badge={counts.data?.unseen_alerts} onPress={() => go('/social/alerts')} icon={(c) => <BellIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('social.home.groups')} active={on('/social/groups')} onPress={() => go('/social/groups')} icon={(c) => <FriendsIcon color={c} size={20} width={1.8} />} />
-        <Item tight={tight} label={t('social.home.pop')} active={false} onPress={() => router.push('/social/pop/new')} icon={(c) => <PartyIcon color={c} size={20} width={1.8} />} />
+        <Item tight={tight} label={t('social.home.pop')} active={on('/social/pop')} onPress={() => router.push('/social/pop/new')} icon={(c) => <PartyIcon color={c} size={20} width={1.8} />} />
 
         <Text style={[styles.group, tight && styles.groupTight]}>{t('nav.you')}</Text>
-        <Item tight={tight} label={t('tabs.me')} active={on('/me') || on('/settings')} onPress={() => go('/me')} icon={(c) => <MeIcon color={c} />} />
+        <Item tight={tight} label={t('tabs.me')} active={inMe} onPress={() => go('/me')} icon={(c) => <MeIcon color={c} />} />
         <Item tight={tight} label={t('me.plus')} active={on('/plus') || on('/family-plan')} onPress={() => go(me.data?.plus ? '/family-plan' : '/plus')} icon={(c) => <PlusIcon color={c} size={20} width={1.8} />} />
         <Item tight={tight} label={t('ops.nav.offers')} active={on('/offers') || on('/shop') || on('/orders')} onPress={() => go('/offers')} icon={(c) => <PartyIcon color={c} size={20} width={1.8} />} />
-        <Item tight={tight} label={t('ops.nav.help')} active={on('/help')} onPress={() => go('/help')} icon={(c) => <ChatIcon color={c} size={20} width={1.8} />} />
+        <Item tight={tight} label={t('ops.nav.help')} active={inHelp} onPress={() => go('/help')} icon={(c) => <ChatIcon color={c} size={20} width={1.8} />} />
         {/* Staff only: the way into the admin panel (it used to need typing /admin). */}
         {me.data?.admin_role ? (
           <Item tight={tight} label={t('nav.adminPanel')} active={on('/admin')} onPress={() => go('/admin')} icon={(c) => <ShieldIcon color={c} size={20} width={1.8} />} />

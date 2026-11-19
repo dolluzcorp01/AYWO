@@ -529,7 +529,11 @@
         "announcement_deleted": "Deleted a banner",
         "report_reopened": "Reopened an abuse report",
         "takedown_reopened": "Reopened a takedown request",
-        "kin_term_corrected": "Corrected a word's spelling"
+        "kin_term_corrected": "Corrected a word's spelling",
+        "shop_image_added": "Added a shop picture",
+        "shop_image_removed": "Removed a shop picture",
+        "shop_image_made_main": "Chose the main shop picture",
+        "shop_price_changed": "Changed a shop price"
       },
       "from": "From this day",
       "to": "Up to this day",
@@ -1224,6 +1228,54 @@
       "serverErrorTotal_other": "{{count}} server errors in this period.",
       "route": "Route",
       "appCrashes": "Errors in the app"
+    },
+    "shopPictures": {
+      "tab": "Shop pictures",
+      "help": "The photos people see in the shop for each product. The first one is the main picture on the product card. Up to {{max}} for each product. JPG, PNG or WebP, at most 15 MB; a wide photo (about 3 by 2) fits best.",
+      "add": "Add a picture",
+      "full": "This product already has {{max}} pictures. Remove one to add another.",
+      "none": "No photo yet. The shop shows this drawing until you add one.",
+      "main": "Main picture",
+      "makeMain": "Make main",
+      "remove": "Remove",
+      "addedBy": "Added by {{name}}, {{when}}",
+      "removeTitle": "Remove this picture?",
+      "removeText": "It will no longer show in the shop for {{product}}. To change a picture, remove it and add the new one.",
+      "added": "Picture added to {{product}}. The shop shows it now.",
+      "removed": "Picture removed.",
+      "madeMain": "This is now the main picture.",
+      "wrongType": "Choose a JPG, PNG or WebP picture.",
+      "tooBig": "That picture is larger than 15 MB. Choose a smaller one."
+    },
+    "shopPrices": {
+      "tab": "Shop prices",
+      "help": "What each product costs. Buyers with an Indian phone number pay in rupees; everyone else pays in US dollars. A new price applies to orders started after you save; orders already made keep their price.",
+      "viewOnly": "You can see the prices. Changing them needs the Payments permission.",
+      "product": "Product",
+      "india": "Price in India",
+      "abroad": "Price elsewhere",
+      "lastChanged": "Last changed",
+      "actions": "Actions",
+      "changedBy": "{{name}}, {{when}}",
+      "never": "Never changed",
+      "change": "Change price",
+      "dialogTitle": "Change the price of {{product}}",
+      "dialogText": "Type the price of one. Coupons take their discount off this price.",
+      "indiaField": "Price in India, in rupees (₹)",
+      "abroadField": "Price elsewhere, in US dollars ($)",
+      "badInr": "Type an amount between ₹1 and ₹1,00,000, such as 799 or 799.50.",
+      "badUsd": "Type an amount between $0.50 and $2,000, such as 19.99.",
+      "preview": "What buyers will pay",
+      "previewIndia": "In India: {{before}} becomes {{now}}",
+      "previewAbroad": "Elsewhere: {{before}} becomes {{now}}",
+      "bigJump": "This is less than half or more than double the price now. Check the numbers before you save.",
+      "inviteNote": "This price is for the website. Inside the iPhone and Android apps the premium invite is sold by the App Store and Google Play at the price set in their consoles.",
+      "reason": "Reason (recorded in the audit log)",
+      "needPrices": "Still needed: both prices, as amounts of money.",
+      "needChange": "Still needed: a price different from the one now.",
+      "needReason": "Still needed: a reason, at least 5 characters.",
+      "save": "Save the new price",
+      "saved": "New price saved for {{product}}. The shop shows it now."
     }
   },
   "errors": {
@@ -1267,6 +1319,7 @@
     "coupon_used_no_delete": "This code was used on an order, so it can't be deleted. Switch it off instead.",
     "admin_decision_final": "This decision removed something, so it is final and can't be reopened.",
     "admin_already_open": "This is already open.",
-    "kin_term_exists": "That spelling is already in the dictionary for this relationship and language."
+    "kin_term_exists": "That spelling is already in the dictionary for this relationship and language.",
+    "admin_nothing_changed": "Nothing was changed. Type a different price first."
   }
 }

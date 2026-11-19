@@ -41,7 +41,8 @@ function near(a: string, b: string, limit: number): boolean {
 // How well one typed word fits one word of the text: 3 the same, 2 the start of it, 1 nearly the same, 0 no fit.
 function fit(typed: string, word: string): number {
   if (typed === word) return 3;
-  if (typed.length >= 2 && word.startsWith(typed)) return 2;
+  // Even one letter counts as the start of a word, so the list narrows from the first key pressed.
+  if (word.startsWith(typed)) return 2;
   // Short words are not guessed at: "pay" must not match "day".
   const limit = typed.length >= 8 ? 2 : typed.length >= 4 ? 1 : 0;
   if (limit && near(typed, word, limit)) return 1;

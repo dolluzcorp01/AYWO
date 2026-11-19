@@ -4,15 +4,16 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { PhoneField } from '@/components/PhoneField';
 import { Text } from '@/components/Text';
 import { Card, Field, Label, Pills, PrimaryButton, SectionTitle, SmallButton } from '@/components/ui';
 import { toE164 } from '@/lib/phone';
-import { api, deviceStore } from '@/lib/api';
+import { ApiFailure, api, deviceStore } from '@/lib/api';
 import { mainTree, useMe, useTrees } from '@/lib/account';
 import { startOrder } from '@/pay/order';
 import type { ShippingAddress } from '@/pay/order';
+import { ProductCard, ProductRow } from '@/ops/ProductPicture';
 import { formatMoney } from '@/ops/types';
 import type { CouponQuote, Product, Products } from '@/ops/types';
 import { ActionError, Gate, Note, Page } from '@/social/parts';
@@ -101,6 +102,7 @@ export default function Shop() {
           quantity: count,
           shipping: products.data?.needs_address ? { ...address, line2: address.line2 || undefined } : undefined,
           coupon: quote ? quote.code : undefined,
+          expected_unit_minor: price?.amount_minor,
         },
         { description: t(`ops.shop.products.${product}`), methodLabel: t('ops.shop.pay') },
         { onOrder: (id) => { orderId.current = id; } },
@@ -111,6 +113,13 @@ export default function Shop() {
         void deviceStore
           .set(LAST_ADDRESS, JSON.stringify({ line1: address.line1, line2: address.line2, city: address.city, state: address.state, postal_code: address.postal_code }))
           .catch(() => undefined);
+      }
+    },
+    // Staff changed the price while this page was open: fetch the new one, so the total on screen is the real one.
+    onError: (error) => {
+      if (error instanceof ApiFailure && error.code === 'price_changed') {
+        setQuote(null);
+        void products.refetch();
       }
     },
     onSuccess: (result) => {
@@ -163,15 +172,34 @@ export default function Shop() {
       <Gate query={products}>
         {(data) => (
           <>
-            <Pills
-              options={data.products.filter((p) => p.physical).map((p) => ({ value: p.product, label: `${t(`ops.shop.products.${p.product}`)} · ${formatMoney(p.amount_minor, data.currency, i18n.language)}` }))}
-              value={product}
-              onChange={(p) => {
-                setProduct(p);
-                setQuote(null);
-              }}
-            />
-            <Note>{t(`ops.shop.about.${product}`)}</Note>
+            {/* Each thing on sale as a card with its picture, so it is clear what is being bought. */}
+            <View accessibilityRole="radiogroup">
+              <ProductRow>
+                {data.products
+                  .filter((p) => p.physical)
+                  .map((p) => (
+                    <ProductCard
+                      key={p.product}
+                      product={p.product}
+                      image={p.images?.[0]}
+                      price={formatMoney(p.amount_minor, data.currency, i18n.language)}
+                      on={product === p.product}
+                      onPress={() => {
+                        setProduct(p.product);
+                        setQuote(null);
+                      }}
+                    />
+                  ))}
+              </ProductRow>
+            </View>
+            {/* More pictures of the chosen product, when staff added more than one. */}
+            {(price?.images?.length ?? 0) > 1 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery}>
+                {(price?.images ?? []).slice(1).map((uri) => (
+                  <Image key={uri} source={{ uri }} resizeMode="cover" accessibilityLabel={t(`ops.shop.products.${product}`)} style={styles.galleryPicture} />
+                ))}
+              </ScrollView>
+            ) : null}
 
             {(trees.data ?? []).length > 1 ? (
               <>
@@ -251,6 +279,8 @@ export default function Shop() {
 
 const styles = StyleSheet.create({
   block: { gap: 10 },
+  gallery: { gap: 10 },
+  galleryPicture: { width: 150, height: 110, borderRadius: 14, backgroundColor: colors.tint },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   count: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 20, minWidth: 28, textAlign: 'center' },
   couponRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },

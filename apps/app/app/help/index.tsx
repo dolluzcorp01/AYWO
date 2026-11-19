@@ -44,6 +44,8 @@ export default function HelpCentre() {
         <TextButton label={t('roles.title')} onPress={() => router.push('/roles')} />
         <TextButton label={t('ops.help.sos')} onPress={() => router.push('/social/sos')} />
         <TextButton label={t('ops.help.privacy')} onPress={() => router.push('/settings/privacy')} />
+        {/* The removal request was only linked from the page before sign-in, so nobody signed in could find it. */}
+        <TextButton label={t('takedown.askLink')} onPress={() => router.push('/takedown')} />
       </Card>
 
       {writing ? (

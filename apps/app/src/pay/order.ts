@@ -36,6 +36,8 @@ export interface OrderRequest {
   shipping?: ShippingAddress;
   /** A coupon code from Offers. The server checks it and sets the price. */
   coupon?: string;
+  /** The price of one as this screen showed it. The server refuses the order if the price has changed since. */
+  expected_unit_minor?: number;
 }
 
 interface OrderReply {

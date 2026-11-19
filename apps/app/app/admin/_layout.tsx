@@ -222,7 +222,9 @@ function Frame({
   const me = useMe();
   const [signingOut, setSigningOut] = useState(false);
   const items = MENU.filter((item) => can(item.gates));
-  const isOn = (item: (typeof MENU)[number]) => (item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(String(item.href)));
+  // One account's page (/admin/user/...) is reached from Users, so it lights Users. Before, it lit nothing.
+  const isOn = (item: (typeof MENU)[number]) =>
+    item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(String(item.href)) || (item.key === 'users' && pathname.startsWith('/admin/user/'));
   const roleLabel = teamRole ?? t(`admin.roles.${role}`);
 
   // Every group starts open when the screen is tall enough to show them all; on a shorter screen only the group of

@@ -72,17 +72,23 @@ export default function Faq() {
     <Screen>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <TopBar title={t('legal.faq.title')} subtitle={t('legal.faq.subtitle')} onBack={close} />
-        <Field
-          value={search}
-          onChangeText={setSearch}
-          placeholder={t('legal.faq.searchHint')}
-          accessibilityLabel={t('legal.faq.search')}
-          autoCorrect={false}
-          autoCapitalize="none"
-          returnKeyType="search"
-          maxLength={80}
-          accessory={searching ? <TextButton label={t('legal.faq.clear')} onPress={() => setSearch('')} /> : undefined}
-        />
+        {/* Clear sits beside the box, not inside it: putting it inside rebuilt the box on the first letter typed,
+            which took the cursor out of it. */}
+        <View style={styles.searchRow}>
+          <View style={styles.searchBox}>
+            <Field
+              value={search}
+              onChangeText={setSearch}
+              placeholder={t('legal.faq.searchHint')}
+              accessibilityLabel={t('legal.faq.search')}
+              autoCorrect={false}
+              autoCapitalize="none"
+              returnKeyType="search"
+              maxLength={80}
+            />
+          </View>
+          {searching ? <TextButton label={t('legal.faq.clear')} onPress={() => setSearch('')} /> : null}
+        </View>
         {!searching ? (
           GROUPS.map((group) => (
             <View key={group.id} style={styles.group}>
@@ -120,6 +126,8 @@ export default function Faq() {
 const styles = StyleSheet.create({
   scroll: { gap: 16, paddingBottom: 24 },
   group: { gap: 8 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  searchBox: { flex: 1, minWidth: 0 },
   none: { gap: 12, alignItems: 'center', paddingVertical: 24 },
   noneText: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 15, lineHeight: 22, textAlign: 'center' },
   noneButtons: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 },

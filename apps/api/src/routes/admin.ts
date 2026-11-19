@@ -1,6 +1,7 @@
 // AYWO staff console API (LLD S-19 to S-21, L5 no. 20, operations release), and the public takedown request.
 // Every /admin route runs as the caller, checks the second sign-in step and the permission here, and the database
 // function checks the permission again.
+import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { z } from 'zod';
@@ -8,6 +9,7 @@ import { forgetBlockMemory, optionalUser, requireUser } from '../auth-tokens.ts'
 import { isReviewerLogin } from '../config.ts';
 import { asCaller, asServer } from '../db.ts';
 import { ApiError } from '../errors.ts';
+import { signedReadUrls, signedUploadUrl } from '../services/storage.ts';
 import { GRANTABLE, matchStep, newTotpSecret, openSecret, sealSecret, signStaffProof, staffCall, twoStepRequired } from '../staff.ts';
 
 const paging = {
@@ -353,6 +355,38 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   });
   // Only a coupon nobody paid with; the database refuses the rest.
   app.delete('/admin/coupons/:id', (req) => staffCall(req, ['marketing'], 'admin_coupon_delete', [idParam.parse(req.params).id]));
+
+  // ----- Offers: the pictures of what the shop sells -----
+  // Staff see each picture through a signed link, the same way the shop shows it.
+  app.get('/admin/shop-images', async (req) => {
+    const rows = (await staffCall(req, ['marketing'], 'admin_shop_images_list')) as { path: string }[];
+    const urls = await signedReadUrls(rows.map((r) => r.path));
+    return rows.map((r) => ({ ...r, url: urls.get(r.path) ?? null }));
+  });
+  // A short-lived link to upload one picture straight to storage. Only staff who may run offers get one.
+  app.post('/admin/shop-images/presign', async (req) => {
+    const body = z.object({ content_type: z.enum(['image/jpeg', 'image/png', 'image/webp']), extension: z.enum(['jpg', 'jpeg', 'png', 'webp']) }).parse(req.body);
+    await staffCall(req, ['marketing'], 'admin_shop_images_list');
+    const path = `shop/${randomUUID()}.${body.extension}`;
+    // Listed so the size check removes anything bigger than a photo may be (jobs/admin.ts).
+    const staffId = await requireUser(req);
+    await asServer((db) => db.query(`insert into upload_log (path, profile_id, kind) values ($1, $2, 'photos')`, [path, staffId]));
+    return { upload_url: await signedUploadUrl(path, body.content_type), path };
+  });
+  app.post('/admin/shop-images', (req) => {
+    const body = z.object({ product: z.enum(['tree_poster', 'family_book']), path: z.string().max(120) }).parse(req.body);
+    return staffCall(req, ['marketing'], 'admin_shop_image_add', [body.product, body.path]);
+  });
+  app.post('/admin/shop-images/:id/first', (req) => staffCall(req, ['marketing'], 'admin_shop_image_first', [idParam.parse(req.params).id]));
+  app.delete('/admin/shop-images/:id', (req) => staffCall(req, ['marketing'], 'admin_shop_image_remove', [idParam.parse(req.params).id]));
+
+  // ----- Offers: the prices of what the shop sells -----
+  app.get('/admin/shop-prices', (req) => staffCall(req, ['payments', 'marketing'], 'admin_shop_prices_list'));
+  app.patch('/admin/shop-prices/:product', (req) => {
+    const { product } = z.object({ product: z.enum(['tree_poster', 'family_book', 'premium_invite']) }).parse(req.params);
+    const body = z.object({ inr_minor: z.number().int(), usd_minor: z.number().int(), reason: z.string().max(500) }).parse(req.body);
+    return staffCall(req, ['payments'], 'admin_shop_price_set', [product, body.inr_minor, body.usd_minor, body.reason]);
+  });
 
   app.get('/admin/announcements', (req) => {
     const q = z.object({ view: z.enum(['active', 'ended', 'all']).default('active') }).parse(req.query);

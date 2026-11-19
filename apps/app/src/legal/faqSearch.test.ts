@@ -58,6 +58,7 @@ describe('FAQ search', () => {
     expect(first(english, 'delivry')).toBe('orders.delivery');
     expect(first(english, 'refu')).toBe('plus.refund');
     expect(first(english, 'REFUND')).toBe('plus.refund');
+    expect(searchFaq(english, 'f').length).toBeGreaterThan(0);
   });
 
   it('gives nothing for nonsense or an empty box', () => {

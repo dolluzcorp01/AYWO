@@ -46,7 +46,8 @@ export interface Products {
   provider: 'razorpay' | 'stripe';
   currency: 'INR' | 'USD';
   needs_address: boolean;
-  products: { product: Product; amount_minor: number; physical: boolean }[];
+  /** images: the pictures staff chose for this product in the admin panel, main one first. Empty: the app's own drawing is shown. */
+  products: { product: Product; amount_minor: number; physical: boolean; images?: string[] }[];
 }
 
 export interface CouponQuote {

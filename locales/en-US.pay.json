@@ -152,6 +152,7 @@
     "not_found": "We could not find that.",
     "not_signed_in": "Please sign in again.",
     "bad_signature": "This request could not be verified.",
-    "webhook_not_configured": "Payments are not set up yet."
+    "webhook_not_configured": "Payments are not set up yet.",
+    "price_changed": "The price changed just now. Check the new total below and pay again."
   }
 }

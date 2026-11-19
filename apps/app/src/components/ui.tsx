@@ -151,25 +151,20 @@ export function ErrorText({ children }: { children: ReactNode }) {
 /** A labelled text box. `invalid` gives it a red border, so the box with the problem is easy to find. */
 /** accessory: something beside the box, such as the mic button. */
 export function Field({ label, style, invalid, accessory, ...input }: { label?: string; invalid?: boolean; accessory?: ReactNode } & ComponentProps<typeof TextInput>) {
-  const box = (
-    <TextInput
-      accessibilityLabel={label}
-      placeholderTextColor={colors.muted}
-      {...input}
-      style={[styles.input, accessory ? styles.inputBeside : null, style, invalid && styles.inputInvalid]}
-    />
-  );
+  // The box always sits in the same row, with or without something beside it. When the row was only added once an
+  // accessory appeared (a Clear button after the first letter, say), the box was built again and lost the cursor.
   return (
     <View style={styles.field}>
       {label ? <Label>{label}</Label> : null}
-      {accessory ? (
-        <View style={[styles.fieldRow, input.multiline && styles.fieldRowTop]}>
-          {box}
-          {accessory}
-        </View>
-      ) : (
-        box
-      )}
+      <View style={[styles.fieldRow, input.multiline && styles.fieldRowTop]}>
+        <TextInput
+          accessibilityLabel={label}
+          placeholderTextColor={colors.muted}
+          {...input}
+          style={[styles.input, styles.inputBeside, style, invalid && styles.inputInvalid]}
+        />
+        {accessory}
+      </View>
     </View>
   );
 }
