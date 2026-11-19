@@ -327,6 +327,7 @@
     "family_plan_full": "இந்தத் திட்டம் நிரம்பிவிட்டது. உங்களையும் சேர்த்து 6 பேர் மட்டுமே.",
     "bad_signature": "இந்தக் கோரிக்கையைச் சரிபார்க்க முடியவில்லை.",
     "webhook_not_configured": "கட்டணங்கள் இன்னும் அமைக்கப்படவில்லை.",
+    "price_changed": "விலை இப்போதுதான் மாறியது. கீழே புதிய மொத்தத்தைப் பார்த்து மீண்டும் செலுத்துங்கள்.",
     "admin_not_allowed": "இதைச் செய்ய உங்களுக்கு அனுமதி இல்லை.",
     "admin_staff_only": "பணியாளர்கள் மீது இதை AYWO நிர்வாகி மட்டுமே செய்ய முடியும்.",
     "admin_cannot_block_self": "உங்கள் சொந்தக் கணக்கைத் தடுக்க முடியாது.",
@@ -363,6 +364,7 @@
     "admin_decision_final": "இந்த முடிவால் ஒன்று நீக்கப்பட்டது; எனவே இது இறுதியானது, மீண்டும் திறக்க முடியாது.",
     "admin_already_open": "இது ஏற்கெனவே திறந்த நிலையில் உள்ளது.",
     "kin_term_exists": "இந்த உறவுக்கும் மொழிக்கும் அந்த எழுத்துவடிவம் ஏற்கெனவே அகராதியில் உள்ளது.",
+    "admin_nothing_changed": "எதுவும் மாற்றப்படவில்லை. முதலில் வேறு விலையைத் தட்டச்சு செய்யுங்கள்.",
     "plus_required": "இதற்கு AYWO Plus தேவை.",
     "date_required": "தேதியையும் நேரத்தையும் தேர்ந்தெடுக்கவும்.",
     "date_in_future": "இந்தத் தேதி இன்னும் வரவில்லை. நினைவுக்கு கடந்த தேதி தேவை.",
@@ -1077,7 +1079,13 @@
         "languageQ": "என் மொழியில் பயன்படுத்த முடியுமா?",
         "languageA": "முதல் திரையில் மொழியைத் தேர்ந்தெடுங்கள், உங்கள் சுயவிவரத்தில் எப்போதும் மாற்றலாம். உறவுச் சொற்களும் உங்கள் மொழியிலேயே வரும்.",
         "importingQ": "என்னிடம் ஏற்கெனவே குடும்ப மரம் உள்ளது. கொண்டு வர முடியுமா?",
-        "importingA": "ஆம். Lighten கோப்பையோ, பெரும்பாலான குடும்ப மர நிரல்கள் சேமிக்கும் GEDCOM கோப்பையோ இறக்குமதி செய்யலாம்."
+        "importingA": "ஆம். Lighten கோப்பையோ, பெரும்பாலான குடும்ப மர நிரல்கள் சேமிக்கும் GEDCOM கோப்பையோ இறக்குமதி செய்யலாம்.",
+        "whatK": "பற்றி செயலி ஆப் குடும்பம் உறவினர் what is aywo about meaning app purpose family tree relatives",
+        "freeK": "கட்டணம் பணம் விலை செலவு is aywo free cost charge money price paid payment fee",
+        "signInK": "உள்நுழை லாகின் ஓடிபி குறியீடு கடவுச்சொல் பதிவு எண் எஸ்எம்எஸ் how do i sign in login log in otp code password register sign up signup account phone number sms",
+        "devicesK": "ஆண்ட்ராய்டு ஐபோன் கைபேசி மொபைல் கணினி உலாவி நிறுவு where can i use it android iphone ios phone mobile web browser computer laptop install download app play store",
+        "languageK": "தமிழ் இந்தி ஆங்கிலம் மொழிபெயர்ப்பு மொழி மாற்று can i use it in my language tamil hindi english telugu malayalam kannada translate change language",
+        "importingK": "இறக்குமதி கோப்பு பதிவேற்று மாற்று i already have a family tree can i bring it in import gedcom upload file ancestry existing move transfer"
       },
       "tree": {
         "title": "உங்கள் குடும்ப மரம்",
@@ -1092,7 +1100,13 @@
         "outsiderQ": "பகிர்ந்த இணைப்பில் ஒருவர் எதைப் பார்ப்பார்?",
         "outsiderA": "பெயர்களும் படங்களும் மட்டுமே. தொடர்பு விவரங்கள் ஒருபோதும் காட்டப்படாது.",
         "downloadQ": "என் மரத்தைப் பதிவிறக்க முடியுமா?",
-        "downloadA": "ஆம், எப்போது வேண்டுமானாலும், அந்த மரத்தில் உங்கள் பொறுப்பைப் பொறுத்துப் PDF அல்லது GEDCOM கோப்பாக."
+        "downloadA": "ஆம், எப்போது வேண்டுமானாலும், அந்த மரத்தில் உங்கள் பொறுப்பைப் பொறுத்துப் PDF அல்லது GEDCOM கோப்பாக.",
+        "whoSeesK": "தனியுரிமை பொது பகிர் அணுகல் உறுப்பினர் பார்வை who can see my family tree privacy private public visible view share access members",
+        "rolesK": "பங்கு அனுமதி உரிமை நிர்வாகி உரிமையாளர் திருத்து what do creator co creator editor commenter and viewer mean role permission rights admin owner access edit change who can",
+        "noAccountK": "உறவினர் நபர் அழைப்பு கணக்கு இல்லாமல் இறந்தவர் can i add someone who isn t on aywo add relative person member invite without account dead late passed away child",
+        "wrongK": "பிழை தவறு சரி செய் திருத்து பெயர் உறவு புகார் something in the tree is wrong what can i do mistake error incorrect fix correct edit change name spelling relation duplicate report",
+        "outsiderK": "இணைப்பு லிங்க் பகிர் அழைப்பு வாட்ஸ்அப் வெளியாள் what does someone see from a shared link link share invite public stranger guest whatsapp",
+        "downloadK": "ஏற்றுமதி பிடிஎஃப் அச்சு படம் சேமி நகல் புத்தகம் can i download my tree export pdf print poster picture image save copy backup book"
       },
       "safety": {
         "title": "தனியுரிமையும் பாதுகாப்பும்",
@@ -1105,7 +1119,12 @@
         "sellQ": "என் தரவை விற்கிறீர்களா, விளம்பரம் காட்டுகிறீர்களா?",
         "sellA": "இல்லை. உங்கள் தரவை விற்பதில்லை, விளம்பரம் காட்டுவதில்லை. விவரங்களுக்குத் தனியுரிமைக் கொள்கையைப் பாருங்கள்.",
         "childrenQ": "குழந்தைகள் மரத்தில் இருக்கலாமா?",
-        "childrenA": "குடும்பங்கள் குழந்தைகளை மரத்தில் பதிவு செய்யலாம். 18 வயதுக்குக் குறைந்தவர்கள் AYWO பயன்படுத்தப் பெற்றோர் அல்லது பாதுகாவலரின் ஒப்புதல் தேவை. குழந்தையின் விவரங்களை மாற்றவோ நீக்கவோ அவர்கள் எங்களிடம் கேட்கலாம்."
+        "childrenA": "குடும்பங்கள் குழந்தைகளை மரத்தில் பதிவு செய்யலாம். 18 வயதுக்குக் குறைந்தவர்கள் AYWO பயன்படுத்தப் பெற்றோர் அல்லது பாதுகாவலரின் ஒப்புதல் தேவை. குழந்தையின் விவரங்களை மாற்றவோ நீக்கவோ அவர்கள் எங்களிடம் கேட்கலாம்.",
+        "numberK": "தொலைபேசி தொடர்பு தனியுரிமை மறை மின்னஞ்சல் will people see my mobile number phone contact privacy hide hidden show visible whatsapp email",
+        "removeK": "அகற்று நீக்கு பெயர் விவரம் அனுமதி புகார் i was added to a tree without being asked can i be removed take down takedown delete my name details permission consent complaint",
+        "sosK": "அவசரம் உதவி ஆபத்து எச்சரிக்கை இருப்பிடம் விபத்து how does sos work emergency help danger alert urgent location police accident",
+        "sellK": "தனியுரிமை விளம்பரம் பாதுகாப்பு தகவல் பகிர் do you sell my data or show ads privacy advertisement ads advertising share third party safe secure security information",
+        "childrenK": "குழந்தை சிறுவர் வயது மகன் மகள் can children be in the tree child kid kids minor age baby son daughter under 18"
       },
       "plus": {
         "title": "AYWO Plus மற்றும் கட்டணங்கள்",
@@ -1124,7 +1143,15 @@
         "refundQ": "பணம் திரும்பக் கிடைக்குமா?",
         "refundA": "ஆம், எங்கள் கொள்கையில் சொல்லப்பட்ட சூழல்களில். Apple அல்லது Google வழியாகச் செலுத்தியதை அவர்களே திரும்பத் தருவார்கள்.",
         "failedQ": "பணம் செலுத்தினேன், ஆனால் Plus தெரியவில்லை. மீண்டும் செலுத்த வேண்டுமா?",
-        "failedA": "வேண்டாம். உறுதியாகச் சில நிமிடங்கள் ஆகலாம். அதன் பிறகும் Plus வராவிட்டால், பணம் செலுத்திய விவரங்களுடன் {{email}} முகவரிக்கு எழுதுங்கள்."
+        "failedA": "வேண்டாம். உறுதியாகச் சில நிமிடங்கள் ஆகலாம். அதன் பிறகும் Plus வராவிட்டால், பணம் செலுத்திய விவரங்களுடன் {{email}} முகவரிக்கு எழுதுங்கள்.",
+        "includesK": "பிரீமியம் சந்தா வசதிகள் பயன்கள் மேம்படுத்து what does aywo plus add premium subscription features benefits upgrade chat reactions",
+        "priceK": "விலை கட்டணம் பணம் ரூபாய் மாதம் வருடம் சந்தா தொகை how much does it cost price fee charge money rupees monthly yearly subscription amount rate",
+        "trialK": "சோதனை முயற்சி இலவச நாட்கள் is there a free trial try test demo free days",
+        "familyK": "உறுப்பினர்கள் பகிர் முழு குடும்பம் சந்தா how many people does one plan cover members share sharing whole family one subscription everyone",
+        "payK": "கட்டணம் யுபிஐ அட்டை கார்டு ஜிபே நெட்பேங்கிங் how can i pay payment upi card gpay phonepe paytm netbanking razorpay stripe credit debit",
+        "cancelK": "நிறுத்து சந்தா ரத்து புதுப்பித்தல் how do i cancel stop unsubscribe end subscription auto renew renewal",
+        "refundK": "பணம் திரும்ப ரீஃபண்ட் தவறான கட்டணம் can i get a refund refund money back return cashback charged twice wrong payment",
+        "failedK": "கட்டணம் தோல்வி பணம் பிடித்தம் நிலுவை வேலை செய்யவில்லை i paid but i don t see plus should i pay again payment failed deducted debited charged not working pending stuck twice money gone showing show missing activated active"
       },
       "orders": {
         "title": "சுவரொட்டிகள், புத்தகங்கள், அழைப்பிதழ்கள்",
@@ -1133,15 +1160,26 @@
         "deliveryQ": "விநியோகத்துக்கு எவ்வளவு நாள் ஆகும்?",
         "deliveryA": "பொதுவாகப் பணம் செலுத்திய {{deliveryDays}} நாட்களுக்குள்.",
         "damagedQ": "என் ஆர்டர் சேதமாக அல்லது தவறாக வந்தது. என்ன செய்வது?",
-        "damagedA": "விநியோகமான {{damageDays}} நாட்களுக்குள் படத்துடன் தெரிவியுங்கள். கட்டணமின்றி மீண்டும் அச்சிடுவோம் அல்லது பணத்தைத் திரும்பத் தருவோம். எங்கள் கொள்கையைப் பாருங்கள்."
+        "damagedA": "விநியோகமான {{damageDays}} நாட்களுக்குள் படத்துடன் தெரிவியுங்கள். கட்டணமின்றி மீண்டும் அச்சிடுவோம் அல்லது பணத்தைத் திரும்பத் தருவோம். எங்கள் கொள்கையைப் பாருங்கள்.",
+        "whatK": "கடை வாங்கு போஸ்டர் புத்தகம் அச்சு அழைப்பிதழ் பொருள் what can i order shop buy purchase poster book print invite design product",
+        "deliveryK": "அனுப்புதல் கூரியர் கண்காணிப்பு நாட்கள் தாமதம் ஆர்டர் எங்கே how long does delivery take shipping ship courier track tracking arrive days late where is my order",
+        "damagedK": "உடைந்த கிழிந்த மாற்று திரும்ப புகார் தவறான பொருள் my order arrived damaged or wrong what now broken torn missing replace replacement return refund complaint wrong item"
       },
       "account": {
         "title": "உங்கள் கணக்கு",
         "deleteQ": "என் கணக்கை எப்படி நீக்குவது?",
         "deleteA": "உங்கள் சுயவிவரத்தில் தனியுரிமையும் கணக்கும் திறந்து நீக்கு என்பதைத் தேர்ந்தெடுங்கள். நீங்கள் வெளியேற்றப்படுவீர்கள், 30 நாட்கள் கழித்து கணக்கு நீக்கப்படும். மனம் மாறினால் அதற்கு முன் உள்நுழைந்து என் கணக்கை வைத்துக்கொள் என்பதைத் தட்டுங்கள். வேண்டுமானால் முதலில் நகல் பதிவிறக்குங்கள், சந்தாவை ரத்து செய்யுங்கள். உங்கள் பெயர், எண், படம் நீக்கப்படும். நீங்கள் மரத்தில் சேர்த்தவை அந்த மரத்திலேயே இருக்கும்.",
         "helpQ": "உதவி எப்படிப் பெறுவது?",
-        "helpA": "{{email}} முகவரிக்கு எழுதுங்கள் அல்லது {{phone}} எண்ணை அழையுங்கள். நேரம்: {{supportHours}}."
-      }
+        "helpA": "{{email}} முகவரிக்கு எழுதுங்கள் அல்லது {{phone}} எண்ணை அழையுங்கள். நேரம்: {{supportHours}}.",
+        "deleteK": "அகற்று மூடு வெளியேறு சுயவிவரம் தரவு how do i delete my account remove close deactivate erase leave profile quit data",
+        "helpK": "ஆதரவு தொடர்பு வாடிக்கையாளர் அழைப்பு மின்னஞ்சல் புகார் கேள்வி பிரச்சனை how do i get help support contact customer care call email phone complaint ticket question problem issue"
+      },
+      "search": "கேள்விகளில் தேடுங்கள்",
+      "searchHint": "ஒன்று அல்லது இரண்டு சொற்களைத் தட்டச்சு செய்யுங்கள், எ.கா. பணம் திரும்ப அல்லது உள்நுழைவு",
+      "clear": "அழி",
+      "results": "உங்கள் தேடலுக்குப் பொருந்தும் கேள்விகள்",
+      "noMatch": "இதற்குப் பொருந்தும் கேள்வி இல்லை. வேறு அல்லது சிறிய சொல்லை முயலுங்கள், அல்லது நேரடியாக எங்களிடம் கேளுங்கள்.",
+      "showAll": "எல்லாக் கேள்விகளையும் காட்டு"
     }
   },
   "calendar": {
@@ -1327,6 +1365,7 @@
       "no": "இல்லை",
       "confirmNamed": "ஆம், {{action}}: {{name}}",
       "add": "குடும்ப உறுப்பினரைச் சேர்க்கவும் ({{count}} இடங்கள் உள்ளன)",
+      "add_one": "குடும்ப உறுப்பினரைச் சேர்க்கவும் (1 இடம் உள்ளது)",
       "addPlaceholder": "மரத்தில் உள்ள பெயர் அல்லது தொலைபேசி எண்",
       "addNumber": "இந்த எண்ணைச் சேர்",
       "addNamed": "{{name}}-ஐச் சேர்",
@@ -1345,7 +1384,6 @@
         "razorpay": "Razorpay மூலம் கட்டணம்",
         "stripe": "Stripe மூலம் கட்டணம்"
       },
-      "add_one": "குடும்ப உறுப்பினரைச் சேர்க்கவும் (1 இடம் உள்ளது)",
       "unnamed": "குடும்ப உறுப்பினர்",
       "cancelAskedTrial": "உங்கள் இலவச மாதங்கள் முடிக்கப்படுகின்றன. இந்தப் பக்கம் சிறிது நேரத்தில் தானாகப் புதுப்பிக்கப்படும்.",
       "cancelDone": "ரத்து செய்யப்பட்டது. இனி உங்களிடம் கட்டணம் வசூலிக்கப்படாது. {{date}} வரை உங்கள் குடும்பத்திற்கு Plus தொடரும்.",
@@ -1917,7 +1955,11 @@
         "announcement_deleted": "பதாகையை நீக்கினார்",
         "report_reopened": "முறைகேடு புகாரை மீண்டும் திறந்தார்",
         "takedown_reopened": "நீக்கக் கோரிக்கையை மீண்டும் திறந்தார்",
-        "kin_term_corrected": "சொல்லின் எழுத்துப்பிழையைத் திருத்தினார்"
+        "kin_term_corrected": "சொல்லின் எழுத்துப்பிழையைத் திருத்தினார்",
+        "shop_image_added": "கடைப் படம் சேர்த்தார்",
+        "shop_image_removed": "கடைப் படம் நீக்கினார்",
+        "shop_image_made_main": "முதன்மைக் கடைப் படத்தைத் தேர்ந்தெடுத்தார்",
+        "shop_price_changed": "கடை விலையை மாற்றினார்"
       },
       "from": "இந்த நாளிலிருந்து",
       "to": "இந்த நாள் வரை",
@@ -2612,6 +2654,54 @@
       "serverErrorTotal_other": "இந்தக் காலத்தில் {{count}} சர்வர் பிழைகள்.",
       "route": "பாதை",
       "appCrashes": "செயலியில் பிழைகள்"
+    },
+    "shopPictures": {
+      "tab": "கடைப் படங்கள்",
+      "help": "ஒவ்வொரு பொருளுக்கும் கடையில் மக்கள் பார்க்கும் படங்கள். முதல் படமே பொருள் அட்டையின் முதன்மைப் படம். ஒரு பொருளுக்கு அதிகபட்சம் {{max}} படங்கள். JPG, PNG அல்லது WebP, அதிகபட்சம் 15 MB; அகலமான படம் (சுமார் 3:2) நன்றாகப் பொருந்தும்.",
+      "add": "படம் சேர்",
+      "full": "இந்தப் பொருளுக்கு ஏற்கெனவே {{max}} படங்கள் உள்ளன. இன்னொன்றைச் சேர்க்க ஒன்றை நீக்குங்கள்.",
+      "none": "இன்னும் படம் இல்லை. நீங்கள் சேர்க்கும் வரை கடை இந்த வரைபடத்தைக் காட்டும்.",
+      "main": "முதன்மைப் படம்",
+      "makeMain": "முதன்மையாக்கு",
+      "remove": "நீக்கு",
+      "addedBy": "சேர்த்தவர் {{name}}, {{when}}",
+      "removeTitle": "இந்தப் படத்தை நீக்கவா?",
+      "removeText": "{{product}} பொருளுக்கு இது இனி கடையில் தெரியாது. படத்தை மாற்ற, இதை நீக்கிவிட்டுப் புதியதைச் சேருங்கள்.",
+      "added": "{{product}} பொருளுக்குப் படம் சேர்க்கப்பட்டது. கடையில் இப்போது தெரியும்.",
+      "removed": "படம் நீக்கப்பட்டது.",
+      "madeMain": "இதுவே இப்போது முதன்மைப் படம்.",
+      "wrongType": "JPG, PNG அல்லது WebP படத்தைத் தேர்ந்தெடுங்கள்.",
+      "tooBig": "அந்தப் படம் 15 MB-ஐ விடப் பெரியது. சிறியதைத் தேர்ந்தெடுங்கள்."
+    },
+    "shopPrices": {
+      "tab": "கடை விலைகள்",
+      "help": "ஒவ்வொரு பொருளின் விலை. இந்திய எண் உள்ளவர்கள் ரூபாயில் செலுத்துவார்கள்; மற்றவர்கள் அமெரிக்க டாலரில். நீங்கள் சேமித்த பிறகு தொடங்கும் ஆர்டர்களுக்கே புதிய விலை; ஏற்கெனவே செய்த ஆர்டர்கள் பழைய விலையிலேயே இருக்கும்.",
+      "viewOnly": "நீங்கள் விலைகளைப் பார்க்கலாம். மாற்ற Payments அனுமதி தேவை.",
+      "product": "பொருள்",
+      "india": "இந்தியாவில் விலை",
+      "abroad": "பிற இடங்களில் விலை",
+      "lastChanged": "கடைசியாக மாற்றியது",
+      "actions": "செயல்கள்",
+      "changedBy": "{{name}}, {{when}}",
+      "never": "மாற்றப்படவில்லை",
+      "change": "விலையை மாற்று",
+      "dialogTitle": "{{product}} விலையை மாற்று",
+      "dialogText": "ஒன்றின் விலையைத் தட்டச்சு செய்யுங்கள். கூப்பன் தள்ளுபடி இந்த விலையிலிருந்து கழிக்கப்படும்.",
+      "indiaField": "இந்தியாவில் விலை, ரூபாயில் (₹)",
+      "abroadField": "பிற இடங்களில் விலை, அமெரிக்க டாலரில் ($)",
+      "badInr": "₹1 முதல் ₹1,00,000 வரை ஒரு தொகையைத் தட்டச்சு செய்யுங்கள், எ.கா. 799 அல்லது 799.50.",
+      "badUsd": "$0.50 முதல் $2,000 வரை ஒரு தொகையைத் தட்டச்சு செய்யுங்கள், எ.கா. 19.99.",
+      "preview": "வாங்குபவர்கள் செலுத்தப்போவது",
+      "previewIndia": "இந்தியாவில்: {{before}} இனி {{now}}",
+      "previewAbroad": "பிற இடங்களில்: {{before}} இனி {{now}}",
+      "bigJump": "இது இப்போதைய விலையில் பாதிக்கும் குறைவு அல்லது இரு மடங்குக்கும் அதிகம். சேமிக்கும் முன் எண்களைச் சரிபாருங்கள்.",
+      "inviteNote": "இந்த விலை இணையதளத்துக்கு மட்டும். iPhone, Android செயலிகளில் பிரீமியம் அழைப்பிதழை App Store, Google Play விற்கின்றன; விலை அவற்றின் கன்சோலில் அமைக்கப்படுகிறது.",
+      "reason": "காரணம் (தணிக்கைப் பதிவில் சேமிக்கப்படும்)",
+      "needPrices": "இன்னும் தேவை: இரண்டு விலைகளும், பணத் தொகையாக.",
+      "needChange": "இன்னும் தேவை: இப்போதைய விலையிலிருந்து வேறுபட்ட விலை.",
+      "needReason": "இன்னும் தேவை: குறைந்தது 5 எழுத்துகள் கொண்ட காரணம்.",
+      "save": "புதிய விலையைச் சேமி",
+      "saved": "{{product}} பொருளுக்குப் புதிய விலை சேமிக்கப்பட்டது. கடையில் இப்போது தெரியும்."
     }
   },
   "social": {

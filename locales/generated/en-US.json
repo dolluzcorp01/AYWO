@@ -327,6 +327,7 @@
     "family_plan_full": "This plan is full. It can have 6 people, including you.",
     "bad_signature": "This request could not be verified.",
     "webhook_not_configured": "Payments are not set up yet.",
+    "price_changed": "The price changed just now. Check the new total below and pay again.",
     "admin_not_allowed": "You don't have permission to do this.",
     "admin_staff_only": "Only an AYWO Admin can do this to staff.",
     "admin_cannot_block_self": "You can't block your own account.",
@@ -363,6 +364,7 @@
     "admin_decision_final": "This decision removed something, so it is final and can't be reopened.",
     "admin_already_open": "This is already open.",
     "kin_term_exists": "That spelling is already in the dictionary for this relationship and language.",
+    "admin_nothing_changed": "Nothing was changed. Type a different price first.",
     "plus_required": "This needs AYWO Plus.",
     "date_required": "Please choose a date and time.",
     "date_in_future": "This date is still to come. A memory needs a date that has passed.",
@@ -1077,7 +1079,13 @@
         "languageQ": "Can I use it in my language?",
         "languageA": "Choose your language on the first screen, and change it any time from your profile. Relationship words, such as what you call an aunt, appear in your language too.",
         "importingQ": "I already have a family tree. Can I bring it in?",
-        "importingA": "Yes. AYWO can import a Lighten file or a GEDCOM file, the common format most family tree programs can save."
+        "importingA": "Yes. AYWO can import a Lighten file or a GEDCOM file, the common format most family tree programs can save.",
+        "whatK": "about meaning app purpose family tree relatives",
+        "freeK": "cost charge money price paid payment fee",
+        "signInK": "login log in otp code password register sign up signup account phone number sms",
+        "devicesK": "android iphone ios phone mobile web browser computer laptop install download app play store",
+        "languageK": "tamil hindi english telugu malayalam kannada translate change language",
+        "importingK": "import gedcom upload file ancestry existing move transfer"
       },
       "tree": {
         "title": "Your family tree",
@@ -1092,7 +1100,13 @@
         "outsiderQ": "What does someone see from a shared link?",
         "outsiderA": "Names and photos only. Contact details are never shown on a shared link.",
         "downloadQ": "Can I download my tree?",
-        "downloadA": "Yes, at any time, as a PDF picture of the tree or a GEDCOM file, depending on your role in that tree."
+        "downloadA": "Yes, at any time, as a PDF picture of the tree or a GEDCOM file, depending on your role in that tree.",
+        "whoSeesK": "privacy private public visible view share access members",
+        "rolesK": "role permission rights admin owner access edit change who can",
+        "noAccountK": "add relative person member invite without account dead late passed away child",
+        "wrongK": "mistake error incorrect fix correct edit change name spelling relation duplicate report",
+        "outsiderK": "link share invite public stranger guest whatsapp",
+        "downloadK": "export pdf print poster picture image save copy backup book"
       },
       "safety": {
         "title": "Privacy and safety",
@@ -1105,7 +1119,12 @@
         "sellQ": "Do you sell my data or show ads?",
         "sellA": "No. We don't sell your data, and we don't show advertising. See the Privacy policy for the details.",
         "childrenQ": "Can children be in the tree?",
-        "childrenA": "Families may record children in a tree. Anyone under 18 needs a parent or guardian's consent to use AYWO, and a parent or guardian can ask us to change or remove a child's details."
+        "childrenA": "Families may record children in a tree. Anyone under 18 needs a parent or guardian's consent to use AYWO, and a parent or guardian can ask us to change or remove a child's details.",
+        "numberK": "phone contact privacy hide hidden show visible whatsapp email",
+        "removeK": "take down takedown delete my name details permission consent complaint",
+        "sosK": "emergency help danger alert urgent location police accident",
+        "sellK": "privacy advertisement ads advertising share third party safe secure security information",
+        "childrenK": "child kid kids minor age baby son daughter under 18"
       },
       "plus": {
         "title": "AYWO Plus and payments",
@@ -1124,7 +1143,15 @@
         "refundQ": "Can I get a refund?",
         "refundA": "Yes, in the situations listed in our Return and refund policy. A payment made through Apple or Google is refunded by them.",
         "failedQ": "I paid, but I don't see Plus. Should I pay again?",
-        "failedA": "No. It can take a few minutes to confirm. If Plus has not appeared after that, write to {{email}} with your payment details."
+        "failedA": "No. It can take a few minutes to confirm. If Plus has not appeared after that, write to {{email}} with your payment details.",
+        "includesK": "premium subscription features benefits upgrade chat reactions",
+        "priceK": "price fee charge money rupees monthly yearly subscription amount rate",
+        "trialK": "try test demo free days",
+        "familyK": "members share sharing whole family one subscription everyone",
+        "payK": "payment upi card gpay phonepe paytm netbanking razorpay stripe credit debit",
+        "cancelK": "stop unsubscribe end subscription auto renew renewal",
+        "refundK": "refund money back return cashback charged twice wrong payment",
+        "failedK": "payment failed deducted debited charged not working pending stuck twice money gone showing show missing activated active"
       },
       "orders": {
         "title": "Posters, books and invites",
@@ -1133,15 +1160,26 @@
         "deliveryQ": "How long does delivery take?",
         "deliveryA": "Usually within {{deliveryDays}} days of payment.",
         "damagedQ": "My order arrived damaged or wrong. What now?",
-        "damagedA": "Tell us within {{damageDays}} days of delivery, with a photo. We will reprint it or refund you, at no cost. See the Return and refund policy."
+        "damagedA": "Tell us within {{damageDays}} days of delivery, with a photo. We will reprint it or refund you, at no cost. See the Return and refund policy.",
+        "whatK": "shop buy purchase poster book print invite design product",
+        "deliveryK": "shipping ship courier track tracking arrive days late where is my order",
+        "damagedK": "broken torn missing replace replacement return refund complaint wrong item"
       },
       "account": {
         "title": "Your account",
         "deleteQ": "How do I delete my account?",
         "deleteA": "Open your profile, then Privacy and account, then Delete. You are signed out, and the account is deleted 30 days later. Sign in before then and tap Keep my account if you change your mind. Download a copy first if you want one, and cancel any subscription. Your name, number and photo are removed. Entries you added to a tree stay with that tree.",
         "helpQ": "How do I get help?",
-        "helpA": "Write to {{email}} or call {{phone}}. Hours: {{supportHours}}."
-      }
+        "helpA": "Write to {{email}} or call {{phone}}. Hours: {{supportHours}}.",
+        "deleteK": "remove close deactivate erase leave profile quit data",
+        "helpK": "support contact customer care call email phone complaint ticket question problem issue"
+      },
+      "search": "Search the questions",
+      "searchHint": "Type a word or two, such as refund or sign in",
+      "clear": "Clear",
+      "results": "Questions that fit your search",
+      "noMatch": "No question fits that. Try a different or shorter word, or ask us directly.",
+      "showAll": "Show all questions"
     }
   },
   "calendar": {
@@ -1917,7 +1955,11 @@
         "announcement_deleted": "Deleted a banner",
         "report_reopened": "Reopened an abuse report",
         "takedown_reopened": "Reopened a takedown request",
-        "kin_term_corrected": "Corrected a word's spelling"
+        "kin_term_corrected": "Corrected a word's spelling",
+        "shop_image_added": "Added a shop picture",
+        "shop_image_removed": "Removed a shop picture",
+        "shop_image_made_main": "Chose the main shop picture",
+        "shop_price_changed": "Changed a shop price"
       },
       "from": "From this day",
       "to": "Up to this day",
@@ -2612,6 +2654,54 @@
       "serverErrorTotal_other": "{{count}} server errors in this period.",
       "route": "Route",
       "appCrashes": "Errors in the app"
+    },
+    "shopPictures": {
+      "tab": "Shop pictures",
+      "help": "The photos people see in the shop for each product. The first one is the main picture on the product card. Up to {{max}} for each product. JPG, PNG or WebP, at most 15 MB; a wide photo (about 3 by 2) fits best.",
+      "add": "Add a picture",
+      "full": "This product already has {{max}} pictures. Remove one to add another.",
+      "none": "No photo yet. The shop shows this drawing until you add one.",
+      "main": "Main picture",
+      "makeMain": "Make main",
+      "remove": "Remove",
+      "addedBy": "Added by {{name}}, {{when}}",
+      "removeTitle": "Remove this picture?",
+      "removeText": "It will no longer show in the shop for {{product}}. To change a picture, remove it and add the new one.",
+      "added": "Picture added to {{product}}. The shop shows it now.",
+      "removed": "Picture removed.",
+      "madeMain": "This is now the main picture.",
+      "wrongType": "Choose a JPG, PNG or WebP picture.",
+      "tooBig": "That picture is larger than 15 MB. Choose a smaller one."
+    },
+    "shopPrices": {
+      "tab": "Shop prices",
+      "help": "What each product costs. Buyers with an Indian phone number pay in rupees; everyone else pays in US dollars. A new price applies to orders started after you save; orders already made keep their price.",
+      "viewOnly": "You can see the prices. Changing them needs the Payments permission.",
+      "product": "Product",
+      "india": "Price in India",
+      "abroad": "Price elsewhere",
+      "lastChanged": "Last changed",
+      "actions": "Actions",
+      "changedBy": "{{name}}, {{when}}",
+      "never": "Never changed",
+      "change": "Change price",
+      "dialogTitle": "Change the price of {{product}}",
+      "dialogText": "Type the price of one. Coupons take their discount off this price.",
+      "indiaField": "Price in India, in rupees (₹)",
+      "abroadField": "Price elsewhere, in US dollars ($)",
+      "badInr": "Type an amount between ₹1 and ₹1,00,000, such as 799 or 799.50.",
+      "badUsd": "Type an amount between $0.50 and $2,000, such as 19.99.",
+      "preview": "What buyers will pay",
+      "previewIndia": "In India: {{before}} becomes {{now}}",
+      "previewAbroad": "Elsewhere: {{before}} becomes {{now}}",
+      "bigJump": "This is less than half or more than double the price now. Check the numbers before you save.",
+      "inviteNote": "This price is for the website. Inside the iPhone and Android apps the premium invite is sold by the App Store and Google Play at the price set in their consoles.",
+      "reason": "Reason (recorded in the audit log)",
+      "needPrices": "Still needed: both prices, as amounts of money.",
+      "needChange": "Still needed: a price different from the one now.",
+      "needReason": "Still needed: a reason, at least 5 characters.",
+      "save": "Save the new price",
+      "saved": "New price saved for {{product}}. The shop shows it now."
     }
   },
   "social": {
