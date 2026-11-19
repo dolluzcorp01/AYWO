@@ -100,8 +100,8 @@ function layout(view: ReturnType<typeof focusView>, width: number, expanded: { s
     .flatMap((g) => pair(g.ids.slice(0, 2)))
     .slice(0, 4);
   const partners = view.partners.slice(0, 1);
-  // The centre person and their partner, left to right.
-  const centreCouple = partners.length ? coupleOrder(view.focusId, partners[0], genderOf) : [view.focusId];
+  // The centre person and their partner, left to right: worked out below, once the brothers and sisters are placed.
+  const preferred = partners.length ? coupleOrder(view.focusId, partners[0], genderOf) : [view.focusId];
   const room = width - 2 * EDGE;
   const besideFocus = room - FOCUS_W - (partners.length ? PARTNER_GAP + CARD_W : 0) - GAP;
   const siblings = fitting(view.siblings, besideFocus, MORE_SIBLINGS, expanded.siblings);
@@ -111,6 +111,18 @@ function layout(view: ReturnType<typeof focusView>, width: number, expanded: { s
   const shown = new Set(siblings);
   const inOrder = view.siblingRow.filter((id) => id === view.focusId || shown.has(id));
   const bloodRow = [...(shown.has(MORE_SIBLINGS) ? [MORE_SIBLINGS] : []), ...inOrder];
+  // Husband on the left, wife on the right, as long as that does not put the partner between the centre person and
+  // their own brothers and sisters, under the parents' line: there they would look like one more child of those
+  // parents. Then the partner stands on the free side instead.
+  const at = bloodRow.indexOf(view.focusId);
+  const leftKin = at > 0;
+  const rightKin = at >= 0 && at < bloodRow.length - 1;
+  let centreCouple = preferred;
+  if (partners.length) {
+    const partnerLeft = preferred[0] !== view.focusId;
+    const flip = partnerLeft ? leftKin && !rightKin : rightKin && !leftKin;
+    if (flip) centreCouple = [preferred[1], preferred[0]];
+  }
   const middle = bloodRow.flatMap((id) => (id === view.focusId ? centreCouple : [id]));
 
   // Two levels down: each child is a small family of their own (child, partner, and their children below).
