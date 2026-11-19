@@ -20,6 +20,8 @@ export interface AppConfig {
   features?: Record<string, boolean>;
   whats_new?: { version?: string; items?: string[] };
   support?: { hours?: string; email?: string };
+  /** Set by staff once each app is in its store (Admin > App settings). Empty until then. */
+  store_links?: { ios?: string; android?: string };
 }
 
 const STORE_LINKS = {
@@ -40,7 +42,9 @@ export function storeLink(platform: 'ios' | 'android', links: Record<'ios' | 'an
 /** The Update button, or plain instructions when there is no working link or the store would not open. */
 function UpdateAction({ platform }: { platform: 'ios' | 'android' }) {
   const { t } = useTranslation();
-  const link = storeLink(platform);
+  // The link staff saved wins; the built-in one is the fallback for a phone that could not load the settings.
+  const saved = useAppConfig().data?.store_links?.[platform];
+  const link = saved || storeLink(platform);
   const [failed, setFailed] = useState(false);
   const how = <Text style={styles.text}>{t(platform === 'ios' ? 'ops.update.howIos' : 'ops.update.howAndroid')}</Text>;
   if (!link) return how;

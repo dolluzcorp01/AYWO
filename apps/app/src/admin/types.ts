@@ -417,7 +417,7 @@ export interface AppHealth {
   server_error_total: number;
 }
 
-export type ConfigKey = 'min_version' | 'latest_version' | 'maintenance' | 'features' | 'whats_new' | 'support';
+export type ConfigKey = 'min_version' | 'latest_version' | 'maintenance' | 'features' | 'whats_new' | 'support' | 'store_links';
 /** A key is absent when its row is missing on the server, so every reader must allow for that. */
 export type AdminConfig = Partial<Record<ConfigKey, { value: Record<string, unknown>; updated_at: string; updated_by_name: string | null }>>;
 

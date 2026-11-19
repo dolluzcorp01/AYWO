@@ -1052,7 +1052,8 @@
         "maintenance": "While maintenance is on, everyone except staff sees the message instead of the app.",
         "features": "Switched-off features disappear from the apps at once.",
         "whats_new": "People see this once after updating to this version.",
-        "support": "Shown on the Contact and Help pages."
+        "support": "Shown on the Contact and Help pages.",
+        "store_links": "The website's front page and the Update button in the apps open these links."
       },
       "versions": "App versions",
       "versionsHelp": "Below the minimum, the app stops and asks for an update. Below the latest, it suggests one.",
@@ -1103,7 +1104,13 @@
       "supportHours": "Support hours",
       "supportHoursExample": "For example Monday to Saturday, 10 am to 6 pm India time",
       "supportEmailBad": "Type a full email address, like help@example.com.",
-      "supportHoursBad": "Type the hours when support answers."
+      "supportHoursBad": "Type the hours when support answers.",
+      "storeLinks": "App store links",
+      "storeLinksHelp": "Where the website's front page sends people for each app. Leave a box empty while that app is not in its store yet: the front page then says \"Coming soon\" for it.",
+      "storeAndroid": "Google Play link (Android)",
+      "storeIos": "App Store link (iPhone)",
+      "storeAndroidBad": "This must be the app's Google Play link, starting with https://play.google.com/store/apps/details?id=",
+      "storeIosBad": "This must be the app's App Store link, starting with https://apps.apple.com/"
     },
     "user360": {
       "title": "Account",

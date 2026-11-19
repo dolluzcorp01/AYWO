@@ -75,6 +75,7 @@ function Controls() {
             <FeaturesPanel value={(config.features?.value ?? {}) as Record<string, boolean>} onSave={config.features ? ask('features') : null} footer={footer('features')} />
             <WhatsNewPanel value={config.whats_new?.value ?? {}} onSave={config.whats_new ? ask('whats_new') : null} footer={footer('whats_new')} />
             <SupportPanel value={config.support?.value ?? {}} onSave={config.support ? ask('support') : null} footer={footer('support')} />
+            <StoreLinksPanel value={config.store_links?.value ?? {}} onSave={config.store_links ? ask('store_links') : null} footer={footer('store_links')} />
             {pending ? (
               <FormDialog
                 title={t('admin.settings.confirmTitle')}
@@ -200,6 +201,29 @@ function SupportPanel({ value, onSave, footer }: { value: Value; onSave: Save; f
       <Actions>
         {/* Other values under this key, if the server ever adds any, are kept as they are. */}
         <SecondaryButton main label={t('admin.common.save')} disabled={!onSave || !!emailBad || !!hoursBad} onPress={() => onSave?.({ ...value, email: email.trim(), hours: hours.trim() })} />
+      </Actions>
+    </Panel>
+  );
+}
+
+const PLAY_LINK = /^https:\/\/play\.google\.com\/store\/apps\/details\?id=[A-Za-z0-9._]{3,100}$/;
+const APPLE_LINK = /^https:\/\/apps\.apple\.com\/[A-Za-z0-9/._-]{3,150}$/;
+
+/** Where the website's front page sends people for each app. Empty means "Coming soon" there. */
+function StoreLinksPanel({ value, onSave, footer }: { value: Value; onSave: Save; footer: ReactNode }) {
+  const { t } = useTranslation();
+  const [android, setAndroid] = useState(text(value.android));
+  const [ios, setIos] = useState(text(value.ios));
+  const androidBad = !android.trim() || PLAY_LINK.test(android.trim()) ? null : t('admin.settings.storeAndroidBad');
+  const iosBad = !ios.trim() || APPLE_LINK.test(ios.trim()) ? null : t('admin.settings.storeIosBad');
+  return (
+    <Panel title={t('admin.settings.storeLinks')}>
+      <Text style={adminStyles.cellMuted}>{t('admin.settings.storeLinksHelp')}</Text>
+      <Field label={t('admin.settings.storeAndroid')} value={android} onChange={setAndroid} maxLength={160} placeholder="https://play.google.com/store/apps/details?id=..." error={androidBad} />
+      <Field label={t('admin.settings.storeIos')} value={ios} onChange={setIos} maxLength={180} placeholder="https://apps.apple.com/app/..." error={iosBad} />
+      {footer}
+      <Actions>
+        <SecondaryButton main label={t('admin.common.save')} disabled={!onSave || !!androidBad || !!iosBad} onPress={() => onSave?.({ android: android.trim(), ios: ios.trim() })} />
       </Actions>
     </Panel>
   );

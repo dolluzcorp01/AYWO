@@ -1295,6 +1295,141 @@
       "unknown": "Partner"
     }
   },
+  "landing": {
+    "openWeb": "Continue on the web",
+    "signIn": "Sign in",
+    "toTop": "AYWO, back to the top",
+    "nav": {
+      "features": "Features",
+      "how": "How it works",
+      "questions": "Questions"
+    },
+    "store": {
+      "android": "Google Play",
+      "ios": "App Store",
+      "get": "Get it on",
+      "soon": "Coming soon to",
+      "getLabel": "Get AYWO on {{store}}",
+      "soonLabel": "AYWO is coming soon to {{store}}"
+    },
+    "hero": {
+      "badge": "The family tree that speaks your language",
+      "lead": "Build your family tree together, see what to call every relative in your own language, and keep birthdays, memories and family news in one private place.",
+      "soonNote": "The Android and iPhone apps are on their way. Until then, AYWO works in your browser, and your family will be there in the apps when they arrive.",
+      "factFree": "Free to start. Your family tree is always free.",
+      "factPrivate": "Private. Nobody can find your tree by searching.",
+      "factAds": "No ads. Your data is never sold."
+    },
+    "art": {
+      "family": "Our family",
+      "names": {
+        "grandfather": "Raman",
+        "grandmother": "Lakshmi",
+        "father": "Kumar",
+        "mother": "Meena",
+        "sister": "Priya",
+        "you": "Arun",
+        "brother": "Vijay"
+      },
+      "kin": {
+        "grandfather": "Grandfather",
+        "grandmother": "Grandmother",
+        "father": "Father",
+        "mother": "Mother",
+        "sister": "Elder sister",
+        "you": "You",
+        "brother": "Little brother"
+      },
+      "cardHow": "Mother's younger sister",
+      "cardWord": "Chithi · சித்தி",
+      "noteBirthdayTitle": "Birthday on Sunday",
+      "noteBirthdayText": "Grandmother turns 70",
+      "noteMemoryTitle": "New memory",
+      "noteMemoryText": "4 photos from Priya"
+    },
+    "words": {
+      "eyebrow": "Only on AYWO",
+      "title": "Finally know what to call everyone",
+      "text": "English says \"uncle\" for four different people. Your language does not. AYWO works out the right word for every relative, from where you stand in the tree.",
+      "pointAuto": "Worked out automatically as the tree grows",
+      "pointLanguage": "In the language you choose, changed any time",
+      "pointBoth": "Shows how you are related, step by step",
+      "oneHow": "Father's younger brother",
+      "oneWord": "Chithappa",
+      "oneAlso": "சித்தப்பா, not just \"uncle\"",
+      "twoHow": "Mother's brother",
+      "twoWord": "Maama",
+      "twoAlso": "மாமா, not just \"uncle\"",
+      "threeHow": "Father's sister",
+      "threeWord": "Athai",
+      "threeAlso": "அத்தை, not just \"aunt\""
+    },
+    "features": {
+      "eyebrow": "Everything in one place",
+      "title": "More than a family tree",
+      "text": "The tree is where it starts. The family is what keeps it alive.",
+      "treeTitle": "One tree, built together",
+      "treeText": "Add parents, partners and children in a few taps. Invite relatives with a link, and everyone fills in their own side.",
+      "memoriesTitle": "Memories",
+      "memoriesText": "Share photos and moments with the family, and look back on them years later.",
+      "calendarTitle": "Never miss a family date",
+      "calendarText": "Birthdays, anniversaries and remembrance days in one calendar, with invites for family events.",
+      "alertsTitle": "Alerts and SOS",
+      "alertsText": "Tell the family important news in one go. In an emergency, SOS alerts the people you chose and shows them where you are. Always free.",
+      "chatTitle": "Chat and call",
+      "chatText": "Family chat, groups, and a call or WhatsApp to anyone in the tree, with AYWO Plus.",
+      "keepTitle": "Yours to keep",
+      "keepText": "Download your tree as a PDF at any time, or bring in a tree you already made in another program."
+    },
+    "how": {
+      "eyebrow": "How it works",
+      "title": "Three steps to your family tree",
+      "oneTitle": "Sign in with your mobile number",
+      "oneText": "A one-time code comes by text message. There is no password to remember.",
+      "twoTitle": "Add your people",
+      "twoText": "Start with yourself, your parents and your children. You can add relatives who are not on AYWO, and those who have passed away.",
+      "threeTitle": "Invite the family",
+      "threeText": "Send a link. Each relative adds their side, and the tree grows on its own."
+    },
+    "elders": {
+      "eyebrow": "For every generation",
+      "title": "Easy for grandparents too",
+      "text": "AYWO is made for the whole family, not only for the ones who are good with phones.",
+      "big": "Large text, with one switch",
+      "simple": "Simple mode: a few big buttons for family, photos, dates and calling",
+      "voice": "Search the family by speaking a name"
+    },
+    "safe": {
+      "eyebrow": "Privacy",
+      "title": "Your family stays yours",
+      "text": "A family tree holds real people. We treat it that way.",
+      "private": "Only the people you share with can see your tree, each at the level you choose",
+      "number": "Your sign-in number is never shown to anyone",
+      "ads": "No advertising, and we never sell your data",
+      "remove": "Added without being asked? Anyone can ask us to remove them, with no account needed"
+    },
+    "print": {
+      "eyebrow": "On paper too",
+      "title": "Hang your family on the wall",
+      "text": "Order a printed poster of your family tree, or a family book, from inside AYWO. A gift the whole family keeps."
+    },
+    "questions": {
+      "eyebrow": "Questions",
+      "title": "Good to know",
+      "all": "See all questions"
+    },
+    "last": {
+      "eyebrow": "Start today",
+      "title": "Your family is waiting",
+      "text": "Begin with yourself. The rest of the family will join in."
+    },
+    "footer": {
+      "remove": "Ask us to remove someone",
+      "rights": "AYWO: Across Years, We're One."
+    },
+    "backHome": "AYWO, back to the front page",
+    "openApp": "Open AYWO"
+  },
   "pay": {
     "kicker": "AYWO PLUS",
     "close": "Close",
@@ -2478,7 +2613,8 @@
         "maintenance": "While maintenance is on, everyone except staff sees the message instead of the app.",
         "features": "Switched-off features disappear from the apps at once.",
         "whats_new": "People see this once after updating to this version.",
-        "support": "Shown on the Contact and Help pages."
+        "support": "Shown on the Contact and Help pages.",
+        "store_links": "The website's front page and the Update button in the apps open these links."
       },
       "versions": "App versions",
       "versionsHelp": "Below the minimum, the app stops and asks for an update. Below the latest, it suggests one.",
@@ -2529,7 +2665,13 @@
       "supportHours": "Support hours",
       "supportHoursExample": "For example Monday to Saturday, 10 am to 6 pm India time",
       "supportEmailBad": "Type a full email address, like help@example.com.",
-      "supportHoursBad": "Type the hours when support answers."
+      "supportHoursBad": "Type the hours when support answers.",
+      "storeLinks": "App store links",
+      "storeLinksHelp": "Where the website's front page sends people for each app. Leave a box empty while that app is not in its store yet: the front page then says \"Coming soon\" for it.",
+      "storeAndroid": "Google Play link (Android)",
+      "storeIos": "App Store link (iPhone)",
+      "storeAndroidBad": "This must be the app's Google Play link, starting with https://play.google.com/store/apps/details?id=",
+      "storeIosBad": "This must be the app's App Store link, starting with https://apps.apple.com/"
     },
     "user360": {
       "title": "Account",

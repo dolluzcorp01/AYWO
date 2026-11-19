@@ -17,7 +17,7 @@ export function useDesktop(): boolean {
   return Platform.OS === 'web' && width >= DESKTOP_MIN;
 }
 
-export type FrameSection = 'app' | 'public' | 'admin';
+export type FrameSection = 'app' | 'public' | 'admin' | 'landing';
 
 /** Screens whose content should use the whole width on a computer, rather than a reading column. */
 const WIDE_ROUTES = new Set(['home', 'tree', 'calendar']);
@@ -33,7 +33,7 @@ export function WebFrame({ children, section = 'public', route }: { children: Re
   // The platform never changes while the app runs, so phones keep their untouched tree.
   if (Platform.OS !== 'web') return <>{children}</>;
   const shape: 'plain' | 'shell' | 'column' =
-    section === 'admin' ? 'plain' : section === 'app' && width >= DESKTOP_MIN ? 'shell' : width <= WEB_COLUMN + 40 ? 'plain' : 'column';
+    section === 'admin' || section === 'landing' ? 'plain' : section === 'app' && width >= DESKTOP_MIN ? 'shell' : width <= WEB_COLUMN + 40 ? 'plain' : 'column';
   const wide = WIDE_ROUTES.has(route ?? '');
   return (
     <View style={shape === 'shell' ? styles.shell : shape === 'column' ? styles.outside : styles.plain}>

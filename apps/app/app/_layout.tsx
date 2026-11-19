@@ -39,10 +39,10 @@ const REFERRAL = 'aywo.referral';
 
 // Screens that work without an account. Everything else needs a session.
 // admin has its own gate, which says why someone cannot come in and offers sign-in.
-const PUBLIC_ROUTES = new Set(['phone', 'otp', 'link', 'invite', 'outsider', 'terms', 'privacy', 'refunds', 'faq', 'roles', 'contact', 'takedown', 'admin']);
+const PUBLIC_ROUTES = new Set(['welcome', 'phone', 'otp', 'link', 'invite', 'outsider', 'terms', 'privacy', 'refunds', 'faq', 'roles', 'contact', 'takedown', 'admin']);
 
 // Before the app proper: welcome and the first steps after signing in. On a computer these stay a centred column.
-const ONBOARDING = new Set(['index', 'after-login', 'profile', 'is-this-you', 'start', 'import']);
+const ONBOARDING = new Set(['index', 'welcome', 'after-login', 'profile', 'is-this-you', 'start', 'import']);
 // Signed in, these keep the side menu (help pages, bringing in another tree, editing your name): nobody should lose
 // their way back by opening the FAQ or the Contact page.
 const IN_APP_WHEN_SIGNED_IN = new Set(['terms', 'privacy', 'refunds', 'faq', 'roles', 'contact', 'takedown', 'import', 'profile']);
@@ -59,8 +59,10 @@ function AppFrame({ children, signedIn }: { children: ReactNode; signedIn: boole
   const trees = useQuery({ queryKey: ['trees'], queryFn: () => api.get<{ id: string }[]>('/trees'), enabled: signedIn && first === 'start' });
   const startWithTree = first === 'start' && (trees.data?.length ?? 0) > 0;
   const keepMenu = signedIn && (startWithTree || (IN_APP_WHEN_SIGNED_IN.has(first ?? '') && (first !== 'profile' || editingProfile)));
+  // The website's front page (the landing page) uses the whole window. In the phone apps the same route is Welcome.
+  const landing = Platform.OS === 'web' && (first === undefined || first === 'index');
   const section =
-    first === 'admin' ? 'admin' : keepMenu ? 'app' : first === undefined || PUBLIC_ROUTES.has(first) || ONBOARDING.has(first) ? 'public' : 'app';
+    landing ? 'landing' : first === 'admin' ? 'admin' : keepMenu ? 'app' : first === undefined || PUBLIC_ROUTES.has(first) || ONBOARDING.has(first) ? 'public' : 'app';
   return (
     <WebFrame section={section} route={first}>
       <AppGate staffArea={section === 'admin'}>
@@ -84,15 +86,18 @@ function SignInGate({ signedIn }: { signedIn: boolean }) {
     first === 'offers';
 
   useEffect(() => {
-    const onWelcome = first === undefined || first === 'index';
+    const onWelcome = first === undefined || first === 'index' || first === 'welcome';
     // Waits a tick: on the first render the Stack beside this gate has only just mounted, and navigating then can throw.
     const timer = setTimeout(() => {
       if (!signedIn && onJoinLink) {
         router.replace({ pathname: '/phone', params: { next: pathname } });
         return;
       }
-      if (!signedIn && !onWelcome && !PUBLIC_ROUTES.has(first)) router.replace('/');
-      if (signedIn && onWelcome) router.replace('/after-login');
+      // On the website the front page is for visitors; someone sent away from an app page wants the sign-in start.
+      if (!signedIn && !onWelcome && !PUBLIC_ROUTES.has(first)) router.replace(Platform.OS === 'web' ? '/welcome' : '/');
+      // The website's front page stays open for someone signed in too: its button then says "Open AYWO".
+      const onLanding = Platform.OS === 'web' && first !== 'welcome';
+      if (signedIn && onWelcome && !onLanding) router.replace('/after-login');
     }, 0);
     return () => clearTimeout(timer);
   }, [signedIn, first, onJoinLink, pathname, router]);
