@@ -1120,16 +1120,7 @@
       "text": "English says \"uncle\" for four different people. Your language does not. AYWO works out the right word for every relative, from where you stand in the tree.",
       "pointAuto": "Worked out automatically as the tree grows",
       "pointLanguage": "In the language you choose, changed any time",
-      "pointBoth": "Shows how you are related, step by step",
-      "oneHow": "Father's younger brother",
-      "oneWord": "Chithappa",
-      "oneAlso": "சித்தப்பா, not just \"uncle\"",
-      "twoHow": "Mother's brother",
-      "twoWord": "Maama",
-      "twoAlso": "மாமா, not just \"uncle\"",
-      "threeHow": "Father's sister",
-      "threeWord": "Athai",
-      "threeAlso": "அத்தை, not just \"aunt\""
+      "cloud": "Thatha, Paatti, Appa, Amma, Akka, Thambi, Chithappa, Chithi, Maama, Athai, Periyappa, Anni"
     },
     "features": {
       "eyebrow": "Everything in one place",
