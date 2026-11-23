@@ -4,7 +4,7 @@ import type { Href } from 'expo-router';
 import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { ChevronIcon } from '@/components/Icons';
 import { LanguagePicker } from '@/components/LanguagePicker';
@@ -229,7 +229,8 @@ export default function MeScreen() {
           ))}
         </Card>
 
-        {me.data?.admin_role ? (
+        {/* The admin panel is built for a wide screen and opens only on the web: no row here that leads nowhere. */}
+        {me.data?.admin_role && Platform.OS === 'web' ? (
           <Card style={styles.list}>
             <Row title={t('nav.adminPanel')} onPress={() => router.push('/admin')} last />
           </Card>

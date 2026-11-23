@@ -154,8 +154,11 @@ export default function RootLayout() {
   // The session check on start. Language and large text load with it, so the first screen is already right.
   useEffect(() => {
     let live = true;
+    // What the session was a moment ago, to tell a fresh sign-in from a renewed one.
+    let before: boolean | null = null;
     Promise.all([hasSession(), loadPrefs().catch(() => undefined)])
       .then(([session]) => {
+        before ??= session;
         // Signed out (for example the session ended while the app was closed): no family stays on the phone.
         if (!session) void offlinePersister.removeClient();
         if (live) setSignedIn(session);
@@ -164,6 +167,11 @@ export default function RootLayout() {
         if (live) setSignedIn(false);
       });
     const stop = onSessionChange((now) => {
+      const fresh = now && before === false;
+      before = now;
+      // Whatever was asked for while signed out was refused, and a refusal is kept and not asked again. Without this,
+      // Home opened on "Please log in again" straight after signing in. Cleared before the screens change.
+      if (fresh) queryClient.clear();
       setSignedIn(now);
       // The next person on this phone must not see the last person's family.
       if (!now) {

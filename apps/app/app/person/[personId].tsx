@@ -116,7 +116,9 @@ export default function PersonCard() {
   const firstName = shownFirstName(t, node.name, node.nameUnknown);
 
   const actions = contactActions(card.data.contacts);
-  const locked = card.data.access === 'ask' || card.data.access === 'plus';
+  // Numbers the server did send are open, whatever the rule for the rest of the tree: someone who typed a
+  // number in themselves sees it, and must not be told underneath that it is hidden.
+  const locked = (card.data.access === 'ask' || card.data.access === 'plus') && !card.data.contacts.values;
   const askFrom = card.data.ask_from ?? t('card.theCreator');
 
   function openPerson(id: string) {
@@ -260,7 +262,7 @@ export default function PersonCard() {
             </Card>
           ) : null}
 
-          {card.data.access === 'ask' && actions.length > 0 ? (
+          {locked && card.data.access === 'ask' && actions.length > 0 ? (
             card.data.request_pending ? (
               <Text style={styles.note}>{t('card.askSent', { name: askFrom })}</Text>
             ) : (
