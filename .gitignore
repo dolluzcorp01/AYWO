@@ -8,3 +8,7 @@ supabase/.temp/
 # Real family files are never committed. Tests read them from a path outside the repo.
 *.lighten.zip
 *.ged
+
+# The native Android and iOS projects are generated from app.json (expo prebuild), not kept in git.
+apps/app/android/
+apps/app/ios/

@@ -359,6 +359,7 @@
     "deathPlace": "Place of passing",
     "notes": "Notes",
     "addToTree": "Add to the tree",
+    "added": "{{name}} is added to the tree.",
     "loadLatest": "Load the latest",
     "sentForApproval": "Thank you. This has gone to the tree's Creator to approve.",
     "addRequested": "Sent to the tree's Creator to approve. Phone numbers and a photo can be added once the person is in the tree.",
@@ -1039,6 +1040,8 @@
     "change": "Change",
     "done": "Done",
     "remove": "Remove",
+    "changeFor": "Change the link with {{name}}",
+    "removeLink": "Remove this link",
     "removeTitle": "Remove this link?",
     "removeParentMessage": "{{parent}} will no longer be shown as {{child}}'s parent. Both stay in the tree.",
     "removePartnerMessage": "{{a}} and {{b}} will no longer be shown as partners. Both stay in the tree, and their children keep both parents.",
@@ -1203,9 +1206,9 @@
       },
       "startFree": "Start free",
       "plusName": "AYWO Plus",
-      "perYearOrMonth": "a year, or {{monthly}} a month",
       "plusAll": "Everything in Free",
-      "cancel": "Cancel any time."
+      "cancel": "The first 2 months are free on the yearly plan. Cancel any time.",
+      "perMonthOrYear": "a month, or {{yearly}} a year"
     }
   }
 }

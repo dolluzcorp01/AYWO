@@ -210,8 +210,8 @@ export function Landing() {
                 <View style={styles.planTag}><Text style={styles.planTagText}>{t('pay.firstTwoFree')}</Text></View>
                 <Text style={styles.planName}>{t('landing.price.plusName')}</Text>
                 <View style={styles.planPriceRow}>
-                  <Text style={styles.planPrice}>{prices.yearly.display}</Text>
-                  <Text style={styles.planPer}>{t('landing.price.perYearOrMonth', { monthly: prices.monthly.display })}</Text>
+                  <Text style={styles.planPrice}>{prices.monthly.display}</Text>
+                  <Text style={styles.planPer}>{t('landing.price.perMonthOrYear', { yearly: prices.yearly.display })}</Text>
                 </View>
                 <Tick text={t('landing.price.plusAll')} />
                 {PLUS.map((key) => <Tick key={key} text={t(key)} />)}

@@ -8,8 +8,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
+import { CloseIcon, PencilIcon } from '@/components/Icons';
 import { Text } from '@/components/Text';
-import { Card, ConfirmDialog, ErrorText, Pills, SmallButton } from '@/components/ui';
+import { Card, ConfirmDialog, ErrorText, Pills, SmallButton, TextButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { errorCode, useErrorText } from '@/lib/errors';
 import { linkSuggestions } from '@/tree/linkSuggestions';
@@ -17,7 +18,7 @@ import { shownName } from '@/tree/personName';
 import { refreshFamilyDates, useAddRelative } from '@/tree/useEdit';
 import type { Relation } from '@/tree/useEdit';
 import type { TreeViewAnswer } from '@/tree/useTreeView';
-import { colors, fonts } from '@/theme/tokens';
+import { colors, fonts, minTapSize } from '@/theme/tokens';
 
 type LinkKind = 'birth' | 'adopted' | 'step' | 'foster' | 'unknown';
 type UnionStatus = 'current' | 'divorced' | 'separated' | 'widowed' | 'annulled' | 'unknown';
@@ -77,8 +78,11 @@ export function FamilyLinks({ data, personId, treeId, onOpen }: { data: TreeView
   const kindLabel = (k: string) => t(`links.kind.${KINDS.includes(k as LinkKind) ? k : 'unknown'}`);
   const statusLabel = (s: string) => t(`links.status.${STATUSES.includes(s as UnionStatus) ? s : 'unknown'}`);
 
-  function linkRow(parentId: string, childId: string, kind: string, otherId: string) {
-    const key = `l:${parentId}:${childId}`;
+  /**
+   * One person in a list. The row itself opens them; one quiet pencil opens the ways to change the link, and
+   * Remove sits in there too. A Change and a Remove button on every row made the card a wall of buttons on a phone.
+   */
+  function personRow<T extends string>(key: string, otherId: string, sub: string, options: { value: T; label: string }[], value: T | null, onChange: (v: T) => void, remove: { message: string; run: () => Promise<unknown> }) {
     const open = editing === key;
     return (
       <View key={key} style={styles.rowBox}>
@@ -89,30 +93,41 @@ export function FamilyLinks({ data, personId, treeId, onOpen }: { data: TreeView
               <Text style={styles.name} numberOfLines={1}>
                 {nameOf(otherId)}
               </Text>
-              <Text style={styles.sub}>{kindLabel(kind)}</Text>
+              <Text style={styles.sub}>{sub}</Text>
             </View>
           </Pressable>
-          <SmallButton kind="plain" label={open ? t('links.done') : t('links.change')} onPress={() => setEditing(open ? null : key)} />
-          <SmallButton
-            kind="plain"
-            label={t('links.remove')}
-            onPress={() =>
-              setRemoving({
-                title: t('links.removeTitle'),
-                message: t('links.removeParentMessage', { parent: nameOf(parentId), child: nameOf(childId) }),
-                run: () => api.rpc('link_remove', { p_parent: parentId, p_child: childId }),
-              })
-            }
-          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: open }}
+            accessibilityLabel={open ? t('links.done') : t('links.changeFor', { name: nameOf(otherId) })}
+            onPress={() => setEditing(open ? null : key)}
+            style={styles.edit}
+          >
+            {open ? <CloseIcon color={colors.relation} size={16} /> : <PencilIcon color={colors.relation} size={18} />}
+          </Pressable>
         </View>
         {open ? (
-          <Pills
-            options={KINDS.map((k) => ({ value: k, label: kindLabel(k) }))}
-            value={KINDS.includes(kind as LinkKind) ? (kind as LinkKind) : null}
-            onChange={(k) => run.mutate(() => api.rpc('link_set_kind', { p_parent: parentId, p_child: childId, p_kind: k }))}
-          />
+          <View style={styles.editBox}>
+            <Pills options={options} value={value} onChange={onChange} />
+            <TextButton danger label={t('links.removeLink')} onPress={() => setRemoving({ title: t('links.removeTitle'), ...remove })} />
+          </View>
         ) : null}
       </View>
+    );
+  }
+
+  function linkRow(parentId: string, childId: string, kind: string, otherId: string) {
+    return personRow(
+      `l:${parentId}:${childId}`,
+      otherId,
+      kindLabel(kind),
+      KINDS.map((k) => ({ value: k, label: kindLabel(k) })),
+      KINDS.includes(kind as LinkKind) ? (kind as LinkKind) : null,
+      (k) => run.mutate(() => api.rpc('link_set_kind', { p_parent: parentId, p_child: childId, p_kind: k })),
+      {
+        message: t('links.removeParentMessage', { parent: nameOf(parentId), child: nameOf(childId) }),
+        run: () => api.rpc('link_remove', { p_parent: parentId, p_child: childId }),
+      },
     );
   }
 
@@ -142,69 +157,42 @@ export function FamilyLinks({ data, personId, treeId, onOpen }: { data: TreeView
       ))}
 
       <Card style={styles.card}>
-        <View style={styles.head}>
+        <View style={[styles.head, styles.headFirst]}>
           <Text style={styles.headText}>{t('links.parents')}</Text>
-          <SmallButton kind="plain" label={t('links.addParent')} onPress={() => addLink('parent')} />
+          <TextButton label={t('links.addParent')} onPress={() => addLink('parent')} />
         </View>
         {parents.length === 0 ? <Text style={styles.none}>{t('links.noParents', { name: me })}</Text> : null}
         {parents.map((l) => linkRow(l.parent_id, l.child_id, l.kind ?? 'unknown', l.parent_id))}
 
         <View style={styles.head}>
           <Text style={styles.headText}>{t('links.partners')}</Text>
-          <SmallButton kind="plain" label={t('links.addPartner')} onPress={() => addLink('spouse')} />
+          <TextButton label={t('links.addPartner')} onPress={() => addLink('spouse')} />
         </View>
         {unions.length === 0 ? <Text style={styles.none}>{t('links.noPartners', { name: me })}</Text> : null}
         {unions.map((u) => {
           const other = (u.partner1_id === personId ? u.partner2_id : u.partner1_id) as string;
-          const key = `u:${u.id}`;
-          const open = editing === key;
           const status = u.status ?? 'unknown';
-          return (
-            <View key={key} style={styles.rowBox}>
-              <View style={styles.row}>
-                <Pressable accessibilityRole="link" onPress={() => onOpen(other)} style={styles.who}>
-                  <Avatar personId={other} size={34} photoUrl={data.nodes.find((n) => n.id === other)?.photoUrl ?? null} name={nameOf(other)} />
-                  <View style={styles.whoText}>
-                    <Text style={styles.name} numberOfLines={1}>
-                      {nameOf(other)}
-                    </Text>
-                    <Text style={styles.sub}>{statusLabel(status)}</Text>
-                  </View>
-                </Pressable>
-                <SmallButton kind="plain" label={open ? t('links.done') : t('links.change')} onPress={() => setEditing(open ? null : key)} />
-                <SmallButton
-                  kind="plain"
-                  label={t('links.remove')}
-                  onPress={() =>
-                    setRemoving({
-                      title: t('links.removeTitle'),
-                      message: t('links.removePartnerMessage', { a: me, b: nameOf(other) }),
-                      run: () => api.rpc('union_remove', { p_union: u.id }),
-                    })
-                  }
-                />
-              </View>
-              {open ? (
-                <Pills
-                  options={STATUSES.map((s) => ({ value: s, label: statusLabel(s) }))}
-                  value={STATUSES.includes(status as UnionStatus) ? (status as UnionStatus) : null}
-                  onChange={(s) => run.mutate(() => api.rpc('union_set_status', { p_union: u.id, p_status: s }))}
-                />
-              ) : null}
-            </View>
+          return personRow(
+            `u:${u.id}`,
+            other,
+            statusLabel(status),
+            STATUSES.map((x) => ({ value: x, label: statusLabel(x) })),
+            STATUSES.includes(status as UnionStatus) ? (status as UnionStatus) : null,
+            (x) => run.mutate(() => api.rpc('union_set_status', { p_union: u.id, p_status: x })),
+            { message: t('links.removePartnerMessage', { a: me, b: nameOf(other) }), run: () => api.rpc('union_remove', { p_union: u.id }) },
           );
         })}
 
         <View style={styles.head}>
           <Text style={styles.headText}>{t('links.children')}</Text>
-          <SmallButton kind="plain" label={t('links.addChild')} onPress={() => addLink('child')} />
+          <TextButton label={t('links.addChild')} onPress={() => addLink('child')} />
         </View>
         {children.length === 0 ? <Text style={styles.none}>{t('links.noChildren', { name: me })}</Text> : null}
         {children.map((l) => linkRow(l.parent_id, l.child_id, l.kind ?? 'unknown', l.child_id))}
 
         <View style={styles.head}>
           <Text style={styles.headText}>{t('links.siblings')}</Text>
-          <SmallButton kind="plain" label={t('links.addSibling')} onPress={() => addLink('sibling')} />
+          <TextButton label={t('links.addSibling')} onPress={() => addLink('sibling')} />
         </View>
         {siblings.map((sib) => (
           <Pressable key={sib.id} accessibilityRole="link" onPress={() => onOpen(sib.id)} style={styles.who}>
@@ -246,10 +234,13 @@ const styles = StyleSheet.create({
   box: { gap: 10 },
   section: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 17, marginTop: 6 },
   card: { gap: 8, paddingVertical: 12 },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, borderTopWidth: 1, borderColor: colors.cardBorder, paddingTop: 6 },
+  headFirst: { borderTopWidth: 0, marginTop: 0, paddingTop: 0 },
   headText: { color: colors.muted, fontFamily: fonts.bold, fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase' },
   rowBox: { gap: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  edit: { width: minTapSize, height: minTapSize, borderRadius: minTapSize / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.tint },
+  editBox: { gap: 2, alignItems: 'flex-start', paddingLeft: 44 },
   who: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 },
   whoText: { flex: 1, minWidth: 0 },
   name: { color: colors.text, fontFamily: fonts.bold, fontSize: 15 },

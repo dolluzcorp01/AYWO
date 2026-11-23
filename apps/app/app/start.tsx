@@ -57,7 +57,7 @@ export default function Start() {
           {hasTree ? <BackButton onPress={() => goBack(router)} /> : null}
           <Image source={require('../assets/aywo_logo_app.png')} style={styles.logo} resizeMode="contain" accessibilityLabel="AYWO" />
           <Pressable accessibilityRole="button" accessibilityLabel={t('tabs.me')} onPress={() => router.replace('/me')}>
-            <Avatar personId={me.data?.id ?? 'me'} size={48} ring />
+            <Avatar personId={me.data?.id ?? 'me'} size={48} photoUrl={me.data?.photo_url} name={me.data?.display_name ?? undefined} ring />
           </Pressable>
         </View>
         <DeleteBanner />

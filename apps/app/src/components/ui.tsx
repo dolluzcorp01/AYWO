@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -13,11 +13,26 @@ import { useSimpleMode } from '@/lib/prefs';
 import { colors, fonts, gradients, minTapSize, radius, shadows } from '@/theme/tokens';
 
 /**
+ * A quick second tap on the same button does nothing. On a slow phone the next screen takes a moment to appear, and
+ * a second tap in that moment opened it twice: after saving, the same form was still there, empty.
+ */
+function useOncePerTap(onPress: () => void): () => void {
+  const last = useRef(0);
+  return () => {
+    const now = Date.now();
+    if (now - last.current < 600) return;
+    last.current = now;
+    onPress();
+  };
+}
+
+/**
  * The main button of a screen. Pass `missing` (what is still needed, such as "Choose who can see this") and the
  * button waits, saying so underneath. A greyed-out button with no reason leaves people stuck.
  */
-export function PrimaryButton({ label, onPress, disabled, missing }: { label: string; onPress: () => void; disabled?: boolean; missing?: string | null }) {
+export function PrimaryButton({ label, onPress: press, disabled, missing }: { label: string; onPress: () => void; disabled?: boolean; missing?: string | null }) {
   const big = useSimpleMode();
+  const onPress = useOncePerTap(press);
   const off = !!disabled || !!missing;
   return (
     <View style={styles.primaryBox}>
@@ -32,8 +47,9 @@ export function PrimaryButton({ label, onPress, disabled, missing }: { label: st
 }
 
 /** The second choice beside or under a primary button: light indigo with an indigo border and words. */
-export function SecondaryButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
+export function SecondaryButton({ label, onPress: press, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
   const big = useSimpleMode();
+  const onPress = useOncePerTap(press);
   return (
     <Pressable
       accessibilityRole="button"

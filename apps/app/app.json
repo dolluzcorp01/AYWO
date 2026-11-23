@@ -52,6 +52,7 @@
     },
     "web": { "bundler": "metro", "output": "single" },
     "plugins": [
+      "./plugins/withShortNativeBuildDir",
       "expo-router",
       ["expo-localization", { "supportsRTL": true }],
       "expo-secure-store",

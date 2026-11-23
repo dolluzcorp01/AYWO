@@ -200,7 +200,7 @@ function Top({ treeId, name }: { treeId: string; name: string | null }) {
         </>
       )}
       <Pressable accessibilityRole="button" accessibilityLabel={t('tabs.me')} onPress={() => router.replace('/me')} style={styles.meTap}>
-        <Avatar personId={own?.id ?? me.data?.id ?? 'me'} size={40} photoUrl={own?.photoUrl} name={own?.name ?? me.data?.display_name ?? undefined} />
+        <Avatar personId={own?.id ?? me.data?.id ?? 'me'} size={40} photoUrl={me.data?.photo_url ?? own?.photoUrl} name={own?.name ?? me.data?.display_name ?? undefined} />
       </Pressable>
     </View>
   );

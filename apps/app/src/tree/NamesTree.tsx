@@ -1,4 +1,6 @@
 // 'Names only' classic line tree (wireframe A9). Drag to move, pinch to zoom. Only what is on screen is drawn (LLD L7).
+// A drag slides one layer and draws nothing again until the finger has gone a good way: drawing every card again
+// for every small move made the tree stutter on a phone.
 import {
   cardsInView,
   centerOn,
@@ -15,7 +17,7 @@ import type { Point, Viewport, ViewState } from '@aywo/layout';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PanResponder, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, PanResponder, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import type { GestureResponderEvent, LayoutChangeEvent } from 'react-native';
 import Svg, { Polyline } from 'react-native-svg';
@@ -32,6 +34,17 @@ const ZOOM_STEP = 1.25;
 /** The "more below" pill is drawn 28 high; its tap area is a full minTapSize, reaching this far above and below it. */
 const MORE_HEIGHT = 28;
 const MORE_REACH = (minTapSize - MORE_HEIGHT) / 2;
+/** How much of the tree is drawn beyond each edge of the screen, so a drag has something to slide in. */
+const OVERSCAN = 280;
+/** Room around the tree inside its layer, for the cards and names that reach past the outermost people. */
+const LAYER_PAD = 240;
+/** A drag draws the tree again once it has used up this much of that extra. */
+const REDRAW_AFTER = 180;
+/** A finger lifted while moving faster than this (pixels a millisecond) lets the tree glide on, like any list. */
+const GLIDE_FROM = 0.5;
+/** The glide is short and its speed is capped: a family tree is small, and a long glide threw it against its edge. */
+const GLIDE_TOP_SPEED = 1.2;
+const GLIDE_SLOWDOWN = 0.988;
 
 interface Props {
   /** Family and outsiders use the same tree; outsider data has names and photos only. */
@@ -40,6 +53,21 @@ interface Props {
   onOpenPerson: (personId: string) => void;
   /** Room to leave at the bottom for the floating tab bar. */
   bottomSpace?: number;
+}
+
+/**
+ * Where the tree may be dragged to. The middle of the screen always stays over the tree, so a fast drag can push
+ * the family to one side but never off the screen, where it looked as if the tree had gone.
+ */
+function holdTree(view: ViewState, layout: Parameters<typeof clampView>[1], viewport: Viewport): ViewState {
+  const kept = clampView(view, layout, viewport);
+  const midX = viewport.width / 2;
+  const midY = viewport.height / 2;
+  return {
+    scale: kept.scale,
+    offsetX: Math.min(midX, Math.max(midX - layout.width * kept.scale, kept.offsetX)),
+    offsetY: Math.min(midY, Math.max(midY - layout.height * kept.scale, kept.offsetY)),
+  };
 }
 
 /**
@@ -54,7 +82,24 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState<string[]>([]);
   const [viewport, setViewport] = useState<Viewport | null>(null);
-  const [view, setView] = useState<ViewState | null>(null);
+  // `view` is what was last drawn. `live` is where the tree is right now, which runs ahead of it during a drag.
+  const [view, setDrawn] = useState<ViewState | null>(null);
+  const live = useRef<ViewState | null>(null);
+  const slide = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  /** Move the tree and draw it again. */
+  const setView = (next: ViewState) => {
+    if (!Number.isFinite(next.offsetX) || !Number.isFinite(next.offsetY) || !Number.isFinite(next.scale)) return;
+    live.current = next;
+    slide.setValue({ x: next.offsetX, y: next.offsetY });
+    setDrawn(next);
+  };
+  /** Move the tree without drawing it again, until it has gone far enough to need more of the tree. */
+  const slideTo = (next: ViewState, drawn: ViewState) => {
+    if (!Number.isFinite(next.offsetX) || !Number.isFinite(next.offsetY)) return;
+    live.current = next;
+    slide.setValue({ x: next.offsetX, y: next.offsetY });
+    if (Math.abs(next.offsetX - drawn.offsetX) > REDRAW_AFTER || Math.abs(next.offsetY - drawn.offsetY) > REDRAW_AFTER) setDrawn(next);
+  };
 
   const layout = useMemo(
     () =>
@@ -72,7 +117,7 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
   function centreOnPerson(personId: string | null, scale = 1) {
     if (!viewport) return;
     const card = layout.cards.find((c) => c.personId === personId && !c.ghost) ?? layout.cards[0];
-    if (card) setView(clampView(centerOn(card, viewport, scale), layout, viewport));
+    if (card) setView(holdTree(centerOn(card, viewport, scale), layout, viewport));
   }
 
   // First look: you in the middle.
@@ -81,8 +126,34 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
   }, [viewport]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The gesture handlers live for the whole screen, so they read the latest values from here.
-  const latest = useRef({ view, viewport, layout });
-  latest.current = { view, viewport, layout };
+  // After a quick flick the tree glides on by itself. While it does, each step is kept inside the edges of the
+  // tree and draws more of it when needed; reaching an edge ends the glide.
+  const gliding = useRef(false);
+  useEffect(() => {
+    const id = slide.addListener(({ x, y }) => {
+      const { view: drawn, viewport: vp, layout: lay } = latest.current;
+      if (!gliding.current || !live.current || !drawn || !vp) return;
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        slide.stopAnimation();
+        return;
+      }
+      const next = holdTree({ scale: live.current.scale, offsetX: x, offsetY: y }, lay, vp);
+      live.current = next;
+      if (next.offsetX !== x || next.offsetY !== y) {
+        slide.stopAnimation();
+        return;
+      }
+      if (Math.abs(x - drawn.offsetX) > REDRAW_AFTER || Math.abs(y - drawn.offsetY) > REDRAW_AFTER) setDrawn(next);
+    });
+    return () => slide.removeListener(id);
+  }, [slide]);
+  const settle = () => {
+    gliding.current = false;
+    if (live.current) latest.current.setView(live.current);
+  };
+
+  const latest = useRef({ view, viewport, layout, setView, slideTo });
+  latest.current = { view, viewport, layout, setView, slideTo };
   const gesture = useRef<{ start: ViewState; pinch: number } | null>(null);
   // Where the canvas sits on the page, measured when it is laid out and again as each gesture starts.
   const canvas = useRef<ComponentRef<typeof View>>(null);
@@ -98,7 +169,10 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
       // Taps fall through to the cards. Only a real drag or a second finger takes over.
       onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4 || g.numberActiveTouches > 1,
       onPanResponderGrant: (e) => {
-        const current = latest.current.view;
+        // A finger on a gliding tree stops it there.
+        gliding.current = false;
+        slide.stopAnimation();
+        const current = live.current;
         if (!current) return;
         measureOrigin();
         const touches = touchPoints(e, origin.current);
@@ -106,27 +180,35 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
       },
       onPanResponderMove: (e, g) => {
         const now = gesture.current;
-        const { viewport: vp, layout: lay, view: current } = latest.current;
-        if (!now || !vp || !current) return;
+        const { viewport: vp, layout: lay, view: drawn } = latest.current;
+        const current = live.current;
+        if (!now || !vp || !current || !drawn) return;
         const touches = touchPoints(e, origin.current);
         if (touches.length > 1) {
           const distance = pinchDistance(touches[0], touches[1]);
           if (now.pinch > 0 && distance > 0) {
             const mid = { x: (touches[0].x + touches[1].x) / 2, y: (touches[0].y + touches[1].y) / 2 };
-            setView(clampView(zoomAround(current, distance / now.pinch, mid), lay, vp));
+            latest.current.setView(holdTree(zoomAround(current, distance / now.pinch, mid), lay, vp));
           }
           now.pinch = distance;
           // Whatever follows a pinch starts moving from where the pinch ended.
           now.start = { ...current, offsetX: current.offsetX - g.dx, offsetY: current.offsetY - g.dy };
           return;
         }
-        setView(clampView({ ...now.start, offsetX: now.start.offsetX + g.dx, offsetY: now.start.offsetY + g.dy }, lay, vp));
+        latest.current.slideTo(holdTree({ ...now.start, offsetX: now.start.offsetX + g.dx, offsetY: now.start.offsetY + g.dy }, lay, vp), drawn);
       },
-      onPanResponderRelease: () => {
+      // Draw once more where the finger let go, so the extra around the screen is even on every side again.
+      onPanResponderRelease: (_e, g) => {
         gesture.current = null;
+        const flick = Math.hypot(g.vx, g.vy);
+        if (g.numberActiveTouches > 0 || !Number.isFinite(flick) || flick < GLIDE_FROM) return settle();
+        gliding.current = true;
+        const keep = Math.min(1, GLIDE_TOP_SPEED / flick);
+        Animated.decay(slide, { velocity: { x: g.vx * keep, y: g.vy * keep }, deceleration: GLIDE_SLOWDOWN, useNativeDriver: false }).start(settle);
       },
       onPanResponderTerminate: () => {
         gesture.current = null;
+        settle();
       },
     }),
   ).current;
@@ -144,7 +226,8 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
     const element = canvas.current as unknown as HTMLElement | null;
     if (!element || typeof element.addEventListener !== 'function') return;
     const onWheel = (event: WheelEvent) => {
-      const { view: current, viewport: vp, layout: lay } = latest.current;
+      const { viewport: vp, layout: lay, setView } = latest.current;
+      const current = live.current;
       if (!current || !vp) return;
       // Otherwise the browser scrolls or zooms the whole page instead.
       event.preventDefault();
@@ -157,13 +240,13 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
         // Shift + wheel moves sideways, for a mouse with one wheel.
         const dx = (event.shiftKey && event.deltaX === 0 ? event.deltaY : event.deltaX) * unit;
         const dy = (event.shiftKey && event.deltaX === 0 ? 0 : event.deltaY) * unit;
-        setView(clampView({ ...current, offsetX: current.offsetX - dx, offsetY: current.offsetY - dy }, lay, vp));
+        setView(holdTree({ ...current, offsetX: current.offsetX - dx, offsetY: current.offsetY - dy }, lay, vp));
         return;
       }
       const delta = event.deltaY * unit;
       const factor = Math.exp(-Math.max(-120, Math.min(120, delta)) * 0.01);
       const at = { x: event.clientX - box.left, y: event.clientY - box.top };
-      setView(clampView(zoomAround(current, factor, at), lay, vp));
+      setView(holdTree(zoomAround(current, factor, at), lay, vp));
     };
     element.addEventListener('wheel', onWheel, { passive: false });
     return () => element.removeEventListener('wheel', onWheel);
@@ -172,22 +255,45 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
   function zoomBy(factor: number) {
     if (!view || !viewport) return;
     const middle = { x: viewport.width / 2, y: viewport.height / 2 };
-    setView(clampView(zoomAround(view, factor, middle), layout, viewport));
+    setView(holdTree(zoomAround(view, factor, middle), layout, viewport));
   }
 
   const onScreen = view && viewport ? visibleWindow(view, viewport) : null;
-  const cards = onScreen ? cardsInView(layout, onScreen.x, onScreen.y, onScreen.w, onScreen.h) : [];
-  const lines = onScreen ? linesInView(layout.lines, onScreen) : [];
+  // Drawn a little beyond the screen on every side: that is what slides in during a drag.
+  const extra = view ? OVERSCAN / view.scale : 0;
+  const cards = onScreen ? cardsInView(layout, onScreen.x - extra, onScreen.y - extra, onScreen.w + 2 * extra, onScreen.h + 2 * extra) : [];
+  const lines = onScreen ? linesInView(layout.lines, { x: onScreen.x - extra, y: onScreen.y - extra, w: onScreen.w + 2 * extra, h: onScreen.h + 2 * extra }) : [];
 
   return (
     <View ref={canvas} collapsable={false} style={[styles.canvas, { marginBottom: bottomSpace }]} onLayout={onLayout} {...panResponder.panHandlers}>
       {view && viewport ? (
         <>
-          <Svg width={viewport.width} height={viewport.height} style={StyleSheet.absoluteFill} pointerEvents="none">
+          {/*
+            One layer the size of the whole tree. Everything in it sits at its own fixed place, and only the layer
+            moves, by exactly where the tree is now. Nothing inside depends on how far it has been dragged, so the
+            moving layer and what is drawn in it can never disagree. (They did once, and the tree left the screen.)
+          */}
+          <Animated.View
+            style={{
+              position: 'absolute',
+              left: -LAYER_PAD,
+              top: -LAYER_PAD,
+              width: layout.width * view.scale + 2 * LAYER_PAD,
+              height: layout.height * view.scale + 2 * LAYER_PAD,
+              transform: [{ translateX: slide.x }, { translateY: slide.y }],
+            }}
+          >
+          {/* The lines are drawn only for the part near the screen: a picture the size of a big tree would be too heavy. */}
+          <Svg
+            width={viewport.width + 2 * OVERSCAN}
+            height={viewport.height + 2 * OVERSCAN}
+            style={{ position: 'absolute', left: LAYER_PAD - view.offsetX - OVERSCAN, top: LAYER_PAD - view.offsetY - OVERSCAN }}
+            pointerEvents="none"
+          >
             {lines.map((line, i) => (
               <Polyline
                 key={`${line.kind}-${i}`}
-                points={line.points.map((p) => toScreen(view, p)).map((p) => `${p.x},${p.y}`).join(' ')}
+                points={line.points.map((p) => toScreen(view, p)).map((p) => `${p.x + OVERSCAN},${p.y + OVERSCAN}`).join(' ')}
                 fill="none"
                 // A gradient stroke vanishes on a perfectly straight line in SVG, so lines use a solid logo colour.
                 stroke={line.kind === 'ghost' ? colors.logoOrange : colors.logoPurple}
@@ -201,7 +307,6 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
           {cards.map((card) => {
             const node = byId.get(card.personId);
             if (!node) return null;
-            const at = toScreen(view, card);
             const isMe = card.personId === viewerId && !card.ghost;
             return (
               <View
@@ -210,8 +315,8 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
                   styles.card,
                   card.hiddenChildren > 0 && styles.cardWithMore,
                   {
-                    left: at.x - CARD_WIDTH / 2,
-                    top: at.y - AVATAR / 2,
+                    left: card.x * view.scale - CARD_WIDTH / 2 + LAYER_PAD,
+                    top: card.y * view.scale - AVATAR / 2 + LAYER_PAD,
                     transform: [{ scale: view.scale }],
                     transformOrigin: `${CARD_WIDTH / 2}px ${AVATAR / 2}px`,
                   },
@@ -250,6 +355,7 @@ export function NamesTree({ data, viewerId, onOpenPerson, bottomSpace = TAB_BAR_
               </View>
             );
           })}
+          </Animated.View>
 
           <View style={styles.controls}>
             {viewerId ? (

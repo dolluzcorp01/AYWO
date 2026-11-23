@@ -425,6 +425,8 @@ export default function PersonDetails() {
       }
       await client.invalidateQueries({ queryKey: ['tree-view', treeId] });
       refreshFamilyDates(client);
+      // Say it worked: the form closing by itself, with nothing said, left people unsure the person was saved.
+      showToast('success', t('details.added', { name: form.nameUnknown ? t('tree.nameNotKnown') : form.name.trim() }));
       backToTree();
     } catch (error) {
       if (errorCode(error) === 'version_conflict') setClash(true);
