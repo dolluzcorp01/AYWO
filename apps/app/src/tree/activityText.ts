@@ -32,7 +32,8 @@ export function useActivityText() {
     if (item.type === 'request') {
       const text = request(item, name, person);
       if (item.state === 'pending') return text;
-      return `${text} ${t(`activity.state.${item.state}`)}`;
+      // The request ends in a name, not a full stop: without one the answer ran into it ("Vignesh Done.").
+      return `${text.replace(/[.\s]+$/, '')}. ${t(`activity.state.${item.state}`)}`;
     }
     if (item.type === 'claim') return t('activity.text.joined', { name });
     if (item.type === 'share') {

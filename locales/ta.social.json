@@ -231,6 +231,7 @@
       "plusGuests_one": "மேலும் {{count}}",
       "plusGuests_other": "மேலும் {{count}}",
       "whoIsComing": "அழைக்கப்பட்ட {{invited}} பேரில் {{yes}} பேர் வருகிறார்கள்",
+      "whoIsComingWithGuests": "அழைக்கப்பட்ட {{invited}} பேரில் {{yes}} பேர் வருகிறார்கள், அவர்களுடன் மேலும் {{guests}} பேர்",
       "seeDesign": "வடிவமைப்பைக் காண்க",
       "share": "WhatsApp மற்றும் பிறவற்றில் பகிர்",
       "shareLead": "{{name}} உங்களை அழைக்கிறார்: {{title}}",

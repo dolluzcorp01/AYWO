@@ -3097,6 +3097,7 @@
       "plusGuests_one": "{{count}} more",
       "plusGuests_other": "{{count}} more",
       "whoIsComing": "{{yes}} coming, of {{invited}} invited",
+      "whoIsComingWithGuests": "{{yes}} coming and {{guests}} more with them, of {{invited}} invited",
       "seeDesign": "See the design",
       "share": "Share to WhatsApp and others",
       "shareLead": "{{name}} invites you: {{title}}",

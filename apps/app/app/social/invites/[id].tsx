@@ -287,7 +287,15 @@ export default function InviteDetail() {
               {e.canva_url ? <SecondaryButton label={t('social.invites.seeDesign')} onPress={() => void Linking.openURL(e.canva_url as string)} /> : null}
               <PrimaryButton label={t('social.invites.share')} onPress={() => void Share.share({ message: shareText })} />
 
-              <SectionTitle>{t('social.invites.whoIsComing', { yes: e.yes, invited: e.invited })}</SectionTitle>
+              {(() => {
+                // People who said yes may bring others: the host needs the full number to plan for.
+                const more = e.people.reduce((sum, p) => sum + (p.answer === 'yes' ? p.guests : 0), 0);
+                return (
+                  <SectionTitle>
+                    {more > 0 ? t('social.invites.whoIsComingWithGuests', { yes: e.yes, invited: e.invited, guests: more }) : t('social.invites.whoIsComing', { yes: e.yes, invited: e.invited })}
+                  </SectionTitle>
+                );
+              })()}
               {e.people.map((p) => (
                 <Row
                   key={p.profile_id}
