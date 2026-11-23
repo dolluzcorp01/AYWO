@@ -1,11 +1,13 @@
 // Building blocks shared by the social screens, on top of the frozen components.
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useRouter } from '@/lib/router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ChevronIcon } from '@/components/Icons';
+import { useButtonInReach } from '@/components/keyboardRoom';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Card, ErrorText, Field, LoadFailed, Loading, Muted, SmallButton, TopBar } from '@/components/ui';
@@ -36,10 +38,12 @@ export function useGoBack() {
 
 export function Page({ title, subtitle, children, footer }: { title: string; subtitle?: string; children: ReactNode; footer?: ReactNode }) {
   const goBack = useGoBack();
+  const scroller = useRef<ComponentRef<typeof ScrollView>>(null);
+  const onScroll = useButtonInReach(scroller);
   return (
     <Screen>
       <TopBar title={title} subtitle={subtitle} onBack={goBack} />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scroller} onScroll={onScroll} scrollEventThrottle={32} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {children}
       </ScrollView>
       {footer}

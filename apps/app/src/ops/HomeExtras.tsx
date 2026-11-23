@@ -10,7 +10,17 @@ import { Text } from '@/components/Text';
 import { api } from '@/lib/api';
 import { firstName } from '@/lib/account';
 import type { FamilyDate, OnThisDay } from '@/ops/types';
+import { useTreeView } from '@/tree/useTreeView';
 import { colors, fonts, radius, shadows } from '@/theme/tokens';
+
+/** The person's photo when the tree has one. Home has the tree loaded already, so this asks for nothing new. */
+function DateFace({ date }: { date: FamilyDate }) {
+  const { i18n } = useTranslation();
+  const tree = useTreeView(date.tree_id, 'mine', i18n.language, null);
+  // An anniversary is two people: initials of both say that better than one face.
+  const photo = date.kind === 'birthday' ? tree.data?.nodes.find((n) => n.id === date.person_id)?.photoUrl : null;
+  return <Avatar personId={date.person_id} size={44} name={date.name} photoUrl={photo} />;
+}
 
 export function FamilyDates() {
   const { t, i18n } = useTranslation();
@@ -37,7 +47,7 @@ export function FamilyDates() {
             onPress={() => router.push({ pathname: '/person/[personId]', params: { personId: d.person_id, treeId: d.tree_id } })}
             style={[styles.date, d.days === 0 && styles.today]}
           >
-            <Avatar personId={d.person_id} size={44} name={d.name} />
+            <DateFace date={d} />
             <Text style={styles.name} numberOfLines={1}>{d.kind === 'birthday' ? firstName(d.name) : d.name}</Text>
             <Text style={styles.what} numberOfLines={1}>
               {d.kind === 'birthday'

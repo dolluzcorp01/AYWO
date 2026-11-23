@@ -5,6 +5,7 @@ import type { PathWords } from '@aywo/kinship';
 import { contactActions } from '@aywo/shared';
 import type { ContactKind } from '@aywo/shared';
 import * as Clipboard from 'expo-clipboard';
+import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
 import { useRouter } from '@/lib/router';
@@ -171,6 +172,8 @@ export default function PersonCard() {
 
   return (
     <View style={styles.page}>
+      {/* The top of this page is dark: the clock and battery go white so they can be read. */}
+      <StatusBar style="light" />
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]}
         scrollEventThrottle={32}
