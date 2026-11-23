@@ -2,7 +2,7 @@
 // and invitations. Tap a day to see just that day; tap it again to see the whole month. Tap the month name to jump
 // to any month or year. On a computer the day's list sits beside the month (no scrolling to find it), with ways to
 // add: plan an event on that day, or put a birthday, wedding day or remembrance day on someone in the family.
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';

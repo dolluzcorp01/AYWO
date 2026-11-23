@@ -1,6 +1,7 @@
 // A4: name and photo. Also the 'Edit' behind the name on Me.
 import type { Href } from 'expo-router';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +13,7 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { showToast } from '@/components/Toast';
 import { BackButton, Card, ErrorText, Field, Heading, Muted, PrimaryButton, TextButton } from '@/components/ui';
+import { TestCode } from '@/components/TestCode';
 import { PhoneField } from '@/components/PhoneField';
 import { safeNext, useMe, useUpdateMe } from '@/lib/account';
 import { api, uploadFile } from '@/lib/api';
@@ -166,6 +168,8 @@ function ChangeNumber({ onChanged }: { onChanged: () => void }) {
   const [open, setOpen] = useState(false);
   const [number, setNumber] = useState('');
   const [sentTo, setSentTo] = useState<string | null>(null);
+  // Testing only: the code, when the server sends no SMS yet.
+  const [testCode, setTestCode] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<unknown>(null);
@@ -184,7 +188,8 @@ function ChangeNumber({ onChanged }: { onChanged: () => void }) {
   }
   const send = () =>
     run(async () => {
-      await api.post('/me/phone/send', { phone });
+      const sent = await api.post<{ test_code?: string }>('/me/phone/send', { phone });
+      setTestCode(sent.test_code ?? null);
       setSentTo(phone);
       setCode('');
     });
@@ -211,6 +216,7 @@ function ChangeNumber({ onChanged }: { onChanged: () => void }) {
             keyboardType="number-pad"
             autoComplete="sms-otp"
           />
+          <TestCode code={testCode} onUse={setCode} />
           {failure ? <ErrorText>{errorText(failure)}</ErrorText> : null}
           <PrimaryButton label={t('profile.confirmNumber')} onPress={() => void confirm()} disabled={busy} missing={code.length === 6 ? null : t('otp.needCode')} />
           <TextButton label={t('otp.changeNumber')} onPress={() => setSentTo(null)} />

@@ -6,8 +6,9 @@ import { contactActions } from '@aywo/shared';
 import type { ContactKind } from '@aywo/shared';
 import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ReactNode } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -43,6 +44,9 @@ export default function PersonCard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const errorText = useErrorText();
+  // The coloured top runs up behind the clock. Once the page is scrolled, a band of the same colour stays there,
+  // or the words of the page would slide up under the clock and the battery.
+  const [scrolled, setScrolled] = useState(false);
 
   // Words come from the place being looked from. 'Names only' has none, so the card always asks for 'My view'.
   const tree = useTreeView(treeId, mode === 'see_as' ? 'see_as' : 'mine', i18n.language, seeAsId);
@@ -167,7 +171,14 @@ export default function PersonCard() {
 
   return (
     <View style={styles.page}>
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]}>
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]}
+        scrollEventThrottle={32}
+        onScroll={(e) => {
+          const now = e.nativeEvent.contentOffset.y > 4;
+          if (now !== scrolled) setScrolled(now);
+        }}
+      >
         <LinearGradient colors={gradients.neon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 12 }]}>
           <View style={styles.heroTop}>
             <Pressable accessibilityRole="button" accessibilityLabel={t('card.goBack')} onPress={() => goBack(router)} style={styles.round}>
@@ -300,6 +311,9 @@ export default function PersonCard() {
           </View>
         </View>
       </ScrollView>
+      {scrolled && insets.top > 0 ? (
+        <LinearGradient pointerEvents="none" colors={gradients.neon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[styles.clockBand, { height: insets.top }]} />
+      ) : null}
     </View>
   );
 }
@@ -374,6 +388,7 @@ function OpenAction({ kind, label, url }: { kind: ContactKind; label: string; ur
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
+  clockBand: { position: 'absolute', top: 0, left: 0, right: 0 },
   scroll: { flexGrow: 1 },
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, backgroundColor: colors.background },
   message: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15, textAlign: 'center' },

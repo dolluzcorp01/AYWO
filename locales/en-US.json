@@ -24,7 +24,12 @@
     "resendIn": "Resend code in {{seconds}} seconds",
     "wrongCode": "That code didn't work. Try again.",
     "changeNumber": "Wrong number? Change it",
-    "needCode": "Type all 6 digits of the code."
+    "needCode": "Type all 6 digits of the code.",
+    "testLabel": "Testing only: no SMS is sent yet. Your code is:",
+    "testCopy": "Copy",
+    "testUse": "Use this code",
+    "testCopied": "Code copied.",
+    "testCopyFailed": "Couldn't copy. Type the code instead."
   },
   "home": {
     "noTrees": "No family tree yet."

@@ -1,7 +1,8 @@
 // S-19 to S-21 frame. AYWO's own staff only, and only on the web. Sidebar shows what this person is granted,
 // in groups that open and close, with the way back to the family app and sign out at the bottom.
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Slot, usePathname, useRouter } from 'expo-router';
+import { Slot, usePathname } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';

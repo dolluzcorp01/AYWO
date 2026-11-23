@@ -23,6 +23,7 @@ import { requireUser } from '../auth-tokens.ts';
 import { config, isProduction, isReviewerLogin } from '../config.ts';
 import { asCaller, asServer } from '../db.ts';
 import { ApiError } from '../errors.ts';
+import { accountPhotoUrls } from '../services/faces.ts';
 import { signedReadUrls } from '../services/storage.ts';
 import { staffCall } from '../staff.ts';
 
@@ -148,8 +149,12 @@ export async function paymentRoutes(app: FastifyInstance): Promise<void> {
       };
     });
     const provider = providerForPhone(phone);
+    // A member whose name the database hid (a stranger to the caller) gets no photo either.
+    const members = (Array.isArray(summary.members) ? summary.members : []) as { profile_id: string; display_name?: string | null }[];
+    const faces = await accountPhotoUrls(members.filter((m) => !!m.display_name).map((m) => m.profile_id));
     return {
       ...summary,
+      members: members.map((m) => ({ ...m, photo_url: faces.get(m.profile_id) ?? null })),
       profile_id: userId,
       // Free Plus days from referrals or support. They count as Plus without any store plan.
       bonus_until: bonus && bonus.getTime() > Date.now() ? bonus.toISOString() : null,

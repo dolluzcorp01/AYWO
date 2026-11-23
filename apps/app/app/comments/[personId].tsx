@@ -1,5 +1,6 @@
 // Comments on a person's card (S-07). Commenter and up may write; the row rules decide.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';

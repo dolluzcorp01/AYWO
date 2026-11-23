@@ -1,6 +1,6 @@
 // Start a 1-to-1 with someone in the family or friends circle, or make a group.
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Field, Pills, PrimaryButton, SectionTitle } from '@/components/ui';

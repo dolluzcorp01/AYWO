@@ -1,7 +1,7 @@
 // S-13 Import. Pick a file, A6 'here's what we found', the gender list, A7 'Which one is you?', then one commit.
 // Nothing joins a tree until import_commit. Someone not in the file adds their own card with tree_add_me straight after.
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';

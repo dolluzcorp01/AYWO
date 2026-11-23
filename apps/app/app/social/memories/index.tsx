@@ -1,6 +1,6 @@
 // P2 memories feed: everything from the caller's trees and friends groups.
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';

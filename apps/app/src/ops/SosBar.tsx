@@ -1,6 +1,6 @@
 // The SOS bar at the top of Home: full width, hard to miss, hard to press by accident. Holding it for 2 seconds starts
 // the SOS straight away (the SOS screen opens already sending). A short tap only explains how it works.
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';

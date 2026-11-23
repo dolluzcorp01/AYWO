@@ -1,6 +1,6 @@
 // Larger pieces of the front page: where the buttons lead, the top bar, the "open on the web" button, the footer.
 import type { Href } from 'expo-router';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';

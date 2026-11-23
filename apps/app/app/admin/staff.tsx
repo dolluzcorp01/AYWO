@@ -4,7 +4,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { PhoneField } from '@/components/PhoneField';
 import { toE164 } from '@/lib/phone';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';

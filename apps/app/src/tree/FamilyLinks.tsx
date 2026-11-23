@@ -3,7 +3,7 @@
 // the tree looks half linked: Divya has only her father, who is married to Lakshmi, so "Is Lakshmi also
 // Divya's parent?". Nobody has to delete a person to fix a wrong link.
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';

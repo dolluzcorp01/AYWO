@@ -257,6 +257,7 @@ interface ActivityBase {
   tree_name: string;
   actor_id?: string | null;
   actor_name?: string | null;
+  actor_photo_url?: string | null;
   person_id?: string | null;
   person_name?: string | null;
   needs_you?: boolean;

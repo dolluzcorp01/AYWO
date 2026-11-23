@@ -1,6 +1,6 @@
 // E4 / S-11 Activity: what needs a decision, what changed, who has access.
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -201,7 +201,7 @@ function RequestRow({ item }: { item: RequestItem }) {
   return (
     <Card style={styles.card}>
       <View style={styles.rowTop}>
-        <Avatar personId={item.actor_id ?? item.id} size={44} />
+        <Avatar personId={item.actor_id ?? item.id} size={44} photoUrl={item.actor_photo_url} />
         <View style={styles.rowText}>
           <Text style={styles.text}>{textFor(item)}</Text>
           {details.map((line) => (

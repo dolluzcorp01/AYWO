@@ -1,5 +1,6 @@
 // D4: 'Akka or Thangai?'. The answer is a fact about the family, so it fixes the word for every cousin too.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';

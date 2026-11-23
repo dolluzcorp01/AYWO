@@ -1,7 +1,8 @@
 // E6 / S-12 History: every change and who made it, for a tree or one person. Undo puts it back.
 // The server lists single rows; one action on the screen is one batch, so rows are gathered here.
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, View } from 'react-native';

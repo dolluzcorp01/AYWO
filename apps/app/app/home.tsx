@@ -2,7 +2,8 @@
 // you, family dates, quick ways into family life, offers, and memories. Activity lives behind the bell.
 import { closeFamily, focusView, graphFromApi } from '@aywo/layout';
 import { useQuery } from '@tanstack/react-query';
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';

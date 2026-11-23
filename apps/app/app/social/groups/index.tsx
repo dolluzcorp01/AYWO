@@ -1,6 +1,6 @@
 // P2 friends groups: college and office gangs, as a circle of their own.
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, PrimaryButton } from '@/components/ui';
 import { api } from '@/lib/api';

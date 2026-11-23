@@ -245,20 +245,20 @@ export default function InviteDetail() {
                     keyboardType="number-pad"
                     maxLength={2}
                   />
-                  {/* The number has its own Save: someone who already answered can change only how many are coming. */}
-                  {e.my_answer ? (
+                  {/* The number has its own Save: someone who already answered can change only how many are coming.
+                      It appears only once the number is different, so there is never a grey button to explain. */}
+                  {e.my_answer && guestsChanged ? (
                     <View style={styles.start}>
                       <SmallButton
                         label={t('social.invites.saveGuests')}
                         kind="plain"
-                        disabled={!guestsChanged || rsvp.isPending}
+                        disabled={rsvp.isPending}
                         onPress={() => e.my_answer && rsvp.mutate({ answer: e.my_answer, onlyGuests: true })}
                       />
                     </View>
-                  ) : guests ? (
+                  ) : !e.my_answer && guests ? (
                     <Note>{t('social.invites.guestsAnswerFirst')}</Note>
                   ) : null}
-                  {e.my_answer && !guestsChanged && !guestsSaved && !rsvp.isPending ? <Note>{t('social.invites.guestsSame')}</Note> : null}
                   {guestsSaved ? <Note>{t('social.invites.guestsSaved')}</Note> : null}
                   <ActionError error={rsvp.error} />
                 </Card>
@@ -343,11 +343,9 @@ export default function InviteDetail() {
                       <ActionError error={setDesign.error ?? buyDesign.error} />
                       <Field label={t('social.invites.canvaLink')} value={canva} onChangeText={setCanva} autoCapitalize="none" placeholder={t('social.invites.canvaPlaceholder')} />
                       <ActionError error={saveCanva.error} />
-                      <SmallButton label={t('social.invites.saveCanva')} kind="plain" disabled={!canva.trim() || canva.trim() === (e.canva_url ?? '') || saveCanva.isPending} onPress={() => saveCanva.mutate()} />
-                      {!canva.trim() ? (
-                        <Note>{t('social.invites.canvaEmpty')}</Note>
-                      ) : canva.trim() === (e.canva_url ?? '') ? (
-                        <Note>{t('social.invites.canvaSame')}</Note>
+                      {/* Save appears only for a link that is new: an empty box or the saved link has nothing to save. */}
+                      {canva.trim() && canva.trim() !== (e.canva_url ?? '') ? (
+                        <SmallButton label={t('social.invites.saveCanva')} kind="plain" disabled={saveCanva.isPending} onPress={() => saveCanva.mutate()} />
                       ) : null}
                       {e.canva_url ? <TextButton label={t('social.invites.removeCanva')} danger onPress={() => setClearingCanva(true)} /> : null}
                     </Card>

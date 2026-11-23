@@ -1,7 +1,7 @@
 // S-01 Welcome + language (wireframe Main). The first screen of the phone apps, and on the website the step after
 // the front page's "Continue on the web".
 import { getCalendars } from 'expo-localization';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';

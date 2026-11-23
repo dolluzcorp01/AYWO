@@ -1,5 +1,5 @@
 // Owned by the social area: the SOS entry on the Me screen. Opens the screen with the hold and the 5-second cancel.
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ChevronIcon } from '@/components/Icons';

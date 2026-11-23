@@ -1,6 +1,6 @@
 // P3 Pop Party: a quick plan. Put dates, places and food to a vote among family and friends only.
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';

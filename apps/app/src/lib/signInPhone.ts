@@ -11,3 +11,14 @@ export function setSignInPhone(value: string | null): void {
 export function getSignInPhone(): string | null {
   return phone;
 }
+
+// Testing only: the code the server handed back because it sends no SMS yet. Never set by a live server.
+let testCode: string | null = null;
+
+export function setSignInTestCode(value: string | null): void {
+  testCode = value;
+}
+
+export function getSignInTestCode(): string | null {
+  return testCode;
+}

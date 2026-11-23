@@ -2,7 +2,7 @@
 // easy as agreeing). Terms and privacy are needed to use AYWO, so withdrawing those means deleting the account; the
 // health card and marketing messages can be withdrawn here in one tap. Below, the full history.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';

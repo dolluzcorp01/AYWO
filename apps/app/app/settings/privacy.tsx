@@ -1,6 +1,6 @@
 // S-17 Privacy and account: take a copy of everything, sign out, read the legal pages, delete the account.
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';

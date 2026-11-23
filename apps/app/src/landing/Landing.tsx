@@ -5,7 +5,7 @@
 // tapping a name changes the panel beside it.
 import { pricesFor } from '@aywo/shared';
 import { getCalendars } from 'expo-localization';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';

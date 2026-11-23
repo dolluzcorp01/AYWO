@@ -10,6 +10,7 @@ export interface PlanMember {
   profile_id: string;
   display_name: string;
   is_payer: boolean;
+  photo_url?: string | null;
 }
 
 export interface PriceTag {

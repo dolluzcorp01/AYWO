@@ -1,7 +1,8 @@
 // New invite. Everyone invited comes from the sender's own tree or groups.
 import { DateField, TimeField } from '@/components/DateTimeField';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking } from 'react-native';

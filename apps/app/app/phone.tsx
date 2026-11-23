@@ -1,5 +1,6 @@
 // S-02 Phone login (wireframe A2)
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -10,7 +11,7 @@ import { BackButton, Card, ErrorText, Heading, Muted, PrimaryButton } from '@/co
 import { api, ApiFailure } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
 import { toE164 } from '@/lib/phone';
-import { setSignInPhone } from '@/lib/signInPhone';
+import { setSignInPhone, setSignInTestCode } from '@/lib/signInPhone';
 import { track } from '@/lib/track';
 import { colors, fonts } from '@/theme/tokens';
 
@@ -33,7 +34,8 @@ export default function Phone() {
     setBusy(true);
     setMessage(null);
     try {
-      await api.post('/auth/otp/send', { phone });
+      const sent = await api.post<{ test_code?: string }>('/auth/otp/send', { phone });
+      setSignInTestCode(sent.test_code ?? null);
       track('code_requested');
       // In memory, not in the address: a phone number must not sit in the browser's history.
       setSignInPhone(phone);

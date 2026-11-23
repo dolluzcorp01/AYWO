@@ -7,7 +7,8 @@
 // (refunds are a staff action that talks to Razorpay or Stripe). So an order that has not started printing gets
 // "Ask to cancel this order": it sends AYWO Support a help request that already names the order.
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, StyleSheet, View } from 'react-native';

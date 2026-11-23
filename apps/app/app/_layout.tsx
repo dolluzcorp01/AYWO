@@ -8,7 +8,8 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import type { Href } from 'expo-router';
-import { Stack, useGlobalSearchParams, usePathname, useRouter, useSegments } from 'expo-router';
+import { Stack, useGlobalSearchParams, usePathname, useSegments } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
@@ -31,6 +32,7 @@ import { makeClient } from '@/lib/queryClient';
 import { AppGate } from '@/ops/appConfig';
 import { CrashBoundary, installCrashReporter, setCrashRoute } from '@/ops/crash';
 import { listenForPushTaps } from '@/pay/registerPush';
+import { MessageWatch } from '@/social/MessageWatch';
 
 installCrashReporter();
 
@@ -186,6 +188,7 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false }} />
           </AppFrame>
           <SignInGate signedIn={signedIn} />
+          {signedIn ? <MessageWatch /> : null}
           <RestartPrompt />
           <ToastHost />
         </PersistQueryClientProvider>

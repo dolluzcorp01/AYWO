@@ -1,7 +1,8 @@
 // One queue for everything staff must act on: abuse reports, help tickets, orders to print, takedowns, word reports.
 // Each item has an owner, a status, a priority and a deadline. Opening one shows its history and internal notes.
 import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import type { Href } from 'expo-router';
 import type { TFunction } from 'i18next';
 import { DateField } from '@/components/DateTimeField';

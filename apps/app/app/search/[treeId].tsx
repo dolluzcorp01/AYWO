@@ -1,6 +1,7 @@
 // F2 Search: names in this tree, in any script. Recent people stay as chips on this device.
 import { relationText } from '@aywo/layout';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Platform, Pressable, StyleSheet, View } from 'react-native';

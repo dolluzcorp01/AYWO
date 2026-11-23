@@ -1,5 +1,6 @@
 // F6 / S-14 Download family data: a GEDCOM file any family-tree app can open, or a picture of the tree as a PDF.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

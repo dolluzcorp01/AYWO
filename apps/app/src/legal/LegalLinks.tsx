@@ -2,7 +2,7 @@
 // A wide browser window (the website on a computer) also gets the full footer, which payment providers check for.
 // Everything else lives under Help and legal on the Me page.
 import type { Href } from 'expo-router';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Text';

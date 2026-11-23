@@ -2,7 +2,7 @@
 import { DateField } from '@/components/DateTimeField';
 import { todayIso } from '@/lib/time';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';

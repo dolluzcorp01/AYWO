@@ -1,7 +1,8 @@
 // The family guide, right after "Start from me": mother, father, partner, children, one question at a time.
 // Each "Add" opens the usual add form already set up and comes back here; "Skip" moves on. Steps already in the tree
 // are passed over. Afterwards the "Add your family" card on the tree keeps the rest one tap away.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';

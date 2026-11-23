@@ -1,7 +1,7 @@
 // Family in the tree who have not joined AYWO yet, each with an Invite button. Chat can only reach people who
 // have joined, so the chat screens show this instead of a dead end ("No one yet").
 import { closeFamily, focusView, graphFromApi } from '@aywo/layout';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';

@@ -1,6 +1,6 @@
 // Help centre: quick answers first, then a question to AYWO Support. Answers come back here and as a notification.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';

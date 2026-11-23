@@ -1,6 +1,7 @@
 // Plans and orders overview. Read only: webhooks alone change plans, and refunds happen at the store or gateway.
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';

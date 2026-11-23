@@ -1,7 +1,7 @@
 // The floating tab bar (Warm Daylight): Home, Family, the gold +, Chat, Me. Activity is the bell on Home.
 import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';

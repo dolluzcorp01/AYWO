@@ -4,7 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { z } from 'zod';
 import { hashToken, newRefreshToken, REFRESH_DAYS, requireUser, signAccessToken } from '../auth-tokens.ts';
-import { config, isReviewerLogin } from '../config.ts';
+import { config, isProduction, isReviewerLogin } from '../config.ts';
 import { asServer } from '../db.ts';
 import { ApiError } from '../errors.ts';
 import { sendSms } from '../services/sms.ts';
@@ -47,6 +47,16 @@ async function issueTokens(userId: string) {
   return { access_token: access, refresh_token: refresh.token, user_id: userId };
 }
 
+/**
+ * While AYWO is being tested no SMS is sent: SMS_PROVIDER is 'console' and the code is only printed where the
+ * server runs. Then, and only then, the code also goes back to the app, which shows it on the code screen so a
+ * tester does not need the server's window. A live server never runs with 'console' (sendSms refuses), and this
+ * checks for live as well, so a real person's code is never in an answer.
+ */
+function testCode(code: string): { test_code?: string } {
+  return config.SMS_PROVIDER === 'console' && !isProduction ? { test_code: code } : {};
+}
+
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   const strict = { config: { rateLimit: { max: 10, timeWindow: '10 minutes' } } };
 
@@ -73,7 +83,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       ),
     );
     if (!isReviewer) await sendSms(phone, `${code} is your AYWO code. It works for ${OTP_MINUTES} minutes.`, code);
-    return { ok: true };
+    return { ok: true, ...(isReviewer ? {} : testCode(code)) };
   });
 
   app.post('/auth/otp/verify', strict, async (req) => {
@@ -148,7 +158,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       ),
     );
     await sendSms(phone, `${code} is your AYWO code to change your number. It works for ${OTP_MINUTES} minutes.`, code);
-    return { ok: true };
+    return { ok: true, ...testCode(code) };
   });
 
   app.post('/me/phone/verify', strict, async (req) => {

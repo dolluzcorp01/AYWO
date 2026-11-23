@@ -1,7 +1,7 @@
 // Frequently asked questions. Public, grouped, and each answer opens on tap.
 // The search box at the top finds the questions that fit what was typed; see faqSearch.ts for how.
 import { pricesFor } from '@aywo/shared';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';

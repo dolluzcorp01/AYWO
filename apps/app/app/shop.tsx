@@ -1,7 +1,8 @@
 // Shop: a printed family tree poster or a family book, sent home. Prices come from the server; a coupon is checked
 // by the server too. Payment happens on Razorpay's or Stripe's own page; card details never reach AYWO.
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';

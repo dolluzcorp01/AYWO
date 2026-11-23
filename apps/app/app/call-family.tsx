@@ -1,7 +1,7 @@
 // Elder mode: "Call family". Everyone in the family with a number, big photo, big Call and WhatsApp buttons.
 // A locked number opens the person's card, which explains how to see it.
 import { relationText } from '@aywo/layout';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';

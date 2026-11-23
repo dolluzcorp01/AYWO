@@ -1,7 +1,7 @@
 // P4 alerts, free for everyone: ones received and ones sent. Opening this screen marks them as seen.
 // The sender can mark an alert sorted (blood found, help arrived) or delete one sent by mistake.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';

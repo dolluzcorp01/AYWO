@@ -1,7 +1,7 @@
 // S-17 Notifications: push and email for each kind of message. The delivery job reads these (LLD L11).
 // Emails go only to a confirmed address. Offers and news are off until the person switches them on (DPDP Act consent).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';

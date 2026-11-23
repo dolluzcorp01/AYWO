@@ -1,6 +1,7 @@
 // One account, everything staff may see about it: plan, trees, orders, tickets, reports, devices and staff history.
 // Opening it needs a reason, which is recorded. Phone and email stay partly hidden; family details stay private.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';

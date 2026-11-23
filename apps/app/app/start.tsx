@@ -1,6 +1,6 @@
 // A5: the first screen for someone with no tree yet. Bring a tree in, or start from yourself.
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { goBack } from '@/lib/nav';
 import { useTranslation } from 'react-i18next';

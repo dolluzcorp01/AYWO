@@ -2,7 +2,7 @@
 import { MENU, useAdminAccess } from '@/admin/access';
 import { MyAccess } from '@/admin/MyAccess';
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';

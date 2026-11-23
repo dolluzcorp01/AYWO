@@ -1,4 +1,4 @@
-import type { useRouter } from 'expo-router';
+import type { useRouter } from '@/lib/router';
 
 /** Back, or Home when there is nothing behind this screen: a reloaded web page, or a link opened straight here. */
 export function goBack(router: ReturnType<typeof useRouter>): void {

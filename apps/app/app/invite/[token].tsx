@@ -1,6 +1,7 @@
 // B1: what someone sees first when family sends them a link. Sign in to see the tree from their own place, or just look.
 import { LinearGradient } from 'expo-linear-gradient';
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

@@ -1,5 +1,6 @@
 // S-06 Tree (wireframes A8, A9, B3, C1 for family). One screen with a view switch, as on the wireframes.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';

@@ -1,7 +1,7 @@
 // Home cards that bring people back for good reasons: family birthdays and anniversaries coming up, and a memory
 // from this day in an earlier year.
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';

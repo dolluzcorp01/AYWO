@@ -1,6 +1,6 @@
 // S-17 Successor: who looks after a tree if its Creator goes quiet or leaves. Must already belong to the tree (tree_update).
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';

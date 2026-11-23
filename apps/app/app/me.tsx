@@ -1,7 +1,7 @@
 // F5 / S-17 Me: the person, their plan, their trees and the app's settings.
 import { useQueries, useQuery } from '@tanstack/react-query';
 import type { Href } from 'expo-router';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';

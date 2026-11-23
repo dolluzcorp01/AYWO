@@ -1,7 +1,7 @@
 // Banners staff write in admin Offers: a slim scrolling strip at the top of the app or the website, and offer cards on
 // Home. Scrolling stops for people who asked their phone for less motion; then the banners take turns instead.
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import type { Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

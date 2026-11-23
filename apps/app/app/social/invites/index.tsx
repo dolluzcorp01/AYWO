@@ -1,6 +1,6 @@
 // P3 invites and Pop Parties: ones the caller is hosting and ones they are invited to.
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { EmptyState, PrimaryButton, SecondaryButton, SectionTitle } from '@/components/ui';

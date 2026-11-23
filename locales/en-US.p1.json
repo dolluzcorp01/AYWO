@@ -360,6 +360,7 @@
     "notes": "Notes",
     "addToTree": "Add to the tree",
     "added": "{{name}} is added to the tree.",
+    "contactsLoading": "Getting their phone number and email…",
     "loadLatest": "Load the latest",
     "sentForApproval": "Thank you. This has gone to the tree's Creator to approve.",
     "addRequested": "Sent to the tree's Creator to approve. Phone numbers and a photo can be added once the person is in the tree.",

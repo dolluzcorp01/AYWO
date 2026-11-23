@@ -1,5 +1,6 @@
 // E1 / S-09 Add a relative: who to, which relation, which partner, how. Then someone new (E2) or someone already in the tree.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';

@@ -1,7 +1,7 @@
 // P5 SOS, free. Hold for 2 seconds and it starts at once: every contact with AYWO hears an alarm, the others get a text,
 // and live location begins. Only then are the choices shown: call the first contact, call the emergency number, or stop.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';

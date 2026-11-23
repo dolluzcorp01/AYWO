@@ -2,7 +2,8 @@
 // the profile step when the account has no name yet, otherwise Home (or the link they came from).
 import { useIsRestoring, useQueryClient } from '@tanstack/react-query';
 import type { Href } from 'expo-router';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/Screen';

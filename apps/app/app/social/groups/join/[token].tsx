@@ -1,6 +1,7 @@
 // Opening a shared group link. Needs an account: the sign-in gate sends visitors to log in first.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Muted, PrimaryButton } from '@/components/ui';

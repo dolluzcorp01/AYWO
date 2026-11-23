@@ -27,7 +27,12 @@
     "resendIn": "Resend code in {{seconds}} seconds",
     "wrongCode": "That code didn't work. Try again.",
     "changeNumber": "Wrong number? Change it",
-    "needCode": "Type all 6 digits of the code."
+    "needCode": "Type all 6 digits of the code.",
+    "testLabel": "Testing only: no SMS is sent yet. Your code is:",
+    "testCopy": "Copy",
+    "testUse": "Use this code",
+    "testCopied": "Code copied.",
+    "testCopyFailed": "Couldn't copy. Type the code instead."
   },
   "home": {
     "noTrees": "No family tree yet.",
@@ -593,6 +598,7 @@
     "notes": "Notes",
     "addToTree": "Add to the tree",
     "added": "{{name}} is added to the tree.",
+    "contactsLoading": "Getting their phone number and email…",
     "loadLatest": "Load the latest",
     "sentForApproval": "Thank you. This has gone to the tree's Creator to approve.",
     "addRequested": "Sent to the tree's Creator to approve. Phone numbers and a photo can be added once the person is in the tree.",
@@ -2919,6 +2925,8 @@
       "deleted": "This message was deleted",
       "photo": "Photo",
       "voiceNote": "Voice note",
+      "newFrom": "New message from {{name}}",
+      "openHint": "Opens the chat",
       "oneToOne": "1-to-1",
       "group": "Group",
       "pickPerson": "Who do you want to talk to?",
@@ -3122,10 +3130,7 @@
       },
       "removeCanva": "Remove link",
       "removeCanvaTitle": "Remove the Canva link?",
-      "removeCanvaMessage": "People invited will no longer see the 'See the design' button. You can add a link again later.",
-      "canvaEmpty": "Paste a link above, then save it.",
-      "canvaSame": "This link is already saved.",
-      "guestsSame": "Change the number above, then save it."
+      "removeCanvaMessage": "People invited will no longer see the 'See the design' button. You can add a link again later."
     },
     "pop": {
       "new": "New Pop Party",

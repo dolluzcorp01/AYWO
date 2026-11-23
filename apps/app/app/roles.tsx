@@ -1,6 +1,7 @@
 // What each role in a tree can do. A table to compare on a wide screen; on a phone, pick a role and read its list.
 // Opened from Share, the Help centre and the line under a tree's name; ?role= opens on that role.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';

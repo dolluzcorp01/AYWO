@@ -1,6 +1,6 @@
 // The health card notice (DPDP Rules, rule 3): on its own, in plain words, item by item: what is kept, why, who sees
 // it, for how long, that it is optional, how to withdraw, and where to complain. Shown before the first save.
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';

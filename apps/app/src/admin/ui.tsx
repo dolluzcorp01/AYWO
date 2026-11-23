@@ -1,7 +1,8 @@
 // Shared pieces of the admin panel: page frame, table, search, paging, dialogs. Web only, using the frozen tokens.
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseQueryResult } from '@tanstack/react-query';
-import { usePathname, useRouter } from 'expo-router';
+import { usePathname } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useRef, useState } from 'react';
 import type { ComponentRef, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,14 +1,16 @@
 // S-03 OTP (wireframe A3)
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Screen } from '@/components/Screen';
+import { TestCode } from '@/components/TestCode';
 import { Text, TextInput } from '@/components/Text';
 import { BackButton, ErrorText, Heading, Muted, PrimaryButton, TextButton } from '@/components/ui';
 import { api, ApiFailure, saveSession } from '@/lib/api';
 import { errorKey } from '@/lib/errors';
-import { getSignInPhone, setSignInPhone } from '@/lib/signInPhone';
+import { getSignInPhone, getSignInTestCode, setSignInPhone, setSignInTestCode } from '@/lib/signInPhone';
 import { track } from '@/lib/track';
 import { colors, fonts } from '@/theme/tokens';
 
@@ -21,6 +23,8 @@ export default function Otp() {
   // Handed over in memory by the phone screen (never in the address).
   const [phone] = useState(getSignInPhone);
   const [code, setCode] = useState('');
+  // Testing only: the code, when the server sends no SMS yet.
+  const [testCode, setTestCode] = useState(getSignInTestCode);
   const [busy, setBusy] = useState(false);
   const [messageKey, setMessageKey] = useState<string | null>(null);
   const [wait, setWait] = useState(RESEND_SECONDS);
@@ -49,6 +53,7 @@ export default function Otp() {
       await saveSession(await api.post<{ access_token: string; refresh_token: string }>('/auth/otp/verify', { phone, code: entered }));
       track('code_verified');
       setSignInPhone(null);
+      setSignInTestCode(null);
       router.replace({ pathname: '/after-login', params: next ? { next } : {} });
     } catch (error) {
       setMessageKey(error instanceof ApiFailure && error.code === 'otp_wrong' ? 'otp.wrongCode' : errorKey(error));
@@ -61,7 +66,10 @@ export default function Otp() {
     setWait(RESEND_SECONDS);
     setMessageKey(null);
     // A refused resend (too many codes, no connection) used to fail silently, leaving people waiting for an SMS.
-    await api.post('/auth/otp/send', { phone }).catch((error: unknown) => setMessageKey(errorKey(error)));
+    await api
+      .post<{ test_code?: string }>('/auth/otp/send', { phone })
+      .then((sent) => setTestCode(sent.test_code ?? null))
+      .catch((error: unknown) => setMessageKey(errorKey(error)));
   }
 
   if (!phone) return <Screen>{null}</Screen>;
@@ -91,6 +99,13 @@ export default function Otp() {
           style={styles.code}
         />
         {messageKey ? <ErrorText>{t(messageKey)}</ErrorText> : null}
+        <TestCode
+          code={testCode}
+          onUse={(value) => {
+            setCode(value);
+            void verify(value);
+          }}
+        />
       </View>
       {wait > 0 ? (
         <Text style={styles.resend}>{t('otp.resendIn', { seconds: wait })}</Text>

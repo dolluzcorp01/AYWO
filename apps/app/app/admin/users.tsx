@@ -1,5 +1,6 @@
 // Find accounts; open one account's full view; block and unblock. Phones and emails are masked by the server.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';

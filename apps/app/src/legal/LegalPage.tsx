@@ -1,5 +1,5 @@
 // The public pages: Terms, Privacy policy, Return and refund policy, Contact. Open to everyone, signed in or not.
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Screen } from '@/components/Screen';

@@ -11,6 +11,7 @@ import { requireUser } from '../auth-tokens.ts';
 import { config } from '../config.ts';
 import { asCaller, asServer } from '../db.ts';
 import { ApiError } from '../errors.ts';
+import { accountPhotoUrls } from '../services/faces.ts';
 import { signedReadUrl, signedReadUrls, uploadObject } from '../services/storage.ts';
 
 const idParam = z.object({ id: z.uuid() });
@@ -330,7 +331,11 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
     const { tab, limit } = z
       .object({ tab: z.enum(['needs_you', 'changes', 'access', 'all']).default('all'), limit: z.coerce.number().int().min(1).max(200).default(50) })
       .parse(req.query);
-    return asCaller(userId, (db) => call(db, 'activity_feed($1, $2)', [tab, limit]));
+    const lines = await asCaller(userId, (db) => call<{ actor_id?: string | null }[]>(db, 'activity_feed($1, $2)', [tab, limit]));
+    if (!Array.isArray(lines)) return lines;
+    // The list names who did each thing; their photo goes with the name.
+    const faces = await accountPhotoUrls(lines.map((line) => line.actor_id));
+    return lines.map((line) => ({ ...line, actor_photo_url: (line.actor_id && faces.get(line.actor_id)) || null }));
   });
 
   app.post('/requests/:id/decide', async (req) => {

@@ -1,7 +1,8 @@
 // E3 / S-10 Share: who it is for, what they can do, then send. Below that, who already has access.
 import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Modal, Pressable, ScrollView, Share as NativeShare, StyleSheet, View } from 'react-native';

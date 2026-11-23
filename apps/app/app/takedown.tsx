@@ -1,7 +1,8 @@
 // Public: someone added to a tree without asking can ask for it to be removed. No account needed.
 // AYWO Admin decides (S-20). The route is rate limited and says nothing about whether a person exists.
 import { useMutation } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';

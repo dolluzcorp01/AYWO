@@ -1,5 +1,6 @@
 // E5: 'Same person?' Two cards side by side, why AYWO thinks so, and one decision. Merging can be undone from History.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';

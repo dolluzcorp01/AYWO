@@ -1,6 +1,7 @@
 // E2 / S-08: a new person (from E1) or changing an existing one. Name is the only required thing.
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -165,8 +166,12 @@ export default function PersonDetails() {
     }
   }, [node, loadedVersion]);
 
+  // Once only. The same list is fetched again whenever the connection comes back, and filling the boxes each time
+  // threw away a number the person was in the middle of typing.
+  const contactsFilled = useRef(false);
   useEffect(() => {
-    if (!stored.data) return;
+    if (!stored.data || contactsFilled.current) return;
+    contactsFilled.current = true;
     const next = { ...NO_CONTACTS };
     for (const c of stored.data) if (!next[c.kind] && c.value) next[c.kind] = c.value;
     const same = !!next.mobile && !!next.whatsapp && normalizeContact('mobile', next.mobile) === normalizeContact('whatsapp', next.whatsapp);
@@ -384,6 +389,7 @@ export default function PersonDetails() {
         await client.invalidateQueries({ queryKey: ['tree-view', treeId] });
         await client.invalidateQueries({ queryKey: ['person-card', personId] });
         refreshFamilyDates(client);
+        showToast('success', t('common.saved'));
         leave();
         return;
       }
@@ -492,7 +498,12 @@ export default function PersonDetails() {
   const addByRequest = !editing && errorCode(anchorRights.error) === 'not_allowed';
   // Those who run the tree always write directly, so their boxes show at once instead of after the answer comes.
   const runsTree = tree.data.role === 'creator' || tree.data.role === 'co_creator';
-  const contactsOpen = editing ? !stored.isError : runsTree || (!anchorRights.isPending && !addByRequest);
+  // A refusal means this person's edits go as a request. Any other failure (no connection, say) is only a failure
+  // to load, and must not be shown as "you may not".
+  const contactsRefused = editing && errorCode(stored.error) === 'not_allowed';
+  const contactsFailed = editing && stored.isError && !contactsRefused;
+  const contactsLoading = editing && stored.isPending;
+  const contactsOpen = editing ? !stored.isError && !stored.isPending : runsTree || (!anchorRights.isPending && !addByRequest);
   const photoOpen = editing || contactsOpen;
   /** The problem with one box, written under it. */
   const problemFor = (field: BadField) =>
@@ -574,7 +585,7 @@ export default function PersonDetails() {
           </View>
         </View>
         {problemFor('name')}
-        {addByRequest || (editing && stored.isError) ? <Text style={styles.approvalNote}>{t(editing ? 'details.approvalEditNote' : 'details.approvalAddNote')}</Text> : null}
+        {addByRequest || contactsRefused ? <Text style={styles.approvalNote}>{t(editing ? 'details.approvalEditNote' : 'details.approvalAddNote')}</Text> : null}
         {photo || (node?.photoUrl && !noPhoto) ? (
           <TextButton
             label={t('profile.removePhoto')}
@@ -664,6 +675,8 @@ export default function PersonDetails() {
         </View>
         )}
 
+        {contactsLoading ? <Text style={styles.approvalNote}>{t('details.contactsLoading')}</Text> : null}
+        {contactsFailed ? <LoadFailed message={errorText(stored.error)} onRetry={() => void stored.refetch()} /> : null}
         {contactsOpen ? (
           <View style={styles.group} onLayout={mark('mobile')}>
             <PhoneField
@@ -761,7 +774,7 @@ export default function PersonDetails() {
         {editing ? <TextButton label={t('details.remove')} onPress={() => setRemoving(true)} danger /> : null}
       </ScrollView>
 
-      <PrimaryButton label={editing ? t('common.save') : t('details.addToTree')} onPress={save} disabled={busy || !!notice} />
+      <PrimaryButton label={editing ? t('common.save') : t('details.addToTree')} onPress={save} disabled={busy || !!notice || contactsLoading} />
 
       <ConfirmDialog
         visible={removing}

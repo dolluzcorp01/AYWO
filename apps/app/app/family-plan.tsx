@@ -7,7 +7,7 @@
 // POST /pay/razorpay/cancel should set will_renew = false itself.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -313,7 +313,7 @@ function MemberRow(props: {
   const shownName = member.display_name || t('pay.family.unnamed');
   return (
     <View style={styles.member}>
-      <Avatar personId={member.profile_id} size={44} />
+      <Avatar personId={member.profile_id} size={44} photoUrl={member.photo_url} />
       <Text style={styles.memberName} numberOfLines={2}>{shownName}</Text>
       {member.is_payer ? (
         <LinearGradient colors={gradients.neon} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.pays}>

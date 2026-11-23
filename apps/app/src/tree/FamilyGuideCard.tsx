@@ -1,6 +1,6 @@
 // "Add your family": the close relatives still missing, one tap each, until the tree has 5 people.
 // Shown under the tree and on Home. Each button opens the add form already set (relation, and gender for parents).
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { PlusIcon } from '@/components/Icons';

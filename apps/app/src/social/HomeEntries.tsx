@@ -1,6 +1,6 @@
 // Owned by the social area: links to chat, memories, invites and alerts on Home, with any running SOS on top.
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';

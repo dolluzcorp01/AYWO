@@ -1,5 +1,5 @@
 // Staff second sign-in step: set up an authenticator app once, then type its 6-digit code every 12 hours.
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import qrcode from 'qrcode-generator';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

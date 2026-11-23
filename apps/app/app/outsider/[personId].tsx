@@ -1,5 +1,6 @@
 // D3: a person's card for someone outside the family. Name, photo, grey icons. No contact data is ever sent here.
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';

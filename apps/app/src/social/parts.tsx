@@ -1,6 +1,6 @@
 // Building blocks shared by the social screens, on top of the frozen components.
 import type { UseQueryResult } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
