@@ -1057,7 +1057,8 @@
         "store_links": "The website's front page and the Update button in the apps open these links.",
         "publisher": "The Contact, Terms, Privacy and Refunds pages show these details to everyone.",
         "emergency_numbers": "The SOS screens offer these numbers to call. Check each one: people use them in an emergency.",
-        "faq": "The FAQ page shows these questions to everyone."
+        "faq": "The FAQ page shows these questions to everyone.",
+        "shop_text": "The shop, orders, offers and the website's front page show these names and descriptions to everyone."
       },
       "versions": "App versions",
       "versionsHelp": "Below the minimum, the app stops and asks for an update. Below the latest, it suggests one.",
@@ -1336,7 +1337,13 @@
       "faqKeep": "Keep this question",
       "faqBuiltIn": "Built-in questions",
       "faqBuiltInHelp": "Untick a question to hide it from the FAQ page. Tick it again to bring it back.",
-      "faqNotSaved": "Not saved yet. Press Save below to put these changes on the FAQ page."
+      "faqNotSaved": "Not saved yet. Press Save below to put these changes on the FAQ page.",
+      "shop": "Shop products",
+      "shopHelp": "What each product is called and how it is described, in the shop, on orders, on offers and on the website's front page. Leave a box empty to keep the app's own words, shown in grey. Pictures and prices are under Offers.",
+      "shopNameEn": "Name (English)",
+      "shopNameTa": "Name (Tamil)",
+      "shopAboutEn": "Description (English)",
+      "shopAboutTa": "Description (Tamil)"
     }
   },
   "errors": {

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';
-import { EmergencyPanel, FaqPanel, PublisherPanel } from '@/admin/ContentPanels';
+import { EmergencyPanel, FaqPanel, PublisherPanel, ShopTextPanel } from '@/admin/ContentPanels';
 import type { AdminConfig, AppHealth, ConfigKey } from '@/admin/types';
 import { Actions, AdminPage, adminStyles, Checkbox, DataTable, Field, FilterChips, formatDate, FormDialog, Message, Panel, Pill, QueryState, SecondaryButton, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
@@ -71,6 +71,7 @@ function Controls({ content }: { content: boolean }) {
                 <PublisherPanel value={config.publisher?.value ?? {}} onSave={config.publisher ? ask('publisher') : null} footer={footer('publisher')} />
                 <EmergencyPanel value={config.emergency_numbers?.value ?? {}} onSave={config.emergency_numbers ? ask('emergency_numbers') : null} footer={footer('emergency_numbers')} />
                 <FaqPanel value={config.faq?.value ?? {}} onSave={config.faq ? ask('faq') : null} footer={footer('faq')} />
+                <ShopTextPanel value={config.shop_text?.value ?? {}} onSave={config.shop_text ? ask('shop_text') : null} footer={footer('shop_text')} />
               </>
             ) : (
               <>

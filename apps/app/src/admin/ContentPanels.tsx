@@ -203,3 +203,53 @@ export function FaqPanel({ value, onSave, footer }: { value: Value; onSave: Save
     </Panel>
   );
 }
+
+const SHOP_PRODUCTS = ['tree_poster', 'family_book', 'premium_invite'] as const;
+type Words = { en?: string; ta?: string };
+type ProductText = { name?: Words; about?: Words };
+
+/** What each shop product is called and how it is described. An empty box keeps the app's own words, shown as the hint. */
+export function ShopTextPanel({ value, onSave, footer }: { value: Value; onSave: Save; footer: ReactNode }) {
+  const { t, i18n } = useTranslation();
+  const [words, setWords] = useState<Record<string, ProductText>>(() => value as Record<string, ProductText>);
+  const set = (product: string, part: 'name' | 'about', lang: 'en' | 'ta', v: string) =>
+    setWords((now) => ({ ...now, [product]: { ...now[product], [part]: { ...now[product]?.[part], [lang]: v } } }));
+  // Only what was typed is saved: an empty box must fall back to the app's words, not blank the name.
+  const cleaned = () => {
+    const out: Record<string, ProductText> = {};
+    for (const product of SHOP_PRODUCTS) {
+      for (const part of ['name', 'about'] as const) {
+        for (const lang of ['en', 'ta'] as const) {
+          const typed = words[product]?.[part]?.[lang]?.trim();
+          if (typed) out[product] = { ...out[product], [part]: { ...out[product]?.[part], [lang]: typed } };
+        }
+      }
+    }
+    return out;
+  };
+  const builtIn = (key: string, lng: string) => i18n.t(key, { lng, defaultValue: '' });
+  return (
+    <Panel title={t('admin.content.shop')}>
+      <Text style={adminStyles.cellMuted}>{t('admin.content.shopHelp')}</Text>
+      {SHOP_PRODUCTS.map((product) => (
+        <View key={product} style={{ gap: 8 }}>
+          <Text style={adminStyles.cellStrong}>{builtIn(`ops.shop.products.${product}`, 'en-US')}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+            <View style={{ flexBasis: 240, flexGrow: 1 }}>
+              <Field label={t('admin.content.shopNameEn')} value={words[product]?.name?.en ?? ''} onChange={(v) => set(product, 'name', 'en', v)} maxLength={60} placeholder={builtIn(`ops.shop.products.${product}`, 'en-US')} />
+            </View>
+            <View style={{ flexBasis: 240, flexGrow: 1 }}>
+              <Field label={t('admin.content.shopNameTa')} value={words[product]?.name?.ta ?? ''} onChange={(v) => set(product, 'name', 'ta', v)} maxLength={60} placeholder={builtIn(`ops.shop.products.${product}`, 'ta')} />
+            </View>
+          </View>
+          <Field label={t('admin.content.shopAboutEn')} value={words[product]?.about?.en ?? ''} onChange={(v) => set(product, 'about', 'en', v)} multiline maxLength={300} placeholder={builtIn(`ops.shop.about.${product}`, 'en-US')} />
+          <Field label={t('admin.content.shopAboutTa')} value={words[product]?.about?.ta ?? ''} onChange={(v) => set(product, 'about', 'ta', v)} multiline maxLength={300} placeholder={builtIn(`ops.shop.about.${product}`, 'ta')} />
+        </View>
+      ))}
+      {footer}
+      <Actions>
+        <SecondaryButton main label={t('admin.common.save')} disabled={!onSave} onPress={() => onSave?.(cleaned())} />
+      </Actions>
+    </Panel>
+  );
+}

@@ -28,6 +28,8 @@ export interface AppConfig {
   emergency_numbers?: Record<string, string>;
   /** Questions staff added to the FAQ, and built-in ones they hid ("group.question"). */
   faq?: { items?: FaqItem[]; hidden?: string[] };
+  /** Staff's own name and description for each shop product. Empty parts fall back to the app's words. */
+  shop_text?: Record<string, { name?: { en?: string; ta?: string }; about?: { en?: string; ta?: string } }>;
 }
 
 export interface FaqItem {

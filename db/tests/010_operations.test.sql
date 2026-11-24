@@ -243,6 +243,8 @@ select throws_ok($$ select admin_config_set('emergency_numbers', '{"IN": "call m
 select lives_ok($$ select admin_config_set('faq', '{"items": [{"id": "q1abc", "group": "start", "q": {"en": "Is AYWO free?"}, "a": {"en": "Yes, the tree is free."}}], "hidden": ["plus.trial"]}', 'New question from support') $$, 'a question is added to the FAQ and one is hidden');
 select throws_ok($$ select admin_config_set('faq', '{"items": [{"id": "q1abc", "group": "nowhere", "q": {"en": "Hello?"}, "a": {"en": "Hi."}}]}', 'bad group') $$, 'PT422', 'bad_input', 'a question must sit in a group the FAQ has');
 select is((app_config_public() -> 'faq' -> 'items' -> 0 #>> '{q,en}'), 'Is AYWO free?', 'the added question reaches the apps');
+select lives_ok($$ select admin_config_set('shop_text', '{"tree_poster": {"name": {"en": "Family wall poster", "ta": "குடும்ப சுவரொட்டி"}}}', 'Marketing asked for a new name') $$, 'a shop product gets staff''s own name');
+select throws_ok($$ select admin_config_set('shop_text', '{"gold_coin": {"name": {"en": "Gold"}}}', 'not a product') $$, 'PT422', 'bad_input', 'only real products can be named');
 reset role;
 set local role anon;
 select is((app_config_public() -> 'maintenance' ->> 'on'), 'true', 'everyone can read the app settings, signed in or not');

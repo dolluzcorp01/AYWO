@@ -18,6 +18,7 @@ import { FloatingNote, PhoneMock } from './art';
 import { FEATURES, Question, QUESTIONS, StoreButton, Tick } from './parts';
 import { ProductPicture } from '@/ops/ProductPicture';
 import { LandingBar, LandingFooter, useFrontDoor, WebButton } from './shared';
+import { useProductWords } from '@/ops/productWords';
 
 const STEPS = ['one', 'two', 'three'] as const;
 const BAR_HEIGHT = 64;
@@ -38,6 +39,7 @@ const WORD_LOOKS = [
 
 export function Landing() {
   const { t } = useTranslation();
+  const productWords = useProductWords();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const wide = width >= 960;
@@ -258,8 +260,8 @@ export function Landing() {
                 <View key={product} style={styles.product}>
                   <ProductPicture product={product} />
                   <View style={styles.productWords}>
-                    <Text style={styles.h3}>{t(`ops.shop.products.${product}`)}</Text>
-                    <Text style={styles.body}>{t(`ops.shop.about.${product}`)}</Text>
+                    <Text style={styles.h3}>{productWords.name(product)}</Text>
+                    <Text style={styles.body}>{productWords.about(product)}</Text>
                   </View>
                 </View>
               ))}

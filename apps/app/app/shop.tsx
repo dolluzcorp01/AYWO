@@ -19,6 +19,7 @@ import { formatMoney } from '@/ops/types';
 import type { CouponQuote, Product, Products } from '@/ops/types';
 import { ActionError, Gate, Note, Page } from '@/social/parts';
 import { colors, fonts } from '@/theme/tokens';
+import { useProductWords } from '@/ops/productWords';
 
 // The last delivery address, kept on this phone only, so a second order does not start from empty boxes.
 const LAST_ADDRESS = 'aywo.lastAddress';
@@ -27,6 +28,7 @@ const EMPTY: ShippingAddress = { name: '', line1: '', line2: '', city: '', state
 
 export default function Shop() {
   const { t, i18n } = useTranslation();
+  const productWords = useProductWords();
   const router = useRouter();
   const params = useLocalSearchParams<{ coupon?: string; product?: Product }>();
   const me = useMe();
@@ -117,7 +119,7 @@ export default function Shop() {
           coupon: quote ? quote.code : undefined,
           expected_unit_minor: price?.amount_minor,
         },
-        { description: t(`ops.shop.products.${product}`), methodLabel: t('ops.shop.pay') },
+        { description: productWords.name(product), methodLabel: t('ops.shop.pay') },
         { onOrder: (id) => { orderId.current = id; } },
       ),
     onMutate: () => {
@@ -210,7 +212,7 @@ export default function Shop() {
             {(price?.images?.length ?? 0) > 1 ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery}>
                 {(price?.images ?? []).slice(1).map((uri) => (
-                  <Image key={uri} source={{ uri }} resizeMode="cover" accessibilityLabel={t(`ops.shop.products.${product}`)} style={styles.galleryPicture} />
+                  <Image key={uri} source={{ uri }} resizeMode="cover" accessibilityLabel={productWords.name(product)} style={styles.galleryPicture} />
                 ))}
               </ScrollView>
             ) : null}

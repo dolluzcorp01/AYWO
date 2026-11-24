@@ -7,6 +7,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { Text } from '@/components/Text';
 import { colors, fonts, radius } from '@/theme/tokens';
 import type { Product } from './types';
+import { useProductWords } from '@/ops/productWords';
 
 /** A small family tree: two grandparents, two parents, three children, joined by lines. Drawn inside w x h at x, y. */
 function MiniTree({ x, y, w, h, line, dots }: { x: number; y: number; w: number; h: number; line: string; dots: string[] }) {
@@ -74,8 +75,8 @@ export function ProductPicture({ product, image }: { product: Product; image?: s
 
 /** A product as a card to tap: its picture, its name and, when known, its price. `on` marks the chosen one. */
 export function ProductCard({ product, price, image, on, onPress }: { product: Product; price?: string; image?: string | null; on?: boolean; onPress: () => void }) {
-  const { t } = useTranslation();
-  const name = t(`ops.shop.products.${product}`);
+  const words = useProductWords();
+  const name = words.name(product);
   return (
     <Pressable
       accessibilityRole={on === undefined ? 'button' : 'radio'}
@@ -88,7 +89,7 @@ export function ProductCard({ product, price, image, on, onPress }: { product: P
       <View style={styles.words}>
         <Text style={styles.name}>{name}</Text>
         {price ? <Text style={styles.price}>{price}</Text> : null}
-        <Text style={styles.about}>{t(`ops.shop.about.${product}`)}</Text>
+        <Text style={styles.about}>{words.about(product)}</Text>
       </View>
     </Pressable>
   );

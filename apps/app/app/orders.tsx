@@ -20,6 +20,7 @@ import { formatMoney } from '@/ops/types';
 import type { MyOrder as BasicOrder } from '@/ops/types';
 import { ActionError, Gate, Note, Page } from '@/social/parts';
 import { colors, fonts } from '@/theme/tokens';
+import { useProductWords } from '@/ops/productWords';
 
 /** What my_orders adds for the buyer (migration 0032): where it is going, and the payment service's own id. */
 interface MyOrder extends BasicOrder {
@@ -53,6 +54,7 @@ function safeLink(url: string | null): string | null {
 
 export default function MyOrders() {
   const { t, i18n } = useTranslation();
+  const productWords = useProductWords();
   const router = useRouter();
   const params = useLocalSearchParams<{ paid?: string; order?: string }>();
   const justPaid = params.paid === '1';
@@ -94,7 +96,7 @@ export default function MyOrders() {
         p_subject: t('ops.orders.cancelSubject', { ref: orderRef(o.id) }),
         p_category: 'order',
         p_body: t('ops.orders.cancelBody', {
-          product: t(`ops.shop.products.${o.product}`),
+          product: productWords.name(o.product),
           quantity: o.quantity,
           id: o.id,
           date: day(o.paid_at ?? o.created_at),
@@ -158,7 +160,7 @@ export default function MyOrders() {
                 return (
                   <Card key={o.id} style={styles.order}>
                     <Text style={styles.title}>
-                      {t(`ops.shop.products.${o.product}`)}
+                      {productWords.name(o.product)}
                       {o.quantity > 1 ? ` x ${o.quantity}` : ''}
                     </Text>
                     <Note>{t('ops.orders.paidLine', { amount: formatMoney(o.amount_minor, o.currency, i18n.language), date: day(o.paid_at ?? o.created_at) })}</Note>

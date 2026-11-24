@@ -14,9 +14,11 @@ import { ProductCard, ProductRow } from '@/ops/ProductPicture';
 import type { Offer, Products } from '@/ops/types';
 import { Gate, Note, Page } from '@/social/parts';
 import { colors, fonts } from '@/theme/tokens';
+import { useProductWords } from '@/ops/productWords';
 
 export default function Offers() {
   const { t, i18n } = useTranslation();
+  const productWords = useProductWords();
   const router = useRouter();
   const offers = useQuery({ queryKey: ['offers'], queryFn: () => api.rpc<Offer[]>('offers_list') });
   const [copied, setCopied] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export default function Offers() {
                   <Text style={styles.title}>{o.title}</Text>
                   {o.description ? <Text style={styles.body}>{o.description}</Text> : null}
                   <Note>
-                    {o.products.map((p) => t(`ops.shop.products.${p}`)).join(', ')}
+                    {o.products.map((p) => productWords.name(p)).join(', ')}
                     {o.ends_at ? ` · ${t('ops.offers.until', { date: new Date(o.ends_at).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' }) })}` : ''}
                   </Note>
                   <View style={styles.actions}>
