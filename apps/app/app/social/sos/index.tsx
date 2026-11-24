@@ -11,7 +11,7 @@ import { Card, ConfirmDialog, ErrorText, Loading, Pills, PrimaryButton, Secondar
 import { api, deviceStore } from '@/lib/api';
 import { errorCode } from '@/lib/errors';
 import { callNow, dialEmergency } from '@/social/call';
-import { emergencyNumber } from '@/social/emergency';
+import { useEmergencyNumber } from '@/social/emergency';
 import { ActionError, Note, Page, useName } from '@/social/parts';
 import {
   locationPermissionNow,
@@ -42,7 +42,7 @@ class StartTimeout extends Error {}
 
 function EmergencyButton() {
   const { t } = useTranslation();
-  const number = emergencyNumber();
+  const number = useEmergencyNumber();
   return (
     <View style={styles.block}>
       <SecondaryButton label={t('social.sos.callEmergency', { number })} onPress={() => void dialEmergency(number)} />

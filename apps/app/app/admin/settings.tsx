@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useAdminAccess } from '@/admin/access';
+import { EmergencyPanel, FaqPanel, PublisherPanel } from '@/admin/ContentPanels';
 import type { AdminConfig, AppHealth, ConfigKey } from '@/admin/types';
 import { Actions, AdminPage, adminStyles, Checkbox, DataTable, Field, FilterChips, formatDate, FormDialog, Message, Panel, Pill, QueryState, SecondaryButton, useRefreshAfter } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
@@ -14,7 +15,7 @@ import { api } from '@/lib/api';
 export default function AdminSettings() {
   const { t } = useTranslation();
   const access = useAdminAccess();
-  const [tab, setTab] = useState<'controls' | 'health'>(access.can(['settings']) ? 'controls' : 'health');
+  const [tab, setTab] = useState<'controls' | 'content' | 'health'>(access.can(['settings']) ? 'controls' : 'health');
   return (
     <AdminPage title={t('admin.settings.title')} subtitle={t('admin.settings.subtitle')} gates={['settings', 'analytics']}>
       {access.can(['settings']) ? (
@@ -23,11 +24,12 @@ export default function AdminSettings() {
           onChange={setTab}
           options={[
             { value: 'controls', label: t('admin.settings.controls') },
+            { value: 'content', label: t('admin.content.tab') },
             { value: 'health', label: t('admin.settings.health') },
           ]}
         />
       ) : null}
-      {tab === 'controls' ? <Controls /> : <Health />}
+      {tab === 'health' ? <Health /> : <Controls content={tab === 'content'} />}
     </AdminPage>
   );
 }
@@ -35,7 +37,8 @@ export default function AdminSettings() {
 type Value = Record<string, unknown>;
 const VERSION = /^\d{1,3}\.\d{1,3}\.\d{1,3}$/;
 
-function Controls() {
+/** `content`: the Content tab (what people read) instead of the switches. Both save the same way, with a reason. */
+function Controls({ content }: { content: boolean }) {
   const { t, i18n } = useTranslation();
   const refreshAfter = useRefreshAfter();
   const query = useQuery({ queryKey: ['admin', 'config'], queryFn: () => api.get<AdminConfig>('/admin/config') });
@@ -63,6 +66,14 @@ function Controls() {
         };
         return (
           <>
+            {content ? (
+              <>
+                <PublisherPanel value={config.publisher?.value ?? {}} onSave={config.publisher ? ask('publisher') : null} footer={footer('publisher')} />
+                <EmergencyPanel value={config.emergency_numbers?.value ?? {}} onSave={config.emergency_numbers ? ask('emergency_numbers') : null} footer={footer('emergency_numbers')} />
+                <FaqPanel value={config.faq?.value ?? {}} onSave={config.faq ? ask('faq') : null} footer={footer('faq')} />
+              </>
+            ) : (
+              <>
             <VersionPanel
               min={config.min_version?.value}
               latest={config.latest_version?.value}
@@ -76,13 +87,15 @@ function Controls() {
             <WhatsNewPanel value={config.whats_new?.value ?? {}} onSave={config.whats_new ? ask('whats_new') : null} footer={footer('whats_new')} />
             <SupportPanel value={config.support?.value ?? {}} onSave={config.support ? ask('support') : null} footer={footer('support')} />
             <StoreLinksPanel value={config.store_links?.value ?? {}} onSave={config.store_links ? ask('store_links') : null} footer={footer('store_links')} />
+              </>
+            )}
             {pending ? (
               <FormDialog
                 title={t('admin.settings.confirmTitle')}
                 text={t(`admin.settings.confirm.${pending.key}`)}
                 fields={[{ name: 'reason', label: t('admin.common.reason'), minLength: 5, multiline: true }]}
                 confirmLabel={t('admin.common.save')}
-                danger={pending.key === 'maintenance' || pending.key === 'min_version'}
+                danger={pending.key === 'maintenance' || pending.key === 'min_version' || pending.key === 'emergency_numbers'}
                 onCancel={() => setPending(null)}
                 onConfirm={async ({ reason }) => {
                   await api.patch(`/admin/config/${pending.key}`, { value: pending.value, reason });

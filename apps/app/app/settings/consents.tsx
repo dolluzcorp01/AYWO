@@ -9,7 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { showToast } from '@/components/Toast';
 import { Card, ConfirmDialog, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
-import { PUBLISHER } from '@/legal/publisher';
+import { usePublisher } from '@/legal/usePublisher';
 import { api } from '@/lib/api';
 import { useMyConsents } from '@/ops/consents';
 import type { ConsentItem } from '@/ops/consents';
@@ -19,6 +19,7 @@ import { colors, fonts } from '@/theme/tokens';
 
 export default function MyConsentsScreen() {
   const { t, i18n } = useTranslation();
+  const publisher = usePublisher().words;
   const router = useRouter();
   const client = useQueryClient();
   const consents = useMyConsents();
@@ -116,7 +117,7 @@ export default function MyConsentsScreen() {
                 ))
               )}
 
-              <Note>{t('ops.myConsents.complain', { ...PUBLISHER })}</Note>
+              <Note>{t('ops.myConsents.complain', { ...publisher })}</Note>
 
               <ConfirmDialog
                 visible={withdrawing}

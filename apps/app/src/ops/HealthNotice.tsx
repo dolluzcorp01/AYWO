@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { TextButton } from '@/components/ui';
-import { PUBLISHER } from '@/legal/publisher';
+import { usePublisher } from '@/legal/usePublisher';
 import { colors, fonts, radius } from '@/theme/tokens';
 
 const SECTIONS = ['what', 'why', 'who', 'howLong', 'optional', 'withdraw', 'complain'] as const;
@@ -13,6 +13,7 @@ const SECTIONS = ['what', 'why', 'who', 'howLong', 'optional', 'withdraw', 'comp
 export function HealthNotice() {
   const { t } = useTranslation();
   const router = useRouter();
+  const publisher = usePublisher().words;
   return (
     <View style={styles.box} accessibilityLabel={t('ops.consent.noticeTitle')}>
       <Text accessibilityRole="header" style={styles.title}>
@@ -21,7 +22,7 @@ export function HealthNotice() {
       {SECTIONS.map((s) => (
         <View key={s} style={styles.item}>
           <Text style={styles.label}>{t(`ops.consent.${s}Title`)}</Text>
-          <Text style={styles.body}>{t(`ops.consent.${s}Body`, { ...PUBLISHER })}</Text>
+          <Text style={styles.body}>{t(`ops.consent.${s}Body`, { ...publisher })}</Text>
         </View>
       ))}
       <TextButton label={t('legal.privacyLink')} onPress={() => router.push('/privacy')} />

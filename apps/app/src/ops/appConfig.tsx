@@ -22,6 +22,19 @@ export interface AppConfig {
   support?: { hours?: string; email?: string };
   /** Set by staff once each app is in its store (Admin > App settings). Empty until then. */
   store_links?: { ios?: string; android?: string };
+  /** Company and contact details for the public pages. An empty value falls back to legal/publisher.ts. */
+  publisher?: Record<string, string | boolean>;
+  /** The number the SOS screens offer to call, by two-letter country. */
+  emergency_numbers?: Record<string, string>;
+  /** Questions staff added to the FAQ, and built-in ones they hid ("group.question"). */
+  faq?: { items?: FaqItem[]; hidden?: string[] };
+}
+
+export interface FaqItem {
+  id: string;
+  group: string;
+  q: { en: string; ta?: string };
+  a: { en: string; ta?: string };
 }
 
 const STORE_LINKS = {

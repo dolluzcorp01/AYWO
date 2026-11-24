@@ -234,6 +234,15 @@ select test_login('00000000-0000-0000-0000-0000000000f1');
 select lives_ok($$ select admin_config_set('min_version', '{"ios": "1.2.0", "android": "1.2.0"}', 'Security fix needs 1.2') $$, 'a minimum version is set');
 select throws_ok($$ select admin_config_set('min_version', '{"ios": "latest"}', 'bad version text') $$, 'PT422', 'bad_input', 'versions must look like 1.2.0');
 select lives_ok($$ select admin_config_set('maintenance', '{"on": true, "message": "Back at 6 pm"}', 'Database upgrade') $$, 'maintenance is switched on');
+-- 0050: what people read is set by staff.
+select lives_ok($$ select admin_config_set('publisher', '{"company": "Dolluz Corp", "email": "help@aywo.in", "draft": false}', 'Lawyer approved the pages') $$, 'company details are saved');
+select throws_ok($$ select admin_config_set('publisher', '{"website": "evil.example"}', 'unknown detail') $$, 'PT422', 'bad_input', 'only details the pages know are kept');
+select lives_ok($$ select admin_config_set('emergency_numbers', '{"IN": "112", "US": "911"}', 'Checked both numbers') $$, 'emergency numbers are saved');
+select throws_ok($$ select admin_config_set('emergency_numbers', '{"US": "911"}', 'India left out') $$, 'PT422', 'bad_input', 'India can never be left out of the emergency numbers');
+select throws_ok($$ select admin_config_set('emergency_numbers', '{"IN": "call mum"}', 'not a number') $$, 'PT422', 'bad_input', 'an emergency number is digits only');
+select lives_ok($$ select admin_config_set('faq', '{"items": [{"id": "q1abc", "group": "start", "q": {"en": "Is AYWO free?"}, "a": {"en": "Yes, the tree is free."}}], "hidden": ["plus.trial"]}', 'New question from support') $$, 'a question is added to the FAQ and one is hidden');
+select throws_ok($$ select admin_config_set('faq', '{"items": [{"id": "q1abc", "group": "nowhere", "q": {"en": "Hello?"}, "a": {"en": "Hi."}}]}', 'bad group') $$, 'PT422', 'bad_input', 'a question must sit in a group the FAQ has');
+select is((app_config_public() -> 'faq' -> 'items' -> 0 #>> '{q,en}'), 'Is AYWO free?', 'the added question reaches the apps');
 reset role;
 set local role anon;
 select is((app_config_public() -> 'maintenance' ->> 'on'), 'true', 'everyone can read the app settings, signed in or not');

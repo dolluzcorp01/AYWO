@@ -6,7 +6,8 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Card, PrimaryButton, TopBar } from '@/components/ui';
 import { LegalLinks } from '@/legal/LegalLinks';
-import { LEGAL_DRAFT, LEGAL_VERSION, PUBLISHER } from '@/legal/publisher';
+import { LEGAL_VERSION } from '@/legal/publisher';
+import { usePublisher } from '@/legal/usePublisher';
 import { colors, fonts } from '@/theme/tokens';
 
 export type LegalKind = 'terms' | 'privacy' | 'refunds' | 'contact';
@@ -22,18 +23,19 @@ export function LegalPage({ kind }: { kind: LegalKind }) {
   const { t } = useTranslation();
   const router = useRouter();
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  const publisher = usePublisher();
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.scroll}>
         <TopBar title={t(`legal.${kind}.title`)} subtitle={t('legal.version', { version: LEGAL_VERSION })} onBack={close} />
-        {LEGAL_DRAFT ? (
+        {publisher.draft ? (
           <Card>
             <Text accessibilityRole="alert" style={styles.draft}>{t('legal.draft')}</Text>
           </Card>
         ) : null}
         {SECTIONS[kind].map((section) => {
           // A detail not filled in yet (see publisher.ts) is left out: "Phone: XXX" helps nobody.
-          const body = t(`legal.${kind}.${section}Body`, { ...PUBLISHER })
+          const body = t(`legal.${kind}.${section}Body`, { ...publisher.words })
             .split('\n')
             .filter((line) => !line.includes('XXX'))
             .join('\n')

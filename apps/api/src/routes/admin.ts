@@ -450,7 +450,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   // ----- App settings, analytics, app health -----
   app.get('/admin/config', (req) => staffCall(req, ['settings'], 'admin_config_get'));
   app.patch('/admin/config/:key', (req) => {
-    const { key } = z.object({ key: z.enum(['min_version', 'latest_version', 'maintenance', 'features', 'whats_new', 'support', 'store_links']) }).parse(req.params);
+    const { key } = z.object({ key: z.enum(['min_version', 'latest_version', 'maintenance', 'features', 'whats_new', 'support', 'store_links', 'publisher', 'emergency_numbers', 'faq']) }).parse(req.params);
     const body = z.object({ value: z.record(z.string(), z.unknown()), reason }).parse(req.body);
     return staffCall(req, ['settings'], 'admin_config_set', [key, JSON.stringify(body.value), body.reason]);
   });

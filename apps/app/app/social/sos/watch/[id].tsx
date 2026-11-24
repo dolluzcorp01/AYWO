@@ -10,7 +10,7 @@ import { Text } from '@/components/Text';
 import { Card, PrimaryButton, SecondaryButton, SectionTitle } from '@/components/ui';
 import { api } from '@/lib/api';
 import { dialEmergency } from '@/social/call';
-import { emergencyNumber } from '@/social/emergency';
+import { useEmergencyNumber } from '@/social/emergency';
 import { Gate, Note, Page, useName, useWhen } from '@/social/parts';
 import { useSosAlarm } from '@/social/SosAlarm';
 import type { EmergencyCard } from '@/ops/types';
@@ -24,7 +24,7 @@ export default function SosWatch() {
   const { t } = useTranslation();
   const when = useWhen();
   const showName = useName();
-  const number = emergencyNumber();
+  const number = useEmergencyNumber();
   const [seen, setSeen] = useState(alarm !== '1');
   const view = useQuery({
     queryKey: ['sos-view', id],
