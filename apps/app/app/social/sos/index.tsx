@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from '@/lib/router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { openDoNotDisturbAccess } from '@/pay/registerPush';
 import { Text } from '@/components/Text';
 import { Card, ConfirmDialog, ErrorText, Loading, Pills, PrimaryButton, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
@@ -99,6 +99,13 @@ function Running({ active, callPhone, tracking, locationWaiting, alerted, smsFai
         <>
           <ErrorText>{t('social.sos.noLocation')}</ErrorText>
           <SecondaryButton label={t('social.sos.tryLocation')} onPress={onTryLocation} />
+          {/* Once the phone has stopped asking, "try again" can do nothing: location has to be allowed in the phone's own settings. */}
+          {Platform.OS !== 'web' ? (
+            <>
+              <Text style={styles.runningHelp}>{t('social.sos.locationSettingsHelp')}</Text>
+              <SecondaryButton label={t('social.sos.openSettings')} onPress={() => void Linking.openSettings().catch(() => undefined)} />
+            </>
+          ) : null}
         </>
       ) : null}
       {tracking === null && locationWaiting ? <ErrorText>{t('social.sos.locationWaiting')}</ErrorText> : null}
@@ -475,6 +482,7 @@ export default function SosScreen() {
 }
 
 const styles = StyleSheet.create({
+  runningHelp: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
   block: { gap: 8 },
   hold: {
     alignSelf: 'center',

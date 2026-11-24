@@ -5,13 +5,13 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { PageLoader } from '@/components/Loaders';
-import { SearchIcon, ShareIcon } from '@/components/Icons';
+import { SearchIcon, ShareIcon, HistoryIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { TabBar } from '@/components/TabBar';
 import { Text } from '@/components/Text';
 import { TextButton } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
-import { canShare } from '@/tree/roles';
+import { canShare, canSeeHistory } from '@/tree/roles';
 import { FamilyGuideCard } from '@/tree/FamilyGuideCard';
 import { MyView } from '@/tree/MyView';
 import { NamesTree } from '@/tree/NamesTree';
@@ -81,6 +81,17 @@ export default function TreeScreen() {
           >
             <SearchIcon color={colors.text} />
           </Pressable>
+          {/* The whole tree's History: the only way to bring back someone who was removed, since their card is gone. */}
+          {canSeeHistory(data?.role) ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('history.title')}
+              onPress={() => router.push({ pathname: '/history/[treeId]', params: { treeId: id } })}
+              style={styles.iconButton}
+            >
+              <HistoryIcon color={colors.text} />
+            </Pressable>
+          ) : null}
           {canShare(data?.role) ? (
             <Pressable
               accessibilityRole="button"

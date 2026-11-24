@@ -117,7 +117,10 @@
     "contactsPrivate": "Contact details stay private to family.",
     "pitchTitle": "Your family deserves this too",
     "pitchText": "Start your own tree in two minutes. The tree is always free.",
-    "startTree": "Start my family tree"
+    "startTree": "Start my family tree",
+    "sharedNoName": "Shared with you by a family member. Names and photos only.",
+    "outsiderHelp": "In this family? Ask whoever sent the link to share the tree with your mobile number. Then you see it from your own place.",
+    "goHome": "Go to Home"
   },
   "kin": {
     "F": "father",
@@ -669,7 +672,7 @@
     "partlySaved": "Added, but the photo or contacts didn't save. Try again from their card.",
     "remove": "Remove from the tree",
     "removeTitle": "Remove {{name}}?",
-    "removeHelp": "You can bring them back from History.",
+    "removeHelp": "You can bring them back: open the tree and tap the History button at the top.",
     "removeConfirm": "Yes, remove",
     "weddingDate": "Wedding date (optional)",
     "weddingWith": "Wedding date with {{name}}",
@@ -682,7 +685,7 @@
     "leaveYes": "Leave, don't save",
     "approvalAddNote": "Your addition goes to the tree's Creator to approve first. A photo and phone numbers can be added once the person is in the tree.",
     "approvalEditNote": "Your changes go to the tree's Creator to approve first. Phone numbers and email cannot be changed this way.",
-    "removeMeHelp": "This is your own card. Without it the tree can't show you your place in the family or what to call each relative. You can bring it back from History.",
+    "removeMeHelp": "This is your own card. Without it the tree can't show you your place in the family or what to call each relative. To bring it back, open the tree and tap the History button at the top.",
     "dateInFuture": "That date is in the future. Check the year.",
     "diedBeforeBorn": "The year they passed away is before the year they were born. Check both years."
   },
@@ -913,7 +916,8 @@
       "link": "{{name}} changed a family link"
     },
     "showMore": "Show older changes",
-    "end": "That is every change in this tree."
+    "end": "That is every change in this tree.",
+    "cantUndo": "Can't be undone here: it changed a phone number or email, and History keeps no copy of those. Change it on the person's card."
   },
   "comments": {
     "title": "Comments",
@@ -939,7 +943,7 @@
     "suggestions": "Words others use",
     "reviewNote": "New words are checked before others see them.",
     "useWord": "Save this word",
-    "saved": "Thank you. {{word}} has been saved and will be checked.",
+    "saved": "Thank you. We have your word, {{word}}. AYWO's team checks each new word first. Once it is approved it shows on the card; until then the card keeps the word it has now.",
     "report": "{{word}} is wrong: report it",
     "reported": "Thank you. We'll look at this word."
   },
@@ -3046,7 +3050,10 @@
       "hide": "Remove from my list",
       "hideTitle": "Remove this chat from your list?",
       "hideMessage": "Only your list changes. The messages are kept, and the chat comes back when a new message arrives.",
-      "hideYes": "Remove"
+      "hideYes": "Remove",
+      "sendingPhoto": "Sending the photo…",
+      "sendingVoice": "Sending the voice note…",
+      "sendAgain": "Send it again"
     },
     "memories": {
       "title": "Memories",
@@ -3091,7 +3098,10 @@
       "deleteCommentTitle": "Delete this comment?",
       "addTags": "Tag the people ticked",
       "addHelpers": "Add helpers",
-      "morePhotos": "+{{count}} more"
+      "morePhotos": "+{{count}} more",
+      "photosFull": "This memory already has 20 photos, which is the most it can hold. Remove one to add another.",
+      "photosAdded_one": "{{count}} photo added",
+      "photosAdded_other": "{{count}} photos added"
     },
     "groups": {
       "title": "Friends groups",
@@ -3351,7 +3361,9 @@
       "confirmStartBody": "Your SOS contacts hear an alarm or get a text, and can see your location.",
       "confirmStart": "Start SOS",
       "needNumber": "Type the phone number first.",
-      "callThem": "Call {{name}} now"
+      "callThem": "Call {{name}} now",
+      "locationSettingsHelp": "If nothing happens, your phone has stopped asking. Open the phone's settings and allow Location for AYWO, then come back and try again.",
+      "openSettings": "Open phone settings"
     },
     "missing": {
       "who": "Choose who can see this.",
@@ -3383,7 +3395,13 @@
       "next": "Next photo"
     },
     "edited": "edited",
-    "edit": "Edit"
+    "edit": "Edit",
+    "sendAsk": {
+      "title": "Send it now?",
+      "wholeTree": "Everyone in the whole family tree who uses AYWO will be told straight away. Check the details first: once sent, they have seen it.",
+      "chosen": "The people you chose will be told straight away. Check the details first: once sent, they have seen it.",
+      "yes": "Yes, send"
+    }
   },
   "ops": {
     "update": {

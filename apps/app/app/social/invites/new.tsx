@@ -6,7 +6,7 @@ import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking } from 'react-native';
-import { Field, Label, Pills, PrimaryButton, SecondaryButton } from '@/components/ui';
+import { ConfirmDialog, Field, Label, Pills, PrimaryButton, SecondaryButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { AudiencePicker } from '@/social/AudiencePicker';
 import { InviteCard } from '@/social/InviteCard';
@@ -31,6 +31,7 @@ export default function NewInvite() {
   const [canva, setCanva] = useState('');
   const [design, setDesign] = useState<Design>('classic');
   const [audience, setAudience] = useState<Audience | null>(null);
+  const [asking, setAsking] = useState(false);
 
   const startsAt = parseDateTime(date, time);
   // An invitation is for something still to come: a date already gone is almost always a slip of the finger.
@@ -97,7 +98,20 @@ export default function NewInvite() {
                     ? t('social.missing.whoSend')
                     : null
         }
-        onPress={() => create.mutate()}
+        onPress={() => setAsking(true)}
+      />
+      {/* It goes to everyone at once and cannot be called back unseen, so one look before it leaves. */}
+      <ConfirmDialog
+        visible={asking}
+        title={t('social.sendAsk.title')}
+        message={t(audience?.type === 'tree' ? 'social.sendAsk.wholeTree' : 'social.sendAsk.chosen')}
+        confirmLabel={t('social.sendAsk.yes')}
+        busy={create.isPending}
+        onCancel={() => setAsking(false)}
+        onConfirm={() => {
+          setAsking(false);
+          create.mutate();
+        }}
       />
     </Page>
   );

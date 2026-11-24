@@ -431,7 +431,7 @@
     "partlySaved": "Added, but the photo or contacts didn't save. Try again from their card.",
     "remove": "Remove from the tree",
     "removeTitle": "Remove {{name}}?",
-    "removeHelp": "You can bring them back from History.",
+    "removeHelp": "You can bring them back: open the tree and tap the History button at the top.",
     "removeConfirm": "Yes, remove",
     "weddingDate": "Wedding date (optional)",
     "weddingWith": "Wedding date with {{name}}",
@@ -444,7 +444,7 @@
     "leaveYes": "Leave, don't save",
     "approvalAddNote": "Your addition goes to the tree's Creator to approve first. A photo and phone numbers can be added once the person is in the tree.",
     "approvalEditNote": "Your changes go to the tree's Creator to approve first. Phone numbers and email cannot be changed this way.",
-    "removeMeHelp": "This is your own card. Without it the tree can't show you your place in the family or what to call each relative. You can bring it back from History.",
+    "removeMeHelp": "This is your own card. Without it the tree can't show you your place in the family or what to call each relative. To bring it back, open the tree and tap the History button at the top.",
     "dateInFuture": "That date is in the future. Check the year.",
     "diedBeforeBorn": "The year they passed away is before the year they were born. Check both years."
   },
@@ -675,7 +675,8 @@
       "link": "{{name}} changed a family link"
     },
     "showMore": "Show older changes",
-    "end": "That is every change in this tree."
+    "end": "That is every change in this tree.",
+    "cantUndo": "Can't be undone here: it changed a phone number or email, and History keeps no copy of those. Change it on the person's card."
   },
   "comments": {
     "title": "Comments",
@@ -701,7 +702,7 @@
     "suggestions": "Words others use",
     "reviewNote": "New words are checked before others see them.",
     "useWord": "Save this word",
-    "saved": "Thank you. {{word}} has been saved and will be checked.",
+    "saved": "Thank you. We have your word, {{word}}. AYWO's team checks each new word first. Once it is approved it shows on the card; until then the card keeps the word it has now.",
     "report": "{{word}} is wrong: report it",
     "reported": "Thank you. We'll look at this word."
   },

@@ -135,7 +135,9 @@ export default function HistoryScreen() {
                       disabled={revert.isPending}
                       onPress={() => setAsking(item)}
                     />
-                  ) : null}
+                  ) : (
+                    <Text style={styles.undone}>{t('history.cantUndo')}</Text>
+                  )}
                 </Card>
               </View>
             );

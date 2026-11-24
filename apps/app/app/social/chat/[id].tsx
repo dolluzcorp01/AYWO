@@ -352,7 +352,17 @@ export default function ChatRoom() {
 
         {!connected ? <Note>{t('social.chat.reconnecting')}</Note> : null}
         {micDenied ? <Note>{t('social.chat.micDenied')}</Note> : null}
+        {/* A photo or voice note takes a few seconds to go. Without a word here the screen looked as if nothing was happening. */}
+        {send.isPending && send.variables?.file ? (
+          <View accessibilityLiveRegion="polite">
+            <Note>{t(send.variables.kind === 'voice' ? 'social.chat.sendingVoice' : 'social.chat.sendingPhoto')}</Note>
+          </View>
+        ) : null}
         <ActionError error={send.error} />
+        {/* One that failed is kept, so it can be sent again without picking or recording it a second time. */}
+        {send.isError && send.variables?.file ? (
+          <SmallButton label={t('social.chat.sendAgain')} onPress={() => send.variables && send.mutate(send.variables)} />
+        ) : null}
         <ActionError error={remove.error} />
 
         {editing ? (

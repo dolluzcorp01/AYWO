@@ -74,7 +74,10 @@
     "contactsPrivate": "Contact details stay private to family.",
     "pitchTitle": "Your family deserves this too",
     "pitchText": "Start your own tree in two minutes. The tree is always free.",
-    "startTree": "Start my family tree"
+    "startTree": "Start my family tree",
+    "sharedNoName": "Shared with you by a family member. Names and photos only.",
+    "outsiderHelp": "In this family? Ask whoever sent the link to share the tree with your mobile number. Then you see it from your own place.",
+    "goHome": "Go to Home"
   },
   "kin": {
     "F": "father",

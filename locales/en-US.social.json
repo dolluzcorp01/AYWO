@@ -101,7 +101,10 @@
       "hide": "Remove from my list",
       "hideTitle": "Remove this chat from your list?",
       "hideMessage": "Only your list changes. The messages are kept, and the chat comes back when a new message arrives.",
-      "hideYes": "Remove"
+      "hideYes": "Remove",
+      "sendingPhoto": "Sending the photo…",
+      "sendingVoice": "Sending the voice note…",
+      "sendAgain": "Send it again"
     },
     "memories": {
       "title": "Memories",
@@ -146,7 +149,10 @@
       "deleteCommentTitle": "Delete this comment?",
       "addTags": "Tag the people ticked",
       "addHelpers": "Add helpers",
-      "morePhotos": "+{{count}} more"
+      "morePhotos": "+{{count}} more",
+      "photosFull": "This memory already has 20 photos, which is the most it can hold. Remove one to add another.",
+      "photosAdded_one": "{{count}} photo added",
+      "photosAdded_other": "{{count}} photos added"
     },
     "groups": {
       "title": "Friends groups",
@@ -406,7 +412,9 @@
       "confirmStartBody": "Your SOS contacts hear an alarm or get a text, and can see your location.",
       "confirmStart": "Start SOS",
       "needNumber": "Type the phone number first.",
-      "callThem": "Call {{name}} now"
+      "callThem": "Call {{name}} now",
+      "locationSettingsHelp": "If nothing happens, your phone has stopped asking. Open the phone's settings and allow Location for AYWO, then come back and try again.",
+      "openSettings": "Open phone settings"
     },
     "missing": {
       "who": "Choose who can see this.",
@@ -438,7 +446,13 @@
       "next": "Next photo"
     },
     "edited": "edited",
-    "edit": "Edit"
+    "edit": "Edit",
+    "sendAsk": {
+      "title": "Send it now?",
+      "wholeTree": "Everyone in the whole family tree who uses AYWO will be told straight away. Check the details first: once sent, they have seen it.",
+      "chosen": "The people you chose will be told straight away. Check the details first: once sent, they have seen it.",
+      "yes": "Yes, send"
+    }
   },
   "errors": {
     "not_allowed": "You do not have permission for this.",

@@ -9,7 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { Card, ConfirmDialog, Field, Label, SecondaryButton, SectionTitle, SmallButton, TextButton } from '@/components/ui';
-import { api, uploadFile } from '@/lib/api';
+import { ApiFailure, api, uploadFile } from '@/lib/api';
+import { showToast } from '@/components/Toast';
 import { useTimeAgo } from '@/lib/time';
 import { ReportDialog } from '@/ops/Report';
 import type { ReportTarget } from '@/ops/Report';
@@ -20,6 +21,7 @@ import { ActionError, Gate, Note, Page, useGoBack, useName, useWhen } from '@/so
 import type { Post } from '@/social/types';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 
+const MOST_PHOTOS = 20;
 const EMOJIS = ['❤️', '🙏', '😂', '😢', '👏'];
 
 /** A name with an x to take it off (a tag, a helper). Without onRemove it is just the name. */
@@ -80,12 +82,19 @@ export default function MemoryDetail() {
   const setClosed = useMutation({ mutationFn: (closed: boolean) => api.rpc('post_set_closed', { p_post: id, p_closed: closed }), onSuccess: refresh });
   const addPhotos = useMutation({
     mutationFn: async () => {
-      const photos = await pickPhotos(10);
-      if (photos.length === 0) return;
+      // A memory holds 20 photos. Counted before anything is sent, so nobody waits for an upload that is then refused.
+      const room = MOST_PHOTOS - (post.data?.media.length ?? 0);
+      if (room <= 0) throw new ApiFailure(422, 'too_many_photos', 'social.memories.photosFull');
+      const photos = await pickPhotos(Math.min(10, room));
+      if (photos.length === 0) return 0;
       const paths = await Promise.all(photos.map((photo) => uploadFile('posts', photo)));
       await api.rpc('post_add_media', { p_post: id, p_media: paths });
+      return paths.length;
     },
-    onSuccess: refresh,
+    onSuccess: (added) => {
+      if (added) showToast('success', t('social.memories.photosAdded', { count: added }));
+      refresh();
+    },
   });
   const update = useMutation({
     mutationFn: () =>
@@ -191,6 +200,8 @@ export default function MemoryDetail() {
                   {!data.closed ? (
                     <SecondaryButton label={t('social.memories.addPhotos')} disabled={addPhotos.isPending} onPress={() => addPhotos.mutate()} />
                   ) : null}
+                  {/* Shown here too: while editing, a failed upload used to say nothing at all. */}
+                  <ActionError error={addPhotos.error} />
                   <Field label={t('social.memories.words')} value={draftBody} onChangeText={setDraftBody} multiline maxLength={4000} style={styles.words} />
                   <DateField label={t('social.memories.when')} value={draftDate} onChange={setDraftDate} max={todayIso()} optional />
                   {data.tags.length > 0 ? (

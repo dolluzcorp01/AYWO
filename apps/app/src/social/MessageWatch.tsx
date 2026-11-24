@@ -5,7 +5,7 @@
 // red number on Chat was only fetched once a minute, and nothing said who had written. Now the number updates the
 // moment the message arrives, and a small card at the top says who wrote and what, and opens the chat when tapped.
 // Sits once in the root layout. While the app is closed this cannot run: that is what phone notifications are for.
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePathname } from 'expo-router';
 import type { Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChatIcon, CloseIcon } from '@/components/Icons';
 import { Text } from '@/components/Text';
 import { useMe } from '@/lib/account';
+import { api } from '@/lib/api';
 import { refreshNotices } from '@/lib/notices';
 import { useRouter } from '@/lib/router';
 import type { Message } from '@/social/types';
@@ -45,6 +46,11 @@ export function MessageWatch() {
   const latest = useRef({ pathname, myId: me.data?.id });
   latest.current = { pathname, myId: me.data?.id };
 
+  // The same list the chat screen hides by. Kept in a ref so the socket's handler always reads the newest.
+  const hiddenPeople = useQuery({ queryKey: ['hidden-people'], queryFn: () => api.rpc<string[]>('social_hidden_people'), enabled: !!me.data?.id });
+  const hidden = useRef<string[]>([]);
+  hidden.current = hiddenPeople.data ?? [];
+
   const refreshCounts = () => {
     void client.invalidateQueries({ queryKey: ['social-home'] });
     void client.invalidateQueries({ queryKey: ['chats'] });
@@ -58,6 +64,8 @@ export function MessageWatch() {
       // Already reading that chat: the message is on the screen, a card about it would only be in the way.
       if (latest.current.pathname === `/social/chat/${message.chat_id}`) return;
       if (message.deleted) return;
+      // Someone this person blocked: their messages are hidden inside the chat, so they must not pop up here either.
+      if (hidden.current.includes(message.sender_id)) return;
       const words = message.media_kind === 'photo' ? t('social.chat.photo') : message.media_kind === 'voice' ? t('social.chat.voiceNote') : (message.body ?? '');
       setNote({
         key: message.id,

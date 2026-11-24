@@ -85,7 +85,15 @@ function SignInGate({ signedIn }: { signedIn: boolean }) {
     (first === 'social' && segments[1] === 'groups' && segments[2] === 'join') ||
     (first === 'social' && segments[1] === 'sos' && segments[2] === 'watch') ||
     (first === 'help' && segments[1] !== undefined) ||
-    first === 'offers';
+    first === 'offers' ||
+    // What an email or a notification opens: an invitation, a memory, a chat, the alerts, an order, a request.
+    // Signed out, these used to end on Home after sign-in, and the person had to find the thing again.
+    (first === 'social' && segments[1] !== undefined) ||
+    ((first === 'person' || first === 'tree') && segments[1] !== undefined) ||
+    first === 'orders' ||
+    first === 'family-plan' ||
+    first === 'calendar' ||
+    first === 'activity';
 
   useEffect(() => {
     const onWelcome = first === undefined || first === 'index' || first === 'welcome';

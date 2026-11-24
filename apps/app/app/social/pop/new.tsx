@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { DateField, TimeField } from '@/components/DateTimeField';
-import { Field, Label, PrimaryButton, SecondaryButton } from '@/components/ui';
+import { ConfirmDialog, Field, Label, PrimaryButton, SecondaryButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { AudiencePicker } from '@/social/AudiencePicker';
 import { ActionError, lines, Note, Page, Row, todayIso, useDateOption } from '@/social/parts';
@@ -25,6 +25,7 @@ export default function NewPopParty() {
   const [menus, setMenus] = useState('');
   const [note, setNote] = useState('');
   const [audience, setAudience] = useState<Audience | null>(null);
+  const [asking, setAsking] = useState(false);
 
   const picked = pickDate ? (pickTime ? `${pickDate} ${pickTime.padStart(5, '0')}` : pickDate) : null;
   // A date picked but not yet added still counts: pressing Start must not quietly lose it.
@@ -72,7 +73,20 @@ export default function NewPopParty() {
         label={create.isPending ? t('social.sending') : t('social.pop.start')}
         disabled={create.isPending}
         missing={!title.trim() ? t('social.missing.name') : !hasOptions ? t('social.missing.options') : !audience ? t('social.missing.whoSend') : null}
-        onPress={() => create.mutate()}
+        onPress={() => setAsking(true)}
+      />
+      {/* It goes to everyone at once and cannot be called back unseen, so one look before it leaves. */}
+      <ConfirmDialog
+        visible={asking}
+        title={t('social.sendAsk.title')}
+        message={t(audience?.type === 'tree' ? 'social.sendAsk.wholeTree' : 'social.sendAsk.chosen')}
+        confirmLabel={t('social.sendAsk.yes')}
+        busy={create.isPending}
+        onCancel={() => setAsking(false)}
+        onConfirm={() => {
+          setAsking(false);
+          create.mutate();
+        }}
       />
     </Page>
   );
