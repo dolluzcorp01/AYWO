@@ -411,7 +411,8 @@ export function useMerge(requestId: string) {
 export function useApplyMerge(requestId: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: () => api.post<unknown>(`/merge/${requestId}/apply`),
+    // keepId: the card that stays. Left out, the server keeps the first of the two.
+    mutationFn: (keepId?: string) => api.post<unknown>(`/merge/${requestId}/apply`, keepId ? { keep_person_id: keepId } : {}),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['activity'] });
       client.invalidateQueries({ queryKey: ['tree-view'] });

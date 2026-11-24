@@ -136,8 +136,11 @@ export default function Plus() {
   const method = chosenMethod ?? webMethods[0] ?? null;
 
   const storePrice = storeAvailable ? packages.data : undefined;
-  const yearlyPrice = storePrice?.yearly?.price ?? data.prices.yearly.display;
-  const monthlyPrice = storePrice?.monthly?.price ?? data.prices.monthly.display;
+  // In the apps the store's own price is the one charged. Until the store has answered, a dash is shown, not the
+  // website's price: that one could differ, and the person would see the number change under their thumb.
+  const storeLoading = storeAvailable && packages.isPending;
+  const yearlyPrice = storeLoading ? '…' : (storePrice?.yearly?.price ?? data.prices.yearly.display);
+  const monthlyPrice = storeLoading ? '…' : (storePrice?.monthly?.price ?? data.prices.monthly.display);
   const trial = storeAvailable ? !!storePrice?.yearly?.freeTrial : data.trial_eligible;
   const showTrial = period === 'yearly' && trial;
 

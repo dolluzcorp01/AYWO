@@ -13,7 +13,7 @@ import { Text, TextInput } from '@/components/Text';
 import { useVoiceInput } from '@/voice/useVoiceInput';
 import { VoiceButton } from '@/voice/VoiceButton';
 import { ConfirmDialog, Field, SmallButton, TextButton, TopBar } from '@/components/ui';
-import { api, uploadFile } from '@/lib/api';
+import { ApiFailure, api, uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
 import { showPhone } from '@/lib/phone';
 import { useTimeAgo } from '@/lib/time';
@@ -132,6 +132,7 @@ export default function ChatRoom() {
     // With the socket up nothing else fetches, and the signed photo and voice links would run out after an hour.
     refetchInterval: connected ? MEDIA_REFETCH_MS : FETCH_WHEN_OFFLINE_MS,
   });
+  const plusNeeded = chat.error instanceof ApiFailure && chat.error.code === 'plus_required';
 
   // Each message keeps the link it was first shown with until that link is getting old.
   const mediaLinks = useRef(new Map<string, { url: string; at: number }>());
@@ -415,7 +416,8 @@ export default function ChatRoom() {
           </View>
         ) : null}
 
-        {recording ? (
+        {/* Chat needs Plus. Without it the list above already says so; a box to type in, refused only on Send, wasted the person's words. */}
+        {plusNeeded ? null : recording ? (
           <VoiceRecorder
             onCancel={() => setRecording(false)}
             onDenied={(refused) => {

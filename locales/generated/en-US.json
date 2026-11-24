@@ -895,7 +895,9 @@
     "explain": "Keeps one {{name}} with everything from both. Undo any time from History.",
     "yes": "Yes, merge into one",
     "no": "No, they are different people",
-    "alreadyDecided": "This has already been decided."
+    "alreadyDecided": "This has already been decided.",
+    "keepWhich": "Which card should stay?",
+    "done": "Merged into one person"
   },
   "history": {
     "title": "History",

@@ -322,6 +322,8 @@ export default function MemoryDetail() {
                 );
               })}
             </View>
+            {/* The reason sits with the greyed buttons, not far below the comments. */}
+            {data.closed ? <Note>{t('social.memories.closedNote')}</Note> : null}
             <ActionError error={react.error} />
 
             <SectionTitle>{t('social.memories.comments')}</SectionTitle>

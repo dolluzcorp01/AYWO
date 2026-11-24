@@ -1,4 +1,5 @@
 // E5: 'Same person?' Two cards side by side, why AYWO thinks so, and one decision. Merging can be undone from History.
+import { useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,8 @@ import { Avatar } from '@/components/Avatar';
 import { CheckIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
-import { Card, EmptyState, ErrorText, Loading, LoadFailed, Muted, NeonPanel, PrimaryButton, TextButton, TopBar } from '@/components/ui';
+import { Card, EmptyState, ErrorText, LoadFailed, Loading, Muted, NeonPanel, Pills, PrimaryButton, TextButton, TopBar } from '@/components/ui';
+import { showToast } from '@/components/Toast';
 import { useErrorText } from '@/lib/errors';
 import { shownName } from '@/tree/personName';
 import { useApplyMerge, useDecideRequest, useMerge } from '@/tree/useEdit';
@@ -31,6 +33,8 @@ export default function MergeScreen() {
   const merge = useMerge(requestId);
   const apply = useApplyMerge(requestId);
   const decide = useDecideRequest();
+  // The card that stays. Its name and photo are the ones kept; everything linked to the other moves onto it.
+  const [keep, setKeep] = useState<string | null>(null);
 
   if (merge.isError) {
     return (
@@ -69,6 +73,8 @@ export default function MergeScreen() {
   else reasons.push(t('merge.namesClose'));
 
   const busy = apply.isPending || decide.isPending;
+  const keepId = keep ?? a.id;
+  const kept = keepId === b.id ? b : a;
 
   return (
     <Screen>
@@ -92,11 +98,28 @@ export default function MergeScreen() {
             </View>
           ))}
         </NeonPanel>
-        <Muted>{t('merge.explain', { name: shownName(t, a.display_name, a.name_unknown) })}</Muted>
+        <Text style={styles.whyTitleDark}>{t('merge.keepWhich')}</Text>
+        <Pills
+          options={[a, b].map((person, index) => ({
+            value: person.id,
+            label: `${index + 1}. ${shownName(t, person.display_name, person.name_unknown)}${person.added_by ? ` (${t('merge.addedBy', { name: person.added_by })})` : ''}`,
+          }))}
+          value={keepId}
+          onChange={setKeep}
+        />
+        <Muted>{t('merge.explain', { name: shownName(t, kept.display_name, kept.name_unknown) })}</Muted>
         {apply.isError ? <ErrorText>{errorText(apply.error)}</ErrorText> : null}
         {decide.isError ? <ErrorText>{errorText(decide.error)}</ErrorText> : null}
       </ScrollView>
-      <PrimaryButton label={t('merge.yes')} disabled={busy} onPress={() => apply.mutate(undefined, { onSuccess: () => goBack(router) })} />
+      <PrimaryButton label={t('merge.yes')} disabled={busy} onPress={() =>
+          apply.mutate(keepId, {
+            onSuccess: () => {
+              showToast('success', t('merge.done'));
+              goBack(router);
+            },
+          })
+        }
+      />
       <TextButton
         label={t('merge.no')}
         disabled={busy}
@@ -118,6 +141,7 @@ function Side({ person }: { person: MergePerson }) {
 }
 
 const styles = StyleSheet.create({
+  whyTitleDark: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
   scroll: { gap: 14, paddingBottom: 12 },
   sides: { flexDirection: 'row', gap: 10 },
   side: { flex: 1, alignItems: 'center', gap: 8, borderRadius: 22, minWidth: 0 },
