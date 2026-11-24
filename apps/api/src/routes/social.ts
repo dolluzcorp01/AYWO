@@ -137,9 +137,16 @@ async function startListener(log: FastifyBaseLogger): Promise<void> {
   client.on('end', () => lost());
   client.on('notification', (note) => {
     try {
-      const { message_id: messageId, notification_id: noticeId } = JSON.parse(note.payload ?? '{}') as { message_id?: string; notification_id?: string };
+      const { message_id: messageId, notification_id: noticeId, recipient_id: recipient } = JSON.parse(note.payload ?? '{}') as {
+        message_id?: string;
+        notification_id?: string;
+        recipient_id?: string;
+      };
       if (messageId) deliverMessage(messageId).catch((err) => log.error(safeError(err), 'chat delivery failed'));
-      if (noticeId) deliverNotice(noticeId).catch((err) => log.error(safeError(err), 'notification delivery failed'));
+      // Only for someone with the app open. A notice sent to every account would otherwise look up every row at once.
+      if (noticeId && (!recipient || socketsByUser.has(recipient))) {
+        deliverNotice(noticeId).catch((err) => log.error(safeError(err), 'notification delivery failed'));
+      }
     } catch (err) {
       log.error(safeError(err), 'chat notification unreadable');
     }
@@ -325,8 +332,10 @@ function nameForSms(name: string | null | undefined, fallback: string): string {
  * sender's own, and it goes only to the contacts they chose: the receiver can see who it really is, and call back.
  */
 async function withSenderNumber(userId: string, name: string): Promise<string> {
-  const { rows } = await asServer((db) => db.query(`select login_phone from profiles where id = $1`, [userId]));
-  const phone = rows[0]?.login_phone as string | null | undefined;
+  // The number is a help, not a need: if it cannot be read, the alarm still goes out with the name alone.
+  const phone = await asServer((db) => db.query(`select login_phone from profiles where id = $1`, [userId]))
+    .then(({ rows }) => rows[0]?.login_phone as string | null | undefined)
+    .catch(() => null);
   return phone ? `${name} (${phone})` : name;
 }
 

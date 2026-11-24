@@ -176,7 +176,14 @@ export default function ImportScreen() {
   }
   // The phone's own back button (and the browser's Back) used to close the whole wizard and lose every answer.
   // Past the first step it now goes one step back, like the arrow on screen.
-  const allowLeaving = usePreventRemove(step !== 'pick' && !!answer && !busy, stepBack);
+  // Only for going back. A press on the side menu (computer) is a wish to go somewhere else: it used to step the
+  // wizard back and not open the page asked for.
+  const allowLeaving = usePreventRemove(step !== 'pick' && !!answer && !busy, ({ data: { action }, repeat }) => {
+    if (action.type === 'REPLACE' || action.type === 'NAVIGATE' || action.type === 'PUSH' || action.type === 'JUMP_TO') {
+      allowLeaving();
+      repeat();
+    } else stepBack();
+  });
 
   function afterChecks() {
     setFailure(null);

@@ -3027,7 +3027,7 @@
       "ship": "Delivery countries outside India",
       "shipHelp": "Where a printed poster or book can be sent when the buyer is outside India. Buyers choose from these on the payment page. Orders in India are not affected.",
       "shipCodes": "Two-letter country codes, separated by commas (for example: US, GB, SG)",
-      "shipBad": "\"{{code}}\" is not a two-letter country code.",
+      "shipBad": "\"{{code}}\" is not a country code the payment page accepts. Use the two-letter code, for example GB for the United Kingdom.",
       "shipNoIndia": "Leave India (IN) out: orders in India already work and are not part of this list.",
       "shipNeedsOne": "Type at least one country."
     }

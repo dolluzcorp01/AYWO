@@ -202,6 +202,19 @@ export default function InviteDetail() {
       applyDesign(bought);
     }
   }, [bought, owned, spare, designNow, applyDesign]);
+  // The payment is confirmed on the server a little after the person comes back. Until it shows, this page asks
+  // again every few seconds; before this it waited for a press on "Check payment" and Buy stayed grey meanwhile.
+  const askAgain = event.refetch;
+  useEffect(() => {
+    if (!bought) return;
+    const timer = setInterval(() => void askAgain(), 4000);
+    // Two minutes is far longer than a confirmation takes: after that Buy comes back, and "Check payment" still works.
+    const giveUp = setTimeout(() => setBought(null), 120_000);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(giveUp);
+    };
+  }, [bought, askAgain]);
   const decide = useMutation({
     mutationFn: () =>
       api.rpc('pop_party_decide', {

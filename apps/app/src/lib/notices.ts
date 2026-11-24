@@ -4,6 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
+/** A request to answer is counted on the bell under "Needs you", so these are left out of the unread number. */
+export const COUNTED_ELSEWHERE = ['request_created', 'request_routed', 'merge_candidate'];
+
 export interface Notice {
   id: string;
   kind: string;

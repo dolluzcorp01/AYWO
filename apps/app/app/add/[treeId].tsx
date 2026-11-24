@@ -116,8 +116,9 @@ export default function AddRelative() {
 
   function pickFar(throughId: string, choice: FarRelative) {
     if (!anchor) return;
-    // Chosen twice in a row (cousin, then the cousin's child): still counted from where the first one started.
-    setFar({ fromId: far?.fromId ?? anchor.id, choice });
+    // The note names the person this choice was counted from. Chosen twice in a row (uncle, then the uncle's child),
+    // the second is counted from the uncle, so that is who the note names.
+    setFar({ fromId: anchor.id, choice });
     lookFrom(throughId);
     setRelation(choice.relation);
     setFarOpen(false);
@@ -238,7 +239,11 @@ export default function AddRelative() {
                 key={r.value}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on }}
-                onPress={() => setRelation(r.value)}
+                onPress={() => {
+                  // Another link chosen by hand: the "Cousin, child of Murugan" note no longer describes it.
+                  if (far && r.value !== far.choice.relation) setFar(null);
+                  setRelation(r.value);
+                }}
                 style={styles.relationWrap}
               >
                 {on ? (

@@ -37,7 +37,7 @@ export async function buildServer() {
         // A link token in the address is a key, and a query can hold a name or a phone number searched for. Neither is logged.
         req: (req: { method: string; url: string }) => ({
           method: req.method,
-          url: req.url.split('?')[0].replace(/^\/(sos\/live|view-by-link|link)\/[^/]+/, '/$1/[token]'),
+          url: req.url.split('?')[0].replace(/^\/(sos\/live|sos\/not-for-me|view-by-link|link)\/[^/]+/, '/$1/[token]'),
         }),
       },
     },

@@ -12,6 +12,7 @@ import {
   stripePlanChange,
   TRIAL_DAYS,
   webMethodsFor,
+  canShipTo,
 } from '@aywo/shared';
 import type { PlanChange, PlusProduct, RazorpaySubscription, RevenueCatEvent } from '@aywo/shared';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
@@ -57,7 +58,7 @@ async function shipCountries(): Promise<string[]> {
     const { rows } = await db.query(`select value -> 'countries' as c from app_config where key = 'ship_countries'`);
     return rows[0]?.c as unknown;
   }).catch(() => null);
-  const list = Array.isArray(saved) ? saved.filter((c): c is string => typeof c === 'string' && /^[A-Z]{2}$/.test(c)) : [];
+  const list = Array.isArray(saved) ? saved.filter((c): c is string => typeof c === 'string' && canShipTo(c)) : [];
   return list.length > 0 ? list : [...STRIPE_SHIP_COUNTRIES];
 }
 

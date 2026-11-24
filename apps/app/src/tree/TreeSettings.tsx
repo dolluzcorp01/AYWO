@@ -6,6 +6,7 @@ import { showToast } from '@/components/Toast';
 import { ConfirmDialog, ErrorText, Field, Muted, Pills, TextButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
+import { deleteWordShown, isDeleteWord } from '@/lib/deleteWord';
 
 export function TreeSettings({ trees, onClose }: { trees: { id: string; name: string }[]; onClose: () => void }) {
   const { t } = useTranslation();
@@ -20,7 +21,7 @@ export function TreeSettings({ trees, onClose }: { trees: { id: string; name: st
   const name = typed ?? tree?.name ?? '';
   // The English word is always accepted too: not every phone can type the translated one.
   const ownWord = t('settings.deleteWord');
-  const deleteWord = ownWord.toLowerCase() === 'delete' ? ownWord : `${ownWord} / delete`;
+  const deleteWord = deleteWordShown(ownWord);
 
   // Everything that shows a tree's name or lists the trees.
   const refresh = () => Promise.all([client.invalidateQueries({ queryKey: ['trees'] }), client.invalidateQueries({ queryKey: ['tree-view'] }), client.invalidateQueries({ queryKey: ['social-circles'] })]);
@@ -74,7 +75,7 @@ export function TreeSettings({ trees, onClose }: { trees: { id: string; name: st
           <TextButton
             label={t('me.deleteTreeYes', { name: tree.name })}
             danger
-            disabled={![ownWord.toLowerCase(), 'delete'].includes(word.trim().toLowerCase()) || remove.isPending}
+            disabled={!isDeleteWord(word, ownWord) || remove.isPending}
             onPress={() => remove.mutate()}
           />
         </>

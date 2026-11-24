@@ -29,12 +29,19 @@ export default function AdminSettings() {
           ]}
         />
       ) : null}
-      {tab === 'health' ? <Health /> : <Controls content={tab === 'content'} />}
+      {/* Controls stay on the page behind the other tabs, so typing that is not saved yet is still there on coming back. */}
+      {access.can(['settings']) ? (
+        <View style={tab === 'health' ? HIDDEN : undefined}>
+          <Controls content={tab === 'content'} />
+        </View>
+      ) : null}
+      {tab === 'health' ? <Health /> : null}
     </AdminPage>
   );
 }
 
 type Value = Record<string, unknown>;
+const HIDDEN = { display: 'none' } as const;
 const VERSION = /^\d{1,3}\.\d{1,3}\.\d{1,3}$/;
 
 /** `content`: the Content tab (what people read) instead of the switches. Both save the same way, with a reason. */
@@ -66,16 +73,14 @@ function Controls({ content }: { content: boolean }) {
         };
         return (
           <>
-            {content ? (
-              <>
+            <View style={content ? undefined : HIDDEN}>
                 <PublisherPanel value={config.publisher?.value ?? {}} onSave={config.publisher ? ask('publisher') : null} footer={footer('publisher')} />
                 <EmergencyPanel value={config.emergency_numbers?.value ?? {}} onSave={config.emergency_numbers ? ask('emergency_numbers') : null} footer={footer('emergency_numbers')} />
                 <FaqPanel value={config.faq?.value ?? {}} onSave={config.faq ? ask('faq') : null} footer={footer('faq')} />
                 <ShopTextPanel value={config.shop_text?.value ?? {}} onSave={config.shop_text ? ask('shop_text') : null} footer={footer('shop_text')} />
                 <ShipCountriesPanel value={config.ship_countries?.value ?? {}} onSave={config.ship_countries ? ask('ship_countries') : null} footer={footer('ship_countries')} />
-              </>
-            ) : (
-              <>
+            </View>
+            <View style={content ? HIDDEN : undefined}>
             <VersionPanel
               min={config.min_version?.value}
               latest={config.latest_version?.value}
@@ -89,8 +94,7 @@ function Controls({ content }: { content: boolean }) {
             <WhatsNewPanel value={config.whats_new?.value ?? {}} onSave={config.whats_new ? ask('whats_new') : null} footer={footer('whats_new')} />
             <SupportPanel value={config.support?.value ?? {}} onSave={config.support ? ask('support') : null} footer={footer('support')} />
             <StoreLinksPanel value={config.store_links?.value ?? {}} onSave={config.store_links ? ask('store_links') : null} footer={footer('store_links')} />
-              </>
-            )}
+            </View>
             {pending ? (
               <FormDialog
                 title={t('admin.settings.confirmTitle')}

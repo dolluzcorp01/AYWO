@@ -20,6 +20,10 @@ interface SetOptions { auto?: boolean }
 export function choseHere(pref: Pref): boolean {
   return chosenHere.has(pref);
 }
+/** Once signed in (and at sign-out) the list starts again, so one person's choice is never saved to the next account. */
+export function forgetChosenHere(): void {
+  chosenHere.clear();
+}
 const listeners = new Set<() => void>();
 
 function subscribe(listener: () => void) {

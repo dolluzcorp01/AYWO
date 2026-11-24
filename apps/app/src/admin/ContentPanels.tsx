@@ -1,7 +1,8 @@
 // Admin > App settings > Content: what people read that staff must be able to change without a new release.
 // Company details (Contact, Terms, Privacy, Refunds), the emergency numbers on the SOS screens, and the FAQ.
 // Each panel hands its whole value to onSave; the settings page asks for a reason and saves it (0050).
-import { useState } from 'react';
+import { canShipTo } from '@aywo/shared';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -99,6 +100,9 @@ export function FaqPanel({ value, onSave, footer }: { value: Value; onSave: Save
   // The question being written or changed. Null when the form is closed.
   const [editing, setEditing] = useState<FaqItem | null>(null);
   const [changed, setChanged] = useState(false);
+  // Saved for real: the server's copy has changed. Only then does the "not saved" warning go.
+  const onServer = JSON.stringify(value);
+  useEffect(() => setChanged(false), [onServer]);
 
   const questionBad = editing && editing.q.en.trim().length < 3 ? t('admin.content.faqNeedsQuestion') : null;
   const answerBad = editing && editing.a.en.trim().length < 3 ? t('admin.content.faqNeedsAnswer') : null;
@@ -195,8 +199,8 @@ export function FaqPanel({ value, onSave, footer }: { value: Value; onSave: Save
           label={t('admin.common.save')}
           disabled={!onSave || !!editing || !changed}
           onPress={() => {
+            // The warning stays until the server has it: Save only opens the reason box, which can be cancelled.
             onSave?.({ items, hidden });
-            setChanged(false);
           }}
         />
       </Actions>
@@ -259,7 +263,7 @@ export function ShipCountriesPanel({ value, onSave, footer }: { value: Value; on
   const { t } = useTranslation();
   const [typed, setTyped] = useState(() => (Array.isArray(value.countries) ? (value.countries as string[]).join(', ') : ''));
   const codes = [...new Set(typed.toUpperCase().split(/[\s,]+/).filter(Boolean))];
-  const wrong = codes.filter((code) => !/^[A-Z]{2}$/.test(code));
+  const wrong = codes.filter((code) => code !== 'IN' && !canShipTo(code));
   const problem = wrong.length > 0
     ? t('admin.content.shipBad', { code: wrong[0] })
     : codes.includes('IN')

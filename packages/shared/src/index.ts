@@ -1,6 +1,7 @@
 export * from './tree-view.ts';
 export * from './person-card.ts';
 export * from './pay.ts';
+export * from './ship-countries.ts';
 
 export type Gender = 'male' | 'female' | 'other' | 'unknown';
 

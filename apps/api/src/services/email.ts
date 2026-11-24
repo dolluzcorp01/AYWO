@@ -19,6 +19,8 @@ export interface NotificationFacts {
   step?: string | null;
   /** What someone answered to an invitation: yes, maybe or no. */
   answer?: string | null;
+  /** The number an SOS contact was saved under. */
+  phone?: string | null;
   url: string;
 }
 
@@ -91,6 +93,7 @@ const TEMPLATES: Record<Lang, Record<string, Template>> = {
     poll_vote: (f) => ({ title: 'New vote in your Pop Party', body: `${f.by_name ?? someone.en} voted in ${f.title ?? 'your Pop Party'}. Open it to see what they chose.` }),
     group_added: (f) => ({ title: 'New group', body: `${f.by_name ?? someone.en} added you to a group.` }),
     sos: (f) => ({ title: `${f.by_name ?? someone.en} needs help`, body: `${f.by_name ?? someone.en} pressed SOS. Open this to see where they are, then call them.` }),
+    sos_contact_left: (f) => ({ title: 'An SOS contact was removed', body: `${f.phone ?? 'A number you saved'} said the SOS texts were not meant for them, so it is no longer one of your SOS contacts. Open SOS and check who will get your alert.` }),
     sos_ended: (f) => ({ title: 'SOS has ended', body: `${f.by_name ?? someone.en} has stopped the SOS.` }),
     claim_made: (f) => ({ title: 'Someone found their entry', body: `${f.by_name ?? someone.en} says they are ${f.person_name ?? aPerson.en} in your tree. You can undo this if it is wrong.` }),
     claim_undone: (f) => ({ title: 'Your entry was unlinked', body: `Your link to ${f.person_name ?? aPerson.en} was undone by the tree's Creator.` }),
@@ -148,6 +151,7 @@ const TEMPLATES: Record<Lang, Record<string, Template>> = {
     poll_vote: (f) => ({ title: 'பாப் பார்ட்டியில் புதிய வாக்கு', body: `${f.by_name ?? someone.ta} "${f.title ?? 'உங்கள் பாப் பார்ட்டி'}" க்கு வாக்களித்தார். என்ன தேர்வு செய்தார் என்று பார்க்கத் திறக்கவும்.` }),
     group_added: (f) => ({ title: 'புதிய குழு', body: `${f.by_name ?? someone.ta} உங்களை ஒரு குழுவில் சேர்த்தார்.` }),
     sos: (f) => ({ title: `${f.by_name ?? someone.ta} உதவி கேட்கிறார்`, body: `${f.by_name ?? someone.ta} SOS அழுத்தினார். அவர் எங்கே இருக்கிறார் என்று பார்க்க இதைத் திறந்து, பிறகு அவரை அழையுங்கள்.` }),
+    sos_contact_left: (f) => ({ title: 'ஒரு SOS தொடர்பு நீக்கப்பட்டது', body: `${f.phone ?? 'நீங்கள் சேமித்த ஓர் எண்'} SOS குறுஞ்செய்திகள் தமக்கானவை அல்ல என்று சொன்னதால், அது இனி உங்கள் SOS தொடர்பு அல்ல. SOS-ஐத் திறந்து, உங்கள் எச்சரிக்கை யாருக்குப் போகும் என்று பாருங்கள்.` }),
     sos_ended: (f) => ({ title: 'SOS முடிந்தது', body: `${f.by_name ?? someone.ta} SOS-ஐ நிறுத்தினார்.` }),
     claim_made: (f) => ({ title: 'ஒருவர் தன் பதிவைக் கண்டறிந்தார்', body: `உங்கள் மரத்தில் ${f.person_name ?? aPerson.ta} தாங்களே என்று ${f.by_name ?? someone.ta} கூறுகிறார். தவறு எனில் நீங்கள் இதை ரத்து செய்யலாம்.` }),
     claim_undone: (f) => ({ title: 'உங்கள் இணைப்பு நீக்கப்பட்டது', body: `${f.person_name ?? aPerson.ta} உடனான உங்கள் இணைப்பை மரத்தின் உருவாக்குநர் ரத்து செய்தார்.` }),

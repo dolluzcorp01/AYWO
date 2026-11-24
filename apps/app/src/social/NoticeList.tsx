@@ -8,7 +8,7 @@ import { BellIcon } from '@/components/Icons';
 import { Text } from '@/components/Text';
 import { EmptyState, Loading, LoadFailed, TextButton } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
-import { useMarkRead, useNotices } from '@/lib/notices';
+import { COUNTED_ELSEWHERE, useMarkRead, useNotices } from '@/lib/notices';
 import type { Notice } from '@/lib/notices';
 import { useRouter } from '@/lib/router';
 import { useTimeAgo } from '@/lib/time';
@@ -31,7 +31,9 @@ export function NoticeList({ listStyle, onStayHere }: { listStyle: StyleProp<Vie
 
   if (notices.isError) return <LoadFailed message={errorText(notices.error)} onRetry={() => notices.refetch()} />;
   if (!notices.data) return <Loading label={t('tree.loading')} />;
-  const unread = notices.data.filter((n) => !n.read_at).length;
+  const anyUnread = notices.data.some((n) => !n.read_at);
+  // A request to answer is counted under "Needs you", so it is left out of this number, as on the tab and the bell.
+  const unread = notices.data.filter((n) => !n.read_at && !COUNTED_ELSEWHERE.includes(n.kind)).length;
   return (
     <FlatList
       data={notices.data}
@@ -40,9 +42,9 @@ export function NoticeList({ listStyle, onStayHere }: { listStyle: StyleProp<Vie
       refreshing={notices.isRefetching}
       onRefresh={() => notices.refetch()}
       ListHeaderComponent={
-        unread > 0 ? (
+        anyUnread ? (
           <View style={styles.head}>
-            <Text style={styles.count}>{t('activity.unread', { count: unread })}</Text>
+            <Text style={styles.count}>{unread > 0 ? t('activity.unread', { count: unread }) : ''}</Text>
             <TextButton label={t('activity.markAllRead')} onPress={() => markRead.mutate(undefined)} disabled={markRead.isPending} />
           </View>
         ) : undefined

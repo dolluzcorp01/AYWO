@@ -38,6 +38,7 @@ export function pathFor(kind: string, payload: Record<string, unknown> | null): 
   if (kind === 'alert') return '/social/alerts';
   if (kind === 'group_added') return '/social/groups';
   // An alarm opens the page that shows where the person is. It used to open Home, with nothing about the alarm.
+  if (kind === 'sos_contact_left') return '/social/sos';
   if ((kind === 'sos' || kind === 'sos_ended') && isUuid(payload?.event_id)) return `/social/sos/watch/${payload?.event_id}`;
   if (kind === 'request_created' || kind === 'request_routed' || kind === 'merge_candidate') return '/activity?tab=needs_you';
   const person = payload?.person_id;
@@ -76,6 +77,7 @@ export function noticeWords(row: NoticeRow): { title: string; body: string; path
     blood_group: str(row.payload?.blood_group),
     step: str(row.payload?.step),
     answer: str(row.payload?.answer),
+    phone: str(row.payload?.phone),
     url: `${config.WEB_URL}${path}`,
   };
   const text = notificationText(row.kind, facts, row.language_code);

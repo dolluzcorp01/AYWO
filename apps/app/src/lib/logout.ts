@@ -1,5 +1,6 @@
 // Signing out, in the order that works: push and the store need the session that the last step ends.
 import { signOut } from '@/lib/api';
+import { forgetChosenHere } from '@/lib/prefs';
 import { unregisterPush } from '@/pay/registerPush';
 import { signOutOfStore } from '@/pay/store';
 import { stopSosTracking } from '@/social/sosTask';
@@ -9,5 +10,6 @@ export async function logOut(): Promise<void> {
   await stopSosTracking().catch(() => undefined);
   await unregisterPush().catch(() => undefined);
   await signOutOfStore().catch(() => undefined);
+  forgetChosenHere();
   await signOut();
 }

@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { forgetBlockMemory, optionalUser, requireUser } from '../auth-tokens.ts';
 import { isReviewerLogin } from '../config.ts';
 import { asCaller, asServer } from '../db.ts';
+import { canShipTo } from '@aywo/shared';
 import { ApiError } from '../errors.ts';
 import { signedReadUrls, signedUploadUrl } from '../services/storage.ts';
 import { GRANTABLE, matchStep, newTotpSecret, openSecret, sealSecret, signStaffProof, staffCall, twoStepRequired } from '../staff.ts';
@@ -475,6 +476,10 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   app.patch('/admin/config/:key', (req) => {
     const { key } = z.object({ key: z.enum(['min_version', 'latest_version', 'maintenance', 'features', 'whats_new', 'support', 'store_links', 'publisher', 'emergency_numbers', 'faq', 'shop_text', 'ship_countries']) }).parse(req.params);
     const body = z.object({ value: z.record(z.string(), z.unknown()), reason }).parse(req.body);
+    // A code the payment page does not take (UK for GB) would make it refuse every overseas order.
+    if (key === 'ship_countries' && Array.isArray(body.value.countries) && !body.value.countries.every((c) => typeof c === 'string' && canShipTo(c))) {
+      throw new ApiError(422, 'bad_input');
+    }
     return staffCall(req, ['settings'], 'admin_config_set', [key, JSON.stringify(body.value), body.reason]);
   });
   app.get('/admin/analytics', (req) => {

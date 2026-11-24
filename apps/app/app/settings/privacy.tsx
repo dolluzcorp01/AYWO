@@ -12,6 +12,7 @@ import { showToast } from '@/components/Toast';
 import { Card, ConfirmDialog, ErrorText, Field, Muted, SecondaryButton, TextButton, TopBar } from '@/components/ui';
 import { api, clearSession } from '@/lib/api';
 import { errorCode, useErrorText } from '@/lib/errors';
+import { deleteWordShown, isDeleteWord } from '@/lib/deleteWord';
 import { logOut } from '@/lib/logout';
 import { unregisterPush } from '@/pay/registerPush';
 import { signOutOfStore } from '@/pay/store';
@@ -32,8 +33,8 @@ export default function Privacy() {
   // Many people read Tamil (or another language) on a phone that only types English letters, so the English word
   // is always accepted too, and shown beside the translated one.
   const ownWord = t('settings.deleteWord');
-  const confirmWord = ownWord.toLowerCase() === 'delete' ? ownWord : `${ownWord} / delete`;
-  const wordTyped = [ownWord.toLowerCase(), 'delete'].includes(word.trim().toLowerCase());
+  const confirmWord = deleteWordShown(ownWord);
+  const wordTyped = isDeleteWord(word, ownWord);
 
   const exportData = useMutation({
     mutationFn: () => api.post<{ url: string }>('/account/export'),

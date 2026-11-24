@@ -12,7 +12,7 @@ import { claimCandidates, safeNext } from '@/lib/account';
 import type { Me } from '@/lib/account';
 import { api, ApiFailure, deviceStore } from '@/lib/api';
 import { errorCode, useErrorText } from '@/lib/errors';
-import { choseHere, isLargeText, isSimpleMode, setLanguage, setLargeText, setSimpleMode } from '@/lib/prefs';
+import { choseHere, forgetChosenHere, isLargeText, isSimpleMode, setLanguage, setLargeText, setSimpleMode } from '@/lib/prefs';
 import { registerForPush } from '@/pay/registerPush';
 import { LEGAL_VERSION } from '@/legal/publisher';
 
@@ -56,6 +56,7 @@ export default function AfterLogin() {
         }
         if (Object.keys(fresh).length > 0) await api.patch('/me', fresh).catch(() => undefined);
       }
+      forgetChosenHere();
 
       // The phone screen says signing in accepts the Terms and Privacy policy; this records that (LLD S-02).
       // Once per version for each account on this phone, so a new version is recorded for returning people too.

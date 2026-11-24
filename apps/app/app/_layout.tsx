@@ -12,7 +12,7 @@ import { Stack, useGlobalSearchParams, usePathname, useSegments } from 'expo-rou
 import { useRouter } from '@/lib/router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import '@/i18n';
 // F-SOS-03: the background location task must be defined whenever the app starts, even if the system starts it just for this.
@@ -95,11 +95,16 @@ function SignInGate({ signedIn }: { signedIn: boolean }) {
     first === 'calendar' ||
     first === 'activity';
 
+  // Someone who was signed in on this screen and now is not has signed out (or their session ended). They go to the
+  // start, not to "sign in to come back here": the next person to sign in must not land on the last person's page.
+  const wasSignedIn = useRef(signedIn);
   useEffect(() => {
     const onWelcome = first === undefined || first === 'index' || first === 'welcome';
+    if (signedIn) wasSignedIn.current = true;
+    else if (onWelcome) wasSignedIn.current = false;
     // Waits a tick: on the first render the Stack beside this gate has only just mounted, and navigating then can throw.
     const timer = setTimeout(() => {
-      if (!signedIn && onJoinLink) {
+      if (!signedIn && onJoinLink && !wasSignedIn.current) {
         router.replace({ pathname: '/phone', params: { next: pathname } });
         return;
       }
