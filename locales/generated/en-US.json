@@ -2486,7 +2486,8 @@
         "amount": "Amount paid",
         "currency": "Currency",
         "coupon": "Coupon"
-      }
+      },
+      "couponOverLimit": "Code used beyond its limit: this order was paid late, after the buyer had already used the code."
     },
     "offers": {
       "title": "Offers",
@@ -3135,7 +3136,8 @@
       "removeMessage": "They leave the group. You can add them again later.",
       "removeYes": "Remove",
       "starterCannotLeave": "You started this group, so you cannot leave it: nobody else could look after it. You can remove people, or delete the group.",
-      "newLinkDone": "A new link is ready. The old link no longer works."
+      "newLinkDone": "A new link is ready. The old link no longer works.",
+      "removedNewLink": "Removed. The old join link no longer works, so they can't use it to come back. Share the new link with anyone who should still join."
     },
     "invites": {
       "title": "Invites",
@@ -3785,5 +3787,13 @@
     "text": "The link may be old or mistyped. Nothing is lost: your family tree is safe.",
     "home": "Go to the start",
     "back": "Go back"
+  },
+  "missing": {
+    "yourName": "Still needed: your name.",
+    "email": "Check the email address, or leave it empty.",
+    "treeName": "Still needed: a name for the tree.",
+    "whichIsYou": "Tap your own name in the list first.",
+    "relative": "Still needed: choose a relative of yours from the list.",
+    "relation": "Still needed: how you are related to them."
   }
 }

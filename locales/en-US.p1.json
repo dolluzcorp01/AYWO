@@ -1291,5 +1291,13 @@
       "cancel": "The first 2 months are free on the yearly plan. Cancel any time.",
       "perMonthOrYear": "a month, or {{yearly}} a year"
     }
+  },
+  "missing": {
+    "yourName": "Still needed: your name.",
+    "email": "Check the email address, or leave it empty.",
+    "treeName": "Still needed: a name for the tree.",
+    "whichIsYou": "Tap your own name in the list first.",
+    "relative": "Still needed: choose a relative of yours from the list.",
+    "relation": "Still needed: how you are related to them."
   }
 }

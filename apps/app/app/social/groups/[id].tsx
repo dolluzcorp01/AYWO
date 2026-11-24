@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Share } from 'react-native';
 import { ConfirmDialog, Field, PrimaryButton, SecondaryButton, SectionTitle, TextButton } from '@/components/ui';
+import { showToast } from '@/components/Toast';
 import { api } from '@/lib/api';
 import { PeoplePicker } from '@/social/AudiencePicker';
 import { ActionError, Gate, Note, Page, Row, useGoBack, useName } from '@/social/parts';
@@ -51,6 +52,8 @@ export default function GroupScreen() {
     mutationFn: (profile: string) => api.rpc('group_remove_member', { p_group: id, p_profile: profile }),
     onSuccess: () => {
       setRemoving(null);
+      // The old join link is closed with them, so they cannot use it to come back.
+      showToast('success', t('social.groups.removedNewLink'));
       refresh();
     },
   });

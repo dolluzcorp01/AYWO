@@ -604,6 +604,8 @@ export default function PersonDetails() {
               value={form.name}
               onChangeText={(v) => change('name', v)}
               placeholder={t('details.namePlaceholder')}
+              // The longest name the tree keeps. The box stops there, so nobody types more and is refused on Save.
+              maxLength={200}
               editable={!form.nameUnknown}
               invalid={badField === 'name'}
               style={styles.nameInput}

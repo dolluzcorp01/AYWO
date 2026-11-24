@@ -2,7 +2,7 @@
 import { DateField, TimeField } from '@/components/DateTimeField';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Share, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Text';
@@ -180,10 +180,28 @@ export default function InviteDetail() {
         { profileId: me.id },
       );
     },
-    onSuccess: (result) => {
-      if (result !== 'cancelled') setPaymentNote(true);
+    onSuccess: (result, design) => {
+      if (result === 'cancelled') return;
+      setPaymentNote(true);
+      setBought(design);
     },
   });
+  // The design just paid for goes onto the card by itself as soon as the payment shows. Before this the person
+  // paid, saw nothing change, and the Buy button was still there to be pressed a second time.
+  const [bought, setBought] = useState<Design | null>(null);
+  const owned = event.data?.owned_designs;
+  const spare = event.data?.spare_designs ?? 0;
+  const designNow = event.data?.design;
+  const applyDesign = setDesign.mutate;
+  useEffect(() => {
+    if (!bought || !owned) return;
+    if (designNow === bought) {
+      setBought(null);
+      setPaymentNote(false);
+    } else if (owned.includes(bought) || spare > 0) {
+      applyDesign(bought);
+    }
+  }, [bought, owned, spare, designNow, applyDesign]);
   const decide = useMutation({
     mutationFn: () =>
       api.rpc('pop_party_decide', {
@@ -342,7 +360,7 @@ export default function InviteDetail() {
                           {e.spare_designs > 0 ? (
                             <SmallButton label={t('social.invites.useBought')} onPress={() => setDesign.mutate(d)} disabled={setDesign.isPending} />
                           ) : (
-                            <SmallButton label={t('social.invites.buy')} kind="yellow" onPress={() => buyDesign.mutate(d)} disabled={buyDesign.isPending} />
+                            <SmallButton label={t('social.invites.buy')} kind="yellow" onPress={() => buyDesign.mutate(d)} disabled={buyDesign.isPending || bought !== null} />
                           )}
                         </View>
                       ))}

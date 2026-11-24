@@ -8,6 +8,7 @@ import { useAdminAccess } from '@/admin/access';
 import type { Fulfilment, OrderAddress, OrderPage, OrderRow } from '@/admin/types';
 import { Actions, AdminPage, adminStyles, DataTable, DialogFrame, DownloadList, Facts, Field, FilterChips, formatDate, FormDialog, Message, Missing, money, Pager, Pill, QueryState, SearchBox, SecondaryButton, useAction, usePagedList, useRefreshAfter, useKept } from '@/admin/ui';
 import type { Column } from '@/admin/ui';
+import { colors } from '@/theme/tokens';
 import { api } from '@/lib/api';
 
 const NEXT: Partial<Record<Fulfilment, Fulfilment>> = { queued: 'printing', printing: 'shipped', shipped: 'delivered' };
@@ -62,6 +63,7 @@ export default function AdminOrders() {
         <View>
           <Text style={adminStyles.cellStrong}>{money(row.amount_minor, row.currency, i18n.language)}</Text>
           {row.coupon ? <Text style={adminStyles.cellMuted}>{t('admin.orders.withCoupon', { code: row.coupon, off: money(row.discount_minor, row.currency, i18n.language) })}</Text> : null}
+          {row.coupon_over_limit ? <Text style={[adminStyles.cellMuted, { color: colors.alert }]}>{t('admin.orders.couponOverLimit')}</Text> : null}
           <Text style={adminStyles.cellMuted}>{formatDate(row.paid_at, i18n.language)}</Text>
         </View>
       ),

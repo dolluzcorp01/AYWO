@@ -310,6 +310,8 @@ export interface OrderRow {
   currency: string;
   discount_minor: number;
   coupon: string | null;
+  /** Paid late, after the buyer had already used the code (0043). */
+  coupon_over_limit?: boolean;
   status: string;
   fulfilment: Fulfilment;
   carrier: string | null;

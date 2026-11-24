@@ -221,7 +221,7 @@ export default function ImportScreen() {
             />
           ) : null}
         </ScrollView>
-        <PrimaryButton label={needGender.length > 0 ? t('import.nextGender') : t('import.nextFind')} onPress={afterChecks} disabled={!treeName.trim()} />
+        <PrimaryButton label={needGender.length > 0 ? t('import.nextGender') : t('import.nextFind')} onPress={afterChecks} missing={treeName.trim() ? null : t('missing.treeName')} />
       </Screen>
     );
   }
@@ -493,7 +493,7 @@ function WhichIsYou({ preview, suggestion, busy, failure, onBack, onConfirm, onN
         }}
       />
       {failure ? <ErrorText>{failure}</ErrorText> : null}
-      <PrimaryButton label={busy ? t('import.saving') : t('claim.yes')} onPress={() => onConfirm(chosen)} disabled={!chosen || busy} />
+      <PrimaryButton label={busy ? t('import.saving') : t('claim.yes')} onPress={() => onConfirm(chosen)} disabled={busy} missing={chosen ? null : t('missing.whichIsYou')} />
     </Screen>
   );
 }
@@ -591,7 +591,8 @@ function AddMe({ preview, myName, busy, failure, onBack, onConfirm, onWithoutMe 
         onPress={() => {
           if (anchor && relation) onConfirm({ anchorTemp: anchor, relation, name: name.trim(), gender });
         }}
-        disabled={!anchor || !relation || !name.trim() || busy}
+        disabled={busy}
+        missing={!name.trim() ? t('missing.yourName') : !anchor ? t('missing.relative') : !relation ? t('missing.relation') : null}
       />
       <TextButton label={t('import.withoutMe')} onPress={onWithoutMe} disabled={busy} />
     </Screen>

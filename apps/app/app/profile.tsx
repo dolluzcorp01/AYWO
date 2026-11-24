@@ -156,7 +156,7 @@ export default function Profile() {
         )}
         {failure ? <ErrorText>{errorText(failure)}</ErrorText> : null}
       </ScrollView>
-      <PrimaryButton label={editing ? t('common.save') : t('common.continue')} onPress={save} disabled={!name.trim() || busy || emailBad} />
+      <PrimaryButton label={editing ? t('common.save') : t('common.continue')} onPress={save} disabled={busy} missing={!name.trim() ? t('missing.yourName') : emailBad ? t('missing.email') : null} />
     </Screen>
   );
 }

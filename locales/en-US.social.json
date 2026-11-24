@@ -186,7 +186,8 @@
       "removeMessage": "They leave the group. You can add them again later.",
       "removeYes": "Remove",
       "starterCannotLeave": "You started this group, so you cannot leave it: nobody else could look after it. You can remove people, or delete the group.",
-      "newLinkDone": "A new link is ready. The old link no longer works."
+      "newLinkDone": "A new link is ready. The old link no longer works.",
+      "removedNewLink": "Removed. The old join link no longer works, so they can't use it to come back. Share the new link with anyone who should still join."
     },
     "invites": {
       "title": "Invites",

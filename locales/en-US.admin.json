@@ -823,7 +823,8 @@
         "amount": "Amount paid",
         "currency": "Currency",
         "coupon": "Coupon"
-      }
+      },
+      "couponOverLimit": "Code used beyond its limit: this order was paid late, after the buyer had already used the code."
     },
     "offers": {
       "title": "Offers",
