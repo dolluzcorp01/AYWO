@@ -27,6 +27,7 @@ export default function Privacy() {
   const [acknowledged, setAcknowledged] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [leavingNow, setLeavingNow] = useState(false);
   const [word, setWord] = useState('');
   // Many people read Tamil (or another language) on a phone that only types English letters, so the English word
   // is always accepted too, and shown beside the translated one.
@@ -81,12 +82,18 @@ export default function Privacy() {
           visible={signingOut}
           title={t('nav.signOutTitle')}
           message={t('nav.signOutMessage')}
-          confirmLabel={t('settings.signOut')}
+          // Signing out tells the server first, which can take a few seconds on a weak connection. The box stays
+          // and says so; it used to close at once and the screen sat there as if nothing had happened.
+          confirmLabel={t(leavingNow ? 'settings.signingOut' : 'settings.signOut')}
+          busy={leavingNow}
           onConfirm={() => {
-            setSigningOut(false);
-            void logOut();
+            setLeavingNow(true);
+            void logOut().finally(() => {
+              setLeavingNow(false);
+              setSigningOut(false);
+            });
           }}
-          onCancel={() => setSigningOut(false)}
+          onCancel={() => (leavingNow ? undefined : setSigningOut(false))}
         />
 
         <Card style={styles.card}>

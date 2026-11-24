@@ -107,7 +107,8 @@
       "sendAgain": "Send it again",
       "close": "Close this chat for everyone",
       "closeTitle": "Close this group chat?",
-      "closeMessage": "It leaves everyone's chat list and nobody can write in it any more. This can't be undone. To step out yourself and let the others carry on, use Leave instead."
+      "closeMessage": "It leaves everyone's chat list and nobody can write in it any more. This can't be undone. To step out yourself and let the others carry on, use Leave instead.",
+      "micFailed": "The recording couldn't start. Close other apps that use the microphone (a call, a recorder) and try again."
     },
     "memories": {
       "title": "Memories",
@@ -418,7 +419,8 @@
       "needNumber": "Type the phone number first.",
       "callThem": "Call {{name}} now",
       "locationSettingsHelp": "If nothing happens, your phone has stopped asking. Open the phone's settings and allow Location for AYWO, then come back and try again.",
-      "openSettings": "Open phone settings"
+      "openSettings": "Open phone settings",
+      "noDialler": "This computer can't make calls. Dial {{number}} from a phone."
     },
     "missing": {
       "who": "Choose who can see this.",

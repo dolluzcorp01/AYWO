@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { goBack } from '@/lib/nav';
+import { showToast } from '@/components/Toast';
 import { Avatar } from '@/components/Avatar';
 import { DownIcon, RightIcon, RingsIcon, UpIcon } from '@/components/Icons';
 import { Screen } from '@/components/Screen';
@@ -66,6 +67,7 @@ export default function AddRelative() {
   if (!data) {
     return (
       <Screen>
+        <TopBar title={t('add.title')} onBack={() => goBack(router)} close />
         <Loading label={t('tree.loading')} />
       </Screen>
     );
@@ -174,7 +176,10 @@ export default function AddRelative() {
       {
         onSuccess: (answer) => {
           if (answer.status === 'requested') setRequested(true);
-          else goBack(router);
+          else {
+            showToast('success', t('common.saved'));
+            goBack(router);
+          }
         },
       },
     );

@@ -28,7 +28,8 @@ function voiceFile(uri: string): PickedFile {
     : { uri, contentType: 'audio/mp4', extension: 'm4a' };
 }
 
-export function VoiceRecorder({ onDone, onCancel, onDenied }: { onDone: (file: PickedFile, ms: number) => void; onCancel: () => void; onDenied: () => void }) {
+/** onDenied(true): the microphone was refused. onDenied(false): it was allowed, and recording still could not start. */
+export function VoiceRecorder({ onDone, onCancel, onDenied }: { onDone: (file: PickedFile, ms: number) => void; onCancel: () => void; onDenied: (refused: boolean) => void }) {
   const { t } = useTranslation();
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [ms, setMs] = useState(0);
@@ -45,7 +46,7 @@ export function VoiceRecorder({ onDone, onCancel, onDenied }: { onDone: (file: P
       const permission = await AudioModule.requestRecordingPermissionsAsync();
       if (!live) return;
       if (!permission.granted) {
-        onDenied();
+        onDenied(true);
         return;
       }
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
@@ -63,7 +64,7 @@ export function VoiceRecorder({ onDone, onCancel, onDenied }: { onDone: (file: P
       setReady(true);
     })().catch(() => {
       recordingOff();
-      if (live) onDenied();
+      if (live) onDenied(false);
     });
     return () => {
       live = false;

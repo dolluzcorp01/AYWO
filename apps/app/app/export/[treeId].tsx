@@ -111,6 +111,7 @@ export default function ExportScreen() {
   if (!trees.data) {
     return (
       <Screen>
+        <TopBar title={t('export.title')} onBack={() => goBack(router)} />
         <Loading label={t('tree.loading')} />
       </Screen>
     );

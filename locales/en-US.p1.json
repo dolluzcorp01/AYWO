@@ -799,7 +799,8 @@
     "keepAccount": "Keep my account",
     "simpleMode": "Simple mode for elders",
     "simpleModeHelp": "A few big buttons on Home, larger text and bigger buttons everywhere.",
-    "deletedNote": "Your account is set to be deleted in 30 days. To keep it, sign in again before then and tap \"Keep my account\"."
+    "deletedNote": "Your account is set to be deleted in 30 days. To keep it, sign in again before then and tap \"Keep my account\".",
+    "signingOut": "Signing out…"
   },
   "time": {
     "justNow": "Just now",

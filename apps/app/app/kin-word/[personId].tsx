@@ -62,6 +62,7 @@ export default function KinWord() {
   if (!data || !node) {
     return (
       <Screen>
+        <TopBar title={t('kinWord.title')} onBack={() => goBack(router)} />
         <Loading label={t('tree.loading')} />
       </Screen>
     );

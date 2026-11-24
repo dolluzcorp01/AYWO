@@ -57,7 +57,10 @@ export default function ChatRoom() {
   const textVoice = useVoiceInput(text, setText);
   const [reply, setReply] = useState<Message | null>(null);
   const [recording, setRecording] = useState(false);
-  const [micDenied, setMicDenied] = useState(false);
+  // 'refused': the phone said no to the microphone. 'failed': allowed, but the recording could not start.
+  const [micDenied, setMicDenied] = useState<false | 'refused' | 'failed'>(false);
+  // What was being typed when Edit was chosen: it comes back when the edit is saved or cancelled.
+  const draft = useRef('');
   const [toDelete, setToDelete] = useState<Message | null>(null);
   // One "are you sure" for the small removals on this screen: what is asked, and what Yes does.
   const [asking, setAsking] = useState<{ title: string; yes: string; run: () => void } | null>(null);
@@ -187,7 +190,8 @@ export default function ChatRoom() {
     mutationFn: (input: { messageId: string; body: string }) => api.rpc('message_update', { p_message: input.messageId, p_body: input.body.trim() }),
     onSuccess: () => {
       setEditing(null);
-      setText('');
+      setText(draft.current);
+      draft.current = '';
       client.invalidateQueries({ queryKey: key });
     },
   });
@@ -366,7 +370,7 @@ export default function ChatRoom() {
         </Gate>
 
         {!connected ? <Note>{t('social.chat.reconnecting')}</Note> : null}
-        {micDenied ? <Note>{t('social.chat.micDenied')}</Note> : null}
+        {micDenied ? <Note>{t(micDenied === 'refused' ? 'social.chat.micDenied' : 'social.chat.micFailed')}</Note> : null}
         {/* A photo or voice note takes a few seconds to go. Without a word here the screen looked as if nothing was happening. */}
         {send.isPending && send.variables?.file ? (
           <View accessibilityLiveRegion="polite">
@@ -390,7 +394,8 @@ export default function ChatRoom() {
               accessibilityLabel={t('social.cancel')}
               onPress={() => {
                 setEditing(null);
-                setText('');
+                setText(draft.current);
+                draft.current = '';
               }}
               style={styles.iconButton}
             >
@@ -413,9 +418,9 @@ export default function ChatRoom() {
         {recording ? (
           <VoiceRecorder
             onCancel={() => setRecording(false)}
-            onDenied={() => {
+            onDenied={(refused) => {
               setRecording(false);
-              setMicDenied(true);
+              setMicDenied(refused ? 'refused' : 'failed');
             }}
             onDone={(file, ms) => {
               setRecording(false);
@@ -475,6 +480,8 @@ export default function ChatRoom() {
           <TextButton
             label={t('social.edit')}
             onPress={() => {
+              // Not while already editing: the draft kept is the one from before the first Edit.
+              if (!editing) draft.current = text;
               setEditing(chosen);
               setReply(null);
               setText(chosen.body ?? '');

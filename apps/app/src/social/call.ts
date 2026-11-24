@@ -10,7 +10,20 @@ async function placeAndroidCall(phone: string): Promise<boolean> {
   return true;
 }
 
+/**
+ * A computer has nothing to call with: its browser takes a tel: link and does nothing, so the button looked broken.
+ * Thrown there instead, so the screen can show the number to dial from a phone.
+ */
+export class NoDialler extends Error {}
+function needDialler(): void {
+  if (Platform.OS !== 'web') return;
+  const nav = (globalThis as { navigator?: { maxTouchPoints?: number; userAgent?: string } }).navigator;
+  const phoneLike = (nav?.maxTouchPoints ?? 0) > 0 || /Android|iPhone|iPad|Mobile/i.test(nav?.userAgent ?? '');
+  if (!phoneLike) throw new NoDialler();
+}
+
 export async function callNow(phone: string): Promise<void> {
+  needDialler();
   if (Platform.OS === 'android') {
     const placed = await placeAndroidCall(phone).catch(() => false);
     if (placed) return;
@@ -19,6 +32,7 @@ export async function callNow(phone: string): Promise<void> {
 }
 
 /** The emergency number always goes through the phone's own dialler, one tap from the button. */
-export function dialEmergency(number: string): Promise<void> {
-  return Linking.openURL(`tel:${number}`);
+export async function dialEmergency(number: string): Promise<void> {
+  needDialler();
+  await Linking.openURL(`tel:${number}`);
 }

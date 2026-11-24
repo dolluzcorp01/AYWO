@@ -24,6 +24,7 @@ import {
 import { takeSosStart } from '@/social/sosStart';
 import type { SosActive, SosContact, SosStart } from '@/social/types';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
+import { showToast } from '@/components/Toast';
 
 const HOLD_MS = 2_000;
 // A weak network must not leave the person looking at "Alerting your contacts" for ever.
@@ -45,7 +46,7 @@ function EmergencyButton() {
   const number = useEmergencyNumber();
   return (
     <View style={styles.block}>
-      <SecondaryButton label={t('social.sos.callEmergency', { number })} onPress={() => void dialEmergency(number)} />
+      <SecondaryButton label={t('social.sos.callEmergency', { number })} onPress={() => void dialEmergency(number).catch(() => showToast('error', t('social.sos.noDialler', { number })))} />
       <Note>{t('social.sos.notEmergency')}</Note>
     </View>
   );
@@ -111,7 +112,7 @@ function Running({ active, callPhone, tracking, locationWaiting, alerted, smsFai
       {tracking === null && locationWaiting ? <ErrorText>{t('social.sos.locationWaiting')}</ErrorText> : null}
       {tracking === 'foreground' ? <Note>{t('social.sos.keepOpen')}</Note> : null}
       {smsFailed > 0 ? <ErrorText>{t('social.sos.smsFailed', { count: smsFailed })}</ErrorText> : null}
-      {callPhone ? <SecondaryButton label={t('social.sos.callFirst')} onPress={() => void callNow(callPhone)} /> : null}
+      {callPhone ? <SecondaryButton label={t('social.sos.callFirst')} onPress={() => void callNow(callPhone).catch(() => showToast('error', t('social.sos.noDialler', { number: callPhone })))} /> : null}
       <EmergencyButton />
       <TextButton label={t('social.sos.seeWhatTheySee')} onPress={() => router.push({ pathname: '/social/sos/watch/[id]', params: { id: active.id } })} />
       <Pressable accessibilityRole="button" onPress={() => setStopping(true)} style={styles.stop}>

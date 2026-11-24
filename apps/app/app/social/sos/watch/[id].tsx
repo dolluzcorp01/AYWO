@@ -16,6 +16,7 @@ import { useSosAlarm } from '@/social/SosAlarm';
 import type { EmergencyCard } from '@/ops/types';
 import type { SosView } from '@/social/types';
 import { colors, fonts } from '@/theme/tokens';
+import { showToast } from '@/components/Toast';
 
 const REFRESH_MS = 15_000;
 
@@ -52,7 +53,7 @@ export default function SosWatch() {
             </View>
             {/* First, because the alert says "please call now". */}
             {data.active && data.call_phone ? (
-              <PrimaryButton label={t('social.sos.callThem', { name: showName(data.name) })} onPress={() => void Linking.openURL(`tel:${data.call_phone}`)} />
+              <PrimaryButton label={t('social.sos.callThem', { name: showName(data.name) })} onPress={() => void dialEmergency(String(data.call_phone)).catch(() => showToast('error', t('social.sos.noDialler', { number: String(data.call_phone) })))} />
             ) : null}
             {data.last ? (
               <PrimaryButton
@@ -78,7 +79,7 @@ export default function SosWatch() {
         )}
       </Gate>
       {/* Always there, also when the SOS could not be loaded. */}
-      <SecondaryButton label={t('social.sos.callEmergency', { number })} onPress={() => void dialEmergency(number)} />
+      <SecondaryButton label={t('social.sos.callEmergency', { number })} onPress={() => void dialEmergency(number).catch(() => showToast('error', t('social.sos.noDialler', { number })))} />
       <Note>{t('social.sos.notEmergency')}</Note>
     </Page>
   );
