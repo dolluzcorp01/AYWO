@@ -136,11 +136,28 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   async function checkCode(userId: string, typed: string, confirming: boolean) {
     const state = await staffOnly(userId);
     if (!state.secret || state.confirmed === confirming) throw new ApiError(409, confirming ? 'admin_two_step_already' : 'admin_two_step_setup');
+    // Five wrong codes in a row lock the second step for 15 minutes (0055), so the code cannot be guessed at leisure.
+    const locked = await asServer(async (db) => {
+      const { rows } = await db.query(`select locked_until > now() as locked from admin_mfa where profile_id = $1`, [userId]);
+      return rows[0]?.locked === true;
+    });
+    if (locked) throw new ApiError(429, 'admin_two_step_locked');
     const step = matchStep(state.secret, typed, state.last_step);
-    if (step === null) throw new ApiError(422, 'admin_two_step_wrong');
+    if (step === null) {
+      await asServer((db) =>
+        db.query(
+          `update admin_mfa set
+             locked_until = case when wrong_tries + 1 >= 5 then now() + interval '15 minutes' else locked_until end,
+             wrong_tries = case when wrong_tries + 1 >= 5 then 0 else wrong_tries + 1 end
+           where profile_id = $1`,
+          [userId],
+        ),
+      );
+      throw new ApiError(422, 'admin_two_step_wrong');
+    }
     await asServer(async (db) => {
       await db.query(
-        `update admin_mfa set last_step = $2, confirmed_at = coalesce(confirmed_at, now()) where profile_id = $1`,
+        `update admin_mfa set last_step = $2, confirmed_at = coalesce(confirmed_at, now()), wrong_tries = 0, locked_until = null where profile_id = $1`,
         [userId, step],
       );
       if (confirming) {

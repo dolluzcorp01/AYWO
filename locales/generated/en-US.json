@@ -415,7 +415,8 @@
     "otp_expired": "That code is no longer valid. Tap \"Send the code again\" and use the new one.",
     "otp_locked": "Too many wrong tries. Ask for a new code, or wait an hour if it still doesn't work.",
     "event_in_past": "That date and time have already passed. Choose a time that is still to come.",
-    "sos_number_stopped": "The person with this number asked not to get SOS texts from AYWO. Choose someone else, or ask them to join AYWO and add them from your family."
+    "sos_number_stopped": "The person with this number asked not to get SOS texts from AYWO. Choose someone else, or ask them to join AYWO and add them from your family.",
+    "admin_two_step_locked": "Too many wrong codes. The second step is locked for 15 minutes. Then use the newest code from your authenticator app."
   },
   "language": {
     "title": "Choose your language",
@@ -688,7 +689,14 @@
     "approvalEditNote": "Your changes go to the tree's Creator to approve first. Phone numbers and email cannot be changed this way.",
     "removeMeHelp": "This is your own card. Without it the tree can't show you your place in the family or what to call each relative. To bring it back, open the tree and tap the History button at the top.",
     "dateInFuture": "That date is in the future. Check the year.",
-    "diedBeforeBorn": "The year they passed away is before the year they were born. Check both years."
+    "diedBeforeBorn": "The year they passed away is before the year they were born. Check both years.",
+    "agesTitle": "Check the birth years",
+    "agesChild": "This child would be born before, or in the same year as, their parent {{name}}. Is the year right?",
+    "agesParent": "This parent would be born after, or in the same year as, their child {{name}}. Is the year right?",
+    "agesSave": "The years are right. Save",
+    "onlyCardTitle": "This is the only person in the tree",
+    "onlyCardHelp": "A tree needs at least one person, so this card can't be removed. Change the name or details here instead. To remove the whole tree, go to Me, then Tree settings.",
+    "onlyCardOk": "OK, keep it"
   },
   "picker": {
     "hour": "Hour",
@@ -3115,7 +3123,10 @@
       "hideYes": "Remove",
       "sendingPhoto": "Sending the photo…",
       "sendingVoice": "Sending the voice note…",
-      "sendAgain": "Send it again"
+      "sendAgain": "Send it again",
+      "close": "Close this chat for everyone",
+      "closeTitle": "Close this group chat?",
+      "closeMessage": "It leaves everyone's chat list and nobody can write in it any more. This can't be undone. To step out yourself and let the others carry on, use Leave instead."
     },
     "memories": {
       "title": "Memories",

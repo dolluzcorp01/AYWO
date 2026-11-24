@@ -446,7 +446,14 @@
     "approvalEditNote": "Your changes go to the tree's Creator to approve first. Phone numbers and email cannot be changed this way.",
     "removeMeHelp": "This is your own card. Without it the tree can't show you your place in the family or what to call each relative. To bring it back, open the tree and tap the History button at the top.",
     "dateInFuture": "That date is in the future. Check the year.",
-    "diedBeforeBorn": "The year they passed away is before the year they were born. Check both years."
+    "diedBeforeBorn": "The year they passed away is before the year they were born. Check both years.",
+    "agesTitle": "Check the birth years",
+    "agesChild": "This child would be born before, or in the same year as, their parent {{name}}. Is the year right?",
+    "agesParent": "This parent would be born after, or in the same year as, their child {{name}}. Is the year right?",
+    "agesSave": "The years are right. Save",
+    "onlyCardTitle": "This is the only person in the tree",
+    "onlyCardHelp": "A tree needs at least one person, so this card can't be removed. Change the name or details here instead. To remove the whole tree, go to Me, then Tree settings.",
+    "onlyCardOk": "OK, keep it"
   },
   "picker": {
     "hour": "Hour",

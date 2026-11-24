@@ -71,6 +71,7 @@ export default function ChatRoom() {
   const [editing, setEditing] = useState<Message | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [hiding, setHiding] = useState(false);
   // One id for each thing being sent, kept until that send succeeds: trying the same words or the same photo again after
   // a dropped connection cannot post twice, and two different things sent close together never share an id (the server
@@ -217,6 +218,17 @@ export default function ChatRoom() {
     },
   });
 
+  // Only whoever made the group chat: it leaves everyone's list.
+  const close = useMutation({
+    mutationFn: () => api.rpc('chat_close', { p_chat: id }),
+    onSuccess: () => {
+      setClosing(false);
+      client.invalidateQueries({ queryKey: ['chats'] });
+      client.invalidateQueries({ queryKey: ['social-home'] });
+      goBack();
+    },
+  });
+
   const remove = useMutation({
     mutationFn: (messageId: string) => api.rpc('message_delete', { p_message: messageId }),
     onSettled: () => {
@@ -320,6 +332,9 @@ export default function ChatRoom() {
             ) : null}
             {first.chat.kind === 'group' ? <TextButton label={t('ops.chat.people')} onPress={() => setPeople(true)} /> : null}
             {first.chat.kind === 'group' ? <TextButton label={t('social.chat.leave')} danger onPress={() => setLeaving(true)} /> : null}
+            {first.chat.kind === 'group' && first.chat.can_rename ? (
+              <TextButton label={t('social.chat.close')} danger onPress={() => setClosing(true)} />
+            ) : null}
           </View>
         ) : null}
         {/* Whose message is whose depends on knowing who is signed in: nothing is drawn on a guess. */}
@@ -508,6 +523,18 @@ export default function ChatRoom() {
         onCancel={() => setHiding(false)}
       >
         <ActionError error={hide.error} />
+      </ConfirmDialog>
+      <ConfirmDialog
+        visible={closing}
+        title={t('social.chat.closeTitle')}
+        message={t('social.chat.closeMessage')}
+        confirmLabel={t('social.chat.close')}
+        danger
+        busy={close.isPending}
+        onConfirm={() => close.mutate()}
+        onCancel={() => setClosing(false)}
+      >
+        <ActionError error={close.error} />
       </ConfirmDialog>
       <ConfirmDialog
         visible={leaving}

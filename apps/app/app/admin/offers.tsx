@@ -330,7 +330,9 @@ function CouponDialog({ coupon, onClose }: { coupon: Coupon | null; onClose: () 
         </>
       ) : null}
       <Text style={adminStyles.fieldLabel}>{t('admin.offers.on')}</Text>
-      {PRODUCTS.map((p) => (
+      {/* A premium invite is bought inside the invitation, where there is no box for a code, so a code for it could
+          never be used. It is only shown on a code that already has it, so it can be unticked. */}
+      {PRODUCTS.filter((p) => p !== 'premium_invite' || coupon?.products.includes('premium_invite')).map((p) => (
         <Checkbox key={p} label={t(`admin.orders.products.${p}`)} checked={products.includes(p)} onChange={(on) => setProducts((old) => (on ? [...old, p] : old.filter((x) => x !== p)))} />
       ))}
       <DateField label={t('admin.offers.starts')} value={starts} onChange={setStarts} help={t('admin.offers.dateHelp')} error={dayErrors.starts || undefined} />

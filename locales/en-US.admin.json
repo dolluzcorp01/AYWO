@@ -1388,6 +1388,7 @@
     "admin_decision_final": "This decision removed something, so it is final and can't be reopened.",
     "admin_already_open": "This is already open.",
     "kin_term_exists": "That spelling is already in the dictionary for this relationship and language.",
-    "admin_nothing_changed": "Nothing was changed. Type a different price first."
+    "admin_nothing_changed": "Nothing was changed. Type a different price first.",
+    "admin_two_step_locked": "Too many wrong codes. The second step is locked for 15 minutes. Then use the newest code from your authenticator app."
   }
 }

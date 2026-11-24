@@ -114,6 +114,17 @@ interface ClaimDetails {
   [key: string]: unknown;
 }
 
+/**
+ * A download made for one person (their tree as a file, a copy of their data) is wanted for a few minutes. It used
+ * to stay in storage for ever, names and dates and all. It is now put on the list the storage clean-up empties,
+ * dated an hour ahead, so the link works for as long as it is signed and the file is gone soon after.
+ */
+async function forgetExportLater(path: string): Promise<void> {
+  await asServer((db) =>
+    db.query(`insert into storage_trash (path, reason, created_at) values ($1, 'export', now() + interval '50 minutes') on conflict do nothing`, [path]),
+  );
+}
+
 export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
   // ===== Me =====
 
@@ -423,6 +434,7 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
     const file = await buildGedcom(userId, id, query.include_living === '1');
     const path = `exports/${userId}/${randomUUID()}.ged`;
     await uploadObject(path, file, 'text/plain; charset=utf-8');
+    await forgetExportLater(path);
     return { url: await signedReadUrl(path) };
   });
 
@@ -496,7 +508,9 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
 
   app.post('/notifications/read-all', async (req) => {
     const userId = await requireUser(req);
-    await asCaller(userId, (db) => db.query(`update notifications set read_at = now() where recipient_id = $1 and read_at is null`, [userId]));
+    // Only what the list shows. Chat messages keep their own unread numbers, and marking their rows here made the
+    // delivery job treat them as seen.
+    await asCaller(userId, (db) => db.query(`update notifications set read_at = now() where recipient_id = $1 and read_at is null and kind <> 'chat_message'`, [userId]));
     return { ok: true };
   });
 
@@ -555,6 +569,7 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
     }));
     const path = `exports/${userId}/${randomUUID()}.json`;
     await uploadObject(path, JSON.stringify(data, null, 2), 'application/json');
+    await forgetExportLater(path);
     return { url: await signedReadUrl(path) };
   });
 

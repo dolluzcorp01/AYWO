@@ -22,6 +22,7 @@ export const socialRpc: RpcList = {
   chat_create_group: { args: ['p_name', 'p_audience'] },
   chat_add_members: { args: ['p_chat', 'p_members'] },
   chat_leave: { args: ['p_chat'] },
+  chat_close: { args: ['p_chat'] },
   // Takes a one-to-one chat off the caller's own list until a new message arrives (0033).
   chat_hide: { args: ['p_chat'] },
   chat_list: { args: [] },

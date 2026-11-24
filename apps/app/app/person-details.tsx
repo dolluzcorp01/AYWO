@@ -137,6 +137,9 @@ export default function PersonDetails() {
     setDirty(true);
   }
   const [more, setMore] = useState(false);
+  // "Born before their parent?" was asked and the person said the years are right.
+  const [ageAsk, setAgeAsk] = useState(false);
+  const agesChecked = useRef(false);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   // The box the last problem was about, outlined in red until it is changed.
@@ -390,6 +393,17 @@ export default function PersonDetails() {
       }
       plan.push({ kind, value, normalized });
     }
+    // A child born before their parent is nearly always a wrong year. Asked once, not refused: a step-parent or an
+    // adoptive parent can be the younger one.
+    if (!editing && !agesChecked.current && anchorNode?.birthDate && built.fields.birth_date) {
+      const theirs = Number(anchorNode.birthDate.slice(0, 4));
+      const typed = Number(built.fields.birth_date.slice(0, 4));
+      const odd = params.relation === 'child' ? typed <= theirs : params.relation === 'parent' ? typed >= theirs : false;
+      if (odd) {
+        setAgeAsk(true);
+        return;
+      }
+    }
 
     setBusy(true);
     setFailure(null);
@@ -569,6 +583,7 @@ export default function PersonDetails() {
   // Ticks chosen on the add screen come along; otherwise everyone offered starts ticked.
   const untickedNow = unticked ?? (params.also !== undefined ? alsoPeople.map((p) => p.id).filter((id) => !params.also!.split(',').includes(id)) : []);
   const alsoTicked = alsoPeople.map((p) => p.id).filter((id) => !untickedNow.includes(id));
+  const onlyCard = editing && tree.data.nodes.length <= 1;
   const subtitle = editing ? t('details.editing') : params.relation ? t(`details.relationOf.${params.relation}`, { name: anchorName }) : undefined;
 
   return (
@@ -806,7 +821,28 @@ export default function PersonDetails() {
       <PrimaryButton label={editing ? t('common.save') : t('details.addToTree')} onPress={save} disabled={busy || !!notice || contactsLoading} />
 
       <ConfirmDialog
-        visible={removing}
+        visible={ageAsk}
+        title={t('details.agesTitle')}
+        message={t(params.relation === 'parent' ? 'details.agesParent' : 'details.agesChild', { name: anchorName })}
+        confirmLabel={t('details.agesSave')}
+        onCancel={() => setAgeAsk(false)}
+        onConfirm={() => {
+          agesChecked.current = true;
+          setAgeAsk(false);
+          void save();
+        }}
+      />
+      {/* The only person in the tree: taking them away leaves an empty tree, which is a tree to delete, not a card. */}
+      <ConfirmDialog
+        visible={removing && onlyCard}
+        title={t('details.onlyCardTitle')}
+        message={t('details.onlyCardHelp')}
+        confirmLabel={t('details.onlyCardOk')}
+        onConfirm={() => setRemoving(false)}
+        onCancel={() => setRemoving(false)}
+      />
+      <ConfirmDialog
+        visible={removing && !onlyCard}
         title={t('details.removeTitle', { name: title })}
         // Their own card: said plainly, because without it the tree no longer knows where they stand.
         message={personId && personId === tree.data?.viewer_person_id ? t('details.removeMeHelp') : t('details.removeHelp')}

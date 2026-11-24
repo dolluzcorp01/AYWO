@@ -104,7 +104,10 @@
       "hideYes": "Remove",
       "sendingPhoto": "Sending the photo…",
       "sendingVoice": "Sending the voice note…",
-      "sendAgain": "Send it again"
+      "sendAgain": "Send it again",
+      "close": "Close this chat for everyone",
+      "closeTitle": "Close this group chat?",
+      "closeMessage": "It leaves everyone's chat list and nobody can write in it any more. This can't be undone. To step out yourself and let the others carry on, use Leave instead."
     },
     "memories": {
       "title": "Memories",

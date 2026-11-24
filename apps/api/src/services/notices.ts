@@ -93,10 +93,15 @@ export interface Notice {
   created_at: string;
 }
 
-// payload values are compared as text, so a malformed id in a payload cannot break the query.
+// An id in a payload is only used when it looks like one, so a malformed value cannot break the query. It is then
+// compared as an id, not as text: comparing text read every profile and every person for each notification.
+const ID = `'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'`;
 const SELECT = `select n.id, n.recipient_id, n.kind, n.payload, n.read_at, n.created_at, p.language_code,
-       (select b.display_name from profiles b where b.id::text = n.payload ->> 'by') as by_name,
-       (select c.display_name from persons c where c.id::text = n.payload ->> 'person_id' and c.deleted_at is null) as person_name
+       (select b.display_name from profiles b
+         where b.id = case when n.payload ->> 'by' ~ ${ID} then (n.payload ->> 'by')::uuid end) as by_name,
+       (select c.display_name from persons c
+         where c.id = case when n.payload ->> 'person_id' ~ ${ID} then (n.payload ->> 'person_id')::uuid end
+           and c.deleted_at is null) as person_name
   from notifications n join profiles p on p.id = n.recipient_id`;
 
 type Stored = NoticeRow & { id: string; recipient_id: string; read_at: Date | null; created_at: Date };
