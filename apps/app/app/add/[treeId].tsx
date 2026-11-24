@@ -15,6 +15,8 @@ import { ErrorText, Loading, LoadFailed, NeonPanel, Pills, PrimaryButton, Sectio
 import { useErrorText } from '@/lib/errors';
 import { AlsoParentOf } from '@/tree/AlsoParentOf';
 import { alsoChildCandidates } from '@/tree/alsoChildren';
+import { FarRelativePicker } from '@/tree/FarRelativePicker';
+import type { FarRelative } from '@/tree/farRelatives';
 import { PersonPicker } from '@/tree/PersonPicker';
 import { useAddRelative } from '@/tree/useEdit';
 import type { LinkKind, Relation } from '@/tree/useEdit';
@@ -43,6 +45,9 @@ export default function AddRelative() {
   const [requested, setRequested] = useState(false);
   // Brothers and sisters unticked by the person (everyone offered starts ticked).
   const [unticked, setUnticked] = useState<string[]>([]);
+  // "More relatives": an uncle, a cousin, an in-law. Open while choosing; once chosen, who it was started from.
+  const [farOpen, setFarOpen] = useState(false);
+  const [far, setFar] = useState<{ fromId: string; choice: FarRelative } | null>(null);
 
   const data = tree.data;
 
@@ -95,6 +100,50 @@ export default function AddRelative() {
     { value: 'sibling', label: t('add.sibling'), icon: (c) => <RightIcon color={c} /> },
   ];
 
+  const shown = (id: string) => {
+    const node = data.nodes.find((n) => n.id === id);
+    return !node || node.nameUnknown ? t('tree.nameNotKnown') : node.name;
+  };
+
+  /** Points the screen at another person: every choice made for the last one is forgotten. */
+  function lookFrom(personId: string) {
+    setAnchorId(personId);
+    setUnionChoice(null);
+    setUnticked([]);
+  }
+
+  function pickFar(throughId: string, choice: FarRelative) {
+    if (!anchor) return;
+    // Chosen twice in a row (cousin, then the cousin's child): still counted from where the first one started.
+    setFar({ fromId: far?.fromId ?? anchor.id, choice });
+    lookFrom(throughId);
+    setRelation(choice.relation);
+    setFarOpen(false);
+  }
+
+  /** The person in between is not in the tree yet: start adding them. */
+  function addFirst(missing: 'father' | 'mother' | 'sibling' | 'child' | 'partner') {
+    if (!anchor || !data) return;
+    setFarOpen(false);
+    if (missing === 'father' || missing === 'mother') {
+      const also = alsoChildCandidates(data.nodes, data.links, anchor.id).map((n) => n.id);
+      router.push({
+        pathname: '/person-details',
+        params: { treeId, anchor: anchor.id, relation: 'parent', linkKind: 'birth', gender: missing === 'father' ? 'male' : 'female', ...(also.length ? { also: also.join(',') } : {}) },
+      });
+      return;
+    }
+    // Straight to the form for that person: the button said "Add the husband or wife", so it adds, not only selects.
+    const first: Relation = missing === 'partner' ? 'spouse' : missing;
+    setRelation(first);
+    // A child belongs to both parents. With one husband or wife in the tree the child is linked to them too; with
+    // several, this screen stays open on "Child" so the other parent is chosen first. Before this the child was
+    // linked to one parent only.
+    if (first === 'child' && partners.length > 1) return;
+    const withPartner = first === 'child' && partners[0] ? { union: partners[0].unionId } : {};
+    router.push({ pathname: '/person-details', params: { treeId, anchor: anchor.id, relation: first, ...(first === 'spouse' ? {} : { linkKind: 'birth' }), ...withPartner } });
+  }
+
   function someoneNew() {
     if (!anchor) return;
     router.push({
@@ -142,10 +191,32 @@ export default function AddRelative() {
             <Text style={styles.anchorHelp}>{anchor ? t('add.relativeOf') : t('add.chooseAnchor')}</Text>
             {anchor ? <Text style={styles.anchorName}>{anchor.nameUnknown ? t('tree.nameNotKnown') : anchor.name}</Text> : null}
           </View>
-          <Pressable accessibilityRole="button" onPress={() => setPicking('anchor')} style={styles.change}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setFarOpen(false);
+              setPicking('anchor');
+            }}
+            style={styles.change}
+          >
             <Text style={styles.changeText}>{t('add.change')}</Text>
           </Pressable>
         </NeonPanel>
+
+        {far && anchor ? (
+          <View style={styles.farNote}>
+            <Text style={styles.farNoteText}>
+              {t('add.far.now', { relative: t(`add.far.kinds.${far.choice.key}`), from: shown(far.fromId), through: shown(anchor.id), link: t(`add.far.link.${far.choice.relation}`) })}
+            </Text>
+            <TextButton
+              label={t('add.far.back', { name: shown(far.fromId) })}
+              onPress={() => {
+                lookFrom(far.fromId);
+                setFar(null);
+              }}
+            />
+          </View>
+        ) : null}
 
         <SectionTitle>{t('add.who')}</SectionTitle>
         <View accessibilityRole="radiogroup" style={styles.relations}>
@@ -176,6 +247,14 @@ export default function AddRelative() {
             );
           })}
         </View>
+
+        {anchor ? (
+          farOpen ? (
+            <FarRelativePicker family={data} anchorId={anchor.id} anchorName={shown(anchor.id)} nameOf={shown} onPick={pickFar} onAddFirst={addFirst} onClose={() => setFarOpen(false)} />
+          ) : (
+            <TextButton label={t('add.far.open')} onPress={() => setFarOpen(true)} />
+          )
+        ) : null}
 
         {showPartners ? (
           <>
@@ -230,9 +309,9 @@ export default function AddRelative() {
         onClose={() => setPicking(null)}
         onPick={(personId) => {
           if (picking === 'anchor') {
-            setAnchorId(personId);
-            setUnionChoice(null);
-            setUnticked([]);
+            lookFrom(personId);
+            // Chosen by hand: no longer the uncle or cousin of the person it started from.
+            setFar(null);
             setPicking(null);
           } else {
             linkExisting(personId);
@@ -284,5 +363,7 @@ const styles = StyleSheet.create({
   radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.white },
   partnerName: { flex: 1, color: colors.text, fontFamily: fonts.bold, fontSize: 15 },
   partnerNote: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 12 },
+  farNote: { gap: 2, padding: 14, borderRadius: 18, backgroundColor: colors.tint },
+  farNoteText: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
   requested: { color: colors.relation, fontFamily: fonts.bold, fontSize: 14, lineHeight: 20 },
 });

@@ -1,6 +1,7 @@
 // S-13 Import. Pick a file, A6 'here's what we found', the gender list, A7 'Which one is you?', then one commit.
 // Nothing joins a tree until import_commit. Someone not in the file adds their own card with tree_add_me straight after.
 import { useQueryClient } from '@tanstack/react-query';
+import { usePreventRemove } from 'expo-router';
 import { useRouter } from '@/lib/router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -125,6 +126,7 @@ export default function ImportScreen() {
   async function openTree(treeId: string) {
     await client.invalidateQueries({ queryKey: ['trees'] });
     track('tree_started');
+    allowLeaving();
     router.replace({ pathname: '/tree/[id]', params: { id: treeId } });
   }
 
@@ -161,6 +163,21 @@ export default function ImportScreen() {
     }
   }
 
+  /** One step back inside the wizard: what every arrow on screen does. */
+  function stepBack() {
+    setFailure(null);
+    if (step === 'checks') setStep('pick');
+    else if (step === 'gender') setStep('checks');
+    else if (step === 'addMe') {
+      // Once the tree is saved there is nothing to go back to: the person can only finish, or go and see it.
+      if (committed) void openTree(committed.tree_id);
+      else setStep('which');
+    } else setStep(needGender.length + guessedGender.length > 0 ? 'gender' : 'checks');
+  }
+  // The phone's own back button (and the browser's Back) used to close the whole wizard and lose every answer.
+  // Past the first step it now goes one step back, like the arrow on screen.
+  const allowLeaving = usePreventRemove(step !== 'pick' && !!answer && !busy, stepBack);
+
   function afterChecks() {
     setFailure(null);
     setStep(needGender.length + guessedGender.length > 0 ? 'gender' : 'which');
@@ -191,7 +208,7 @@ export default function ImportScreen() {
     return (
       <Screen>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <TopBar title={fileName} subtitle={t('import.reviewSubtitle')} onBack={() => setStep('pick')} />
+          <TopBar title={fileName} subtitle={t('import.reviewSubtitle')} onBack={stepBack} />
           <FoundPanel preview={preview} />
           <Field label={t('import.treeName')} value={treeName} onChangeText={setTreeName} />
           {answer ? (
@@ -213,7 +230,7 @@ export default function ImportScreen() {
     const left = needGender.filter((p) => genders[p.tempId] === undefined).length;
     return (
       <Screen>
-        <TopBar title={t('import.genderTitle')} onBack={() => setStep('checks')} />
+        <TopBar title={t('import.genderTitle')} onBack={stepBack} />
         <View style={styles.genderHelp}>
           <Muted>{t('import.genderExplain')}</Muted>
         </View>
@@ -255,11 +272,7 @@ export default function ImportScreen() {
         myName={me.data?.display_name ?? ''}
         busy={busy}
         failure={failure ? errorText(failure) : null}
-        onBack={() => {
-          // Once the tree is saved there is nothing to go back to: the person can only finish, or go and see it.
-          if (committed) openTree(committed.tree_id);
-          else setStep('which');
-        }}
+        onBack={stepBack}
         onConfirm={addMe}
         onWithoutMe={() => commit(null)}
       />
@@ -272,7 +285,7 @@ export default function ImportScreen() {
       suggestion={firstName(me.data?.display_name)}
       busy={busy}
       failure={failure ? errorText(failure) : null}
-      onBack={() => setStep(needGender.length + guessedGender.length > 0 ? 'gender' : 'checks')}
+      onBack={stepBack}
       onConfirm={commit}
       onNotHere={() => {
         setFailure(null);

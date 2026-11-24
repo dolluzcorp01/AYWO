@@ -151,5 +151,11 @@
     "full": "Ready",
     "wordsOnly": "Family words only",
     "chosenNote": "{{language}} is chosen. Family words such as uncle and aunt will show in {{language}}. The screens stay in English until {{language}} is ready."
+  },
+  "notFound": {
+    "title": "This page isn't here",
+    "text": "The link may be old or mistyped. Nothing is lost: your family tree is safe.",
+    "home": "Go to the start",
+    "back": "Go back"
   }
 }

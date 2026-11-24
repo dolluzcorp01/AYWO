@@ -11,6 +11,15 @@ const SIMPLE = 'aywo.simpleMode';
 
 let largeText = false;
 let simpleMode = false;
+// What the person changed with their own hand since the app opened. A choice made on Welcome a moment before
+// signing in is what they want now, so signing in must not put the account's older setting back over it.
+type Pref = 'language' | 'largeText' | 'simpleMode';
+const chosenHere = new Set<Pref>();
+/** `auto`: set by the app (the account's saved choice, the phone's region), not by the person. */
+interface SetOptions { auto?: boolean }
+export function choseHere(pref: Pref): boolean {
+  return chosenHere.has(pref);
+}
 const listeners = new Set<() => void>();
 
 function subscribe(listener: () => void) {
@@ -29,7 +38,8 @@ export function useTextScale(): number {
   return useLargeText() ? largeTextScale : 1;
 }
 
-export async function setLargeText(on: boolean): Promise<void> {
+export async function setLargeText(on: boolean, options: SetOptions = {}): Promise<void> {
+  if (!options.auto) chosenHere.add('largeText');
   largeText = on;
   listeners.forEach((listener) => listener());
   await deviceStore.set(LARGE_TEXT, on ? '1' : '0');
@@ -44,11 +54,12 @@ export function isSimpleMode(): boolean {
 }
 
 /** Elder mode: the simple Home with big buttons. Turning it on turns large text on too; turning it off leaves text as it is. */
-export async function setSimpleMode(on: boolean): Promise<void> {
+export async function setSimpleMode(on: boolean, options: SetOptions = {}): Promise<void> {
+  if (!options.auto) chosenHere.add('simpleMode');
   simpleMode = on;
   listeners.forEach((listener) => listener());
   await deviceStore.set(SIMPLE, on ? '1' : '0');
-  if (on && !largeText) await setLargeText(true);
+  if (on && !largeText) await setLargeText(true, options);
 }
 
 /** Buttons grow in Elder mode so they are easier to hit. */
@@ -56,7 +67,8 @@ export function useTapSize(base: number): number {
   return useSimpleMode() ? Math.round(base * 1.3) : base;
 }
 
-export async function setLanguage(code: string): Promise<void> {
+export async function setLanguage(code: string, options: SetOptions = {}): Promise<void> {
+  if (!options.auto) chosenHere.add('language');
   ensureLocale(code);
   await i18n.changeLanguage(code);
   applyLayoutDirection(code, isTranslated(code));

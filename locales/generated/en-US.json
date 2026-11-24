@@ -405,7 +405,13 @@
     "email_missing": "Add an email address first.",
     "email_code_wrong": "That code isn't right, or it has expired. Ask for a new one.",
     "consent_needed": "Tick \"I agree\" to save health details on your card.",
-    "consent_outdated": "The notice was updated. Read the new one and tick \"I agree\" again."
+    "consent_outdated": "The notice was updated. Read the new one and tick \"I agree\" again.",
+    "bad_date": "That date doesn't look right. Check the day, month and year.",
+    "calendar_range": "That is too long a stretch of dates. Choose a shorter one.",
+    "not_a_marriage": "A wedding date can only be saved for a married couple.",
+    "otp_expired": "That code is no longer valid. Tap \"Send the code again\" and use the new one.",
+    "otp_locked": "Too many wrong tries. Ask for a new code, or wait an hour if it still doesn't work.",
+    "event_in_past": "That date and time have already passed. Choose a time that is still to come."
   },
   "language": {
     "title": "Choose your language",
@@ -555,7 +561,65 @@
     "someoneNew": "Someone new",
     "alsoParentOf": "Also the parent of",
     "alsoParentHelp": "Ticked brothers and sisters get this mother or father too. Untick anyone who has a different mother or father.",
-    "alreadyInTree": "Someone already in the tree"
+    "alreadyInTree": "Someone already in the tree",
+    "far": {
+      "open": "Uncle, aunt, cousin, grandparent or in-law? Tap here",
+      "title": "Which relative of {{name}}?",
+      "now": "Adding for {{from}}: {{relative}}. In the tree this is {{link}} {{through}}.",
+      "back": "Go back to {{name}}",
+      "other": "Choose a different relative",
+      "close": "Close this list",
+      "link": {
+        "parent": "a parent of",
+        "sibling": "a brother or sister of",
+        "child": "a child of",
+        "spouse": "the partner of"
+      },
+      "whose": {
+        "parent": "Whose father or mother?",
+        "sibling": "Whose brother or sister?",
+        "child": "Whose child?",
+        "spouse": "Whose husband or wife?"
+      },
+      "kinds": {
+        "fatherParent": "Father's father or mother",
+        "motherParent": "Mother's father or mother",
+        "fatherSibling": "Father's brother or sister",
+        "motherSibling": "Mother's brother or sister",
+        "uncleAuntPartner": "Uncle's wife or aunt's husband",
+        "cousin": "Cousin (uncle's or aunt's child)",
+        "siblingPartner": "Brother's wife or sister's husband",
+        "siblingChild": "Brother's or sister's child",
+        "childPartner": "Son's wife or daughter's husband",
+        "grandchild": "Grandchild",
+        "partnerParent": "Husband's or wife's father or mother",
+        "partnerSibling": "Husband's or wife's brother or sister"
+      },
+      "need": {
+        "father": "{{name}}'s father is not in the tree yet. Add him first, then come back for this.",
+        "mother": "{{name}}'s mother is not in the tree yet. Add her first, then come back for this.",
+        "parentSibling": "No uncle or aunt of {{name}} is in the tree yet. Add one first with \"Father's brother or sister\" or \"Mother's brother or sister\" above.",
+        "sibling": "No brother or sister of {{name}} is in the tree yet. Add one first, then come back for this.",
+        "child": "No child of {{name}} is in the tree yet. Add one first, then come back for this.",
+        "partner": "{{name}}'s husband or wife is not in the tree yet. Add them first, then come back for this."
+      },
+      "addFirst": {
+        "father": "Add the father",
+        "mother": "Add the mother",
+        "sibling": "Add a brother or sister",
+        "child": "Add a child",
+        "partner": "Add the husband or wife"
+      },
+      "maybe": {
+        "father": "{{name}}'s father may already be in the tree. Is it this person?",
+        "mother": "{{name}}'s mother may already be in the tree. Is it this person?"
+      },
+      "yesThem": "Yes, {{name}}",
+      "notThem": {
+        "father": "No, add the father",
+        "mother": "No, add the mother"
+      }
+    }
   },
   "details": {
     "newPerson": "New person",
@@ -617,7 +681,10 @@
     "leaveText": "What you typed here will be lost.",
     "leaveYes": "Leave, don't save",
     "approvalAddNote": "Your addition goes to the tree's Creator to approve first. A photo and phone numbers can be added once the person is in the tree.",
-    "approvalEditNote": "Your changes go to the tree's Creator to approve first. Phone numbers and email cannot be changed this way."
+    "approvalEditNote": "Your changes go to the tree's Creator to approve first. Phone numbers and email cannot be changed this way.",
+    "removeMeHelp": "This is your own card. Without it the tree can't show you your place in the family or what to call each relative. You can bring it back from History.",
+    "dateInFuture": "That date is in the future. Check the year.",
+    "diedBeforeBorn": "The year they passed away is before the year they were born. Check both years."
   },
   "picker": {
     "hour": "Hour",
@@ -724,17 +791,29 @@
     "pickPerson": "Choose from the tree",
     "changePerson": "Change",
     "endsOn": "until {{date}}",
-    "changeRole": "Change what they can do"
+    "changeRole": "Change what they can do",
+    "noNumberHelp": "No number yet. Without it the link shows names and photos only, not \"{{role}}\".",
+    "bareTitle": "Send without their number?",
+    "bareHelp": "Without their mobile number this link shows names and photos only. They will not get \"{{role}}\". To give them that, cancel and add their number or choose them from the tree.",
+    "bareSend": "Send the names-and-photos link",
+    "namesOnly": "Names and photos only"
   },
   "activity": {
     "title": "Activity",
     "needsYou": "Needs you",
+    "news": "Notifications",
+    "emptyNews": "No notifications yet. Answers to your invitations, new invitations, comments and alerts will show here.",
+    "markAllRead": "Mark all as read",
+    "new": "New",
+    "unread_one": "{{count}} new",
+    "unread_other": "{{count}} new",
     "changes": "Changes",
     "access": "Access",
     "all": "All",
     "empty": "Nothing here yet.",
     "emptyNeeds": "Nothing needs you right now.",
     "about": {
+      "news": "News for you: who answered your invitation, new invitations, comments on memories and alerts. Tap one to open it.",
       "needs_you": "Requests waiting for your answer: someone wants to add or change a relative, see contact numbers, or help edit. Accept or decline here.",
       "changes": "Every change made to your family tree, newest first: who added, edited or removed someone.",
       "access": "Who asked to see contact numbers or to help edit the tree, and what was decided.",
@@ -935,11 +1014,11 @@
     "exportButton": "Download my data",
     "signOut": "Sign out",
     "deleteTitle": "Delete my account",
-    "deleteHelp": "We delete your account 30 days after you ask. Sign in during that time to keep it. After that it goes for good, and your trees pass to a successor or Co-creator.",
+    "deleteHelp": "We delete your account 30 days after you ask. To keep it, sign in during that time and tap \"Keep my account\". After that it goes for good, and your trees pass to a successor or Co-creator.",
     "deleteButton": "Delete my account",
     "deleteWord": "delete",
     "deleteConfirmTitle": "Delete in 30 days?",
-    "deleteConfirmHelp": "We sign you out now and delete your account in 30 days. Sign in before then to keep it. To confirm, type the word: {{word}}",
+    "deleteConfirmHelp": "We sign you out now and delete your account in 30 days. To keep it, sign in before then and tap \"Keep my account\". To confirm, type the word: {{word}}",
     "planWarningTitle": "Your AYWO Plus is still running",
     "planWarningStore": "Deleting doesn't stop payments. Cancel in App Store or Google Play first.",
     "planWarningWeb": "Deleting doesn't stop payments. Cancel on the Family plan screen first.",
@@ -950,7 +1029,7 @@
     "keepAccount": "Keep my account",
     "simpleMode": "Simple mode for elders",
     "simpleModeHelp": "A few big buttons on Home, larger text and bigger buttons everywhere.",
-    "deletedNote": "Your account is set to be deleted in 30 days. Sign in again before then to keep it."
+    "deletedNote": "Your account is set to be deleted in 30 days. To keep it, sign in again before then and tap \"Keep my account\"."
   },
   "time": {
     "justNow": "Just now",
@@ -3517,12 +3596,17 @@
       "needPhone": "Check the phone number for the courier.",
       "paying": "Please wait…",
       "payAgain": "Try paying again",
-      "notPaidTitle": "The payment was not completed",
-      "notPaid": "We have not received a payment for this order. If you closed the payment page without paying, nothing was charged and you can try again below. If you did pay, do not pay again: your order will show in My orders within a few minutes.",
+      "notPaidTitle": "We haven't seen your payment yet",
+      "notPaid": "If you closed the payment page without paying, nothing was charged and you can pay again below. If you did pay, do not pay again: banks can take a few minutes to tell us. Tap \"I have paid. Check again\".",
       "seeOrders": "See My orders",
       "fewer": "One fewer",
       "more": "One more",
-      "checkingCoupon": "Checking your code..."
+      "checkingCoupon": "Checking your code...",
+      "checkAgain": "I have paid. Check again",
+      "stillNotPaid": "Not arrived yet. Wait a minute and check again. Your order will also show in My orders when the payment arrives.",
+      "payAgainTitle": "Pay again?",
+      "payAgainHelp": "Only pay again if no money left your account. If money was taken, cancel here and tap \"I have paid. Check again\", so you are not charged twice.",
+      "payAgainYes": "No money was taken. Pay again"
     },
     "refer": {
       "title": "Invite and earn",
@@ -3677,5 +3761,11 @@
       "bug": "Something isn't working",
       "other": "Something else"
     }
+  },
+  "notFound": {
+    "title": "This page isn't here",
+    "text": "The link may be old or mistyped. Nothing is lost: your family tree is safe.",
+    "home": "Go to the start",
+    "back": "Go back"
   }
 }

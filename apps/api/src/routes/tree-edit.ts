@@ -12,6 +12,7 @@ import { config } from '../config.ts';
 import { asCaller, asServer } from '../db.ts';
 import { ApiError } from '../errors.ts';
 import { accountPhotoUrls } from '../services/faces.ts';
+import { noticesFor, unreadNoticeCount } from '../services/notices.ts';
 import { signedReadUrl, signedReadUrls, uploadObject } from '../services/storage.ts';
 
 const idParam = z.object({ id: z.uuid() });
@@ -484,13 +485,19 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
 
   app.get('/notifications', async (req) => {
     const userId = await requireUser(req);
-    return asCaller(userId, async (db) => {
-      const { rows } = await db.query(
-        `select id, kind, payload, read_at, created_at from notifications where recipient_id = $1 order by created_at desc limit 100`,
-        [userId],
-      );
-      return rows;
-    });
+    // Ready to show: words in the person's language and the screen a tap opens.
+    return (await noticesFor(userId)).map(({ recipient_id: _mine, ...notice }) => notice);
+  });
+
+  app.get('/notifications/count', async (req) => {
+    const userId = await requireUser(req);
+    return { unread: await unreadNoticeCount(userId) };
+  });
+
+  app.post('/notifications/read-all', async (req) => {
+    const userId = await requireUser(req);
+    await asCaller(userId, (db) => db.query(`update notifications set read_at = now() where recipient_id = $1 and read_at is null`, [userId]));
+    return { ok: true };
   });
 
   app.post('/notifications/:id/read', async (req) => {

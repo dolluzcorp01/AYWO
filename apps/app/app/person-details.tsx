@@ -21,6 +21,7 @@ import { uploadFile } from '@/lib/api';
 import type { PickedFile } from '@/lib/api';
 import { dateFromBox, dateToText, normalizeContact, parseDateText } from '@/lib/contacts';
 import { errorCode, useErrorText } from '@/lib/errors';
+import { useLeaveGuard } from '@/lib/leaveGuard';
 import { pickPhoto } from '@/lib/pick';
 import { track } from '@/lib/track';
 import { asName } from '@/voice/speech';
@@ -128,7 +129,13 @@ export default function PersonDetails() {
   const [noPhoto, setNoPhoto] = useState(false);
   // Anything typed or picked since the form opened: Back then asks before throwing it away.
   const touched = useRef(false);
-  const [leaving, setLeaving] = useState(false);
+  // The same thing as state, so the phone's own back button and the browser's Back ask too.
+  const [dirty, setDirty] = useState(false);
+  const guard = useLeaveGuard(dirty);
+  function touch() {
+    touched.current = true;
+    setDirty(true);
+  }
   const [more, setMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -193,7 +200,7 @@ export default function PersonDetails() {
   }, [badField]);
 
   function changeContact(kind: ContactKind, value: string) {
-    touched.current = true;
+    touch();
     setContacts((now) => ({ ...now, [kind]: value, ...(kind === 'mobile' && sameWhatsapp ? { whatsapp: value } : {}) }));
     if (badField === kind || (kind === 'mobile' && sameWhatsapp && badField === 'whatsapp')) setBadField(null);
     setFailure(null);
@@ -230,6 +237,7 @@ export default function PersonDetails() {
 
   /** One screen back. A reloaded web page has nothing behind it, so the tree (or the family guide) instead of a dead end. */
   function leave() {
+    guard.release();
     if (router.canGoBack()) router.back();
     else if (params.back === 'guide') router.replace({ pathname: '/guide/[treeId]', params: { treeId } });
     else router.replace(treeHref);
@@ -242,14 +250,17 @@ export default function PersonDetails() {
    */
   function backToTree() {
     if (params.back === 'guide' || params.back === 'here') leave();
-    else router.dismissTo(treeHref);
+    else {
+      guard.release();
+      router.dismissTo(treeHref);
+    }
   }
 
   // Speak the name instead of typing it. English names get capitals; Tamil script is left as it is.
   const nameVoice = useVoiceInput(form.name, (v) => change('name', v), { shape: asName });
 
   function change<K extends keyof Form>(key: K, value: Form[K]) {
-    touched.current = true;
+    touch();
     setForm((now) => ({ ...now, [key]: value }));
     setFailure(null);
     if ((key === 'name' || key === 'nameUnknown') && badField === 'name') setBadField(null);
@@ -260,7 +271,7 @@ export default function PersonDetails() {
     try {
       const picked = await pickPhoto();
       if (picked) {
-        touched.current = true;
+        touch();
         setPhoto(picked);
         setNoPhoto(false);
       }
@@ -285,6 +296,15 @@ export default function PersonDetails() {
     if (!birth) return { problem: t('details.badDate'), field: 'born' };
     const death = dateFromBox(form.died, node ? { date: node.deathDate, precision: node.deathPrecision } : null);
     if (!death) return { problem: t('details.badDate'), field: 'died' };
+    // Today on this phone. A birth in 2090 or a death before the birth is a slip of the finger: said here, at the box.
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    if (birth.date && birth.date > today) return { problem: t('details.dateInFuture'), field: 'born' };
+    if (form.living === 'deceased' && death.date) {
+      if (death.date > today) return { problem: t('details.dateInFuture'), field: 'died' };
+      // Years only: "born 1950, died about 1950" is fine.
+      if (birth.date && death.date.slice(0, 4) < birth.date.slice(0, 4)) return { problem: t('details.diedBeforeBorn'), field: 'died' };
+    }
     return {
       fields: {
         // Stored as the plain marker the importer and add_relative also use; the screen shows 'Name not known'.
@@ -330,7 +350,16 @@ export default function PersonDetails() {
       const old = stored.data?.find((c) => c.kind === kind);
       if ((old?.value ?? '') === value.trim()) continue;
       if (old) await deleteContact(old.id);
-      if (normalized) await setContact(id, kind, value.trim(), normalized);
+      if (!normalized) continue;
+      try {
+        await setContact(id, kind, value.trim(), normalized);
+      } catch (error) {
+        // The new one was refused after the old one had gone: put the old one back, so a number is never lost to a
+        // failed change, and read the saved list again so the next try starts from what is really stored.
+        if (old?.value) await setContact(id, kind, old.value, normalizeContact(kind, old.value) ?? old.value).catch(() => undefined);
+        await stored.refetch().catch(() => undefined);
+        throw error;
+      }
     }
   }
 
@@ -457,6 +486,7 @@ export default function PersonDetails() {
       refreshFamilyDates(client);
       // The person's own card may be underneath, and it now says "no longer in the tree". Take it away first, then
       // go to the tree: back to it when it is already open behind, in place of this screen when it is not.
+      guard.release();
       if (params.from === 'card' && router.canDismiss()) router.dismiss(1);
       router.dismissTo(treeHref);
     } catch (error) {
@@ -544,18 +574,15 @@ export default function PersonDetails() {
   return (
     <Screen>
       <ScrollView ref={scroller} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <TopBar title={title} subtitle={subtitle} onBack={() => (touched.current ? setLeaving(true) : leave())} />
+        <TopBar title={title} subtitle={subtitle} onBack={() => guard.back(leave)} />
         <ConfirmDialog
-          visible={leaving}
+          visible={guard.asking}
           title={t('details.leaveTitle')}
           message={t('details.leaveText')}
           confirmLabel={t('details.leaveYes')}
           danger
-          onConfirm={() => {
-            setLeaving(false);
-            leave();
-          }}
-          onCancel={() => setLeaving(false)}
+          onConfirm={guard.leave}
+          onCancel={guard.stay}
         />
 
         <View style={styles.nameRow} onLayout={mark('name')}>
@@ -591,7 +618,7 @@ export default function PersonDetails() {
             label={t('profile.removePhoto')}
             danger
             onPress={() => {
-              touched.current = true;
+              touch();
               // A photo only just picked is simply dropped; a saved one goes on Save.
               if (photo) setPhoto(null);
               else setNoPhoto(true);
@@ -779,7 +806,8 @@ export default function PersonDetails() {
       <ConfirmDialog
         visible={removing}
         title={t('details.removeTitle', { name: title })}
-        message={t('details.removeHelp')}
+        // Their own card: said plainly, because without it the tree no longer knows where they stand.
+        message={personId && personId === tree.data?.viewer_person_id ? t('details.removeMeHelp') : t('details.removeHelp')}
         confirmLabel={t('details.removeConfirm')}
         danger
         busy={busy}

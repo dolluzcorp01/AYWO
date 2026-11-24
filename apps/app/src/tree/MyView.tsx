@@ -329,7 +329,7 @@ export function MyView({ data, viewerId, focusId, seeingAs, onFocus, onOpenPerso
                 {p.focus ? (
                   centreWord ? <Text style={styles.focusWord} numberOfLines={1}>{centreWord}</Text> : null
                 ) : relation ? (
-                  <Text style={[styles.word, relation.ask && styles.ask]} numberOfLines={1}>{relation.text}</Text>
+                  <Text style={[styles.word, relation.text.length > 10 && styles.longWord, relation.ask && styles.ask]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{relation.text}</Text>
                 ) : null}
               </Pressable>
             );
@@ -377,6 +377,8 @@ const styles = StyleSheet.create({
   name: { color: colors.text, fontFamily: fonts.bold, fontSize: 13, maxWidth: '100%' },
   focusName: { fontSize: 15, fontFamily: fonts.extrabold },
   word: { color: colors.relation, fontFamily: fonts.bold, fontSize: 12 },
+  // "Grandmother" is a little wider than the card at the usual size and was cut to "Grandmoth...".
+  longWord: { fontSize: 10.5 },
   ask: { color: colors.ask },
   focusWord: { color: colors.logoOrange, fontFamily: fonts.extrabold, fontSize: 12 },
   actions: { alignItems: 'center', gap: 2, paddingHorizontal: 16 },

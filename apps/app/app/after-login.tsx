@@ -12,7 +12,7 @@ import { claimCandidates, safeNext } from '@/lib/account';
 import type { Me } from '@/lib/account';
 import { api, ApiFailure, deviceStore } from '@/lib/api';
 import { errorCode, useErrorText } from '@/lib/errors';
-import { isLargeText, isSimpleMode, setLanguage, setLargeText, setSimpleMode } from '@/lib/prefs';
+import { choseHere, isLargeText, isSimpleMode, setLanguage, setLargeText, setSimpleMode } from '@/lib/prefs';
 import { registerForPush } from '@/pay/registerPush';
 import { LEGAL_VERSION } from '@/legal/publisher';
 
@@ -36,10 +36,25 @@ export default function AfterLogin() {
         // A new account takes what was chosen on Welcome.
         await api.patch('/me', { language_code: i18n.language, large_text: isLargeText(), simple_mode: isSimpleMode() });
       } else {
-        // A returning person gets their saved choices on this phone too.
-        if (me.language_code && me.language_code !== i18n.language && me.language_code !== 'en') await setLanguage(me.language_code);
-        if (me.large_text !== isLargeText()) await setLargeText(me.large_text);
-        if (!!me.simple_mode !== isSimpleMode()) await setSimpleMode(!!me.simple_mode);
+        // A returning person gets their saved choices on this phone too. But what they changed on Welcome just now
+        // (language, large text, simple mode) is their newest wish: that is kept, and saved to the account.
+        const fresh: Record<string, unknown> = {};
+        if (choseHere('language')) {
+          if (me.language_code !== i18n.language) fresh.language_code = i18n.language;
+        } else if (me.language_code && me.language_code !== i18n.language && me.language_code !== 'en') {
+          await setLanguage(me.language_code, { auto: true });
+        }
+        if (choseHere('simpleMode')) {
+          if (!!me.simple_mode !== isSimpleMode()) fresh.simple_mode = isSimpleMode();
+        } else if (!!me.simple_mode !== isSimpleMode()) {
+          await setSimpleMode(!!me.simple_mode, { auto: true });
+        }
+        if (choseHere('largeText') || (choseHere('simpleMode') && isSimpleMode())) {
+          if (me.large_text !== isLargeText()) fresh.large_text = isLargeText();
+        } else if (me.large_text !== isLargeText()) {
+          await setLargeText(me.large_text, { auto: true });
+        }
+        if (Object.keys(fresh).length > 0) await api.patch('/me', fresh).catch(() => undefined);
       }
 
       // The phone screen says signing in accepts the Terms and Privacy policy; this records that (LLD S-02).

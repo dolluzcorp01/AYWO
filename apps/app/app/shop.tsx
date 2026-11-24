@@ -8,11 +8,11 @@ import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { PhoneField } from '@/components/PhoneField';
 import { Text } from '@/components/Text';
-import { Card, Field, Label, Pills, PrimaryButton, SectionTitle, SmallButton } from '@/components/ui';
+import { Card, ConfirmDialog, Field, Label, Pills, PrimaryButton, SectionTitle, SmallButton } from '@/components/ui';
 import { toE164 } from '@/lib/phone';
 import { ApiFailure, api, deviceStore } from '@/lib/api';
 import { mainTree, useMe, useTrees } from '@/lib/account';
-import { startOrder } from '@/pay/order';
+import { orderIsPaid, startOrder } from '@/pay/order';
 import type { ShippingAddress } from '@/pay/order';
 import { ProductCard, ProductRow } from '@/ops/ProductPicture';
 import { formatMoney } from '@/ops/types';
@@ -69,6 +69,18 @@ export default function Shop() {
   // 'unconfirmed': the payment page was closed and the server has seen no payment (see pay/order.ts).
   const [state, setState] = useState<'idle' | 'started' | 'cancelled' | 'unconfirmed'>('idle');
   const orderId = useRef<string | null>(null);
+  // Paying a second time is asked about first: a bank can take a minute to tell us about the first payment.
+  const [askAgain, setAskAgain] = useState(false);
+  const [stillNotPaid, setStillNotPaid] = useState(false);
+  const recheck = useMutation({
+    mutationFn: () => (orderId.current ? orderIsPaid(orderId.current, 1) : Promise.resolve(false)),
+    onMutate: () => setStillNotPaid(false),
+    onSuccess: (paid) => {
+      if (paid) router.replace({ pathname: '/orders', params: { paid: '1', ...(orderId.current ? { order: orderId.current } : {}) } });
+      else setStillNotPaid(true);
+    },
+    onError: () => setStillNotPaid(true),
+  });
   // The account loads after the first render; its name fills an empty name box once.
   const myName = me.data?.display_name;
   useEffect(() => {
@@ -110,6 +122,7 @@ export default function Shop() {
       ),
     onMutate: () => {
       setState('idle');
+      setStillNotPaid(false);
       if (products.data?.needs_address) {
         void deviceStore
           .set(LAST_ADDRESS, JSON.stringify({ line1: address.line1, line2: address.line2, city: address.city, state: address.state, postal_code: address.postal_code }))
@@ -261,6 +274,8 @@ export default function Shop() {
                 <View accessibilityLiveRegion="polite">
                   <Note>{t('ops.shop.notPaid')}</Note>
                 </View>
+                {stillNotPaid ? <Note>{t('ops.shop.stillNotPaid')}</Note> : null}
+                <SmallButton label={recheck.isPending ? t('ops.shop.paying') : t('ops.shop.checkAgain')} disabled={recheck.isPending} onPress={() => recheck.mutate()} />
                 <SmallButton kind="plain" label={t('ops.shop.seeOrders')} onPress={() => router.push('/orders')} />
               </Card>
             ) : null}
@@ -268,7 +283,18 @@ export default function Shop() {
               label={pay.isPending ? t('ops.shop.paying') : state === 'unconfirmed' ? t('ops.shop.payAgain') : t('ops.shop.pay')}
               disabled={!price || pay.isPending || (!!applied && check.isPending)}
               missing={pay.isPending ? null : missing}
-              onPress={() => pay.mutate()}
+              onPress={() => (state === 'unconfirmed' ? setAskAgain(true) : pay.mutate())}
+            />
+            <ConfirmDialog
+              visible={askAgain}
+              title={t('ops.shop.payAgainTitle')}
+              message={t('ops.shop.payAgainHelp')}
+              confirmLabel={t('ops.shop.payAgainYes')}
+              onCancel={() => setAskAgain(false)}
+              onConfirm={() => {
+                setAskAgain(false);
+                pay.mutate();
+              }}
             />
             <Note>{t('ops.shop.secure')}</Note>
           </>

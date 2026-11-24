@@ -28,7 +28,11 @@ export default function Privacy() {
   const [deleting, setDeleting] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [word, setWord] = useState('');
-  const confirmWord = t('settings.deleteWord');
+  // Many people read Tamil (or another language) on a phone that only types English letters, so the English word
+  // is always accepted too, and shown beside the translated one.
+  const ownWord = t('settings.deleteWord');
+  const confirmWord = ownWord.toLowerCase() === 'delete' ? ownWord : `${ownWord} / delete`;
+  const wordTyped = [ownWord.toLowerCase(), 'delete'].includes(word.trim().toLowerCase());
 
   const exportData = useMutation({
     mutationFn: () => api.post<{ url: string }>('/account/export'),
@@ -135,7 +139,7 @@ export default function Privacy() {
         message={t('settings.deleteConfirmHelp', { word: confirmWord })}
         confirmLabel={t('settings.deleteButton')}
         danger
-        busy={remove.isPending || word.trim().toLowerCase() !== confirmWord.toLowerCase()}
+        busy={remove.isPending || !wordTyped}
         onCancel={() => {
           setDeleting(false);
           setWord('');

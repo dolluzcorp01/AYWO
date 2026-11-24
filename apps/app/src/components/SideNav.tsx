@@ -18,6 +18,7 @@ import { logOut } from '@/lib/logout';
 import { LogoLink } from '@/components/LogoLink';
 import { SosBar } from '@/ops/SosBar';
 import type { HomeCounts } from '@/social/types';
+import { useUnreadNotices } from '@/lib/notices';
 import { useActivity } from '@/tree/useEdit';
 import { colors, fonts, gradients } from '@/theme/tokens';
 
@@ -89,7 +90,7 @@ export function SideNav() {
   const inFamily = onAny(['/tree', '/person', '/person-details', '/add', '/comments', '/kin-word', '/word', '/search', '/share', '/export', '/guide', '/history', '/merge', '/outsider', '/import', '/call-family']);
   const inMe = onAny(['/me', '/settings', '/profile', '/invite-friends', '/social/sos']);
   const inHelp = onAny(['/help', '/faq', '/roles', '/terms', '/privacy', '/refunds', '/contact', '/takedown']);
-  const waiting = needs.data?.filter((item) => item.needs_you).length;
+  const waiting = (needs.data?.filter((item) => item.needs_you).length ?? 0) + useUnreadNotices();
   const tight = useWindowDimensions().height < SHORT;
   const me = useMe();
   const [signingOut, setSigningOut] = useState(false);

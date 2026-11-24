@@ -10,6 +10,7 @@ import { isUserBlocked, requireUser } from '../auth-tokens.ts';
 import { config } from '../config.ts';
 import { asCaller, asServer, databaseSsl } from '../db.ts';
 import { ApiError, safeError } from '../errors.ts';
+import { noticeById } from '../services/notices.ts';
 import { sendPush } from '../services/push.ts';
 import { sendSms } from '../services/sms.ts';
 import { signedReadUrls } from '../services/storage.ts';
@@ -96,6 +97,18 @@ async function deliverMessage(messageId: string): Promise<void> {
   }
 }
 
+/** A notification just saved goes to its reader's open apps at once: the bell's number and a card on screen. */
+async function deliverNotice(noticeId: string): Promise<void> {
+  if (socketsByUser.size === 0) return;
+  const notice = await noticeById(noticeId);
+  if (!notice) return;
+  const { recipient_id: recipient, ...shown } = notice;
+  const text = JSON.stringify({ type: 'notification', notification: shown });
+  for (const socket of socketsByUser.get(recipient) ?? []) {
+    if (socket.readyState === SOCKET_OPEN) socket.send(text);
+  }
+}
+
 function scheduleListen(log: FastifyBaseLogger): void {
   setTimeout(() => {
     if (socketsByUser.size > 0) void startListener(log);
@@ -124,8 +137,9 @@ async function startListener(log: FastifyBaseLogger): Promise<void> {
   client.on('end', () => lost());
   client.on('notification', (note) => {
     try {
-      const { message_id: messageId } = JSON.parse(note.payload ?? '{}') as { message_id?: string };
+      const { message_id: messageId, notification_id: noticeId } = JSON.parse(note.payload ?? '{}') as { message_id?: string; notification_id?: string };
       if (messageId) deliverMessage(messageId).catch((err) => log.error(safeError(err), 'chat delivery failed'));
+      if (noticeId) deliverNotice(noticeId).catch((err) => log.error(safeError(err), 'notification delivery failed'));
     } catch (err) {
       log.error(safeError(err), 'chat notification unreadable');
     }
@@ -266,6 +280,17 @@ interface SosTarget {
 function nameForSms(name: string | null | undefined, fallback: string): string {
   const clean = (name ?? '').replace(/(https?:\/\/|www\.)\S*/gi, '').replace(/\s+/g, ' ').trim().slice(0, SOS_NAME_MAX).trim();
   return clean || fallback;
+}
+
+/**
+ * The name in an SOS text, with the sender's own sign-in number beside it. The name is whatever the sender typed,
+ * so on its own "Amma needs help" could come from anyone. The number is the one AYWO checked by code, it is the
+ * sender's own, and it goes only to the contacts they chose: the receiver can see who it really is, and call back.
+ */
+async function withSenderNumber(userId: string, name: string): Promise<string> {
+  const { rows } = await asServer((db) => db.query(`select login_phone from profiles where id = $1`, [userId]));
+  const phone = rows[0]?.login_phone as string | null | undefined;
+  return phone ? `${name} (${phone})` : name;
 }
 
 async function sosTargets(eventId: string): Promise<SosTarget[]> {
@@ -458,7 +483,9 @@ export async function socialRoutes(app: FastifyInstance): Promise<void> {
     // mistake gets a family member checking in. Contacts known only by number get the text.
     const smsTargets = targets.filter((t) => t.phone);
     const [sms, pushes] = await Promise.all([
-      Promise.allSettled(smsTargets.map((t) => sendSms(t.phone as string, words.smsStart(name, link)))),
+      withSenderNumber(userId, name).then((sender) =>
+        Promise.allSettled(smsTargets.map((t) => sendSms(t.phone as string, words.smsStart(sender, link)))),
+      ),
       Promise.allSettled(
         targets
           .filter((t) => t.profile_id)
@@ -500,18 +527,22 @@ export async function socialRoutes(app: FastifyInstance): Promise<void> {
       const words = SOS_WORDS[langOf(targets[0]?.owner_language)];
       const name = nameForSms(targets[0]?.owner_name, words.someone);
       // Straight away, so an alarm set off by mistake is called off on every phone it rang on.
-      const results = await Promise.allSettled([
-        ...targets.filter((t) => t.phone && !t.profile_id).map((t) => sendSms(t.phone as string, words.smsStop(name))),
-        ...targets
-          .filter((t) => t.profile_id)
-          .map((t) =>
-            sendPush(t.profile_id as string, {
-              title: words.smsStop(name),
-              body: words.stopBody,
-              data: { kind: 'sos_stopped', event_id: eventId, url: `/social/sos/watch/${eventId}` },
-            }),
-          ),
-      ]);
+      // Whoever got the "needs help" text must also get the all-clear. A family member on AYWO hears by notification;
+      // when none reaches their phone (signed out, notifications off) the text goes to their number instead.
+      // Before this they were texted the alarm and never told it was over.
+      const sender = await withSenderNumber(userId, name);
+      const results = await Promise.allSettled(
+        targets.map(async (t) => {
+          const pushed = t.profile_id
+            ? await sendPush(t.profile_id, {
+                title: words.smsStop(name),
+                body: words.stopBody,
+                data: { kind: 'sos_stopped', event_id: eventId, url: `/social/sos/watch/${eventId}` },
+              }).catch(() => 'none' as const)
+            : 'none';
+          if (t.phone && pushed !== 'sent') await sendSms(t.phone, words.smsStop(sender));
+        }),
+      );
       // Pushed just now, so the delivery job must not send the 'sos_ended' rows again, by push or by text.
       await asServer((db) =>
         db.query(

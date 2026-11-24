@@ -1,5 +1,6 @@
 // E4 / S-11 Activity: what needs a decision, what changed, who has access.
 import { useQuery } from '@tanstack/react-query';
+import { useLocalSearchParams } from 'expo-router';
 import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
@@ -13,13 +14,19 @@ import { Text } from '@/components/Text';
 import { Card, ConfirmDialog, EmptyState, ErrorText, Field, Heading, Loading, LoadFailed, NeonPanel, SmallButton, TextButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
+import { useUnreadNotices } from '@/lib/notices';
 import { useTimeAgo } from '@/lib/time';
+import { NoticeList } from '@/social/NoticeList';
 import { useActivityText } from '@/tree/activityText';
 import { useActivity, useDecideRequest, useRevert, useUndoClaim } from '@/tree/useEdit';
 import type { ActivityItem, ActivityTab, ChangeItem, ClaimItem, RequestItem } from '@/tree/useEdit';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
 
-const TABS: { key: ActivityTab; labelKey: string }[] = [
+// 'news' is the person's notifications; the rest are views of the family tree's own log.
+type Tab = ActivityTab | 'news';
+
+const TABS: { key: Tab; labelKey: string }[] = [
+  { key: 'news', labelKey: 'activity.news' },
   { key: 'needs_you', labelKey: 'activity.needsYou' },
   { key: 'changes', labelKey: 'activity.changes' },
   { key: 'access', labelKey: 'activity.access' },
@@ -33,13 +40,17 @@ const MOST = 200;
 export default function Activity() {
   const { t } = useTranslation();
   const errorText = useErrorText();
-  const [tab, setTab] = useState<ActivityTab>('needs_you');
+  // Home's "waiting for you" card opens straight on the requests; the bell opens on the news.
+  const asked = useLocalSearchParams<{ tab?: string }>().tab;
+  const [tab, setTab] = useState<Tab>(asked === 'needs_you' ? 'needs_you' : 'news');
+  const unread = useUnreadNotices();
   const [limit, setLimit] = useState(PAGE);
   // The key starts with 'activity', so every action that refreshes the feed refreshes this list too. The lines
   // already on screen stay while the longer list loads.
   const feed = useQuery({
     queryKey: ['activity', tab, limit],
     queryFn: () => api.get<ActivityItem[]>(`/activity?tab=${tab}&limit=${limit}`),
+    enabled: tab !== 'news',
     // Only within one tab: another tab's lines must never show under this tab's name.
     placeholderData: (previous, previousQuery) => (previousQuery?.queryKey[1] === tab ? previous : undefined),
   });
@@ -67,7 +78,11 @@ export default function Activity() {
                 style={[styles.tab, on && styles.tabOn]}
               >
                 <Text style={[styles.tabText, on && styles.tabTextOn]}>
-                  {item.key === 'needs_you' && needCount > 0 ? `${t(item.labelKey)} · ${needCount}` : t(item.labelKey)}
+                  {item.key === 'needs_you' && needCount > 0
+                    ? `${t(item.labelKey)} · ${needCount}`
+                    : item.key === 'news' && unread > 0
+                      ? `${t(item.labelKey)} · ${unread}`
+                      : t(item.labelKey)}
                 </Text>
               </Pressable>
             );
@@ -77,7 +92,9 @@ export default function Activity() {
         <Text style={styles.about}>{t(`activity.about.${tab}`)}</Text>
       </View>
 
-      {feed.isError ? (
+      {tab === 'news' ? (
+        <NoticeList listStyle={styles.list} onStayHere={() => setTab('needs_you')} />
+      ) : feed.isError ? (
         <LoadFailed message={errorText(feed.error)} onRetry={() => feed.refetch()} />
       ) : !feed.data ? (
         <Loading label={t('tree.loading')} />

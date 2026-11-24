@@ -34,5 +34,9 @@ export function toHttpError(e: unknown): { status: number; code: string } | null
   if (err.code === '42501') return { status: 403, code: 'not_allowed' };
   if (err.code === '23505') return { status: 409, code: 'already_exists' };
   if (err.code === '23503' || err.code === '22P02' || err.code === '23514') return { status: 422, code: 'bad_input' };
+  // A value the database cannot hold: a date like 2015-13-45, a number too big for its column, text too long.
+  // What was sent is wrong, not the server, so it is "check what you entered" and not "something went wrong".
+  if (err.code === '22007' || err.code === '22008') return { status: 422, code: 'bad_date' };
+  if (err.code === '22003' || err.code === '22001' || err.code === '23502') return { status: 422, code: 'bad_input' };
   return null;
 }

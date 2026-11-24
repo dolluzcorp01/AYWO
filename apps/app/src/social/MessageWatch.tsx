@@ -1,4 +1,5 @@
-// Tells a signed-in person about a new chat message wherever they are in the app.
+// Tells a signed-in person about a new chat message, and any other news (an answer to their invitation, a new
+// invitation, a comment, an alert), wherever they are in the app.
 //
 // Before this, a message that arrived while someone was on Home or in the tree changed nothing they could see: the
 // red number on Chat was only fetched once a minute, and nothing said who had written. Now the number updates the
@@ -6,6 +7,7 @@
 // Sits once in the root layout. While the app is closed this cannot run: that is what phone notifications are for.
 import { useQueryClient } from '@tanstack/react-query';
 import { usePathname } from 'expo-router';
+import type { Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, AppState, Platform, Pressable, StyleSheet, View } from 'react-native';
@@ -13,12 +15,23 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChatIcon, CloseIcon } from '@/components/Icons';
 import { Text } from '@/components/Text';
 import { useMe } from '@/lib/account';
+import { refreshNotices } from '@/lib/notices';
 import { useRouter } from '@/lib/router';
 import type { Message } from '@/social/types';
 import { useChatSocket } from '@/social/useChatSocket';
 import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
 
 const SHOW_MS = 6000;
+
+/** What the card says and where a tap goes: a chat message, or any other piece of news. */
+interface Shown {
+  key: string;
+  title: string;
+  body: string;
+  open: Href;
+  /** The screen this is about: the card is not shown, and goes away, while the person is already there. */
+  at: string;
+}
 
 export function MessageWatch() {
   const { t } = useTranslation();
@@ -27,7 +40,7 @@ export function MessageWatch() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const me = useMe();
-  const [note, setNote] = useState<Message | null>(null);
+  const [note, setNote] = useState<Shown | null>(null);
   const appear = useRef(new Animated.Value(0)).current;
   const latest = useRef({ pathname, myId: me.data?.id });
   latest.current = { pathname, myId: me.data?.id };
@@ -44,16 +57,39 @@ export function MessageWatch() {
       refreshCounts();
       // Already reading that chat: the message is on the screen, a card about it would only be in the way.
       if (latest.current.pathname === `/social/chat/${message.chat_id}`) return;
-      if (!message.deleted) setNote(message);
+      if (message.deleted) return;
+      const words = message.media_kind === 'photo' ? t('social.chat.photo') : message.media_kind === 'voice' ? t('social.chat.voiceNote') : (message.body ?? '');
+      setNote({
+        key: message.id,
+        title: t('social.chat.newFrom', { name: message.sender_name }),
+        body: words,
+        open: { pathname: '/social/chat/[id]', params: { id: message.chat_id } },
+        at: `/social/chat/${message.chat_id}`,
+      });
     },
     // Messages sent while the connection was down are not sent again: fetch the numbers afresh.
-    refreshCounts,
+    () => {
+      refreshCounts();
+      refreshNotices(client);
+    },
+    (notice) => {
+      // The bell's number, the list, and whatever screen the news is about (who is coming, the alerts, the requests).
+      refreshNotices(client);
+      refreshCounts();
+      for (const key of ['events', 'event', 'alerts', 'posts', 'post', 'activity', 'groups']) void client.invalidateQueries({ queryKey: [key] });
+      const at = notice.path.split('?')[0] ?? notice.path;
+      if (latest.current.pathname === at) return;
+      setNote({ key: notice.id, title: notice.title, body: notice.body, open: notice.path as Href, at });
+    },
   );
 
   // Coming back to the app after a while: the numbers may be old.
   useEffect(() => {
     const watch = AppState.addEventListener('change', (state) => {
-      if (state === 'active') refreshCounts();
+      if (state === 'active') {
+        refreshCounts();
+        refreshNotices(client);
+      }
     });
     return () => watch.remove();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -68,22 +104,21 @@ export function MessageWatch() {
 
   // Opening the chat by any other way puts the card away.
   useEffect(() => {
-    if (note && pathname === `/social/chat/${note.chat_id}`) setNote(null);
+    if (note && pathname === note.at) setNote(null);
   }, [pathname, note]);
 
   if (!note) return null;
-  const words = note.media_kind === 'photo' ? t('social.chat.photo') : note.media_kind === 'voice' ? t('social.chat.voiceNote') : (note.body ?? '');
   return (
     <View pointerEvents="box-none" style={[styles.layer, { top: insets.top + 12 }]}>
       <Animated.View style={[styles.card, { opacity: appear, transform: [{ translateY: appear.interpolate({ inputRange: [0, 1], outputRange: [-12, 0] }) }] }]}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={t('social.chat.newFrom', { name: note.sender_name })}
+          accessibilityLabel={`${note.title}. ${note.body}`}
           accessibilityHint={t('social.chat.openHint')}
           onPress={() => {
-            const chatId = note.chat_id;
+            const open = note.open;
             setNote(null);
-            router.push({ pathname: '/social/chat/[id]', params: { id: chatId } });
+            router.push(open);
           }}
           style={styles.open}
         >
@@ -91,8 +126,8 @@ export function MessageWatch() {
             <ChatIcon color={colors.white} size={20} width={2} />
           </View>
           <View style={styles.words}>
-            <Text style={styles.from} numberOfLines={1}>{t('social.chat.newFrom', { name: note.sender_name })}</Text>
-            <Text style={styles.body} numberOfLines={2}>{words}</Text>
+            <Text style={styles.from} numberOfLines={1}>{note.title}</Text>
+            <Text style={styles.body} numberOfLines={2}>{note.body}</Text>
           </View>
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={() => setNote(null)} style={styles.close}>

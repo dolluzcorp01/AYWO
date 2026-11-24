@@ -184,11 +184,20 @@ select throws_ok($$ select coupon_quote('FAMILY20', 'family_book', 149900, 'INR'
 select throws_ok($$ select coupon_quote('NOPE1', 'tree_poster', 79900, 'INR') $$, 'PT422', 'coupon_invalid', 'an unknown code is refused');
 select is(jsonb_array_length(offers_list()), 1, 'the public offer is listed');
 reset role;
+-- The payment box was closed: an unpaid order is left behind. It must not use up the person's one go at the code.
+insert into one_time_orders (id, buyer_id, product, store, amount_minor, currency, coupon_id, discount_minor, status)
+values ('99999999-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000000f6', 'tree_poster', 'stripe', 1599, 'USD', (select id from coupons where code = 'FAMILY20'), 400, 'created');
+select test_login('00000000-0000-0000-0000-0000000000f6');
+select lives_ok($$ select coupon_quote('FAMILY20', 'tree_poster', 1999, 'USD') $$, 'a code still works after a payment that was started and never paid');
+reset role;
 insert into one_time_orders (buyer_id, product, store, amount_minor, currency, coupon_id, discount_minor, status, paid_at)
 values ('00000000-0000-0000-0000-0000000000f6', 'tree_poster', 'stripe', 1599, 'USD', (select id from coupons where code = 'FAMILY20'), 400, 'paid', now());
 select test_login('00000000-0000-0000-0000-0000000000f6');
 select throws_ok($$ select coupon_quote('FAMILY20', 'tree_poster', 1999, 'USD') $$, 'PT422', 'coupon_already_used', 'one use per person');
 reset role;
+-- The unpaid order from before is paid late, after another order already used the code: paid, and marked for staff.
+select is(apply_order_event('stripe', '99999999-0000-0000-0000-0000000000c1', null, 'paid', 1599, 'USD', 'pi_late'), 'paid', 'money that arrives is always recorded');
+select is((select details ->> 'coupon_over_limit' from one_time_orders where id = '99999999-0000-0000-0000-0000000000c1'), 'true', 'a paid order beyond the code''s limit is marked for staff');
 select set_config('test.coupon', (select id::text from coupons where code = 'FAMILY20'), true);
 select test_login('00000000-0000-0000-0000-0000000000f1');
 select throws_ok($$ select admin_coupon_save(current_setting('test.coupon')::uuid, '{"value": 50}') $$, 'PT409', 'coupon_in_use', 'a used code''s discount stays fixed');

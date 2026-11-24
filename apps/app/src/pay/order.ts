@@ -82,9 +82,12 @@ function backInApp(): Promise<void> {
   });
 }
 
-/** my_orders lists only paid and refunded orders, so finding the order there means the payment arrived. */
-async function orderIsPaid(orderId: string): Promise<boolean> {
-  for (let i = 0; i < CHECK_TIMES; i++) {
+/**
+ * my_orders lists only paid and refunded orders, so finding the order there means the payment arrived.
+ * `times` 1 is one look, for "I have paid. Check again".
+ */
+export async function orderIsPaid(orderId: string, times = CHECK_TIMES): Promise<boolean> {
+  for (let i = 0; i < times; i++) {
     if (i > 0) await pause(CHECK_EVERY_MS);
     const orders = await api.rpc<{ id: string }[]>('my_orders').catch(() => null);
     if (orders?.some((order) => order.id === orderId)) return true;

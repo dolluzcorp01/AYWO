@@ -2,6 +2,7 @@
 // The answer says whether the socket is up: when it is not, screens fetch on a timer instead.
 import { useEffect, useRef, useState } from 'react';
 import { accessToken, api, API_URL } from '@/lib/api';
+import type { Notice } from '@/lib/notices';
 import type { Message } from '@/social/types';
 
 const FIRST_RETRY_MS = 1_000;
@@ -13,10 +14,10 @@ const PONG_WAIT_MS = 10_000;
 
 export const FETCH_WHEN_OFFLINE_MS = 15_000;
 
-export function useChatSocket(onMessage: (message: Message) => void, onReady?: () => void): boolean {
+export function useChatSocket(onMessage: (message: Message) => void, onReady?: () => void, onNotice?: (notice: Notice) => void): boolean {
   const [connected, setConnected] = useState(false);
-  const latest = useRef({ onMessage, onReady });
-  latest.current = { onMessage, onReady };
+  const latest = useRef({ onMessage, onReady, onNotice });
+  latest.current = { onMessage, onReady, onNotice };
 
   useEffect(() => {
     let stopped = false;
@@ -95,7 +96,7 @@ export function useChatSocket(onMessage: (message: Message) => void, onReady?: (
         waitingForPong = false;
         if (pongTimer) clearTimeout(pongTimer);
         try {
-          const data = JSON.parse(String(event.data)) as { type: string; message?: Message };
+          const data = JSON.parse(String(event.data)) as { type: string; message?: Message; notification?: Notice };
           if (data.type === 'ready') {
             delay = FIRST_RETRY_MS;
             setConnected(true);
@@ -103,6 +104,8 @@ export function useChatSocket(onMessage: (message: Message) => void, onReady?: (
             latest.current.onReady?.();
           } else if (data.type === 'message' && data.message) {
             latest.current.onMessage(data.message);
+          } else if (data.type === 'notification' && data.notification) {
+            latest.current.onNotice?.(data.notification);
           }
         } catch {
           // A frame that cannot be read is skipped; the next fetch fills any gap.

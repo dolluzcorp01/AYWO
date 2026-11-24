@@ -31,6 +31,7 @@ import type { HomeCounts, Post } from '@/social/types';
 import { activityRoute, useActivityText } from '@/tree/activityText';
 import { canShare } from '@/tree/roles';
 import { generationCount } from '@/tree/stats';
+import { useUnreadNotices } from '@/lib/notices';
 import { useActivity } from '@/tree/useEdit';
 import type { RequestItem } from '@/tree/useEdit';
 import { useTreeView } from '@/tree/useTreeView';
@@ -180,7 +181,8 @@ function Top({ treeId, name }: { treeId: string; name: string | null }) {
   const own = tree.data?.nodes.find((n) => n.id === tree.data?.viewer_person_id);
   // The side menu already has Activity on a computer.
   const desktop = useDesktop();
-  const waiting = needs.data?.filter((item) => item.needs_you).length ?? 0;
+  // Requests waiting for an answer, and news not yet read: both are behind the bell.
+  const waiting = (needs.data?.filter((item) => item.needs_you).length ?? 0) + useUnreadNotices();
   return (
     <View style={styles.top}>
       <View style={styles.topText}>
@@ -196,7 +198,11 @@ function Top({ treeId, name }: { treeId: string; name: string | null }) {
             style={styles.iconButton}
           >
             <BellIcon color={colors.text} size={20} width={1.8} />
-            {waiting ? <View style={styles.dot} /> : null}
+            {waiting ? (
+              <View style={styles.bellCount}>
+                <Text style={styles.bellCountText}>{waiting > 99 ? '99+' : waiting}</Text>
+              </View>
+            ) : null}
           </Pressable>
         </>
       )}
@@ -477,6 +483,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  bellCount: { position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.alert, borderWidth: 1.5, borderColor: colors.card },
+  bellCountText: { color: colors.white, fontFamily: fonts.extrabold, fontSize: 11, lineHeight: 14 },
   dot: { position: 'absolute', top: 9, right: 11, width: 9, height: 9, borderRadius: 5, backgroundColor: colors.alert, borderWidth: 1.5, borderColor: colors.card },
   incoming: { minHeight: minTapSize + 8, borderRadius: radius.card, backgroundColor: colors.alert, padding: 16, justifyContent: 'center' },
   incomingText: { color: colors.white, fontFamily: fonts.extrabold, fontSize: 16 },

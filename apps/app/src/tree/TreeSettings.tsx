@@ -18,7 +18,9 @@ export function TreeSettings({ trees, onClose }: { trees: { id: string; name: st
   const [deleting, setDeleting] = useState(false);
   const [word, setWord] = useState('');
   const name = typed ?? tree?.name ?? '';
-  const deleteWord = t('settings.deleteWord');
+  // The English word is always accepted too: not every phone can type the translated one.
+  const ownWord = t('settings.deleteWord');
+  const deleteWord = ownWord.toLowerCase() === 'delete' ? ownWord : `${ownWord} / delete`;
 
   // Everything that shows a tree's name or lists the trees.
   const refresh = () => Promise.all([client.invalidateQueries({ queryKey: ['trees'] }), client.invalidateQueries({ queryKey: ['tree-view'] }), client.invalidateQueries({ queryKey: ['social-circles'] })]);
@@ -72,7 +74,7 @@ export function TreeSettings({ trees, onClose }: { trees: { id: string; name: st
           <TextButton
             label={t('me.deleteTreeYes', { name: tree.name })}
             danger
-            disabled={word.trim().toLowerCase() !== deleteWord.toLowerCase() || remove.isPending}
+            disabled={![ownWord.toLowerCase(), 'delete'].includes(word.trim().toLowerCase()) || remove.isPending}
             onPress={() => remove.mutate()}
           />
         </>

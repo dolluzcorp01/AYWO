@@ -1,62 +1,21 @@
 // LLD L11. Other areas only insert into notifications; this job sends them, as notification_prefs says, and records
 // the channels used. A row with channels_sent null has not been dealt with yet.
-import { isUuid } from '@aywo/shared';
-import { config } from '../config.ts';
 import { asServer } from '../db.ts';
 import type { Job } from '../jobs.ts';
-import { notificationText, sendEmail } from '../services/email.ts';
-import type { NotificationFacts } from '../services/email.ts';
+import { sendEmail } from '../services/email.ts';
+import { noticeWords } from '../services/notices.ts';
 import { checkPushReceipts, sendPush } from '../services/push.ts';
 import { sendSms } from '../services/sms.ts';
 
 const BATCH = 200;
 const MAX_ATTEMPTS = 10;
 const SMS_MAX_LENGTH = 300;
-const PUSH_ONLY_BY_DEFAULT = new Set(['chat_message', 'memory_comment', 'rsvp', 'promo', 'birthdays_today', 'remembrance_today']);
+const PUSH_ONLY_BY_DEFAULT = new Set(['chat_message', 'memory_comment', 'rsvp', 'poll_vote', 'promo', 'birthdays_today', 'remembrance_today']);
 
 // HLD: 'Push for normal, SMS for alerts and SOS'. Only the server inserts notifications, so the payload flag is safe.
 const URGENT_KIND = /^(sos|alert|help_request|blood_)/;
 export function isUrgent(kind: string, payload: Record<string, unknown> | null): boolean {
   return URGENT_KIND.test(kind) || payload?.urgent === true;
-}
-
-function str(value: unknown): string | null {
-  return typeof value === 'string' && value.length > 0 ? value : null;
-}
-
-/** Where a tap or an email button goes. Fixed routes and ids only. */
-function pathFor(kind: string, payload: Record<string, unknown> | null): string {
-  if (kind.startsWith('staff_')) return '/admin/work';
-  if (kind === 'ticket_reply' && isUuid(payload?.ticket_id)) return `/help/${payload?.ticket_id}`;
-  if (kind.startsWith('order_')) return '/orders';
-  if (kind === 'plus_gift' || kind === 'referral_reward') return '/family-plan';
-  // A promotional message may open one screen of the app, never an outside address.
-  if (kind === 'promo') return typeof payload?.path === 'string' && /^\/[A-Za-z0-9/_-]*$/.test(payload.path) ? payload.path : '/offers';
-  if (kind === 'trial_ending' || kind.startsWith('plan_')) return '/family-plan';
-  if (kind.startsWith('chat_') && isUuid(payload?.chat_id)) return `/social/chat/${payload?.chat_id}`;
-  if (kind.startsWith('memory_') && isUuid(payload?.post_id)) return `/social/memories/${payload?.post_id}`;
-  if ((kind.startsWith('invite') || kind === 'rsvp') && isUuid(payload?.event_id)) return `/social/invites/${payload?.event_id}`;
-  // Birthdays and remembrance days open the family calendar on today.
-  if (kind === 'birthdays_today' || kind === 'remembrance_today') return '/calendar';
-  if (kind === 'alert') return '/social/alerts';
-  if (kind === 'group_added') return '/social/groups';
-  if (kind === 'request_created' || kind === 'request_routed' || kind === 'merge_candidate') return '/activity';
-  const person = payload?.person_id;
-  const tree = payload?.tree_id;
-  if (isUuid(person) && isUuid(tree)) return `/person/${person}?treeId=${tree}`;
-  if (isUuid(tree)) return `/tree/${tree}`;
-  return '/home';
-}
-
-function formatDate(value: unknown, language: string): string | null {
-  const text = str(value);
-  if (!text) return null;
-  const date = new Date(text);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat(language.startsWith('ta') ? 'ta-IN' : 'en-IN', {
-    dateStyle: 'long',
-    timeZone: 'Asia/Kolkata',
-  }).format(date);
 }
 
 interface Pending {
@@ -86,19 +45,7 @@ async function deliverOne(row: Pending): Promise<void> {
     return;
   }
 
-  const path = pathFor(row.kind, row.payload);
-  const facts: NotificationFacts = {
-    by_name: row.by_name,
-    person_name: row.person_name,
-    date: formatDate(row.payload?.ends_at, row.language_code),
-    note: str(row.payload?.body) ?? str(row.payload?.title),
-    title: str(row.payload?.title),
-    alert_kind: str(row.payload?.alert_kind),
-    blood_group: str(row.payload?.blood_group),
-    step: str(row.payload?.step),
-    url: `${config.WEB_URL}${path}`,
-  };
-  const text = notificationText(row.kind, facts, row.language_code);
+  const { path, facts, ...text } = noticeWords(row);
 
   const sent: string[] = [];
   let failed = false;

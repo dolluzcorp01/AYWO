@@ -210,12 +210,17 @@
       "needPhone": "Check the phone number for the courier.",
       "paying": "Please wait…",
       "payAgain": "Try paying again",
-      "notPaidTitle": "The payment was not completed",
-      "notPaid": "We have not received a payment for this order. If you closed the payment page without paying, nothing was charged and you can try again below. If you did pay, do not pay again: your order will show in My orders within a few minutes.",
+      "notPaidTitle": "We haven't seen your payment yet",
+      "notPaid": "If you closed the payment page without paying, nothing was charged and you can pay again below. If you did pay, do not pay again: banks can take a few minutes to tell us. Tap \"I have paid. Check again\".",
       "seeOrders": "See My orders",
       "fewer": "One fewer",
       "more": "One more",
-      "checkingCoupon": "Checking your code..."
+      "checkingCoupon": "Checking your code...",
+      "checkAgain": "I have paid. Check again",
+      "stillNotPaid": "Not arrived yet. Wait a minute and check again. Your order will also show in My orders when the payment arrives.",
+      "payAgainTitle": "Pay again?",
+      "payAgainHelp": "Only pay again if no money left your account. If money was taken, cancel here and tap \"I have paid. Check again\", so you are not charged twice.",
+      "payAgainYes": "No money was taken. Pay again"
     },
     "refer": {
       "title": "Invite and earn",

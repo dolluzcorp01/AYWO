@@ -349,6 +349,11 @@ export async function paymentRoutes(app: FastifyInstance): Promise<void> {
     const amount = fullAmount - discount;
 
     const orderId = await asServer(async (db) => {
+      // A try that was left unpaid (the payment box was closed) gives way to this one, so the code is never
+      // "already used" by an order nobody paid for, and only one unpaid order per person holds a code.
+      if (quote) {
+        await db.query(`update one_time_orders set status = 'expired' where buyer_id = $1 and coupon_id = $2 and status = 'created'`, [userId, quote.coupon_id]);
+      }
       const { rows } = await db.query(
         `insert into one_time_orders (buyer_id, product, store, amount_minor, currency, tree_id, details, coupon_id, discount_minor)
          values ($1, $2, $3::store_t, $4, $5, $6, $7, $8, $9) returning id`,

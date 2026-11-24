@@ -17,6 +17,8 @@ export interface NotificationFacts {
   blood_group?: string | null;
   /** An order's new step: printing, shipped, delivered or cancelled. */
   step?: string | null;
+  /** What someone answered to an invitation: yes, maybe or no. */
+  answer?: string | null;
   url: string;
 }
 
@@ -81,8 +83,14 @@ const TEMPLATES: Record<Lang, Record<string, Template>> = {
     invite: (f) => ({ title: 'You are invited', body: `${f.by_name ?? someone.en} invited you: ${f.note ?? ''}`.trim() }),
     invite_changed: (f) => ({ title: 'An invite changed', body: `The details of ${f.note ?? 'an invite'} have changed.` }),
     invite_cancelled: (f) => ({ title: 'An invite was cancelled', body: `${f.note ?? 'An invite'} has been cancelled.` }),
-    rsvp: (f) => ({ title: 'New reply to your invite', body: `${f.by_name ?? someone.en} replied to your invite.` }),
+    // Says what was answered and to which invitation: a host with several invitations must not have to open each.
+    rsvp: (f) => {
+      const said = f.answer === 'yes' ? 'is coming to' : f.answer === 'no' ? 'cannot come to' : f.answer === 'maybe' ? 'may come to' : 'replied to';
+      return { title: 'New reply to your invite', body: `${f.by_name ?? someone.en} ${said} ${f.title ?? 'your invite'}.` };
+    },
+    poll_vote: (f) => ({ title: 'New vote in your Pop Party', body: `${f.by_name ?? someone.en} voted in ${f.title ?? 'your Pop Party'}. Open it to see what they chose.` }),
     group_added: (f) => ({ title: 'New group', body: `${f.by_name ?? someone.en} added you to a group.` }),
+    sos: (f) => ({ title: `${f.by_name ?? someone.en} needs help`, body: `${f.by_name ?? someone.en} pressed SOS. Open this to see where they are, then call them.` }),
     sos_ended: (f) => ({ title: 'SOS has ended', body: `${f.by_name ?? someone.en} has stopped the SOS.` }),
     claim_made: (f) => ({ title: 'Someone found their entry', body: `${f.by_name ?? someone.en} says they are ${f.person_name ?? aPerson.en} in your tree. You can undo this if it is wrong.` }),
     claim_undone: (f) => ({ title: 'Your entry was unlinked', body: `Your link to ${f.person_name ?? aPerson.en} was undone by the tree's Creator.` }),
@@ -133,8 +141,13 @@ const TEMPLATES: Record<Lang, Record<string, Template>> = {
     invite: (f) => ({ title: 'உங்களுக்கு அழைப்பு', body: `${f.by_name ?? someone.ta} அழைத்துள்ளார்: ${f.note ?? ''}`.trim() }),
     invite_changed: (f) => ({ title: 'அழைப்பு மாறியது', body: `${f.note ?? 'ஓர் அழைப்பு'} விவரங்கள் மாறியுள்ளன.` }),
     invite_cancelled: (f) => ({ title: 'அழைப்பு ரத்தானது', body: `${f.note ?? 'ஓர் அழைப்பு'} ரத்து செய்யப்பட்டது.` }),
-    rsvp: (f) => ({ title: 'அழைப்புக்கு புதிய பதில்', body: `${f.by_name ?? someone.ta} உங்கள் அழைப்புக்கு பதிலளித்தார்.` }),
+    rsvp: (f) => {
+      const said = f.answer === 'yes' ? 'வருகிறேன் என்று' : f.answer === 'no' ? 'வர இயலாது என்று' : f.answer === 'maybe' ? 'வரலாம் என்று' : '';
+      return { title: 'அழைப்புக்கு புதிய பதில்', body: `${f.by_name ?? someone.ta} "${f.title ?? 'உங்கள் அழைப்பு'}" அழைப்புக்கு ${said} பதிலளித்தார்.`.replace('  ', ' ') };
+    },
+    poll_vote: (f) => ({ title: 'பாப் பார்ட்டியில் புதிய வாக்கு', body: `${f.by_name ?? someone.ta} "${f.title ?? 'உங்கள் பாப் பார்ட்டி'}" க்கு வாக்களித்தார். என்ன தேர்வு செய்தார் என்று பார்க்கத் திறக்கவும்.` }),
     group_added: (f) => ({ title: 'புதிய குழு', body: `${f.by_name ?? someone.ta} உங்களை ஒரு குழுவில் சேர்த்தார்.` }),
+    sos: (f) => ({ title: `${f.by_name ?? someone.ta} உதவி கேட்கிறார்`, body: `${f.by_name ?? someone.ta} SOS அழுத்தினார். அவர் எங்கே இருக்கிறார் என்று பார்க்க இதைத் திறந்து, பிறகு அவரை அழையுங்கள்.` }),
     sos_ended: (f) => ({ title: 'SOS முடிந்தது', body: `${f.by_name ?? someone.ta} SOS-ஐ நிறுத்தினார்.` }),
     claim_made: (f) => ({ title: 'ஒருவர் தன் பதிவைக் கண்டறிந்தார்', body: `உங்கள் மரத்தில் ${f.person_name ?? aPerson.ta} தாங்களே என்று ${f.by_name ?? someone.ta} கூறுகிறார். தவறு எனில் நீங்கள் இதை ரத்து செய்யலாம்.` }),
     claim_undone: (f) => ({ title: 'உங்கள் இணைப்பு நீக்கப்பட்டது', body: `${f.person_name ?? aPerson.ta} உடனான உங்கள் இணைப்பை மரத்தின் உருவாக்குநர் ரத்து செய்தார்.` }),

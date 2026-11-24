@@ -90,12 +90,13 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const body = z.object({ phone: z.string(), code: z.string().regex(/^\d{6}$/) }).parse(req.body);
     const phone = e164(body.phone);
 
-    const userId = await asServer(async (db) => {
+    // A reason beginning with 'otp_' instead of an account: the screen can then say what to do next, not only "didn't work".
+    const userId = await asServer(async (db): Promise<string> => {
       const wrong = await db.query(
         `select coalesce(sum(attempts), 0)::int as n from auth.otp_codes where phone = $1 and created_at > now() - interval '1 hour'`,
         [phone],
       );
-      if (wrong.rows[0].n >= MAX_WRONG_PER_HOUR) return null;
+      if (wrong.rows[0].n >= MAX_WRONG_PER_HOUR) return 'otp_locked';
       const { rows } = await db.query(
         `select id, code_hash, attempts from auth.otp_codes
          where phone = $1 and used_at is null and expires_at > now()
@@ -103,10 +104,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         [phone],
       );
       const row = rows[0];
-      if (!row || row.attempts >= MAX_ATTEMPTS) return null;
+      if (!row) return 'otp_expired';
+      if (row.attempts >= MAX_ATTEMPTS) return 'otp_locked';
       if (!sameHash(row.code_hash, hashCode(phone, body.code))) {
         await db.query(`update auth.otp_codes set attempts = attempts + 1 where id = $1`, [row.id]);
-        return null;
+        return 'otp_wrong';
       }
       await db.query(`update auth.otp_codes set used_at = now() where id = $1`, [row.id]);
       // A trigger on auth.users creates the profile (0004).
@@ -127,7 +129,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       }
       return user.rows[0].id as string;
     });
-    if (!userId) throw new ApiError(422, 'otp_wrong');
+    if (userId.startsWith('otp_')) throw new ApiError(422, userId);
     return issueTokens(userId);
   });
 

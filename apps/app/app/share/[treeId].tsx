@@ -66,6 +66,8 @@ export default function ShareScreen() {
   const [badPhone, setBadPhone] = useState(false);
   const [revoking, setRevoking] = useState<ShareRow | null>(null);
   const [changing, setChanging] = useState<ShareRow | null>(null);
+  // Sending with nobody named and no number: asked first, because that link carries no rights.
+  const [askingBare, setAskingBare] = useState<'whatsapp' | 'other' | 'copy' | null>(null);
   const changeRole = useUpdateShare(treeId);
   // The number already saved on this person's card: filled in when it may be shown, otherwise used by the server.
   const card = usePersonCard(personId ?? '', !!personId);
@@ -123,6 +125,9 @@ export default function ShareScreen() {
   // A link alone only ever opens the names-and-photos view. Rights reach a person through their number,
   // or through the card they claim.
   const needsPhone = !person?.joined;
+  // Somebody the rights can reach: a relative already signed in, a typed number, or the number saved on their card.
+  const hasRecipient = !needsPhone || !!phone.trim() || (savedHidden && !otherNumber);
+  const roleName = t(ROLES.find((r) => r.value === role)?.nameKey ?? 'share.view');
 
   function buildInput(): ShareInput | null {
     const days = ENDS[endIndex].days;
@@ -157,7 +162,8 @@ export default function ShareScreen() {
     const who = `${input.grantee_person_id ?? ''}|${input.grantee_phone ?? ''}`;
     const earlier = made.current;
     made.current = null;
-    if (earlier && earlier.who === who) await revoke.mutateAsync(earlier.id).catch(() => undefined);
+    // A link with nobody named may already be with another relative, so it is never taken back here.
+    if (earlier && who !== '|' && earlier.who === who) await revoke.mutateAsync(earlier.id).catch(() => undefined);
     const share = await create.mutateAsync(input);
     made.current = { key, url: share.link_url, id: share.id, who };
     return share.link_url;
@@ -194,6 +200,16 @@ export default function ShareScreen() {
     } catch {
       showToast('error', t('share.copyFailed'));
     }
+  }
+
+  /** Every way of sending goes through here, so a link that carries no rights is never sent without saying so. */
+  function send(way: 'whatsapp' | 'other' | 'copy', sure = false) {
+    if (!hasRecipient && !sure) {
+      setAskingBare(way);
+      return;
+    }
+    setAskingBare(null);
+    void (way === 'whatsapp' ? sendWhatsApp() : way === 'other' ? shareOther() : copyLink());
   }
 
   async function sendWhatsApp() {
@@ -343,7 +359,7 @@ export default function ShareScreen() {
               invalid={badPhone}
               onPickContact={() => setBadPhone(false)}
             />
-            <Muted>{savedMobile && phone === savedMobile ? t('share.fromCard', { name: personName }) : t('share.phoneHelp')}</Muted>
+            <Muted>{savedMobile && phone === savedMobile ? t('share.fromCard', { name: personName }) : phone.trim() ? t('share.phoneHelp') : t('share.noNumberHelp', { role: roleName })}</Muted>
             {badPhone ? <ErrorText>{t('details.badPhone')}</ErrorText> : null}
           </Card>
         ) : null}
@@ -363,36 +379,40 @@ export default function ShareScreen() {
 
         {create.isError ? <ErrorText>{errorText(create.error)}</ErrorText> : null}
 
-        <Pressable accessibilityRole="button" disabled={create.isPending} onPress={sendWhatsApp} style={{ opacity: create.isPending ? 0.5 : 1 }}>
+        <Pressable accessibilityRole="button" disabled={create.isPending} onPress={() => send('whatsapp')} style={{ opacity: create.isPending ? 0.5 : 1 }}>
           <LinearGradient colors={gradients.whatsapp} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.whatsapp}>
             <ContactIcon kind="whatsapp" color={colors.white} size={20} />
             <Text style={styles.whatsappText}>{t('share.whatsapp')}</Text>
           </LinearGradient>
         </Pressable>
         <View style={styles.sendRow}>
-          <TextButton label={copied ? t('share.copied') : t('share.copy')} onPress={copyLink} disabled={create.isPending} />
-          <TextButton label={t('share.moreWays')} onPress={shareOther} disabled={create.isPending} />
+          <TextButton label={copied ? t('share.copied') : t('share.copy')} onPress={() => send('copy')} disabled={create.isPending} />
+          <TextButton label={t('share.moreWays')} onPress={() => send('other')} disabled={create.isPending} />
         </View>
 
         {canManage && liveShares.length > 0 ? (
           <>
             <SectionTitle>{t('share.haveAccess')}</SectionTitle>
-            {liveShares.map((s) => (
+            {liveShares.map((s) => {
+              // Nobody named and no number: the link opens names and photos, whatever role was picked with it.
+              const bare = !s.grantee_name && !s.grantee_person_name && !s.waiting_phone;
+              return (
               <View key={s.id} style={styles.accessRow}>
                 <View style={styles.whoText}>
                   <Text style={styles.rowTitle}>{s.grantee_name || (s.grantee_person_name ? shownName(t, s.grantee_person_name) : '') || s.waiting_phone || t('share.anyoneWithLink')}</Text>
                   <Text style={styles.rowValueLeft}>
-                    {t(ROLES.find((r) => r.value === s.role)?.nameKey ?? 'share.view')}
+                    {bare ? t('share.namesOnly') : t(ROLES.find((r) => r.value === s.role)?.nameKey ?? 'share.view')}
                     {s.expires_at ? ` · ${t('share.endsOn', { date: new Date(s.expires_at).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' }) })}` : ''}
                   </Text>
                   <View style={styles.accessActions}>
-                    <SmallButton label={t('share.changeRole')} kind="plain" onPress={() => setChanging(s)} />
+                    {bare ? null : <SmallButton label={t('share.changeRole')} kind="plain" onPress={() => setChanging(s)} />}
                     {s.link_url ? <SmallButton label={t('share.copy')} kind="plain" onPress={() => void copyUrl(s.link_url as string)} /> : null}
                     <SmallButton label={t('share.revoke')} kind="plain" onPress={() => setRevoking(s)} />
                   </View>
                 </View>
               </View>
-            ))}
+              );
+            })}
           </>
         ) : null}
         {revoke.isError ? <ErrorText>{errorText(revoke.error)}</ErrorText> : null}
@@ -436,6 +456,14 @@ export default function ShareScreen() {
         </View>
       </Modal>
 
+      <ConfirmDialog
+        visible={askingBare !== null}
+        title={t('share.bareTitle')}
+        message={t('share.bareHelp', { role: roleName })}
+        confirmLabel={t('share.bareSend')}
+        onCancel={() => setAskingBare(null)}
+        onConfirm={() => askingBare && send(askingBare, true)}
+      />
       <ConfirmDialog
         visible={revoking !== null}
         title={t('share.revokeTitle')}

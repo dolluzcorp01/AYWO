@@ -52,5 +52,5 @@ export function activityRoute(item: ActivityItem): Href {
   if (item.type === 'request' && item.kind === 'merge') {
     return { pathname: '/merge/[requestId]', params: { requestId: item.request_id } };
   }
-  return '/activity';
+  return { pathname: '/activity', params: { tab: 'needs_you' } };
 }
