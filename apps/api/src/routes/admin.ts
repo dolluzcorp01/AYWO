@@ -463,6 +463,12 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     return staffCall(req, ['staff'], 'admin_broadcasts_list', [q.limit, q.offset]);
   });
   app.get('/admin/broadcast/count', (req) => staffCall(req, ['staff'], 'admin_broadcast_count'));
+  // Takes a notice sent by mistake off everyone's list (0057). What already went out as a push stays sent.
+  app.post('/admin/broadcasts/:id/withdraw', (req) => {
+    const { id } = z.object({ id: z.uuid() }).parse(req.params);
+    const body = z.object({ reason }).parse(req.body);
+    return staffCall(req, ['staff'], 'admin_broadcast_withdraw', [id, body.reason]);
+  });
 
   // ----- App settings, analytics, app health -----
   app.get('/admin/config', (req) => staffCall(req, ['settings'], 'admin_config_get'));

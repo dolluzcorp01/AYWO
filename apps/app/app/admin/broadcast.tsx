@@ -22,6 +22,9 @@ interface SentNotice {
   body: string | null;
   recipients: number;
   reason: string | null;
+  /** The notice's own id, for withdrawing it. Missing on notices sent before that was possible to read. */
+  broadcast_id?: string | null;
+  withdrawn?: boolean;
 }
 /** Who the next notice reaches, and how many of the day's allowance have gone. */
 interface NoticeCount {
@@ -40,6 +43,7 @@ export default function AdminBroadcast() {
   const [body, setBody] = useState('');
   const [asking, setAsking] = useState(false);
   const [sent, setSent] = useState<number | null>(null);
+  const [withdrawing, setWithdrawing] = useState<SentNotice | null>(null);
   const ready = title.trim().length >= MIN_TITLE && body.trim().length >= MIN_BODY && !usedUp;
 
   const columns: Column<SentNotice>[] = [
@@ -58,6 +62,18 @@ export default function AdminBroadcast() {
     { key: 'by', label: t('admin.broadcast.sentBy'), render: (row) => row.sent_by_name ?? '-' },
     { key: 'reach', label: t('admin.broadcast.reached'), flex: 0.7, render: (row) => row.recipients },
     { key: 'why', label: t('admin.common.reason'), flex: 1.4, render: (row) => row.reason ?? '-' },
+    {
+      key: 'undo',
+      label: t('admin.common.actions'),
+      render: (row) =>
+        row.withdrawn ? (
+          <Text style={adminStyles.cellMuted}>{t('admin.broadcast.withdrawn')}</Text>
+        ) : row.broadcast_id ? (
+          <SecondaryButton danger label={t('admin.broadcast.withdraw')} onPress={() => setWithdrawing(row)} />
+        ) : (
+          '-'
+        ),
+    },
   ];
 
   return (
@@ -119,6 +135,21 @@ export default function AdminBroadcast() {
             <Message text={t('admin.broadcast.limitNote')} />
           )}
         </FormDialog>
+      ) : null}
+      {withdrawing ? (
+        <FormDialog
+          title={t('admin.broadcast.withdrawTitle')}
+          text={t('admin.broadcast.withdrawHelp', { title: withdrawing.title ?? '' })}
+          fields={[{ name: 'reason', label: t('admin.common.reason'), minLength: 5, multiline: true }]}
+          confirmLabel={t('admin.broadcast.withdraw')}
+          danger
+          onCancel={() => setWithdrawing(null)}
+          onConfirm={async ({ reason }) => {
+            await api.post(`/admin/broadcasts/${withdrawing.broadcast_id}/withdraw`, { reason });
+            setWithdrawing(null);
+            await refreshAfter('broadcasts');
+          }}
+        />
       ) : null}
       <Section title={t('admin.broadcast.history')}>
         <QueryState query={history.query} isEmpty={(data) => data.rows.length === 0} emptyText={t('admin.broadcast.noHistory')}>

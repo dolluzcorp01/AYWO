@@ -568,7 +568,11 @@
       "usedToday": "{{used}} of the {{limit}} notices allowed in 24 hours have already been sent.",
       "usedUp": "All {{limit}} notices allowed in 24 hours have been sent. Please wait before sending another.",
       "history": "Notices sent before",
-      "noHistory": "No notice has been sent yet."
+      "noHistory": "No notice has been sent yet.",
+      "withdraw": "Withdraw",
+      "withdrawn": "Withdrawn",
+      "withdrawTitle": "Withdraw this notice?",
+      "withdrawHelp": "\"{{title}}\" is removed from everyone's Notifications list. A notification that already popped up on someone's phone cannot be called back, so if the notice was wrong, send a short corrected one afterwards."
     },
     "menuGroup": {
       "work": "Work",
