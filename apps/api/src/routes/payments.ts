@@ -51,6 +51,16 @@ async function loadOrderPrices(): Promise<OrderPrices> {
 const STORE_INVITE_PRODUCT = 'aywo_premium_invite';
 const STRIPE_SHIP_COUNTRIES = ['US', 'GB', 'CA', 'AU', 'NZ', 'SG', 'MY', 'AE', 'DE', 'FR', 'NL', 'IE'] as const;
 
+/** The countries staff saved (Admin > App settings > Content > Delivery countries); the list above if that cannot be read. */
+async function shipCountries(): Promise<string[]> {
+  const saved = await asServer(async (db) => {
+    const { rows } = await db.query(`select value -> 'countries' as c from app_config where key = 'ship_countries'`);
+    return rows[0]?.c as unknown;
+  }).catch(() => null);
+  const list = Array.isArray(saved) ? saved.filter((c): c is string => typeof c === 'string' && /^[A-Z]{2}$/.test(c)) : [];
+  return list.length > 0 ? list : [...STRIPE_SHIP_COUNTRIES];
+}
+
 const plusBody = z.object({ product_id: z.enum(['aywo_plus_monthly', 'aywo_plus_yearly']) });
 
 const shipping = z.object({
@@ -386,6 +396,7 @@ export async function paymentRoutes(app: FastifyInstance): Promise<void> {
         await saveExternal(order.id);
         return { provider, order_id: orderId, razorpay_order_id: order.id, key_id: config.RAZORPAY_KEY_ID, amount, currency };
       }
+      const sendTo = physical ? await shipCountries() : [];
       const session = await stripeCall(() =>
         stripe.checkout.sessions.create({
           mode: 'payment',
@@ -399,7 +410,7 @@ export async function paymentRoutes(app: FastifyInstance): Promise<void> {
           ],
           client_reference_id: userId,
           ...(buyer.email ? { customer_email: buyer.email } : {}),
-          ...(physical ? { shipping_address_collection: { allowed_countries: [...STRIPE_SHIP_COUNTRIES] } } : {}),
+          ...(physical ? { shipping_address_collection: { allowed_countries: sendTo as (typeof STRIPE_SHIP_COUNTRIES)[number][] } } : {}),
           metadata: { order_id: orderId },
           payment_intent_data: { metadata: { order_id: orderId } },
           // Back to where the order is shown, not the AYWO Plus page: the buyer wants to see that it went through.

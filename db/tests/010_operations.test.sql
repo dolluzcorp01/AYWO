@@ -245,6 +245,8 @@ select throws_ok($$ select admin_config_set('faq', '{"items": [{"id": "q1abc", "
 select is((app_config_public() -> 'faq' -> 'items' -> 0 #>> '{q,en}'), 'Is AYWO free?', 'the added question reaches the apps');
 select lives_ok($$ select admin_config_set('shop_text', '{"tree_poster": {"name": {"en": "Family wall poster", "ta": "குடும்ப சுவரொட்டி"}}}', 'Marketing asked for a new name') $$, 'a shop product gets staff''s own name');
 select throws_ok($$ select admin_config_set('shop_text', '{"gold_coin": {"name": {"en": "Gold"}}}', 'not a product') $$, 'PT422', 'bad_input', 'only real products can be named');
+select lives_ok($$ select admin_config_set('ship_countries', '{"countries": ["US", "GB", "JP"]}', 'Printer now delivers to Japan') $$, 'delivery countries are saved');
+select throws_ok($$ select admin_config_set('ship_countries', '{"countries": []}', 'none left') $$, 'PT422', 'bad_input', 'at least one delivery country stays');
 reset role;
 set local role anon;
 select is((app_config_public() -> 'maintenance' ->> 'on'), 'true', 'everyone can read the app settings, signed in or not');

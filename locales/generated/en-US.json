@@ -2731,7 +2731,8 @@
         "publisher": "The Contact, Terms, Privacy and Refunds pages show these details to everyone.",
         "emergency_numbers": "The SOS screens offer these numbers to call. Check each one: people use them in an emergency.",
         "faq": "The FAQ page shows these questions to everyone.",
-        "shop_text": "The shop, orders, offers and the website's front page show these names and descriptions to everyone."
+        "shop_text": "The shop, orders, offers and the website's front page show these names and descriptions to everyone.",
+        "ship_countries": "Buyers outside India can have printed orders sent to these countries only."
       },
       "versions": "App versions",
       "versionsHelp": "Below the minimum, the app stops and asks for an update. Below the latest, it suggests one.",
@@ -3016,7 +3017,13 @@
       "shopNameEn": "Name (English)",
       "shopNameTa": "Name (Tamil)",
       "shopAboutEn": "Description (English)",
-      "shopAboutTa": "Description (Tamil)"
+      "shopAboutTa": "Description (Tamil)",
+      "ship": "Delivery countries outside India",
+      "shipHelp": "Where a printed poster or book can be sent when the buyer is outside India. Buyers choose from these on the payment page. Orders in India are not affected.",
+      "shipCodes": "Two-letter country codes, separated by commas (for example: US, GB, SG)",
+      "shipBad": "\"{{code}}\" is not a two-letter country code.",
+      "shipNoIndia": "Leave India (IN) out: orders in India already work and are not part of this list.",
+      "shipNeedsOne": "Type at least one country."
     }
   },
   "social": {

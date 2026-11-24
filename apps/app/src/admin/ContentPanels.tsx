@@ -253,3 +253,28 @@ export function ShopTextPanel({ value, onSave, footer }: { value: Value; onSave:
     </Panel>
   );
 }
+
+/** Two-letter country codes, separated by commas or spaces. India is handled apart and is not typed here. */
+export function ShipCountriesPanel({ value, onSave, footer }: { value: Value; onSave: Save; footer: ReactNode }) {
+  const { t } = useTranslation();
+  const [typed, setTyped] = useState(() => (Array.isArray(value.countries) ? (value.countries as string[]).join(', ') : ''));
+  const codes = [...new Set(typed.toUpperCase().split(/[\s,]+/).filter(Boolean))];
+  const wrong = codes.filter((code) => !/^[A-Z]{2}$/.test(code));
+  const problem = wrong.length > 0
+    ? t('admin.content.shipBad', { code: wrong[0] })
+    : codes.includes('IN')
+      ? t('admin.content.shipNoIndia')
+      : codes.length === 0
+        ? t('admin.content.shipNeedsOne')
+        : null;
+  return (
+    <Panel title={t('admin.content.ship')}>
+      <Text style={adminStyles.cellMuted}>{t('admin.content.shipHelp')}</Text>
+      <Field label={t('admin.content.shipCodes')} value={typed} onChange={setTyped} maxLength={300} error={problem} />
+      {footer}
+      <Actions>
+        <SecondaryButton main label={t('admin.common.save')} disabled={!onSave || !!problem} onPress={() => onSave?.({ countries: codes })} />
+      </Actions>
+    </Panel>
+  );
+}
