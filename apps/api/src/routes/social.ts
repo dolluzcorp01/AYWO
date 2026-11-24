@@ -173,6 +173,12 @@ const SOS_WORDS: Record<Lang, {
   notEmergency: string;
   ended: string;
   endedHelp: string;
+  notForMe: string;
+  notForMeTitle: string;
+  notForMeHelp: string;
+  notForMeYes: string;
+  notForMeDone: string;
+  notForMeUnknown: string;
 }> = {
   en: {
     someone: 'A family member',
@@ -190,6 +196,12 @@ const SOS_WORDS: Record<Lang, {
     notEmergency: 'AYWO does not replace emergency services. If someone is in danger, call the local emergency number.',
     ended: 'This live location has ended',
     endedHelp: 'The SOS was stopped, or its time ran out.',
+    notForMe: 'This text is not for me: stop these',
+    notForMeTitle: 'Stop SOS texts to this number?',
+    notForMeHelp: 'If you do not know this person, your number was probably added by mistake. If you stop, AYWO will send no more SOS texts to this number. If this is your family, do not stop: they could not reach you in an emergency.',
+    notForMeYes: 'Yes, stop for this number',
+    notForMeDone: 'Done. AYWO will send no more SOS texts to this number.',
+    notForMeUnknown: 'This link no longer works.',
   },
   ta: {
     someone: 'குடும்ப உறுப்பினர் ஒருவர்',
@@ -207,6 +219,12 @@ const SOS_WORDS: Record<Lang, {
     notEmergency: 'AYWO அவசர சேவைகளுக்கு மாற்று அல்ல. ஆபத்து எனில் உள்ளூர் அவசர எண்ணை அழைக்கவும்.',
     ended: 'இந்த நேரலை இருப்பிடம் முடிந்தது',
     endedHelp: 'SOS நிறுத்தப்பட்டது, அல்லது நேரம் முடிந்தது.',
+    notForMe: 'இந்தச் செய்தி எனக்கானது அல்ல: இவற்றை நிறுத்து',
+    notForMeTitle: 'இந்த எண்ணுக்கு SOS செய்திகளை நிறுத்தவா?',
+    notForMeHelp: 'இந்த நபரை உங்களுக்குத் தெரியாவிட்டால், உங்கள் எண் தவறுதலாகச் சேர்க்கப்பட்டிருக்கலாம். நிறுத்தினால், AYWO இந்த எண்ணுக்கு இனி SOS செய்திகளை அனுப்பாது. இவர் உங்கள் குடும்பத்தினர் என்றால் நிறுத்த வேண்டாம்: அவசரத்தில் அவர்கள் உங்களை அணுக முடியாது.',
+    notForMeYes: 'ஆம், இந்த எண்ணுக்கு நிறுத்து',
+    notForMeDone: 'முடிந்தது. AYWO இந்த எண்ணுக்கு இனி SOS செய்திகளை அனுப்பாது.',
+    notForMeUnknown: 'இந்த இணைப்பு இனி வேலை செய்யாது.',
   },
 };
 
@@ -223,7 +241,7 @@ interface SosPageData {
   last_at?: string | null;
 }
 
-function sosPageHtml(data: SosPageData | null, lang: Lang): string {
+function sosPageHtml(data: SosPageData | null, lang: Lang, stopToken?: string): string {
   const w = SOS_WORDS[lang];
   const style = `body{margin:0;padding:24px;background:#FCFBFF;color:#17153A;font-family:Manrope,Arial,sans-serif}
 main{max-width:480px;margin:0 auto}h1{font-size:26px;line-height:1.25;margin:0 0 12px}
@@ -251,9 +269,28 @@ a.map{display:block;text-align:center;padding:16px;margin:18px 0;border-radius:2
   return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">${refresh}
 <title>${escapeHtml(w.pageTitle)}</title><style>${style}</style></head>
-<body><main>${body}<p class="note">${escapeHtml(w.notEmergency)}</p></main>
+<body><main>${body}<p class="note">${escapeHtml(w.notEmergency)}</p>${
+    stopToken ? `<p class="note"><a href="/sos/not-for-me/${stopToken}">${escapeHtml(w.notForMe)}</a></p>` : ''
+  }</main>
 <script>var t=document.getElementById('t');if(t&&t.dateTime){t.textContent=new Date(t.dateTime).toLocaleString()}</script>
 </body></html>`;
+}
+
+/** The small page behind "This text is not for me": asks once, then says it is done. Same look as the live page. */
+function sosStopHtml(lang: Lang, state: 'ask' | 'done' | 'unknown', stopToken: string): string {
+  const w = SOS_WORDS[lang];
+  const style = `body{margin:0;padding:24px;background:#FCFBFF;color:#17153A;font-family:Manrope,Arial,sans-serif}
+main{max-width:480px;margin:0 auto}h1{font-size:24px;line-height:1.25;margin:0 0 12px}p{font-size:16px;line-height:1.5;color:#55516F}
+button{display:block;width:100%;padding:16px;margin:18px 0;border:0;border-radius:28px;background:#E94057;color:#FFFFFF;font-weight:800;font-size:16px}`;
+  const body =
+    state === 'ask'
+      ? `<h1>${escapeHtml(w.notForMeTitle)}</h1><p>${escapeHtml(w.notForMeHelp)}</p>
+<button id="y" type="button">${escapeHtml(w.notForMeYes)}</button>
+<script>document.getElementById('y').onclick=function(){var b=this;b.disabled=true;fetch('/sos/not-for-me/${stopToken}',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}).then(function(r){return r.json()}).then(function(a){document.querySelector('main').innerHTML='<h1>'+(a.ok?${JSON.stringify(escapeHtml(w.notForMeDone))}:${JSON.stringify(escapeHtml(w.notForMeUnknown))})+'</h1>'}).catch(function(){b.disabled=false})}</script>`
+      : `<h1>${escapeHtml(state === 'done' ? w.notForMeDone : w.notForMeUnknown)}</h1>`;
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>${escapeHtml(w.pageTitle)}</title><style>${style}</style></head><body><main>${body}</main></body></html>`;
 }
 
 /** Leaves out memories and comments by people the caller blocked, or who blocked the caller. */
@@ -482,9 +519,15 @@ export async function socialRoutes(app: FastifyInstance): Promise<void> {
     // Every contact with AYWO hears an alarm straight away, before the person is shown any choice, so even a press by
     // mistake gets a family member checking in. Contacts known only by number get the text.
     const smsTargets = targets.filter((t) => t.phone);
+    // A number that is not an AYWO account gets its own key on the link, for "This text is not for me" on the page.
+    const stopTokens = await asServer(async (db) => {
+      const { rows } = await db.query(`select position_no, stop_token from sos_stop_tokens($1::uuid)`, [started.id]);
+      return new Map(rows.map((r) => [Number(r.position_no), r.stop_token as string]));
+    });
+    const linkFor = (t: SosTarget) => (stopTokens.has(Number(t.position_no)) ? `${link}?c=${stopTokens.get(Number(t.position_no))}` : link);
     const [sms, pushes] = await Promise.all([
       withSenderNumber(userId, name).then((sender) =>
-        Promise.allSettled(smsTargets.map((t) => sendSms(t.phone as string, words.smsStart(sender, link)))),
+        Promise.allSettled(smsTargets.map((t) => sendSms(t.phone as string, words.smsStart(sender, linkFor(t))))),
       ),
       Promise.allSettled(
         targets
@@ -596,6 +639,26 @@ export async function socialRoutes(app: FastifyInstance): Promise<void> {
       .header('Referrer-Policy', 'no-referrer')
       .header('X-Robots-Tag', 'noindex')
       .type('text/html; charset=utf-8');
-    return sosPageHtml(data, lang);
+    // The key a texted number carries. Only passed on when it looks like one, so nothing typed into the address reaches the page.
+    const c = (req.query as { c?: unknown } | undefined)?.c;
+    return sosPageHtml(data, lang, typeof c === 'string' && /^[a-f0-9]{64}$/.test(c) ? c : undefined);
+  });
+
+  // "This text is not for me", from the link on the live page. Looking at the page changes nothing (phones and
+  // messaging apps open links by themselves); only the button's POST stops the texts.
+  const stopLimit = { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } };
+  app.get<{ Params: { token: string } }>('/sos/not-for-me/:token', stopLimit, async (req, reply) => {
+    const lang = langOf(req.headers['accept-language']);
+    reply.header('Cache-Control', 'no-store').header('Referrer-Policy', 'no-referrer').header('X-Robots-Tag', 'noindex').type('text/html; charset=utf-8');
+    return sosStopHtml(lang, /^[a-f0-9]{64}$/.test(req.params.token) ? 'ask' : 'unknown', req.params.token.replace(/[^a-f0-9]/g, ''));
+  });
+  app.post<{ Params: { token: string } }>('/sos/not-for-me/:token', stopLimit, async (req) => {
+    const token = req.params.token;
+    if (!/^[a-f0-9]{64}$/.test(token)) return { ok: false };
+    const ok = await asServer(async (db) => {
+      const { rows } = await db.query(`select sos_number_stop($1) as r`, [token]);
+      return rows[0].r as boolean;
+    });
+    return { ok };
   });
 }

@@ -484,6 +484,7 @@
     "sos_no_contacts": "Please choose at least one SOS contact first.",
     "sos_already_active": "Your SOS is already on.",
     "already_exists": "That is already on the list.",
-    "last_photo": "A memory needs a photo or some words. Write something before removing the last photo."
+    "last_photo": "A memory needs a photo or some words. Write something before removing the last photo.",
+    "sos_number_stopped": "The person with this number asked not to get SOS texts from AYWO. Choose someone else, or ask them to join AYWO and add them from your family."
   }
 }

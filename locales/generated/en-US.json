@@ -414,7 +414,8 @@
     "not_a_marriage": "A wedding date can only be saved for a married couple.",
     "otp_expired": "That code is no longer valid. Tap \"Send the code again\" and use the new one.",
     "otp_locked": "Too many wrong tries. Ask for a new code, or wait an hour if it still doesn't work.",
-    "event_in_past": "That date and time have already passed. Choose a time that is still to come."
+    "event_in_past": "That date and time have already passed. Choose a time that is still to come.",
+    "sos_number_stopped": "The person with this number asked not to get SOS texts from AYWO. Choose someone else, or ask them to join AYWO and add them from your family."
   },
   "language": {
     "title": "Choose your language",
