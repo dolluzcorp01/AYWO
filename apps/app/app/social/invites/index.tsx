@@ -15,15 +15,15 @@ export default function Invites() {
   const showName = useName();
   const events = useQuery({ queryKey: ['events'], queryFn: () => api.rpc<EventRow[]>('event_list') });
 
-  function line(e: EventRow): string {
-    const parts = [
-      e.is_mine ? t('social.invites.youHost') : t('social.invites.hostedBy', { name: showName(e.host_name) }),
-      e.starts_at ? when(e.starts_at) : t('social.pop.stillDeciding'),
-    ];
+  // Top line: what it is and who hosts. Line below: the date and time, together. They used to run on as one
+  // sentence that broke wherever the screen ended: "27 Nov 2026," above and "6:00 pm" alone underneath.
+  function who(e: EventRow): string {
+    const parts = [t(`social.invites.kinds.${e.kind}`), e.is_mine ? t('social.invites.youHost') : t('social.invites.hostedBy', { name: showName(e.host_name) })];
     if (e.cancelled) parts.push(t('social.invites.cancelled'));
     else if (!e.is_mine && !e.my_answer) parts.push(t('social.invites.waitingForYou'));
     return parts.join(' · ');
   }
+  const day = (e: EventRow): string => (e.starts_at ? when(e.starts_at) : t('social.pop.stillDeciding'));
 
   const search = useListSearch<EventRow>((e) => `${e.title} ${showName(e.host_name)}`);
   function sections(list: EventRow[]): { key: 'upcoming' | 'past' | 'cancelled'; rows: EventRow[] }[] {
@@ -59,7 +59,8 @@ export default function Invites() {
                     <Row
                       key={e.id}
                       title={e.title}
-                      subtitle={`${t(`social.invites.kinds.${e.kind}`)} · ${line(e)}`}
+                      subtitle={who(e)}
+                      second={day(e)}
                       onPress={() => router.push({ pathname: '/social/invites/[id]', params: { id: e.id } })}
                     />
                   ))}

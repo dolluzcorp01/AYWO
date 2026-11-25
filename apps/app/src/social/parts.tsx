@@ -86,12 +86,14 @@ export function ActionError({ error }: { error: unknown }) {
   return <ErrorText>{errorText(error)}</ErrorText>;
 }
 
-export function Row({ title, subtitle, badge, onPress, urgent }: { title: string; subtitle?: string | null; badge?: number; onPress?: () => void; urgent?: boolean }) {
+/** `second` is a line of its own under the subtitle, kept whole: a date and time, for example. */
+export function Row({ title, subtitle, second, badge, onPress, urgent }: { title: string; subtitle?: string | null; second?: string | null; badge?: number; onPress?: () => void; urgent?: boolean }) {
   const body = (
     <>
       <View style={styles.rowText}>
         <Text style={[styles.rowTitle, urgent && styles.urgent]} numberOfLines={1}>{title}</Text>
         {subtitle ? <Text style={styles.rowSub} numberOfLines={2}>{subtitle}</Text> : null}
+        {second ? <Text style={styles.rowSecond} numberOfLines={1}>{second}</Text> : null}
       </View>
       {badge ? <Badge count={badge} /> : null}
       {onPress ? <ChevronIcon color={colors.muted} size={18} /> : null}
@@ -206,6 +208,7 @@ const styles = StyleSheet.create({
   rowTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
   urgent: { color: colors.alert },
   rowSub: { color: colors.muted, fontFamily: fonts.medium, fontSize: 13, lineHeight: 18, marginTop: 2 },
+  rowSecond: { color: colors.text, fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18, marginTop: 2 },
   badge: { minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 7, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.alert },
   badgeText: { color: colors.white, fontFamily: fonts.extrabold, fontSize: 12 },
   note: { color: colors.muted, fontFamily: fonts.medium, fontSize: 13, lineHeight: 19 },
