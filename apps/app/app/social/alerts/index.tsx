@@ -9,7 +9,9 @@ import { Text } from '@/components/Text';
 import { Card, ConfirmDialog, EmptyState, Field, PrimaryButton, TextButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useTimeAgo } from '@/lib/time';
-import { ActionError, Gate, Note, Page, Row, useName } from '@/social/parts';
+import { ActionError, Gate, Note, Page, Row, RowSign, useName } from '@/social/parts';
+import { BellIcon, CalendarIcon, CardIcon, FriendsIcon, HeartIcon } from '@/components/Icons';
+import { Rise } from '@/components/Motion';
 import type { AlertRow, HomeCounts } from '@/social/types';
 import { colors, fonts } from '@/theme/tokens';
 
@@ -71,6 +73,7 @@ export default function Alerts() {
         <Row
           key={sos.id}
           urgent
+          lead={<RowSign icon={BellIcon} ink={colors.alert} back={colors.alertTint} />}
           title={t('social.home.sosFrom', { name: showName(sos.name) })}
           onPress={() => router.push({ pathname: '/social/sos/watch/[id]', params: { id: sos.id } })}
         />
@@ -82,12 +85,29 @@ export default function Alerts() {
             <EmptyState message={t('social.alerts.empty')} />
           ) : (
             <>
-              {list.map((a) => (
-                <Card key={a.id} style={[styles.card, a.closed && styles.closed]}>
+              {list.map((a, i) => {
+                const look = a.closed ? { ...(LOOK[a.kind] ?? LOOK.news), ink: colors.idleTab, back: colors.tint } : LOOK[a.kind] ?? LOOK.news;
+                return (
+                <Rise key={a.id} delay={Math.min(i, 8) * 40}>
+                <Card style={[styles.card, a.closed && styles.closed]}>
+                  {/* The kind of alert is told by its sign and colour before a word is read. */}
                   <View style={styles.top}>
-                    <Text style={styles.kind}>{t(`social.alerts.kinds.${a.kind}`)}</Text>
-                    {a.closed ? <Text style={styles.sorted}>{t('social.alerts.sorted')}</Text> : null}
-                    {a.blood_group ? <Text style={styles.blood}>{t('social.alerts.bloodNeeded', { group: a.blood_group })}</Text> : null}
+                    <RowSign icon={look.icon} ink={look.ink} back={look.back} />
+                    <View style={styles.topText}>
+                      <Text style={[styles.kind, { color: look.ink }]}>{t(`social.alerts.kinds.${a.kind}`)}</Text>
+                      <View style={styles.chips}>
+                        {a.blood_group ? (
+                          <View style={[styles.chip, { backgroundColor: colors.alertTint }]}>
+                            <Text style={[styles.chipText, { color: colors.alert }]}>{t('social.alerts.bloodNeeded', { group: a.blood_group })}</Text>
+                          </View>
+                        ) : null}
+                        {a.closed ? (
+                          <View style={[styles.chip, { backgroundColor: '#E8F7EF' }]}>
+                            <Text style={[styles.chipText, { color: colors.good }]}>{t('social.alerts.sorted')}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    </View>
                   </View>
                   <Text style={styles.body}>{a.body}</Text>
                   <Note>
@@ -118,7 +138,9 @@ export default function Alerts() {
                     </View>
                   ) : null}
                 </Card>
-              ))}
+                </Rise>
+                );
+              })}
             </>
           )
         }
@@ -155,13 +177,24 @@ export default function Alerts() {
   );
 }
 
+/** A sign and a colour for each kind of alert. Red is for what needs someone now; a death stays quiet. */
+const LOOK: Record<string, { icon: typeof BellIcon; ink: string; back: string }> = {
+  hospital: { icon: CardIcon, ink: colors.alert, back: colors.alertTint },
+  blood: { icon: HeartIcon, ink: colors.alert, back: colors.alertTint },
+  help: { icon: FriendsIcon, ink: colors.ask, back: colors.celebrationTint },
+  death: { icon: CalendarIcon, ink: '#4A4E8F', back: '#EEEFF8' },
+  news: { icon: BellIcon, ink: colors.logoPurple, back: colors.tint },
+};
+
 const styles = StyleSheet.create({
-  card: { gap: 6 },
-  closed: { opacity: 0.7 },
-  sorted: { color: colors.whatsapp, fontFamily: fonts.extrabold, fontSize: 13 },
+  card: { gap: 8 },
+  closed: { opacity: 0.75 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  top: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
-  kind: { color: colors.alert, fontFamily: fonts.extrabold, fontSize: 14 },
-  blood: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 14 },
+  top: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+  topText: { flex: 1, minWidth: 0, gap: 4 },
+  kind: { fontFamily: fonts.extrabold, fontSize: 16 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  chip: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999 },
+  chipText: { fontFamily: fonts.bold, fontSize: 12, lineHeight: 16 },
   body: { color: colors.text, fontFamily: fonts.medium, fontSize: 15, lineHeight: 22 },
 });

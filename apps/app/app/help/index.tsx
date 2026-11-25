@@ -8,7 +8,8 @@ import { Text } from '@/components/Text';
 import { Card, Field, Pills, PrimaryButton, SectionTitle, TextButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useTimeAgo } from '@/lib/time';
-import { ActionError, Gate, Note, Page, Row } from '@/social/parts';
+import { ActionError, Gate, Note, Page, Row, RowSign } from '@/social/parts';
+import { BellIcon, BlockIcon, ChatIcon, FriendsIcon, HelpIcon, ShieldIcon } from '@/components/Icons';
 import { TICKET_CATEGORIES as CATEGORIES } from '@/ops/types';
 import type { Ticket, TicketCategory as Category } from '@/ops/types';
 import { colors, fonts } from '@/theme/tokens';
@@ -38,15 +39,14 @@ export default function HelpCentre() {
 
   return (
     <Page title={t('ops.help.title')} subtitle={t('ops.help.subtitle')}>
-      <Card style={styles.block}>
-        <SectionTitle>{t('ops.help.quick')}</SectionTitle>
-        <TextButton label={t('ops.help.faq')} onPress={() => router.push('/faq')} />
-        <TextButton label={t('roles.title')} onPress={() => router.push('/roles')} />
-        <TextButton label={t('ops.help.sos')} onPress={() => router.push('/social/sos')} />
-        <TextButton label={t('ops.help.privacy')} onPress={() => router.push('/settings/privacy')} />
-        {/* The removal request was only linked from the page before sign-in, so nobody signed in could find it. */}
-        <TextButton label={t('takedown.askLink')} onPress={() => router.push('/takedown')} />
-      </Card>
+      <SectionTitle>{t('ops.help.quick')}</SectionTitle>
+      {/* Each answer is a line with its own sign, not five purple links in a box. */}
+      <Row index={0} lead={<RowSign icon={HelpIcon} ink={colors.logoIndigo} />} title={t('ops.help.faq')} onPress={() => router.push('/faq')} />
+      <Row index={1} lead={<RowSign icon={FriendsIcon} />} title={t('roles.title')} onPress={() => router.push('/roles')} />
+      <Row index={2} lead={<RowSign icon={BellIcon} ink={colors.alert} back={colors.alertTint} />} title={t('ops.help.sos')} onPress={() => router.push('/social/sos')} />
+      <Row index={3} lead={<RowSign icon={ShieldIcon} />} title={t('ops.help.privacy')} onPress={() => router.push('/settings/privacy')} />
+      {/* The removal request was only linked from the page before sign-in, so nobody signed in could find it. */}
+      <Row index={4} lead={<RowSign icon={BlockIcon} ink={colors.ask} back={colors.celebrationTint} />} title={t('takedown.askLink')} onPress={() => router.push('/takedown')} />
 
       {writing ? (
         <Card style={styles.block}>
@@ -76,9 +76,11 @@ export default function HelpCentre() {
             <Note>{t('ops.help.none')}</Note>
           ) : (
             <View style={styles.list}>
-              {list.map((ticket) => (
+              {list.map((ticket, i) => (
                 <Row
                   key={ticket.id}
+                  index={i}
+                  lead={<RowSign icon={ChatIcon} ink={ticket.status === 'waiting' ? colors.alert : colors.logoPurple} back={ticket.status === 'waiting' ? colors.alertTint : colors.tint} />}
                   title={ticket.subject}
                   subtitle={`${t(`ops.help.status.${ticket.status}`)} · ${ago(ticket.updated_at)}`}
                   urgent={ticket.status === 'waiting'}

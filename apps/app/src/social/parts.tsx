@@ -110,7 +110,7 @@ export function Row({ title, subtitle, second, badge, onPress, urgent, lead, met
       {lead}
       <View style={styles.rowText}>
         <View style={styles.rowTop}>
-          <Text style={[styles.rowTitle, urgent && styles.urgent]} numberOfLines={1}>{title}</Text>
+          <Text style={[styles.rowTitle, urgent && styles.urgent]} numberOfLines={subtitle ? 1 : 2}>{title}</Text>
           {meta ? <Text style={[styles.rowMeta, fresh && styles.rowMetaFresh]}>{meta}</Text> : null}
         </View>
         {subtitle ? <Text style={[styles.rowSub, fresh && styles.rowSubFresh]} numberOfLines={2}>{subtitle}</Text> : null}
