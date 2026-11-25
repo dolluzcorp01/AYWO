@@ -3,6 +3,7 @@
 // link is empty that app shows as "Coming soon". Everything here is public: no account, no family data.
 // The look: a deep indigo opening with a drawn phone, a wall of relationship words, and a feature explorer where
 // tapping a name changes the panel beside it.
+import { Float } from '@/components/Motion';
 import { pricesFor } from '@aywo/shared';
 import { getCalendars } from 'expo-localization';
 import { useRouter } from '@/lib/router';
@@ -94,7 +95,10 @@ export function Landing() {
             </View>
             <View style={[styles.heroArt, narrow && styles.heroArtNarrow]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <View style={styles.glow} />
-              <PhoneMock />
+              {/* The phone and its two notes drift slowly, out of step with each other. */}
+              <Float by={6} duration={4200}>
+                <PhoneMock />
+              </Float>
               {wide ? (
                 <>
                   <FloatingNote icon="calendar" title={t('landing.art.noteBirthdayTitle')} text={t('landing.art.noteBirthdayText')} style={styles.noteOne} />

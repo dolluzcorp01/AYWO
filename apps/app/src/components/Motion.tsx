@@ -164,3 +164,32 @@ export function Breathe({ size, color }: { size: number; color: string }) {
     />
   );
 }
+
+/**
+ * Drifts slowly up and down, for a picture that is only there to be looked at (the faces on Welcome, the phone on
+ * the front page). `by` is how far in points; `delay` keeps several from moving in step. Still on "less motion".
+ */
+export function Float({ children, style, by = 6, duration = 3200, delay = 0 }: { children?: ReactNode; style?: StyleProp<ViewStyle>; by?: number; duration?: number; delay?: number }) {
+  const drift = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduced) return undefined;
+    const half = (toValue: number) => Animated.timing(drift, { toValue, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: nativeDriver });
+    const loop = Animated.loop(Animated.sequence([half(1), half(0)]));
+    const start = setTimeout(() => loop.start(), delay);
+    return () => {
+      clearTimeout(start);
+      loop.stop();
+    };
+  }, [drift, duration, delay]);
+  return <Animated.View style={[style, { transform: [{ translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [0, -by] }) }] }]}>{children}</Animated.View>;
+}
+
+/** A plain fade in. Give it a `key` that changes and its contents fade in afresh each time. */
+export function Fade({ children, style, duration = 220 }: { children?: ReactNode; style?: StyleProp<ViewStyle>; duration?: number }) {
+  const shown = useRef(new Animated.Value(reduced ? 1 : 0)).current;
+  useEffect(() => {
+    if (reduced) return;
+    Animated.timing(shown, { toValue: 1, duration, easing: Easing.out(Easing.quad), useNativeDriver: nativeDriver }).start();
+  }, [shown, duration]);
+  return <Animated.View style={[style, { opacity: shown }]}>{children}</Animated.View>;
+}

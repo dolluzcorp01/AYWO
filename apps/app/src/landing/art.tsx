@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Avatar } from '@/components/Avatar';
+import { Float } from '@/components/Motion';
 import { CalendarIcon, PhotoIcon } from '@/components/Icons';
 import { Text } from '@/components/Text';
 import { colors, fonts, shadows } from '@/theme/tokens';
@@ -62,7 +63,7 @@ export function PhoneMock() {
 export function FloatingNote({ icon, title, text, style }: { icon: 'calendar' | 'photo'; title: string; text: string; style?: StyleProp<ViewStyle> }) {
   const NoteIcon = icon === 'calendar' ? CalendarIcon : PhotoIcon;
   return (
-    <View style={[styles.note, style]}>
+    <Float by={8} duration={icon === 'calendar' ? 3000 : 3700} delay={icon === 'calendar' ? 0 : 500} style={[styles.note, style]}>
       <View style={[styles.noteIcon, icon === 'photo' && { backgroundColor: colors.celebrationTint }]}>
         <NoteIcon color={icon === 'photo' ? colors.ask : colors.relation} size={18} />
       </View>
@@ -70,7 +71,7 @@ export function FloatingNote({ icon, title, text, style }: { icon: 'calendar' | 
         <Text style={styles.noteTitle} numberOfLines={1}>{title}</Text>
         <Text style={styles.noteText} numberOfLines={1}>{text}</Text>
       </View>
-    </View>
+    </Float>
   );
 }
 

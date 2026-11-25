@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/Avatar';
+import { Float } from '@/components/Motion';
 import { LanguagePicker } from '@/components/LanguagePicker';
 import { LogoLink } from '@/components/LogoLink';
 import { Text } from '@/components/Text';
@@ -68,11 +69,12 @@ export default function Welcome() {
           <Image source={require('../assets/aywo_logo_app.png')} style={styles.logo} resizeMode="contain" accessibilityLabel="AYWO" />
         )}
         <View style={styles.faces} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <View style={[styles.face, { left: '4%', top: 26 }]}><Avatar personId="welcome-a" size={56} /></View>
-          <View style={[styles.face, { left: '70%', top: 6 }]}><Avatar personId="welcome-b" size={52} /></View>
-          <View style={[styles.face, { left: '34%', top: 24 }]}><Avatar personId="welcome-c" size={92} ring /></View>
-          <View style={[styles.face, { left: '16%', top: 96 }]}><Avatar personId="welcome-d" size={48} /></View>
-          <View style={[styles.face, { left: '74%', top: 88 }]}><Avatar personId="welcome-e" size={56} /></View>
+          {/* The family drifts gently, each face at its own pace, so the first screen is alive and not a still picture. */}
+          <Float by={7} duration={3400} style={[styles.face, { left: '4%', top: 26 }]}><Avatar personId="welcome-a" size={56} /></Float>
+          <Float by={5} duration={2900} delay={400} style={[styles.face, { left: '70%', top: 6 }]}><Avatar personId="welcome-b" size={52} /></Float>
+          <Float by={4} duration={3800} delay={150} style={[styles.face, { left: '34%', top: 24 }]}><Avatar personId="welcome-c" size={92} ring /></Float>
+          <Float by={6} duration={3100} delay={700} style={[styles.face, { left: '16%', top: 96 }]}><Avatar personId="welcome-d" size={48} /></Float>
+          <Float by={7} duration={3600} delay={250} style={[styles.face, { left: '74%', top: 88 }]}><Avatar personId="welcome-e" size={56} /></Float>
         </View>
         <Text accessibilityRole="header" style={styles.title}>{t('welcome.title')}</Text>
         <Text style={styles.subtitle}>{t('welcome.subtitle')}</Text>

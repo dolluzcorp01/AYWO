@@ -10,6 +10,7 @@ import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 're
 import type { LayoutChangeEvent } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Avatar } from '@/components/Avatar';
+import { Bouncy, Fade } from '@/components/Motion';
 import { TAB_BAR_SPACE } from '@/components/TabBar';
 import { DESKTOP_MIN } from '@/components/WebFrame';
 import { firstName } from '@/lib/account';
@@ -292,7 +293,8 @@ export function MyView({ data, viewerId, focusId, seeingAs, onFocus, onOpenPerso
     <ScrollView contentContainerStyle={styles.scroll}>
       <View onLayout={(e: LayoutChangeEvent) => setWidth(Math.max(e.nativeEvent.layout.width, 320))} />
       <ScrollView ref={sideways} horizontal showsHorizontalScrollIndicator contentContainerStyle={{ width: drawn.width }} onContentSizeChange={centreOnFocus}>
-        <View style={{ width: drawn.width, height: drawn.height }}>
+        {/* Tapping someone to the middle redraws the family around them: it fades in afresh, in place of a hard cut. */}
+        <Fade key={focusId} style={{ width: drawn.width, height: drawn.height }}>
           <Svg width={drawn.width} height={drawn.height} style={StyleSheet.absoluteFill}>
             {drawn.paths.map((d, i) => (
               <Path key={i} d={d} stroke={colors.line} strokeWidth={2} strokeLinecap="round" fill="none" />
@@ -317,8 +319,9 @@ export function MyView({ data, viewerId, focusId, seeingAs, onFocus, onOpenPerso
             if (!node) return null;
             const relation = p.focus ? null : relationOf(p.id);
             return (
-              <Pressable
+              <Bouncy
                 key={p.id}
+                to={0.93}
                 accessibilityRole="button"
                 accessibilityLabel={[nameOf(node), p.focus ? centreWord : relation?.text].filter(Boolean).join(', ')}
                 onPress={() => (p.focus ? onOpenPerson(p.id) : relation?.ask ? onAskWord(p.id) : onFocus(p.id))}
@@ -331,10 +334,10 @@ export function MyView({ data, viewerId, focusId, seeingAs, onFocus, onOpenPerso
                 ) : relation ? (
                   <Text style={[styles.word, relation.text.length > 10 && styles.longWord, relation.ask && styles.ask]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{relation.text}</Text>
                 ) : null}
-              </Pressable>
+              </Bouncy>
             );
           })}
-        </View>
+        </Fade>
       </ScrollView>
 
       <View style={styles.actions}>
