@@ -12,6 +12,7 @@ import { AudiencePicker } from '@/social/AudiencePicker';
 import { InviteCard } from '@/social/InviteCard';
 import { ActionError, Note, Page, parseDateTime, todayIso } from '@/social/parts';
 import { EVENT_KINDS, FREE_DESIGNS } from '@/social/types';
+import { DateTimeRow } from '@/components/DateTimeRow';
 import type { Audience, Design, EventKind } from '@/social/types';
 
 const CANVA_START = 'https://www.canva.com/create/invitations/';
@@ -63,8 +64,10 @@ export default function NewInvite() {
       <Label>{t('social.invites.kind')}</Label>
       <Pills options={EVENT_KINDS.map((k) => ({ value: k as EventKind, label: t(`social.invites.kinds.${k}`) }))} value={kind} onChange={setKind} />
       <Field label={t('social.invites.titleField')} value={title} onChangeText={setTitle} maxLength={120} />
-      <DateField label={t('social.dateLabel')} value={date} onChange={setDate} min={todayIso()} invalid={inPast} />
-      <TimeField label={t('social.timeLabel')} value={time} onChange={setTime} />
+      <DateTimeRow>
+        <DateField label={t('social.dateLabel')} value={date} onChange={setDate} min={todayIso()} invalid={inPast} />
+        <TimeField label={t('social.timeLabel')} value={time} onChange={setTime} />
+      </DateTimeRow>
       {date && time && !startsAt ? <Note>{t('social.dateHelp')}</Note> : null}
       <Field label={t('social.invites.place')} value={place} onChangeText={setPlace} maxLength={200} />
       <Field label={t('social.invites.note')} value={note} onChangeText={setNote} multiline maxLength={1000} />

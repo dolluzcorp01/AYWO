@@ -9,6 +9,7 @@ import { ConfirmDialog, Field, Label, PrimaryButton, SecondaryButton } from '@/c
 import { api } from '@/lib/api';
 import { AudiencePicker } from '@/social/AudiencePicker';
 import { ActionError, lines, Note, Page, Row, todayIso, useDateOption } from '@/social/parts';
+import { DateTimeRow } from '@/components/DateTimeRow';
 import type { Audience } from '@/social/types';
 
 export default function NewPopParty() {
@@ -59,8 +60,10 @@ export default function NewPopParty() {
       {dates.map((d) => (
         <Row key={d} title={showDate(d)} subtitle={t('social.tapToRemove')} onPress={() => setDates(dates.filter((x) => x !== d))} />
       ))}
-      <DateField label={t('social.dateLabel')} value={pickDate} onChange={setPickDate} min={todayIso()} optional />
-      {pickDate ? <TimeField label={t('social.pop.timeOptional')} value={pickTime} onChange={setPickTime} optional /> : null}
+      <DateTimeRow>
+        <DateField label={t('social.dateLabel')} value={pickDate} onChange={setPickDate} min={todayIso()} optional />
+        {pickDate ? <TimeField label={t('social.pop.timeOptional')} value={pickTime} onChange={setPickTime} optional /> : null}
+      </DateTimeRow>
       {pickDate ? <SecondaryButton label={t('social.pop.addDate')} onPress={addDate} /> : null}
       <Note>{t('social.pop.oneEachLine')}</Note>
       <Field label={t('social.pop.topics.venue')} value={venues} onChangeText={setVenues} multiline style={styles.tall} placeholder={t('social.pop.venuesPlaceholder')} />

@@ -1,6 +1,7 @@
 // Marketing: coupons for posters, books and premium invites; scrolling banners in the app and on the website;
 // promotional push messages to people who switched them on. Plus discounts inside the iPhone and Android apps must use
 // Apple's and Google's own offer codes, so coupons here never touch Plus.
+import { DateTimeRow } from '@/components/DateTimeRow';
 import { DateField } from '@/components/DateTimeField';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -335,8 +336,10 @@ function CouponDialog({ coupon, onClose }: { coupon: Coupon | null; onClose: () 
       {PRODUCTS.filter((p) => p !== 'premium_invite' || coupon?.products.includes('premium_invite')).map((p) => (
         <Checkbox key={p} label={t(`admin.orders.products.${p}`)} checked={products.includes(p)} onChange={(on) => setProducts((old) => (on ? [...old, p] : old.filter((x) => x !== p)))} />
       ))}
-      <DateField label={t('admin.offers.starts')} value={starts} onChange={setStarts} help={t('admin.offers.dateHelp')} error={dayErrors.starts || undefined} />
-      <DateField label={t('admin.offers.ends')} value={ends} onChange={setEnds} min={starts || undefined} optional help={t('admin.offers.endHelp')} error={dayErrors.ends || undefined} />
+      <DateTimeRow dates>
+        <DateField label={t('admin.offers.starts')} value={starts} onChange={setStarts} help={t('admin.offers.dateHelp')} error={dayErrors.starts || undefined} />
+        <DateField label={t('admin.offers.ends')} value={ends} onChange={setEnds} min={starts || undefined} optional help={t('admin.offers.endHelp')} error={dayErrors.ends || undefined} />
+      </DateTimeRow>
       <Field label={t('admin.offers.maxUses')} value={maxUses} onChange={(v) => setMaxUses(v.replace(/\D/g, ''))} maxLength={7} placeholder={t('admin.offers.noLimit')} />
       <Field label={t('admin.offers.perUser')} value={perUser} onChange={(v) => setPerUser(v.replace(/\D/g, ''))} maxLength={3} error={perUserError} />
       <Checkbox label={t('admin.offers.newOnly')} checked={newOnly} onChange={setNewOnly} />
@@ -628,8 +631,10 @@ function BannerDialog({ item, onClose }: { item: Announcement | null; onClose: (
           ...LANGUAGES.map((code) => ({ value: code, label: languageName(code) })),
         ]}
       />
-      <DateField label={t('admin.offers.starts')} value={starts} onChange={setStarts} help={t('admin.offers.dateHelp')} error={dayErrors.starts || undefined} />
-      <DateField label={t('admin.offers.ends')} value={ends} onChange={setEnds} min={starts || undefined} optional help={t('admin.offers.endHelp')} error={dayErrors.ends || undefined} />
+      <DateTimeRow dates>
+        <DateField label={t('admin.offers.starts')} value={starts} onChange={setStarts} help={t('admin.offers.dateHelp')} error={dayErrors.starts || undefined} />
+        <DateField label={t('admin.offers.ends')} value={ends} onChange={setEnds} min={starts || undefined} optional help={t('admin.offers.endHelp')} error={dayErrors.ends || undefined} />
+      </DateTimeRow>
       <Field label={t('admin.offers.priority')} value={priority} onChange={(v) => setPriority(v.replace(/\D/g, ''))} maxLength={3} help={t('admin.offers.priorityHelp')} />
       <Checkbox label={t('admin.offers.dismissible')} checked={dismissible} onChange={setDismissible} />
       <Checkbox label={t('admin.offers.activeLabel')} checked={active} onChange={setActive} />

@@ -14,6 +14,7 @@ import { PeoplePicker } from '@/social/AudiencePicker';
 import { ActionError, Gate, Note, Page, parseDateTime, readDateOption, Row, todayIso, useDateOption, useName, useWhen } from '@/social/parts';
 import { FREE_DESIGNS, PREMIUM_DESIGNS } from '@/social/types';
 import type { Design, EventDetail, PollRow, RsvpAnswer } from '@/social/types';
+import { DateTimeRow } from '@/components/DateTimeRow';
 import { colors, fonts } from '@/theme/tokens';
 
 function PollCard({ poll, onVote, busy }: { poll: PollRow; onVote: (option: string) => void; busy: boolean }) {
@@ -307,8 +308,10 @@ export default function InviteDetail() {
                 <Card style={styles.card}>
                   <SectionTitle>{t('social.pop.decide')}</SectionTitle>
                   {e.polls.some((p) => p.options.some((o) => o.votes > 0)) ? <Note>{t('social.pop.filledFromVotes')}</Note> : null}
-                  <DateField label={t('social.dateLabel')} value={date} onChange={setDate} min={todayIso()} invalid={isPast(date, time)} />
-                  <TimeField label={t('social.timeLabel')} value={time} onChange={setTime} />
+                  <DateTimeRow>
+                    <DateField label={t('social.dateLabel')} value={date} onChange={setDate} min={todayIso()} invalid={isPast(date, time)} />
+                    <TimeField label={t('social.timeLabel')} value={time} onChange={setTime} />
+                  </DateTimeRow>
                   {isPast(date, time) ? <Note>{t('social.missing.future')}</Note> : null}
                   <Field label={t('social.invites.place')} value={place} onChangeText={setPlace} maxLength={200} />
                   <Field label={t('social.pop.menu')} value={menu} onChangeText={setMenu} maxLength={200} />
@@ -427,8 +430,10 @@ export default function InviteDetail() {
         {details ? (
           <>
             <Field label={t('social.invites.titleField')} value={details.title} onChangeText={(v) => setDetails({ ...details, title: v })} maxLength={120} />
-            <DateField label={t('social.dateLabel')} value={details.date} onChange={(v) => setDetails({ ...details, date: v })} />
-            <TimeField label={t('social.timeLabel')} value={details.time} onChange={(v) => setDetails({ ...details, time: v })} />
+            <DateTimeRow>
+              <DateField label={t('social.dateLabel')} value={details.date} onChange={(v) => setDetails({ ...details, date: v })} />
+              <TimeField label={t('social.timeLabel')} value={details.time} onChange={(v) => setDetails({ ...details, time: v })} />
+            </DateTimeRow>
             {!details.title.trim() ? <Note>{t('social.missing.title')}</Note> : null}
             {!parseDateTime(details.date, details.time) ? <Note>{t('social.missing.when')}</Note> : null}
             {movedToPast ? <Note>{t('social.missing.future')}</Note> : null}

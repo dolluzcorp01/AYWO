@@ -145,14 +145,14 @@ export function TimeField({ label, value, onChange, invalid, help, error }: Date
         onChange: (e: { target: { value: string } }) => e.target.value !== '' && pick(Number(e.target.value)),
         style: {
           minHeight: 54,
-          // Wide enough for the words Hour and Minute; on a narrow phone AM / PM drops to the next line instead.
-          minWidth: 96,
+          // Wide enough for the words Hour and Minute, and narrow enough that AM / PM stays on the same line on a phone.
+          minWidth: 84,
           flex: 1,
           boxSizing: 'border-box',
           borderRadius: radius.button,
           border: `1px solid ${bad ? colors.alert : colors.cardBorder}`,
           backgroundColor: colors.card,
-          padding: '0 12px',
+          padding: '0 8px',
           color: current === null ? colors.muted : colors.text,
           fontFamily: fonts.semibold,
           fontSize: 16,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   timeRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   colon: { color: colors.text, fontFamily: fonts.bold, fontSize: 20 },
   ampm: { flexDirection: 'row', borderRadius: radius.button, borderWidth: 1, borderColor: colors.cardBorder, overflow: 'hidden', backgroundColor: colors.card },
-  ampmButton: { minHeight: 52, minWidth: 64, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
+  ampmButton: { minHeight: 52, minWidth: 56, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
   ampmOn: { backgroundColor: colors.activeTab },
   ampmHover: { backgroundColor: colors.tint },
   ampmText: { color: colors.text, fontFamily: fonts.bold, fontSize: 15 },
