@@ -3,27 +3,17 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { EmptyState, PrimaryButton, SecondaryButton, SectionTitle } from '@/components/ui';
+import { EmptyState, SectionTitle } from '@/components/ui';
 import { api } from '@/lib/api';
-import { Gate, Page, Row, useListSearch, useName, useWhen } from '@/social/parts';
+import { EventTile, StartTiles } from '@/social/EventTile';
+import { Gate, Page, useListSearch, useName } from '@/social/parts';
 import type { EventRow } from '@/social/types';
 
 export default function Invites() {
   const { t } = useTranslation();
   const router = useRouter();
-  const when = useWhen();
   const showName = useName();
   const events = useQuery({ queryKey: ['events'], queryFn: () => api.rpc<EventRow[]>('event_list') });
-
-  // Top line: what it is and who hosts. Line below: the date and time, together. They used to run on as one
-  // sentence that broke wherever the screen ended: "27 Nov 2026," above and "6:00 pm" alone underneath.
-  function who(e: EventRow): string {
-    const parts = [t(`social.invites.kinds.${e.kind}`), e.is_mine ? t('social.invites.youHost') : t('social.invites.hostedBy', { name: showName(e.host_name) })];
-    if (e.cancelled) parts.push(t('social.invites.cancelled'));
-    else if (!e.is_mine && !e.my_answer) parts.push(t('social.invites.waitingForYou'));
-    return parts.join(' · ');
-  }
-  const day = (e: EventRow): string => (e.starts_at ? when(e.starts_at) : t('social.pop.stillDeciding'));
 
   const search = useListSearch<EventRow>((e) => `${e.title} ${showName(e.host_name)}`);
   function sections(list: EventRow[]): { key: 'upcoming' | 'past' | 'cancelled'; rows: EventRow[] }[] {
@@ -41,8 +31,7 @@ export default function Invites() {
 
   return (
     <Page title={t('social.invites.title')} subtitle={t('social.invites.subtitle')}>
-      <PrimaryButton label={t('social.invites.new')} onPress={() => router.push('/social/invites/new')} />
-      <SecondaryButton label={t('social.pop.new')} onPress={() => router.push('/social/pop/new')} />
+      <StartTiles inviteLabel={t('social.invites.new')} popLabel={t('social.pop.new')} onInvite={() => router.push('/social/invites/new')} onPop={() => router.push('/social/pop/new')} />
       <Gate query={events}>
         {(list) =>
           list.length === 0 ? (
@@ -53,16 +42,10 @@ export default function Invites() {
               {search.nothing(list) ? <EmptyState message={t('search.nothing')} /> : null}
               {/* What is coming, soonest first; then what is over; cancelled ones last, out of the way. */}
               {sections(search.filter(list)).map((section) => (
-                <View key={section.key} style={{ gap: 8 }}>
+                <View key={section.key} style={{ gap: 10 }}>
                   <SectionTitle>{t(`social.invites.sections.${section.key}`)}</SectionTitle>
                   {section.rows.map((e) => (
-                    <Row
-                      key={e.id}
-                      title={e.title}
-                      subtitle={who(e)}
-                      second={day(e)}
-                      onPress={() => router.push({ pathname: '/social/invites/[id]', params: { id: e.id } })}
-                    />
+                    <EventTile key={e.id} event={e} onPress={() => router.push({ pathname: '/social/invites/[id]', params: { id: e.id } })} />
                   ))}
                 </View>
               ))}
