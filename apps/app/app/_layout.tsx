@@ -213,7 +213,9 @@ export default function RootLayout() {
           <AppFrame signedIn={!!signedIn}>
             {/* Screens slide in from the side and back out the same way. The places the bottom bar swaps between
                 (Home, Me, the tree) cross-fade instead: they are side by side, not one on top of another. */}
-            <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 280, contentStyle: { backgroundColor: colors.background } }}>
+            {/* Android cannot be told how long a slide takes and its own is slow (about half a second), so there a screen
+                opens with a quick fade. iPhone keeps its slide, shortened. */}
+            <Stack screenOptions={{ headerShown: false, animation: Platform.OS === 'android' ? 'fade' : 'slide_from_right', animationDuration: 200, contentStyle: { backgroundColor: colors.background } }}>
               <Stack.Screen name="home" options={{ animation: 'fade' }} />
               <Stack.Screen name="me" options={{ animation: 'fade' }} />
               <Stack.Screen name="tree/[id]" options={{ animation: 'fade' }} />

@@ -78,10 +78,19 @@ export function Rise({ children, delay = 0, style }: { children: ReactNode; dela
       shown.setValue(1);
       return;
     }
-    Animated.timing(shown, { toValue: 1, duration: 420, delay, easing: Easing.out(Easing.cubic), useNativeDriver: nativeDriver }).start();
+    // On a phone the screen has already taken a moment to open, so the parts come in quickly and almost together.
+    // A long, stepped rise there read as the app being slow.
+    const quick = Platform.OS !== 'web';
+    Animated.timing(shown, {
+      toValue: 1,
+      duration: quick ? 200 : 420,
+      delay: quick ? Math.min(delay * 0.4, 90) : delay,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: nativeDriver,
+    }).start();
   }, [shown, delay]);
   return (
-    <Animated.View style={[style, { opacity: shown, transform: [{ translateY: shown.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }]}>
+    <Animated.View style={[style, { opacity: shown, transform: [{ translateY: shown.interpolate({ inputRange: [0, 1], outputRange: [Platform.OS === 'web' ? 16 : 8, 0] }) }] }]}>
       {children}
     </Animated.View>
   );
