@@ -2,12 +2,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { PageLoader } from '@/components/Loaders';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { BackIcon } from '@/components/ContactIcon';
 import { CheckIcon, CloseIcon } from '@/components/Icons';
-import { Bouncy } from '@/components/Motion';
+import { Appear, Bouncy, Rise, useGlide } from '@/components/Motion';
 import { Text, TextInput } from '@/components/Text';
 import { hideToastIf, showToast } from '@/components/Toast';
 import { useSimpleMode } from '@/lib/prefs';
@@ -215,26 +215,29 @@ export function Pills<T extends string>({ options, value, onChange }: { options:
 
 export function Checkbox({ label, help, on, onChange }: { label: string; help?: string; on: boolean; onChange: (on: boolean) => void }) {
   return (
-    <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: on }} onPress={() => onChange(!on)} style={styles.checkRow}>
-      <View style={[styles.box, on && styles.boxOn]}>{on ? <CheckIcon color={colors.white} size={16} width={3} /> : null}</View>
+    <Bouncy accessibilityRole="checkbox" accessibilityState={{ checked: on }} onPress={() => onChange(!on)} to={0.98} style={styles.checkRow}>
+      {/* The tick grows into its box, so a tap is seen to have landed. */}
+      <View style={[styles.box, on && styles.boxOn]}>{on ? <Appear from={0.4}><CheckIcon color={colors.white} size={16} width={3} /></Appear> : null}</View>
       <View style={styles.checkText}>
         <Text style={styles.checkLabel}>{label}</Text>
         {help ? <Text style={styles.checkHelp}>{help}</Text> : null}
       </View>
-    </Pressable>
+    </Bouncy>
   );
 }
 
 export function Switch({ label, help, on, onChange }: { label: string; help?: string; on: boolean; onChange: (on: boolean) => void }) {
+  // The knob slides across and the track warms to indigo, instead of jumping from one side to the other.
+  const glide = useGlide(on);
   return (
     <Pressable accessibilityRole="switch" accessibilityState={{ checked: on }} onPress={() => onChange(!on)} style={styles.switchRow}>
       <View style={styles.checkText}>
         <Text style={styles.checkLabel}>{label}</Text>
         {help ? <Text style={styles.checkHelp}>{help}</Text> : null}
       </View>
-      <View style={[styles.track, on && styles.trackOn]}>
-        <View style={[styles.thumb, on && styles.thumbOn]} />
-      </View>
+      <Animated.View style={[styles.track, { backgroundColor: glide.interpolate({ inputRange: [0, 1], outputRange: [colors.checkboxOff, colors.logoIndigo] }) }]}>
+        <Animated.View style={[styles.thumb, { marginStart: glide.interpolate({ inputRange: [0, 1], outputRange: [0, 18] }) }]} />
+      </Animated.View>
     </Pressable>
   );
 }
@@ -258,11 +261,17 @@ export function LoadFailed({ message, onRetry }: { message: string; onRetry?: ()
   );
 }
 
+/** Nothing here yet: said kindly, with a soft mark above the words, and eased in so it does not flash up. */
 export function EmptyState({ message }: { message: string }) {
   return (
-    <View style={styles.centre}>
+    <Rise style={styles.centre}>
+      <View style={styles.emptyMark}>
+        <View style={styles.emptyDot} />
+        <View style={[styles.emptyDot, styles.emptyDotMid]} />
+        <View style={[styles.emptyDot, styles.emptyDotEnd]} />
+      </View>
       <Text style={styles.centreText}>{message}</Text>
-    </View>
+    </Rise>
   );
 }
 
@@ -282,13 +291,16 @@ export function ConfirmDialog({ visible, title, message, confirmLabel, onConfirm
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.scrim}>
-        <View accessibilityRole="alert" style={styles.dialog}>
-          <Text style={styles.dialogTitle}>{title}</Text>
-          {message ? <Text style={styles.muted}>{message}</Text> : null}
-          {children}
-          <TextButton label={confirmLabel} onPress={onConfirm} disabled={busy} danger={danger} />
-          <TextButton label={t('common.cancel')} onPress={onCancel} />
-        </View>
+        {/* The box grows into place over the dimmed page. */}
+        <Appear style={styles.dialogBox}>
+          <View accessibilityRole="alert" style={styles.dialog}>
+            <Text style={styles.dialogTitle}>{title}</Text>
+            {message ? <Text style={styles.muted}>{message}</Text> : null}
+            {children}
+            <TextButton label={confirmLabel} onPress={onConfirm} disabled={busy} danger={danger} />
+            <TextButton label={t('common.cancel')} onPress={onCancel} />
+          </View>
+        </Appear>
       </View>
     </Modal>
   );
@@ -402,12 +414,15 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   track: { width: 46, height: 28, borderRadius: 14, backgroundColor: colors.checkboxOff, padding: 3 },
-  trackOn: { backgroundColor: colors.logoIndigo },
-  thumb: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.white },
-  thumbOn: { marginStart: 18 },
+  thumb: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.white, ...shadows.card },
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   centreText: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15, lineHeight: 22, textAlign: 'center' },
   scrim: { flex: 1, backgroundColor: colors.scrim, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  dialog: { alignSelf: 'center', maxWidth: 480, width: '100%', backgroundColor: colors.card, borderRadius: radius.hero, padding: 22, gap: 8, ...shadows.raised },
+  dialogBox: { alignSelf: 'center', maxWidth: 480, width: '100%' },
+  emptyMark: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, width: 76, height: 76, borderRadius: 38, backgroundColor: colors.tint, justifyContent: 'center', paddingBottom: 30 },
+  emptyDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.logoYellow },
+  emptyDotMid: { backgroundColor: colors.logoOrange },
+  emptyDotEnd: { backgroundColor: colors.logoPurple },
+  dialog: { backgroundColor: colors.card, borderRadius: radius.hero, padding: 22, gap: 8, ...shadows.raised },
   dialogTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 18 },
 });

@@ -19,6 +19,7 @@ import '@/i18n';
 import '@/social/sosTask';
 import { Launch } from '@/components/Launch';
 import { WebFrame } from '@/components/WebFrame';
+import { colors } from '@/theme/tokens';
 import { RestartPrompt } from '@/i18n/RestartPrompt';
 import { ToastHost } from '@/components/Toast';
 import { safeNext } from '@/lib/account';
@@ -210,7 +211,16 @@ export default function RootLayout() {
         <PersistQueryClientProvider client={queryClient} persistOptions={PERSIST}>
           <StatusBar style="dark" />
           <AppFrame signedIn={!!signedIn}>
-            <Stack screenOptions={{ headerShown: false }} />
+            {/* Screens slide in from the side and back out the same way. The places the bottom bar swaps between
+                (Home, Me, the tree) cross-fade instead: they are side by side, not one on top of another. */}
+            <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 280, contentStyle: { backgroundColor: colors.background } }}>
+              <Stack.Screen name="home" options={{ animation: 'fade' }} />
+              <Stack.Screen name="me" options={{ animation: 'fade' }} />
+              <Stack.Screen name="tree/[id]" options={{ animation: 'fade' }} />
+              <Stack.Screen name="after-login" options={{ animation: 'fade' }} />
+              <Stack.Screen name="index" options={{ animation: 'fade' }} />
+              <Stack.Screen name="welcome" options={{ animation: 'fade' }} />
+            </Stack>
           </AppFrame>
           <SignInGate signedIn={signedIn} />
           {signedIn ? <MessageWatch /> : null}

@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ChevronIcon } from '@/components/Icons';
+import { Bouncy, Rise } from '@/components/Motion';
 import { useButtonInReach } from '@/components/keyboardRoom';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
@@ -75,7 +76,8 @@ export function Gate<T>({ query, plusMessage, children }: { query: UseQueryResul
     return <LoadFailed message={errorText(query.error)} onRetry={() => query.refetch()} />;
   }
   if (query.data === undefined) return <Loading label={t('social.loading')} />;
-  return <>{children(query.data)}</>;
+  // What was waited for eases in, in place of appearing all at once. Same spacing as the page gives its parts.
+  return <Rise style={styles.loaded}>{children(query.data)}</Rise>;
 }
 
 /** A failed action. When the reason is Plus, the way to get it is right there. */
@@ -101,9 +103,9 @@ export function Row({ title, subtitle, second, badge, onPress, urgent }: { title
   );
   if (!onPress) return <View style={styles.row}>{body}</View>;
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.row}>
+    <Bouncy accessibilityRole="button" onPress={onPress} to={0.985} hoverStyle={styles.rowHover} style={styles.row}>
       {body}
-    </Pressable>
+    </Bouncy>
   );
 }
 
@@ -204,6 +206,8 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     backgroundColor: colors.card,
   },
+  loaded: { gap: 12, flexGrow: 1 },
+  rowHover: { backgroundColor: colors.tint, borderColor: colors.line },
   rowText: { flex: 1, minWidth: 0 },
   rowTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
   urgent: { color: colors.alert },

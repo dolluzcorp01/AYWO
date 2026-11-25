@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PageEnter } from '@/components/Motion';
 import { OfflineBar } from '@/components/OfflineBar';
 import { colors } from '@/theme/tokens';
 
@@ -26,7 +27,8 @@ export function Screen({ children, flush }: { children: ReactNode; flush?: boole
   if (Platform.OS === 'web') {
     return (
       <View style={styles.page}>
-        <View style={[styles.body, room]}>{inside}</View>
+        {/* The website swapped pages in an instant; each one now eases in. The phone apps slide their screens. */}
+        <PageEnter style={[styles.body, room]}>{inside}</PageEnter>
       </View>
     );
   }
