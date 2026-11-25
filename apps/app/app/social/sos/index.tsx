@@ -12,7 +12,9 @@ import { api, deviceStore } from '@/lib/api';
 import { errorCode } from '@/lib/errors';
 import { callNow, dialEmergency } from '@/social/call';
 import { useEmergencyNumber } from '@/social/emergency';
-import { ActionError, Note, Page, useName } from '@/social/parts';
+import { ActionError, Note, Page, useName, RowSign } from '@/social/parts';
+import { CardIcon, FriendsIcon } from '@/components/Icons';
+import { Breathe } from '@/components/Motion';
 import {
   locationPermissionNow,
   prepareLocationPermission,
@@ -379,6 +381,10 @@ export default function SosScreen() {
               <Text style={styles.runningTitle}>{t('social.sos.sending')}</Text>
             </View>
           ) : (
+            // A soft red ring breathes behind the button while it waits: the one thing on this screen. It is drawn
+            // only, and takes no touch; the button itself is unchanged.
+            <View style={styles.holdWrap}>
+            {noContacts || holding ? null : <Breathe size={220} color={colors.alert} />}
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('social.sos.holdLabel')}
@@ -392,6 +398,7 @@ export default function SosScreen() {
               <Text style={styles.holdMark}>{t('social.sos.mark')}</Text>
               <Text style={styles.runningText}>{holding ? t('social.sos.keepHolding') : t('social.sos.holdHint')}</Text>
             </Pressable>
+            </View>
           )}
 
           {noContacts && needContacts ? (
@@ -418,7 +425,10 @@ export default function SosScreen() {
           <EmergencyButton />
 
           <Card style={styles.block}>
-            <SectionTitle>{t('social.sos.contacts')}</SectionTitle>
+            <View style={styles.cardHead}>
+              <RowSign icon={FriendsIcon} ink={colors.alert} back={colors.alertTint} />
+              <SectionTitle>{t('social.sos.contacts')}</SectionTitle>
+            </View>
             {contacts.isError ? (
               <>
                 <ActionError error={contacts.error} />
@@ -435,7 +445,10 @@ export default function SosScreen() {
           </Card>
 
           <Card style={styles.block}>
-            <SectionTitle>{t('ops.card.title')}</SectionTitle>
+            <View style={styles.cardHead}>
+              <RowSign icon={CardIcon} ink={colors.alert} back={colors.alertTint} />
+              <SectionTitle>{t('ops.card.title')}</SectionTitle>
+            </View>
             <Note>{t('ops.card.sosNote')}</Note>
             <TextButton label={t('ops.card.open')} onPress={() => router.push('/social/sos/card')} />
           </Card>
@@ -496,6 +509,8 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 6,
   },
+  holdWrap: { alignSelf: 'center', alignItems: 'center', justifyContent: 'center', marginVertical: 14 },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   holdOn: { borderWidth: 6, borderColor: colors.logoYellow },
   holdOff: { opacity: 0.45 },
   holdMark: { color: colors.white, fontFamily: fonts.extrabold, fontSize: 44, letterSpacing: 2 },

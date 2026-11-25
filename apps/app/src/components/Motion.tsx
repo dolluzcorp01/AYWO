@@ -136,3 +136,31 @@ export function useGlide(on: boolean, duration = 180): Animated.Value {
   }, [on, value, duration]);
   return value;
 }
+
+/**
+ * A soft ring that swells and fades behind something, over and over, like slow breathing: it says "this is the one
+ * thing here" without a word. Still when the phone asks for less motion.
+ */
+export function Breathe({ size, color }: { size: number; color: string }) {
+  const beat = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduced) return undefined;
+    const loop = Animated.loop(Animated.timing(beat, { toValue: 1, duration: 2200, easing: Easing.out(Easing.quad), useNativeDriver: nativeDriver }));
+    loop.start();
+    return () => loop.stop();
+  }, [beat]);
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: color,
+        opacity: beat.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0] }),
+        transform: [{ scale: beat.interpolate({ inputRange: [0, 1], outputRange: [1, 1.22] }) }],
+      }}
+    />
+  );
+}
