@@ -22,6 +22,19 @@ AccessibilityInfo.addEventListener('reduceMotionChanged', (on) => {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+/**
+ * On the website, colour and shadow changes under the mouse glide instead of snapping. Movement is left out here:
+ * the spring below owns it, and two things moving the same button would fight.
+ */
+export const softHover = (Platform.OS === 'web'
+  ? { transitionProperty: 'background-color, border-color, box-shadow, opacity', transitionDuration: '160ms', transitionTimingFunction: 'ease-out' }
+  : {}) as ViewStyle;
+
+/** The same glide for something that also lifts under the mouse (a card that is a link) and has no spring. */
+export const softLift = (Platform.OS === 'web'
+  ? { transitionProperty: 'background-color, border-color, box-shadow, transform', transitionDuration: '180ms', transitionTimingFunction: 'ease-out' }
+  : {}) as ViewStyle;
+
 type BouncyProps = Omit<PressableProps, 'style' | 'children'> & {
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -50,7 +63,7 @@ export function Bouncy({ children, style, hoverStyle, to = 0.96, disabled, onPre
         spring(1);
         onPressOut?.(event);
       }}
-      style={[style, hovered && !disabled && hoverStyle, { transform: [{ scale }] }]}
+      style={[softHover, style, hovered && !disabled && hoverStyle, { transform: [{ scale }] }]}
     >
       {children}
     </AnimatedPressable>

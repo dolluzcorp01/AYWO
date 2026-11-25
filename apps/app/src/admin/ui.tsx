@@ -8,6 +8,7 @@ import type { ComponentRef, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { Spinner } from '@/components/Loaders';
+import { Bouncy, PageEnter, Rise, softLift } from '@/components/Motion';
 import { Card, Heading, Muted } from '@/components/ui';
 import { ApiFailure, api } from '@/lib/api';
 import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
@@ -118,7 +119,8 @@ export function AdminPage({
         }
       }}
     >
-      <View style={styles.pageInner}>
+      {/* Each admin page eases in, like the pages of the app. */}
+      <PageEnter style={styles.pageInner}>
         <Heading>{title}</Heading>
         {subtitle ? <Muted>{subtitle}</Muted> : null}
         {access.can(gates) ? (
@@ -133,7 +135,7 @@ export function AdminPage({
             </View>
           </>
         )}
-      </View>
+      </PageEnter>
     </ScrollView>
   );
 }
@@ -487,21 +489,17 @@ export function SecondaryButton({
   main?: boolean;
 }) {
   return (
-    <Pressable
+    <Bouncy
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ hovered }: { hovered?: boolean }) => [
-        styles.button,
-        danger && styles.buttonDanger,
-        main && (danger ? styles.buttonMainDanger : styles.buttonMain),
-        hovered && !disabled && !main && (danger ? styles.buttonDangerHover : styles.buttonHover),
-        disabled && styles.disabled,
-      ]}
+      to={0.96}
+      hoverStyle={main ? undefined : danger ? styles.buttonDangerHover : styles.buttonHover}
+      style={[styles.button, danger && styles.buttonDanger, main && (danger ? styles.buttonMainDanger : styles.buttonMain), disabled && styles.disabled]}
     >
       <Text style={[styles.buttonText, danger && styles.buttonTextDanger, main && styles.buttonTextMain]}>{label}</Text>
-    </Pressable>
+    </Bouncy>
   );
 }
 
@@ -701,7 +699,7 @@ export function Checkbox({ label, checked, onChange }: { label: string; checked:
 /** A white panel with a heading, for detail views. */
 export function Panel({ title, children, actions }: { title: string; children: ReactNode; actions?: ReactNode }) {
   return (
-    <View style={styles.panel}>
+    <Rise style={styles.panel}>
       <View style={styles.panelHead}>
         <Text accessibilityRole="header" style={styles.sectionTitle}>
           {title}
@@ -709,7 +707,7 @@ export function Panel({ title, children, actions }: { title: string; children: R
         {actions}
       </View>
       {children}
-    </View>
+    </Rise>
   );
 }
 
@@ -901,7 +899,7 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   stat: { minWidth: 190, flexGrow: 1, flexBasis: 190 },
   // A number card that opens its list: the hand pointer, and it lifts a little under the mouse.
-  statLink: { cursor: 'pointer', borderRadius: radius.card },
+  statLink: { cursor: 'pointer', borderRadius: radius.card, ...softLift },
   statHover: { transform: [{ translateY: -2 }], ...shadows.raised },
   statValue: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 30, letterSpacing: -0.6 },
   statLabel: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14 },
