@@ -7,6 +7,7 @@ import { PageLoader } from '@/components/Loaders';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { BackIcon } from '@/components/ContactIcon';
 import { CheckIcon, CloseIcon } from '@/components/Icons';
+import { Bouncy } from '@/components/Motion';
 import { Text, TextInput } from '@/components/Text';
 import { hideToastIf, showToast } from '@/components/Toast';
 import { useSimpleMode } from '@/lib/prefs';
@@ -36,11 +37,11 @@ export function PrimaryButton({ label, onPress: press, disabled, missing }: { la
   const off = !!disabled || !!missing;
   return (
     <View style={styles.primaryBox}>
-      <Pressable accessibilityRole="button" accessibilityState={{ disabled: off }} accessibilityHint={missing ?? undefined} onPress={onPress} disabled={off} style={{ opacity: off ? 0.5 : 1 }}>
+      <Bouncy accessibilityRole="button" accessibilityState={{ disabled: off }} accessibilityHint={missing ?? undefined} onPress={onPress} disabled={off} to={0.97} style={{ opacity: off ? 0.5 : 1 }}>
         <View style={[styles.button, big && styles.bigButton]}>
           <Text style={styles.buttonText}>{label}</Text>
         </View>
-      </Pressable>
+      </Bouncy>
       {missing ? <Text style={styles.missing}>{missing}</Text> : null}
     </View>
   );
@@ -51,15 +52,17 @@ export function SecondaryButton({ label, onPress: press, disabled }: { label: st
   const big = useSimpleMode();
   const onPress = useOncePerTap(press);
   return (
-    <Pressable
+    <Bouncy
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled }}
       onPress={onPress}
       disabled={disabled}
-      style={({ hovered }: { hovered?: boolean }) => [styles.secondary, big && styles.bigSecondary, hovered && !disabled && styles.secondaryHover, { opacity: disabled ? 0.5 : 1 }]}
+      to={0.97}
+      hoverStyle={styles.secondaryHover}
+      style={[styles.secondary, big && styles.bigSecondary, { opacity: disabled ? 0.5 : 1 }]}
     >
       <Text style={styles.secondaryText}>{label}</Text>
-    </Pressable>
+    </Bouncy>
   );
 }
 
@@ -86,17 +89,17 @@ export function SmallButton({ label, onPress, kind = 'solid', disabled, accessib
   }
   if (kind === 'yellow') {
     return (
-      <Pressable {...a11y}>
+      <Bouncy {...a11y}>
         <LinearGradient colors={gradients.highlight} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.small}>
           {inner}
         </LinearGradient>
-      </Pressable>
+      </Bouncy>
     );
   }
   return (
-    <Pressable {...a11y}>
+    <Bouncy {...a11y}>
       <View style={[styles.small, styles.smallSolid]}>{inner}</View>
-    </Pressable>
+    </Bouncy>
   );
 }
 
@@ -104,9 +107,9 @@ export function SmallButton({ label, onPress, kind = 'solid', disabled, accessib
 export function BackButton({ onPress, close }: { onPress: () => void; close?: boolean }) {
   const { t } = useTranslation();
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={close ? t('tree.close') : t('card.goBack')} onPress={onPress} style={styles.round}>
+    <Bouncy accessibilityRole="button" accessibilityLabel={close ? t('tree.close') : t('card.goBack')} onPress={onPress} to={0.9} style={styles.round}>
       {close ? <CloseIcon color={colors.text} size={18} /> : <BackIcon color={colors.text} />}
-    </Pressable>
+    </Bouncy>
   );
 }
 
@@ -188,14 +191,15 @@ export function Field({ label, style, invalid, accessory, ...input }: { label?: 
 /** One choice in a row of pills, such as Male / Female / Other. */
 export function Pill({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   return (
-    <Pressable
+    <Bouncy
       accessibilityRole="radio"
       accessibilityState={{ checked: on }}
       onPress={onPress}
+      to={0.94}
       style={[styles.pill, on && styles.pillOn]}
     >
       <Text style={[styles.pillText, on && styles.pillTextOn]}>{label}</Text>
-    </Pressable>
+    </Bouncy>
   );
 }
 

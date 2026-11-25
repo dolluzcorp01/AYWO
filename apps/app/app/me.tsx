@@ -6,7 +6,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
-import { ChevronIcon } from '@/components/Icons';
+import { ChevronIcon, BagIcon, BellIcon, BlockIcon, BoxIcon, CardIcon, DocIcon, DownloadIcon, GiftIcon, GlobeIcon, HeartIcon, HelpIcon, InviteIcon, LinkedPeopleIcon, PencilIcon, PlusIcon, ShieldIcon } from '@/components/Icons';
+import { Bouncy, Rise } from '@/components/Motion';
 import { LanguagePicker } from '@/components/LanguagePicker';
 import { Screen } from '@/components/Screen';
 import { TAB_BAR_SPACE, TabBar } from '@/components/TabBar';
@@ -153,11 +154,13 @@ export default function MeScreen() {
         <Text accessibilityRole="header" style={styles.group}>{t('me.myTrees')}</Text>
         <Card style={styles.list}>
           {list.length === 0 ? (
-            <Row title={t('home.anotherTree')} onPress={() => router.push('/start')} last />
+            <Row icon={PlusIcon} tone="purple" title={t('home.anotherTree')} onPress={() => router.push('/start')} last />
           ) : (
             list.map((tree, i) => (
               <Row
                 key={tree.id}
+                icon={LinkedPeopleIcon}
+                tone="purple"
                 title={tree.name}
                 value={t('home.peopleCount', { count: tree.people })}
                 onPress={() => router.push({ pathname: '/tree/[id]', params: { id: tree.id } })}
@@ -165,7 +168,7 @@ export default function MeScreen() {
               />
             ))
           )}
-          {created.length > 0 ? <Row title={t('me.treeSettings')} onPress={() => setTreeSettings(true)} last /> : null}
+          {created.length > 0 ? <Row icon={PencilIcon} tone="indigo" title={t('me.treeSettings')} onPress={() => setTreeSettings(true)} last /> : null}
         </Card>
         {treeSettings ? <TreeSettings trees={created} onClose={() => setTreeSettings(false)} /> : null}
 
@@ -173,17 +176,17 @@ export default function MeScreen() {
           <>
             <Text accessibilityRole="header" style={styles.group}>{t('ops.me.more')}</Text>
             <Card style={styles.list}>
-              {offersOn ? <Row title={t('ops.me.offers')} onPress={() => router.push('/offers')} /> : null}
-              {ordersOn ? <Row title={t('ops.me.shop')} onPress={() => router.push('/shop')} /> : null}
-              {ordersOn ? <Row title={t('ops.me.orders')} onPress={() => router.push('/orders')} /> : null}
-              {referralsOn ? <Row title={t('ops.me.invite')} value={t('ops.me.inviteValue')} onPress={() => router.push('/invite-friends')} last /> : null}
+              {offersOn ? <Row icon={GiftIcon} tone="warm" title={t('ops.me.offers')} onPress={() => router.push('/offers')} /> : null}
+              {ordersOn ? <Row icon={BagIcon} tone="warm" title={t('ops.me.shop')} onPress={() => router.push('/shop')} /> : null}
+              {ordersOn ? <Row icon={BoxIcon} tone="warm" title={t('ops.me.orders')} onPress={() => router.push('/orders')} /> : null}
+              {referralsOn ? <Row icon={InviteIcon} tone="warm" title={t('ops.me.invite')} value={t('ops.me.inviteValue')} onPress={() => router.push('/invite-friends')} last /> : null}
             </Card>
           </>
         ) : null}
 
         <Text accessibilityRole="header" style={styles.group}>{t('me.app')}</Text>
         <Card style={styles.list}>
-          <Row title={t('settings.language')} value={languageLabel(i18n.language)} onPress={() => setPicking(true)} />
+          <Row icon={GlobeIcon} tone="indigo" title={t('settings.language')} value={languageLabel(i18n.language)} onPress={() => setPicking(true)} />
           <View style={styles.row}>
             <Checkbox label={t('settings.largeText')} on={large} onChange={toggleLarge} />
           </View>
@@ -191,6 +194,8 @@ export default function MeScreen() {
             <Checkbox label={t('settings.simpleMode')} help={t('settings.simpleModeHelp')} on={simple} onChange={toggleSimple} />
           </View>
           <Row
+            icon={BellIcon}
+            tone="indigo"
             title={t('settings.notifications')}
             value={prefs.data ? (allOn ? t('settings.allOn') : t('settings.someOff')) : undefined}
             onPress={() => router.push('/settings/notifications')}
@@ -201,39 +206,45 @@ export default function MeScreen() {
 
         <Text accessibilityRole="header" style={styles.group}>{t('me.safeKeeping')}</Text>
         <Card style={styles.list}>
-          {created.length > 0 ? <Row title={t('settings.successor')} value={successorValue} onPress={() => router.push('/settings/successor')} /> : null}
+          {created.length > 0 ? <Row icon={HeartIcon} tone="purple" title={t('settings.successor')} value={successorValue} onPress={() => router.push('/settings/successor')} /> : null}
           {exportable ? (
-            <Row title={t('me.download')} onPress={() => router.push({ pathname: '/export/[treeId]', params: { treeId: exportable.id } })} />
+            <Row icon={DownloadIcon} tone="purple" title={t('me.download')} onPress={() => router.push({ pathname: '/export/[treeId]', params: { treeId: exportable.id } })} />
           ) : null}
           <Row
+            icon={CardIcon}
+            tone="red"
             title={t('ops.me.card')}
             value={extras.data ? (extras.data.has_emergency_card ? t('ops.me.cardSet') : t('ops.me.cardNotSet')) : undefined}
             onPress={() => router.push('/social/sos/card')}
           />
           <Row
+            icon={BlockIcon}
+            tone="red"
             title={t('ops.me.blocked')}
             value={extras.data?.blocked ? String(extras.data.blocked) : undefined}
             onPress={() => router.push('/settings/blocked')}
           />
-          <Row title={t('me.privacy')} onPress={() => router.push('/settings/privacy')} last />
+          <Row icon={ShieldIcon} tone="purple" title={t('me.privacy')} onPress={() => router.push('/settings/privacy')} last />
         </Card>
 
         <Text accessibilityRole="header" style={styles.group}>{t('me.help')}</Text>
         <Card style={styles.list}>
           <Row
+            icon={HelpIcon}
+            tone="indigo"
             title={t('ops.me.helpCentre')}
             value={extras.data?.open_tickets ? t('ops.me.answers', { count: extras.data.open_tickets }) : undefined}
             onPress={() => router.push('/help')}
           />
           {HELP_PAGES.map((page, i) => (
-            <Row key={page.key} title={t(page.label)} onPress={() => router.push(page.href as Href)} last={i === HELP_PAGES.length - 1} />
+            <Row icon={DocIcon} tone="indigo" key={page.key} title={t(page.label)} onPress={() => router.push(page.href as Href)} last={i === HELP_PAGES.length - 1} />
           ))}
         </Card>
 
         {/* The admin panel is built for a wide screen and opens only on the web: no row here that leads nowhere. */}
         {me.data?.admin_role && Platform.OS === 'web' ? (
           <Card style={styles.list}>
-            <Row title={t('nav.adminPanel')} onPress={() => router.push('/admin')} last />
+            <Row icon={ShieldIcon} tone="indigo" title={t('nav.adminPanel')} onPress={() => router.push('/admin')} last />
           </Card>
         ) : null}
 
@@ -262,16 +273,30 @@ export default function MeScreen() {
   );
 }
 
-function Row({ title, value, onPress, last }: { title: string; value?: string; onPress: () => void; last?: boolean }) {
+type RowTone = 'indigo' | 'purple' | 'warm' | 'red';
+const ROW_TONES: Record<RowTone, { back: string; ink: string }> = {
+  indigo: { back: colors.tint, ink: colors.logoIndigo },
+  purple: { back: colors.tint, ink: colors.logoPurple },
+  warm: { back: colors.celebrationTint, ink: colors.ask },
+  red: { back: colors.alertTint, ink: colors.alert },
+};
+
+/** One line of the lists on Me. The small picture at the start lets the eye find a row without reading every line. */
+function Row({ title, value, onPress, last, icon: RowIcon, tone = 'indigo' }: { title: string; value?: string; onPress: () => void; last?: boolean; icon?: typeof ChevronIcon; tone?: RowTone }) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={[styles.row, styles.rowInner, !last && styles.rowLine]}>
+    <Bouncy accessibilityRole="button" onPress={onPress} to={0.98} style={[styles.row, styles.rowInner, !last && styles.rowLine]}>
+      {RowIcon ? (
+        <View style={[styles.rowIcon, { backgroundColor: ROW_TONES[tone].back }]}>
+          <RowIcon color={ROW_TONES[tone].ink} size={18} width={1.9} />
+        </View>
+      ) : null}
       <Text style={styles.rowTitle}>{title}</Text>
       <View style={styles.rowEnd}>
         {value ? <Text style={styles.rowValue}>{value}</Text> : null}
         {/* The arrow says "this opens something": a bare line of text does not look tappable. */}
         <ChevronIcon color={colors.idleTab} size={16} />
       </View>
-    </Pressable>
+    </Bouncy>
   );
 }
 
@@ -289,10 +314,11 @@ const styles = StyleSheet.create({
   plusTitle: { color: colors.white, fontFamily: fonts.extrabold, fontSize: 17 },
   group: { color: colors.muted, fontFamily: fonts.extrabold, fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', marginTop: 6 },
   list: { padding: 0, paddingHorizontal: 14 },
-  row: { minHeight: 48, justifyContent: 'center' },
-  rowInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  row: { minHeight: 54, justifyContent: 'center' },
+  rowIcon: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  rowInner: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   rowLine: { borderBottomWidth: 1, borderBottomColor: colors.tint },
-  rowTitle: { flexShrink: 1, color: colors.text, fontFamily: fonts.bold, fontSize: 15 },
+  rowTitle: { flex: 1, minWidth: 0, color: colors.text, fontFamily: fonts.bold, fontSize: 15 },
   rowEnd: { flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
   rowValue: { flexShrink: 1, color: colors.muted, fontFamily: fonts.semibold, fontSize: 13 },
 });

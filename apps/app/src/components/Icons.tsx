@@ -138,3 +138,15 @@ export const PartyIcon = (p: IconProps) => (
 export const UpIcon =(p: IconProps) => <Icon {...p}><Path d="M12 20V5M6 11l6-6 6 6" /></Icon>;
 export const DownIcon = (p: IconProps) => <Icon {...p}><Path d="M12 4v15M6 13l6 6 6-6" /></Icon>;
 export const RightIcon = (p: IconProps) => <Icon {...p} mirror><Path d="M4 12h15M13 6l6 6-6 6" /></Icon>;
+
+// Icons for the rows on Me and the kinds of news on Activity. Same line style as the rest.
+export const GiftIcon = (p: IconProps) => <Icon {...p}><Path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13" strokeLinejoin="round" /><Path d="M12 7c-1.5-3.5-6-3-4.5 0M12 7c1.5-3.5 6-3 4.5 0" strokeLinecap="round" /></Icon>;
+export const BagIcon = (p: IconProps) => <Icon {...p}><Path d="M5 8h14l-1 12H6z" strokeLinejoin="round" /><Path d="M9 8V7a3 3 0 0 1 6 0v1" strokeLinecap="round" /></Icon>;
+export const BoxIcon = (p: IconProps) => <Icon {...p}><Path d="M4 8l8-4 8 4v8l-8 4-8-4z" strokeLinejoin="round" /><Path d="M4 8l8 4 8-4M12 12v8" strokeLinejoin="round" /></Icon>;
+export const GlobeIcon = (p: IconProps) => <Icon {...p}><Circle cx={12} cy={12} r={8.5} /><Path d="M3.5 12h17M12 3.5c3 3 3 14 0 17M12 3.5c-3 3-3 14 0 17" /></Icon>;
+export const HelpIcon = (p: IconProps) => <Icon {...p}><Circle cx={12} cy={12} r={8.5} /><Path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7" strokeLinecap="round" /><Circle cx={12} cy={16.7} r={0.6} /></Icon>;
+export const BlockIcon = (p: IconProps) => <Icon {...p}><Circle cx={12} cy={12} r={8.5} /><Path d="M6 6l12 12" /></Icon>;
+export const CardIcon = (p: IconProps) => <Icon {...p}><Path d="M3 6h18v12H3z" strokeLinejoin="round" /><Path d="M12 9.5v5M9.5 12h5" strokeLinecap="round" /></Icon>;
+export const DocIcon = (p: IconProps) => <Icon {...p}><Path d="M6 3h8l4 4v14H6z" strokeLinejoin="round" /><Path d="M14 3v4h4M9 12h6M9 16h6" strokeLinecap="round" strokeLinejoin="round" /></Icon>;
+export const HeartIcon = (p: IconProps) => <Icon {...p}><Path d="M12 20s-7-4.4-7-9.5A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.5c0 5.1-7 9.5-7 9.5z" strokeLinejoin="round" /></Icon>;
+export const WordIcon = (p: IconProps) => <Icon {...p}><Path d="M5 18l4.5-12h1L15 18M6.7 14h6.6" strokeLinecap="round" strokeLinejoin="round" /><Path d="M17 10h3M18.5 10v8" strokeLinecap="round" /></Icon>;

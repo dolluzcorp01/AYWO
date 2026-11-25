@@ -15,6 +15,7 @@ import { Screen } from '@/components/Screen';
 import { TAB_BAR_SPACE, TabBar } from '@/components/TabBar';
 import { useDesktop } from '@/components/WebFrame';
 import { Text } from '@/components/Text';
+import { Rise } from '@/components/Motion';
 import { Card, Loading, LoadFailed, SmallButton, TextButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { firstName, mainTree, useMe, useTrees } from '@/lib/account';
@@ -113,21 +114,28 @@ export default function Home() {
   return (
     <Screen flush>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Top treeId={main.id} name={name} />
-        <DeleteBanner />
-        <AnnouncementBar />
-        <IncomingSos />
-        <SosEntry />
-        <FamilyCard tree={main} />
-        <NeedsYou />
-        <FamilyDates />
-        <InviteRow tree={main} />
-        <QuickActions />
-        <HomeOfferCards />
-        <OnThisDayCard />
-        <LatestMemory />
-        <OtherTrees trees={others} />
-        <TextButton label={t('home.anotherTree')} onPress={() => router.push('/start')} />
+        {/* Three groups, each rising into place a moment after the one above it. */}
+        <Rise style={styles.part}>
+          <Top treeId={main.id} name={name} />
+          <DeleteBanner />
+          <AnnouncementBar />
+          <IncomingSos />
+          <SosEntry />
+        </Rise>
+        <Rise delay={90} style={styles.part}>
+          <FamilyCard tree={main} />
+          <NeedsYou />
+          <FamilyDates />
+        </Rise>
+        <Rise delay={180} style={styles.part}>
+          <InviteRow tree={main} />
+          <QuickActions />
+          <HomeOfferCards />
+          <OnThisDayCard />
+          <LatestMemory />
+          <OtherTrees trees={others} />
+          <TextButton label={t('home.anotherTree')} onPress={() => router.push('/start')} />
+        </Rise>
       </ScrollView>
       <TabBar active="home" treeId={main.id} />
     </Screen>
@@ -464,6 +472,8 @@ function LatestMemory() {
 
 const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: TAB_BAR_SPACE, gap: 16 },
+  // Same spacing inside a group as between groups, so grouping changes nothing in the layout.
+  part: { gap: 16 },
   desktopScroll: { paddingHorizontal: 40, paddingTop: 32, paddingBottom: 48, gap: 24 },
   columns: { flexDirection: 'row', gap: 24, alignItems: 'flex-start' },
   leftColumn: { flex: 3, minWidth: 0, gap: 16 },

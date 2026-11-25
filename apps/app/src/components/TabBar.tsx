@@ -4,9 +4,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from '@/lib/router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { PlusIcon } from '@/components/Icons';
+import { Bouncy, Pop } from '@/components/Motion';
 import { Text } from '@/components/Text';
 import { api } from '@/lib/api';
 import { mainTree, useTrees } from '@/lib/account';
@@ -61,15 +62,19 @@ interface TabProps {
 function Tab({ label, active, badge, onPress, icon }: TabProps) {
   const color = active ? colors.activeTab : IDLE;
   return (
-    <Pressable
+    <Bouncy
       accessibilityRole="tab"
       accessibilityState={{ selected: !!active }}
       accessibilityLabel={badge ? `${label}, ${badge}` : label}
       onPress={onPress}
+      to={0.9}
       style={styles.tab}
     >
-      <View>
-        {icon(color)}
+      <View style={styles.iconBox}>
+        {/* A soft mark under the tab you are on, so the place you are is seen at a glance and not only by colour. */}
+        {active ? <Pop style={styles.here} /> : null}
+        {/* In its own box so it is drawn over the mark, not under it. */}
+        <View>{icon(color)}</View>
         {badge ? (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
@@ -77,7 +82,7 @@ function Tab({ label, active, badge, onPress, icon }: TabProps) {
         ) : null}
       </View>
       <Text style={[styles.tabText, { color }, active && styles.tabTextOn]}>{label}</Text>
-    </Pressable>
+    </Bouncy>
   );
 }
 
@@ -115,11 +120,11 @@ export function TabBar({ active, treeId, anchorId }: TabBarProps) {
         <Tab label={t('tabs.home')} active={active === 'home'} onPress={() => active !== 'home' && router.replace('/home')} icon={(c) => <HomeIcon color={c} />} />
         <Tab label={t('tabs.family')} active={active === 'family'} onPress={() => active !== 'family' && openFamily()} icon={(c) => <FamilyIcon color={c} />} />
         <View style={styles.tab}>
-          <Pressable accessibilityRole="button" accessibilityLabel={t('add.title')} onPress={openAdd}>
+          <Bouncy accessibilityRole="button" accessibilityLabel={t('add.title')} onPress={openAdd} to={0.88} style={styles.fabGlow}>
             <LinearGradient colors={gradients.highlight} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.fab}>
               <PlusIcon color={colors.text} size={24} width={2.6} />
             </LinearGradient>
-          </Pressable>
+          </Bouncy>
         </View>
         <Tab
           label={t('tabs.chat')}
@@ -149,7 +154,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     ...shadows.raised,
   },
-  tab: { flex: 1, minHeight: minTapSize, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  tab: { flex: 1, minHeight: minTapSize, alignItems: 'center', justifyContent: 'center', gap: 2 },
+  iconBox: { width: 52, height: 30, alignItems: 'center', justifyContent: 'center' },
+  here: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 15, backgroundColor: colors.tint },
+  // The gold + sits a little above the bar with a warm glow of its own colour.
+  fabGlow: {
+    borderRadius: 18,
+    marginTop: -14,
+    ...Platform.select({
+      web: { boxShadow: '0 8px 18px rgba(253,142,73,0.38)' },
+      default: { shadowColor: colors.logoOrange, shadowOpacity: 0.38, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+    }),
+  },
   tabText: { fontFamily: fonts.semibold, fontSize: 11 },
   tabTextOn: { fontFamily: fonts.bold },
   fab: { width: 52, height: 52, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
