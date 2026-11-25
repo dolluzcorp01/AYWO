@@ -54,6 +54,9 @@ export default function Otp() {
       track('code_verified');
       setSignInPhone(null);
       setSignInTestCode(null);
+      // The sign-in screens come off the pile first. They used to stay under Home, so Back from Home or Me showed
+      // the "enter your mobile number" screen to someone already signed in.
+      if (router.canDismiss()) router.dismissAll();
       router.replace({ pathname: '/after-login', params: next ? { next } : {} });
     } catch (error) {
       setMessageKey(error instanceof ApiFailure && error.code === 'otp_wrong' ? 'otp.wrongCode' : errorKey(error));

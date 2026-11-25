@@ -79,6 +79,7 @@ function SignInGate({ signedIn }: { signedIn: boolean }) {
   const segments = useSegments() as string[];
   const first = segments[0];
   const pathname = usePathname();
+  const next = safeNext(useGlobalSearchParams<{ next?: string }>().next) ?? undefined;
   // Links that open straight into the app (a group link, a relative's SOS, a help ticket, an offer) need an account,
   // and come back here after sign-in. Without this the person signs in and lands on Home, with the link forgotten.
   const onJoinLink =
@@ -113,9 +114,12 @@ function SignInGate({ signedIn }: { signedIn: boolean }) {
       // The website's front page stays open for someone signed in too: its button then says "Open AYWO".
       const onLanding = Platform.OS === 'web' && first !== 'welcome';
       if (signedIn && onWelcome && !onLanding) router.replace('/after-login');
+      // Signed in and on the number screen (the browser's Back button can still reach it): on into the app.
+      // The code screen is left alone: it moves on by itself the moment the code is right, and doing it twice ran every sign-in step twice.
+      if (signedIn && first === 'phone') router.replace({ pathname: '/after-login', params: next ? { next } : {} });
     }, 0);
     return () => clearTimeout(timer);
-  }, [signedIn, first, onJoinLink, pathname, router]);
+  }, [signedIn, first, onJoinLink, pathname, router, next]);
 
   // An invite code from a shared link counts once this person is signed in. A wrong or late code is simply dropped.
   useEffect(() => {
