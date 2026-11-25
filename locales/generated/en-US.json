@@ -1804,6 +1804,27 @@
       "analytics": "growth and use charts, crash reports",
       "settings": "forced update, maintenance, feature switches, crash reports"
     },
+    "waitingNow": {
+      "title": "Needs your attention",
+      "none": "Nothing is waiting for you right now.",
+      "new": "New",
+      "open": "Open",
+      "close": "Close",
+      "items": {
+        "tickets_one": "{{count}} help ticket is waiting for an answer",
+        "tickets_other": "{{count}} help tickets are waiting for an answer",
+        "reports_one": "{{count}} abuse report is waiting for a decision",
+        "reports_other": "{{count}} abuse reports are waiting for a decision",
+        "takedowns_one": "{{count}} removal request is waiting",
+        "takedowns_other": "{{count}} removal requests are waiting",
+        "words_one": "{{count}} new family word is waiting for approval",
+        "words_other": "{{count}} new family words are waiting for approval",
+        "wordReports_one": "{{count}} word was reported as wrong",
+        "wordReports_other": "{{count}} words were reported as wrong",
+        "orders_one": "{{count}} paid order is waiting to be printed",
+        "orders_other": "{{count}} paid orders are waiting to be printed"
+      }
+    },
     "dashboard": {
       "title": "Dashboard",
       "subtitle": "Counts only. Family details stay private.",

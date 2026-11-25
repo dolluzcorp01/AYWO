@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Slot, usePathname } from 'expo-router';
 import { useRouter } from '@/lib/router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
@@ -12,6 +12,9 @@ import { accessFrom, AdminAccessProvider, MENU } from '@/admin/access';
 import '@/admin/i18n';
 import { TwoStepCode, TwoStepSetup } from '@/admin/TwoStep';
 import type { AdminMe } from '@/admin/types';
+import { useAdminWaiting } from '@/admin/useAdminWaiting';
+import { arrivals, menuCounts } from '@/admin/waiting';
+import type { WaitingItem } from '@/admin/waiting';
 import { isTwoStepFailure, SecondaryButton } from '@/admin/ui';
 import { Avatar } from '@/components/Avatar';
 import { SignOutIcon } from '@/components/Icons';
@@ -228,6 +231,44 @@ function Frame({
     item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(String(item.href)) || (item.key === 'users' && pathname.startsWith('/admin/user/'));
   const roleLabel = teamRole ?? t(`admin.roles.${role}`);
 
+  // What is waiting for staff: a number beside each menu item, and a notice when something new comes in while the
+  // panel is open. Before this a new family word or help ticket was one number among thirty on the dashboard.
+  const { items: waiting, loaded } = useAdminWaiting();
+  const counts = menuCounts(waiting);
+  const seen = useRef<WaitingItem[] | null>(null);
+  const [fresh, setFresh] = useState<WaitingItem[]>([]);
+  const waitingKey = waiting.map((item) => `${item.key}:${item.count}`).join(',');
+  useEffect(() => {
+    // Until the first counts are in there is no "before": everything would look new.
+    if (!loaded) return;
+    const came = arrivals(seen.current, waiting);
+    seen.current = waiting;
+    if (came.length > 0) setFresh(came);
+    // `waitingKey` stands for `waiting`, which is a new list on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waitingKey, loaded]);
+  const arrived =
+    fresh.length > 0 ? (
+      <View accessibilityRole="alert" style={styles.arrived}>
+        <Text style={styles.arrivedTitle}>{t('admin.waitingNow.new')}</Text>
+        <View style={styles.arrivedList}>
+          {fresh.map((item) => (
+            <Pressable
+              key={item.key}
+              accessibilityRole="link"
+              onPress={() => {
+                setFresh([]);
+                router.navigate(item.href);
+              }}
+            >
+              <Text style={styles.arrivedText}>{t(`admin.waitingNow.items.${item.key}`, { count: item.count })}</Text>
+            </Pressable>
+          ))}
+        </View>
+        <SecondaryButton label={t('admin.waitingNow.close')} onPress={() => setFresh([])} />
+      </View>
+    ) : null;
+
   // Every group starts open when the screen is tall enough to show them all; on a shorter screen only the group of
   // the open page does. A group the person closes stays closed, unless they open a page inside it.
   const activeGroup = items.find((item) => item.key !== 'dashboard' && isOn(item))?.group;
@@ -256,7 +297,7 @@ function Frame({
       icon={ADMIN_ICONS[item.key]}
       active={isOn(item)}
       indent={indent}
-      badge={item.key === 'work' ? openWork : undefined}
+      badge={item.key === 'work' ? openWork : counts[item.key]}
       touch={narrow}
       onPress={() => router.navigate(item.href)}
     />
@@ -295,6 +336,7 @@ function Frame({
         </View>
         <View style={styles.main}>
           {notice}
+          {arrived}
           <View style={styles.page}>{children}</View>
         </View>
         {signOutDialog}
@@ -324,6 +366,8 @@ function Frame({
                   label={t(`admin.menuGroup.${group}`)}
                   icon={GROUP_ICONS[group]}
                   onPress={() => toggle(group)}
+                  // Closed, the group carries the sum of what is inside, or a waiting item would be out of sight.
+                  badge={open ? undefined : inGroup.reduce((sum, item) => sum + ((item.key === 'work' ? openWork : counts[item.key]) ?? 0), 0)}
                   trailing={(c) => (open ? chevronDown(c) : chevronRight(c))}
                 />
                 {open ? inGroup.map((item) => row(item, true)) : null}
@@ -349,6 +393,7 @@ function Frame({
       </View>
       <View style={styles.main}>
           {notice}
+          {arrived}
           <View style={styles.page}>{children}</View>
         </View>
       {signOutDialog}
@@ -388,6 +433,10 @@ const styles = StyleSheet.create({
   accountText: { flex: 1, minWidth: 0 },
   accountName: { color: colors.text, fontFamily: fonts.bold, fontSize: 14 },
   accountRole: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 12 },
+  arrived: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.tint, borderBottomWidth: 1, borderBottomColor: colors.cardBorder },
+  arrivedTitle: { color: colors.white, backgroundColor: colors.alert, fontFamily: fonts.extrabold, fontSize: 11, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, overflow: 'hidden' },
+  arrivedList: { flex: 1, minWidth: 0, gap: 2 },
+  arrivedText: { color: colors.logoIndigo, fontFamily: fonts.bold, fontSize: 14, textDecorationLine: 'underline' },
   main: { flex: 1, minWidth: 0 },
   page: { flex: 1, minHeight: 0 },
   notice: {

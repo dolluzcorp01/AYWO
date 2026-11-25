@@ -5,11 +5,13 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { TwoStepSetup } from '@/admin/TwoStep';
+import { waitingFrom } from '@/admin/waiting';
 import { Actions, AdminPage, adminStyles, Panel, QueryState, Section, SecondaryButton, StatCard, StatRow } from '@/admin/ui';
 import type { Dashboard } from '@/admin/types';
 import { api } from '@/lib/api';
+import { colors } from '@/theme/tokens';
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
@@ -38,6 +40,22 @@ export default function AdminDashboard() {
       <QueryState query={query} isEmpty={(data) => Object.keys(data).filter((key) => key !== 'work' || canWork).length === 0} emptyText={t('admin.dashboard.empty')}>
         {(data) => (
           <>
+            {/* First on the page: what a person must act on, in words. The numbers below are for looking things up. */}
+            <Panel title={t('admin.waitingNow.title')}>
+              {waitingFrom(data).length === 0 ? (
+                <Text style={adminStyles.cellMuted}>{t('admin.waitingNow.none')}</Text>
+              ) : (
+                <View style={{ gap: 8 }}>
+                  {waitingFrom(data).map((item) => (
+                    <Pressable key={item.key} accessibilityRole="link" onPress={() => router.navigate(item.href)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 36 }}>
+                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.alert }} />
+                      <Text style={[adminStyles.cellStrong, { flex: 1 }]}>{t(`admin.waitingNow.items.${item.key}`, { count: item.count })}</Text>
+                      <Text style={[adminStyles.cellStrong, { textDecorationLine: 'underline' }]}>{t('admin.waitingNow.open')}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </Panel>
             {data.work && canWork ? (
               <Section title={t('admin.menu.work')}>
                 <StatRow>
