@@ -1,4 +1,6 @@
 // S-18 Relationship word: 'We use a different word'. Type your own, with suggestions; report a wrong one.
+// Your word goes on this one card at once, for you only, and can be taken off again. Staff approval only decides
+// whether other families are offered the word; it never decides what your own card shows.
 import { useLocalSearchParams } from 'expo-router';
 import { useRouter } from '@/lib/router';
 import { useEffect, useState } from 'react';
@@ -10,7 +12,7 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Card, ErrorText, Field, Loading, LoadFailed, Muted, PrimaryButton, SectionTitle, TextButton, TopBar } from '@/components/ui';
 import { useErrorText } from '@/lib/errors';
-import { useAddKinTerm, useKinSuggest, useReportKinTerm } from '@/tree/useEdit';
+import { useClearOwnWord, useKinSuggest, useReportKinTerm, useSetOwnWord } from '@/tree/useEdit';
 import { useTreeView } from '@/tree/useTreeView';
 import type { TreeMode } from '@/tree/useTreeView';
 import { colors, fonts, minTapSize } from '@/theme/tokens';
@@ -34,7 +36,8 @@ export default function KinWord() {
   }, [term]);
 
   const suggest = useKinSuggest(i18n.language, query, tree.data?.labels[personId]?.pathCode ?? null);
-  const add = useAddKinTerm(treeId);
+  const add = useSetOwnWord(treeId);
+  const clear = useClearOwnWord(treeId);
   const report = useReportKinTerm();
 
   const data = tree.data;
@@ -43,6 +46,9 @@ export default function KinWord() {
   const shown = label?.label ?? null;
   const pathCode = label?.pathCode ?? null;
   const kinTermId = label?.kinTermId ?? null;
+  const own = label?.own === true;
+  // The dictionary's word for this relative: what the card shows without a word of your own.
+  const usual = own ? (label?.usual ?? null) : shown;
 
   if (tree.isError) {
     return (
@@ -71,11 +77,23 @@ export default function KinWord() {
   // One chip per word: the same word can be on record in more than one language of the chain.
   const suggestions = (suggest.data ?? []).filter((s, i, all) => all.findIndex((o) => o.term.toLowerCase() === s.term.toLowerCase()) === i);
 
+  const name = node.nameUnknown ? t('tree.nameNotKnown') : node.name;
+  const typed = term.trim();
+  const same = (a: string | null, b: string) => !!a && a.trim().toLowerCase() === b.toLowerCase();
+  // Typing the word the card already shows changes nothing; typing the dictionary's word takes your own word off.
+  const alreadyShown = typed.length > 0 && same(shown, typed);
+  const busy = add.isPending || clear.isPending;
+
+  function goUsual() {
+    clear.mutate(personId, { onSuccess: () => setDone(t('kinWord.wentBack', { name, word: usual ?? '' })) });
+  }
+
   function save() {
-    if (!pathCode) return;
+    if (!pathCode || !typed || alreadyShown) return;
+    if (own && same(usual, typed)) return goUsual();
     add.mutate(
-      { path_code: pathCode, language_code: i18n.language, term: term.trim() },
-      { onSuccess: () => setDone(t('kinWord.saved', { word: term.trim() })) },
+      { person_id: personId, path_code: pathCode, language_code: i18n.language, term: typed },
+      { onSuccess: (result) => setDone(t(result.sent ? 'kinWord.savedSent' : 'kinWord.saved', { name, word: typed })) },
     );
   }
 
@@ -106,14 +124,23 @@ export default function KinWord() {
         <View style={styles.who}>
           <Avatar personId={node.id} size={44} photoUrl={node.photoUrl} nameUnknown={node.nameUnknown} />
           <View style={styles.whoText}>
-            <Text style={styles.whoName}>{node.nameUnknown ? t('tree.nameNotKnown') : node.name}</Text>
+            <Text style={styles.whoName}>{name}</Text>
             {shown ? <Text style={styles.whoWord}>{t('kinWord.nowShows', { word: shown })}</Text> : null}
+            {own ? <Text style={styles.whoOwn}>{t('kinWord.ownNow')}</Text> : null}
           </View>
         </View>
-        <Muted>{t('kinWord.explain')}</Muted>
-        <Field label={t('kinWord.yourWord')} value={term} onChangeText={setTerm} autoCorrect={false} style={styles.input} />
+        {mode === 'see_as' ? (
+          <Card>
+            <Text style={styles.note}>{t('kinWord.seeAsNote')}</Text>
+          </Card>
+        ) : (
+          <>
+            <Muted>{t('kinWord.explain')}</Muted>
+            <Field label={t('kinWord.yourWord')} value={term} onChangeText={setTerm} autoCorrect={false} style={styles.input} />
+          </>
+        )}
 
-        {suggestions.length > 0 ? (
+        {mode !== 'see_as' && suggestions.length > 0 ? (
           <>
             <SectionTitle>{t('kinWord.suggestions')}</SectionTitle>
             <View style={styles.chips}>
@@ -126,15 +153,20 @@ export default function KinWord() {
           </>
         ) : null}
 
-        <Card>
-          <Text style={styles.note}>{t('kinWord.reviewNote')}</Text>
-        </Card>
+        {mode !== 'see_as' ? (
+          <Card>
+            <Text style={styles.note}>{t('kinWord.reviewNote')}</Text>
+          </Card>
+        ) : null}
 
+        {alreadyShown ? <Muted>{t('kinWord.sameWord')}</Muted> : null}
         {add.isError ? <ErrorText>{errorText(add.error)}</ErrorText> : null}
+        {clear.isError ? <ErrorText>{errorText(clear.error)}</ErrorText> : null}
         {report.isError ? <ErrorText>{errorText(report.error)}</ErrorText> : null}
       </ScrollView>
-      <PrimaryButton label={t('kinWord.useWord')} onPress={save} disabled={!term.trim() || !pathCode || add.isPending} />
-      {kinTermId ? (
+      {mode !== 'see_as' ? <PrimaryButton label={t('kinWord.useWord')} onPress={save} disabled={!typed || !pathCode || alreadyShown || busy} /> : null}
+      {own && mode !== 'see_as' ? <TextButton label={t('kinWord.backTo', { word: usual ?? '' })} onPress={goUsual} disabled={busy} /> : null}
+      {kinTermId && !own ? (
         <TextButton label={t('kinWord.report', { word: shown ?? '' })} onPress={sendReport} disabled={report.isPending} />
       ) : null}
     </Screen>
@@ -147,6 +179,7 @@ const styles = StyleSheet.create({
   whoText: { flex: 1, minWidth: 0 },
   whoName: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 16 },
   whoWord: { color: colors.relation, fontFamily: fonts.bold, fontSize: 13 },
+  whoOwn: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 12 },
   input: { borderWidth: 2, borderColor: colors.logoPurple },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { minHeight: minTapSize, paddingHorizontal: 14, borderRadius: 22, borderWidth: 1, borderColor: colors.cardBorder, backgroundColor: colors.card, justifyContent: 'center' },

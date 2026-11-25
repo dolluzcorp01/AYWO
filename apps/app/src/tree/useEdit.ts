@@ -460,10 +460,21 @@ export function useKinSuggest(lang: string, q: string, path: string | null) {
   });
 }
 
-export function useAddKinTerm(treeId: string) {
+/** Your own word for one relative: on the card at once. `sent` says the word was new and went to staff as well. */
+export function useSetOwnWord(treeId: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (input: { path_code: string; language_code: string; term: string }) => api.post<unknown>('/kin/terms', input),
+    mutationFn: (input: { person_id: string; path_code: string; language_code: string; term: string }) =>
+      api.post<{ ok: boolean; sent: boolean }>('/kin/own-word', input),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['tree-view', treeId] }),
+  });
+}
+
+/** Back to the dictionary's word. */
+export function useClearOwnWord(treeId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (personId: string) => api.del<unknown>(`/kin/own-word/${personId}`),
     onSuccess: () => client.invalidateQueries({ queryKey: ['tree-view', treeId] }),
   });
 }

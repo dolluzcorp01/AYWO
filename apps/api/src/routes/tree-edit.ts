@@ -481,6 +481,47 @@ export async function treeEditRoutes(app: FastifyInstance): Promise<void> {
     });
   });
 
+  // Your own word for one relative. It shows on that card at once, for you only. A word the dictionary has never
+  // seen is also sent to staff, so that other families can be offered it later; that never holds your card back.
+  app.post('/kin/own-word', async (req) => {
+    const userId = await requireUser(req);
+    const body = z
+      .object({ person_id: z.uuid(), path_code: z.string().min(1).max(60), language_code: z.string().min(1).max(20), term: z.string().trim().min(1).max(120) })
+      .parse(req.body);
+    return asCaller(userId, async (db) => {
+      // Read as the caller: a person outside what was shared with them is not found.
+      const saved = await db.query(
+        `insert into kin_word_choices (user_id, person_id, tree_id, term)
+         select $1, p.id, p.tree_id, $3 from persons p where p.id = $2 and p.deleted_at is null
+         on conflict (user_id, person_id) do update set term = excluded.term, created_at = now()
+         returning person_id`,
+        [userId, body.person_id, body.term],
+      );
+      if (!saved.rows[0]) throw new ApiError(404, 'person_not_found');
+      const known = await db.query(
+        `select 1 from kin_terms where path_code = $1 and language_code = any($2) and normalized_term = aywo_normalize($3) limit 1`,
+        [body.path_code, languageChain(body.language_code), body.term],
+      );
+      if (known.rows[0]) return { ok: true, sent: false };
+      // A relationship or language the dictionary does not have: the word is still yours on the card.
+      const fits = await db.query(`select 1 from kin_paths kp, languages l where kp.code = $1 and l.code = $2`, [body.path_code, body.language_code]);
+      if (!fits.rows[0]) return { ok: true, sent: false };
+      await db.query(
+        `insert into kin_terms (path_code, language_code, term, submitted_by) values ($1, $2, $3, $4) on conflict do nothing`,
+        [body.path_code, body.language_code, body.term, userId],
+      );
+      return { ok: true, sent: true };
+    });
+  });
+
+  // Back to the dictionary's word.
+  app.delete('/kin/own-word/:id', async (req) => {
+    const userId = await requireUser(req);
+    const { id } = idParam.parse(req.params);
+    await asCaller(userId, (db) => db.query(`delete from kin_word_choices where user_id = $1 and person_id = $2`, [userId, id]));
+    return { ok: true };
+  });
+
   app.post('/kin/reports', async (req) => {
     const userId = await requireUser(req);
     const body = z.object({ kin_term_id: z.uuid(), suggestion: z.string().trim().max(500).nullable().optional() }).parse(req.body);

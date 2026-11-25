@@ -42,6 +42,9 @@ export interface KinLabel {
   source: LabelSource;
   /** The dictionary row behind this word, so someone can report it. None for a built phrase. With 'ask', the elder word. */
   kinTermId?: string | null;
+  /** The viewer's own word for this one relative is on show. `usual` is the dictionary word it stands in for. */
+  own?: boolean;
+  usual?: string;
   /** Elder and younger words, when the order is not known and the language has no neutral word. */
   ask?: KinTerm[];
   /** Second label when the person is related two ways (cousin marriage). */

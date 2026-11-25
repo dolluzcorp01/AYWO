@@ -37,6 +37,9 @@ export interface TreeViewAnswer extends ApiTree<TreeNode> {
 export interface TreeLabel extends RelationInput {
   pathCode: string;
   native?: string | null;
+  /** Your own word for this relative is on show; `usual` is the dictionary's word it stands in for. */
+  own?: boolean;
+  usual?: string;
   /** The dictionary row behind the word on screen. None for a phrase built from the path. */
   kinTermId?: string | null;
   ask?: { term: string; native?: string | null }[];

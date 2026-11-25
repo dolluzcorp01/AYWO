@@ -21,6 +21,12 @@ export interface NotificationFacts {
   answer?: string | null;
   /** The number an SOS contact was saved under. */
   phone?: string | null;
+  /** A family word staff decided on, what was decided, and the word that replaced a reported one. */
+  word?: string | null;
+  decision?: string | null;
+  new_word?: string | null;
+  /** The word is set on one of the reader's own cards. */
+  on_card?: boolean;
   url: string;
 }
 
@@ -61,6 +67,45 @@ function alertText(lang: Lang, f: NotificationFacts): NotificationText {
   return { title, body: `${f.by_name ?? someone[lang]}: ${group}${f.note ?? ''}`.trim() };
 }
 
+// A family word staff looked at. It says which word and what was decided: "was reviewed" left the person guessing.
+// The word on the person's own card never depends on this decision, and the text says so.
+function wordReviewed(lang: Lang, f: NotificationFacts): NotificationText {
+  const word = f.word ? `"${f.word}"` : lang === 'ta' ? 'நீங்கள் அனுப்பிய சொல்' : 'The word you sent';
+  if (lang === 'ta') {
+    if (f.decision === 'approve') {
+      return {
+        title: 'உங்கள் சொல் ஏற்கப்பட்டது',
+        body: `${word} இப்போது AYWO-வின் குடும்பச் சொற்களில் உள்ளது. மற்ற குடும்பங்களும் இதைத் தேர்ந்தெடுக்கலாம்.${f.on_card ? ' உங்கள் மரத்தில் இது ஏற்கனவே தெரிகிறது.' : ' உங்கள் மரத்தில் காட்ட, அந்த உறவினரின் அட்டையைத் திறந்து "நாங்கள் வேறு சொல் பயன்படுத்துகிறோம்" என்பதைத் தொடுங்கள்.'}`,
+      };
+    }
+    return {
+      title: 'உங்கள் சொல் பொதுப் பட்டியலில் சேர்க்கப்படவில்லை',
+      body: `${word} மற்ற குடும்பங்கள் தேர்ந்தெடுக்கும் சொற்களில் சேர்க்கப்படவில்லை.${f.on_card ? ' உங்கள் மரத்தில் அது அப்படியே இருக்கும்; உங்களுக்கு மட்டும் தெரியும்.' : ''}`,
+    };
+  }
+  if (f.decision === 'approve') {
+    return {
+      title: 'Your word was approved',
+      body: `${word} is now one of AYWO's family words, so other families can choose it too.${f.on_card ? ' It already shows on your own tree.' : ` To show it on your tree, open that relative's card and tap "We use a different word".`}`,
+    };
+  }
+  return {
+    title: 'Your word was not added for others',
+    body: `${word} was not added to the words other families can choose.${f.on_card ? ' It stays on your own tree, where only you see it.' : ''}`,
+  };
+}
+
+// The answer to "this word is wrong". The person who reported it used to hear nothing.
+function reportDecided(lang: Lang, f: NotificationFacts): NotificationText {
+  const word = f.word ? `"${f.word}"` : lang === 'ta' ? 'நீங்கள் தெரிவித்த சொல்' : 'The word you reported';
+  if (lang === 'ta') {
+    if (f.decision !== 'accept') return { title: 'நீங்கள் தெரிவித்த சொல் சரிபார்க்கப்பட்டது', body: `${word} சரிபார்க்கப்பட்டது; அது அப்படியே இருக்கும். உங்கள் மரத்தில் வேறு சொல் வேண்டுமானால், அந்த அட்டையில் உங்கள் சொந்தச் சொல்லை அமைக்கலாம்.` };
+    return { title: 'நன்றி, சொல் திருத்தப்பட்டது', body: f.new_word ? `${word} இப்போது "${f.new_word}" என்று மாற்றப்பட்டது.` : `${word} AYWO-வின் குடும்பச் சொற்களிலிருந்து நீக்கப்பட்டது.` };
+  }
+  if (f.decision !== 'accept') return { title: 'We checked the word you reported', body: `${word} was checked and is staying as it is. If your family uses another word, you can set your own on that card.` };
+  return { title: 'Thank you, the word was fixed', body: f.new_word ? `${word} has been changed to "${f.new_word}".` : `${word} has been taken out of AYWO's family words.` };
+}
+
 const TEMPLATES: Record<Lang, Record<string, Template>> = {
   en: {
     system_notice: (f) => ({ title: f.title ?? 'A notice from AYWO', body: f.note ?? '' }),
@@ -73,7 +118,8 @@ const TEMPLATES: Record<Lang, Record<string, Template>> = {
     successor_named: (f) => ({ title: 'You were named successor', body: `${f.by_name ?? someone.en} named you to look after a family tree if they cannot.` }),
     tree_deleted: () => ({ title: 'A family tree was deleted', body: 'A family tree you were part of has been deleted by its Creator.' }),
     tree_passed_to_you: () => ({ title: 'A family tree is now yours to look after', body: 'You are now the Creator of a family tree. Open AYWO to see it.' }),
-    kin_term_reviewed: () => ({ title: 'Your word was reviewed', body: 'The word you suggested for a relationship has been reviewed. Open AYWO to see it.' }),
+    kin_term_reviewed: (f) => wordReviewed('en', f),
+    term_report_decided: (f) => reportDecided('en', f),
     person_taken_down: () => ({ title: 'An entry was removed', body: 'An entry in your family tree was removed after a request to AYWO.' }),
     alert: (f) => alertText('en', f),
     chat_message: (f) => ({ title: f.by_name ?? 'New message', body: f.note ?? 'Sent you a message.' }),
@@ -132,7 +178,8 @@ const TEMPLATES: Record<Lang, Record<string, Template>> = {
     successor_named: (f) => ({ title: 'நீங்கள் வாரிசாகக் குறிக்கப்பட்டீர்கள்', body: `${f.by_name ?? someone.ta} ஒரு குடும்ப மரத்தைப் பார்த்துக்கொள்ள உங்களைக் குறித்துள்ளார்.` }),
     tree_deleted: () => ({ title: 'ஒரு குடும்ப மரம் நீக்கப்பட்டது', body: 'நீங்கள் இருந்த ஒரு குடும்ப மரத்தை அதன் உருவாக்குநர் நீக்கினார்.' }),
     tree_passed_to_you: () => ({ title: 'ஒரு குடும்ப மரம் இப்போது உங்கள் பொறுப்பு', body: 'நீங்கள் இப்போது ஒரு குடும்ப மரத்தின் உருவாக்குநர். பார்க்க AYWO-வைத் திறக்கவும்.' }),
-    kin_term_reviewed: () => ({ title: 'உங்கள் சொல் பார்க்கப்பட்டது', body: 'நீங்கள் பரிந்துரைத்த உறவுச் சொல் பார்க்கப்பட்டது. அறிய AYWO-வைத் திறக்கவும்.' }),
+    kin_term_reviewed: (f) => wordReviewed('ta', f),
+    term_report_decided: (f) => reportDecided('ta', f),
     person_taken_down: () => ({ title: 'ஒரு பதிவு நீக்கப்பட்டது', body: 'AYWO-வுக்கு வந்த கோரிக்கையால் உங்கள் குடும்ப மரத்திலிருந்து ஒரு பதிவு நீக்கப்பட்டது.' }),
     alert: (f) => alertText('ta', f),
     chat_message: (f) => ({ title: f.by_name ?? 'புதிய செய்தி', body: f.note ?? 'உங்களுக்குச் செய்தி அனுப்பியுள்ளார்.' }),

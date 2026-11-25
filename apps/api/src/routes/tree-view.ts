@@ -1,7 +1,7 @@
 // LLD L5 nos. 5 and 6: the tree for family, and the tree through a shared link.
 import type { FastifyInstance } from 'fastify';
 import { labelTree } from '@aywo/kinship';
-import type { KinGraph, KinTerm } from '@aywo/kinship';
+import type { KinGraph, KinLabel, KinTerm } from '@aywo/kinship';
 import { branchIds, languageChain, toMemberNode, toOutsiderNode } from '@aywo/shared';
 import type { Gender, PersonRow } from '@aywo/shared';
 import { z } from 'zod';
@@ -47,7 +47,7 @@ export async function treeViewRoutes(app: FastifyInstance): Promise<void> {
         viewerPersonId = body.focus_person_id ?? null;
       }
 
-      let labels = {};
+      let labels: Record<string, KinLabel> = {};
       if (body.mode !== 'names' && viewerPersonId && persons.some((p) => p.id === viewerPersonId)) {
         const chain = languageChain(body.lang);
         const termRows = (
@@ -73,6 +73,16 @@ export async function treeViewRoutes(app: FastifyInstance): Promise<void> {
           parentLinks: links.map((l) => ({ parentId: l.parent_id, childId: l.child_id, kind: l.kind })),
         };
         labels = labelTree(graph, viewerPersonId, { languages: chain, terms });
+        // Your own word for a relative goes on top of the dictionary's. Only on your own view: seen "as" someone
+        // else, the words are that person's, and your word for your brother is not theirs.
+        if (body.mode !== 'see_as') {
+          const own = (await db.query(`select person_id, term from kin_word_choices where user_id = $1 and tree_id = $2`, [userId, body.tree_id])).rows;
+          for (const choice of own) {
+            const label = labels[choice.person_id];
+            if (!label) continue;
+            labels[choice.person_id] = { ...label, label: choice.term, native: null, own: true, usual: label.label };
+          }
+        }
       }
       return { tree, role, persons, unions, links, contacts, labels, viewerPersonId };
     });

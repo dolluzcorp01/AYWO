@@ -78,6 +78,10 @@ export function noticeWords(row: NoticeRow): { title: string; body: string; path
     step: str(row.payload?.step),
     answer: str(row.payload?.answer),
     phone: str(row.payload?.phone),
+    word: str(row.payload?.term),
+    decision: str(row.payload?.decision),
+    new_word: str(row.payload?.new_term),
+    on_card: row.payload?.on_card === true,
     url: `${config.WEB_URL}${path}`,
   };
   const text = notificationText(row.kind, facts, row.language_code);

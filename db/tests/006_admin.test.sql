@@ -1,7 +1,7 @@
 -- AYWO Admin and Sub-admin: permissions, privacy and the audit log. Run: supabase test db
 begin;
 create extension if not exists pgtap;
-select plan(122);
+select plan(123);
 
 insert into languages (code, name_en) values ('en', 'English') on conflict (code) do nothing;
 insert into kin_paths (code, description_en, generation, blood) values ('T_ADMIN', 'test path', 0, true) on conflict (code) do nothing;
@@ -86,6 +86,7 @@ select is((select count(*)::int from admin_audit_log where action = 'kin_term.ap
 select is((select term from kin_terms where id = '30000000-0000-0000-0000-0000000000e2'), 'testwordfixed', 'an accepted report replaces the word');
 select is((select count(*)::int from admin_audit_log where action = 'term_report.accepted'), 1, 'deciding a report is audited');
 select is((select count(*)::int from notifications where kind = 'kin_term_reviewed' and recipient_id = '00000000-0000-0000-0000-0000000000e4'), 1, 'the person who sent the word is told');
+select is((select count(*)::int from notifications where kind = 'term_report_decided'), 1, 'the person who reported a word is told what was decided');
 
 -- ===== Sub-admin with takedowns and users =====
 select test_login('00000000-0000-0000-0000-0000000000e3');
