@@ -20,6 +20,9 @@ function toDate(type: 'date' | 'time', value: string): Date {
   }
   const m = value.match(/^(\d{1,2}):(\d{2})$/);
   if (m) now.setHours(Number(m[1]), Number(m[2]), 0, 0);
+  // Nothing picked yet: the clock opens on the next full hour, minutes at 00. It used to open on this very minute
+  // (2:25, 6:47), so picking only the hour left an odd time nobody meant.
+  else now.setHours(now.getHours() + 1, 0, 0, 0);
   return now;
 }
 
