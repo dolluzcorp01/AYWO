@@ -13,7 +13,7 @@ import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Card, ErrorText, Field, LoadFailed, Loading, Muted, SmallButton, TopBar } from '@/components/ui';
 import { errorCode, useErrorText } from '@/lib/errors';
-import { colors, fonts, minTapSize } from '@/theme/tokens';
+import { colors, fonts, minTapSize, shadows } from '@/theme/tokens';
 
 /**
  * A search box for a list that has grown long (more than 8 lines): `box(list)` draws it, `filter(list)` keeps the
@@ -88,24 +88,54 @@ export function ActionError({ error }: { error: unknown }) {
   return <ErrorText>{errorText(error)}</ErrorText>;
 }
 
-/** `second` is a line of its own under the subtitle, kept whole: a date and time, for example. */
-export function Row({ title, subtitle, second, badge, onPress, urgent }: { title: string; subtitle?: string | null; second?: string | null; badge?: number; onPress?: () => void; urgent?: boolean }) {
+/**
+ * One line of a list. `lead` is what stands at its start (a face, a sign in a coloured circle); `meta` is the small
+ * word at its end (how long ago). `second` is a line of its own under the subtitle, kept whole: a date and time.
+ * `fresh` marks a line with something new on it. `index` brings the first lines of a list in one after another.
+ */
+export function Row({ title, subtitle, second, badge, onPress, urgent, lead, meta, fresh, index }: {
+  title: string;
+  subtitle?: string | null;
+  second?: string | null;
+  badge?: number;
+  onPress?: () => void;
+  urgent?: boolean;
+  lead?: ReactNode;
+  meta?: string | null;
+  fresh?: boolean;
+  index?: number;
+}) {
   const body = (
     <>
+      {lead}
       <View style={styles.rowText}>
-        <Text style={[styles.rowTitle, urgent && styles.urgent]} numberOfLines={1}>{title}</Text>
-        {subtitle ? <Text style={styles.rowSub} numberOfLines={2}>{subtitle}</Text> : null}
+        <View style={styles.rowTop}>
+          <Text style={[styles.rowTitle, urgent && styles.urgent]} numberOfLines={1}>{title}</Text>
+          {meta ? <Text style={[styles.rowMeta, fresh && styles.rowMetaFresh]}>{meta}</Text> : null}
+        </View>
+        {subtitle ? <Text style={[styles.rowSub, fresh && styles.rowSubFresh]} numberOfLines={2}>{subtitle}</Text> : null}
         {second ? <Text style={styles.rowSecond} numberOfLines={1}>{second}</Text> : null}
       </View>
       {badge ? <Badge count={badge} /> : null}
-      {onPress ? <ChevronIcon color={colors.muted} size={18} /> : null}
+      {onPress && !lead ? <ChevronIcon color={colors.muted} size={18} /> : null}
     </>
   );
-  if (!onPress) return <View style={styles.row}>{body}</View>;
-  return (
-    <Bouncy accessibilityRole="button" onPress={onPress} to={0.985} hoverStyle={styles.rowHover} style={styles.row}>
+  const line = !onPress ? (
+    <View style={styles.row}>{body}</View>
+  ) : (
+    <Bouncy accessibilityRole="button" onPress={onPress} to={0.985} hoverStyle={styles.rowHover} style={[styles.row, fresh && styles.rowFresh]}>
       {body}
     </Bouncy>
+  );
+  return index === undefined ? line : <Rise delay={Math.min(index, 8) * 40}>{line}</Rise>;
+}
+
+/** A sign in a soft coloured circle, for the start of a line that has no face. */
+export function RowSign({ icon: Sign, ink = colors.logoPurple, back = colors.tint }: { icon: (p: { color: string; size?: number; width?: number }) => ReactNode; ink?: string; back?: string }) {
+  return (
+    <View style={[styles.rowSign, { backgroundColor: back }]}>
+      <Sign color={ink} size={22} width={1.8} />
+    </View>
   );
 }
 
@@ -198,18 +228,25 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    minHeight: minTapSize + 12,
+    gap: 12,
+    minHeight: minTapSize + 16,
     padding: 14,
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.cardBorder,
     backgroundColor: colors.card,
+    ...shadows.card,
   },
   loaded: { gap: 12, flexGrow: 1 },
   rowHover: { backgroundColor: colors.tint, borderColor: colors.line },
+  rowFresh: { borderColor: colors.dashed, backgroundColor: '#FCFAFF' },
   rowText: { flex: 1, minWidth: 0 },
-  rowTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15 },
+  rowTop: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
+  rowTitle: { flex: 1, minWidth: 0, color: colors.text, fontFamily: fonts.extrabold, fontSize: 16 },
+  rowMeta: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 12 },
+  rowMetaFresh: { color: colors.relation, fontFamily: fonts.bold },
+  rowSubFresh: { color: colors.text, fontFamily: fonts.semibold },
+  rowSign: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
   urgent: { color: colors.alert },
   rowSub: { color: colors.muted, fontFamily: fonts.medium, fontSize: 13, lineHeight: 18, marginTop: 2 },
   rowSecond: { color: colors.text, fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18, marginTop: 2 },

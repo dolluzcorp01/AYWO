@@ -6,7 +6,9 @@ import { EmptyState, PrimaryButton } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useTimeAgo } from '@/lib/time';
 import { InviteFamily } from '@/social/InviteFamily';
-import { Gate, Note, Page, Row, useListSearch, useName } from '@/social/parts';
+import { Gate, Note, Page, Row, RowSign, useListSearch, useName } from '@/social/parts';
+import { Avatar } from '@/components/Avatar';
+import { FriendsIcon } from '@/components/Icons';
 import type { ChatRow } from '@/social/types';
 import { FETCH_WHEN_OFFLINE_MS, useChatSocket } from '@/social/useChatSocket';
 
@@ -49,11 +51,16 @@ export default function ChatList() {
             ) : null}
             {search.box(list)}
             {search.nothing(list) ? <Note>{t('search.nothing')}</Note> : null}
-            {search.filter(list).map((chat) => (
+            {search.filter(list).map((chat, i) => (
               <Row
                 key={chat.id}
+                index={i}
+                // A face for a person, the family sign for a group: the list is found by eye, not by reading.
+                lead={chat.kind === 'group' ? <RowSign icon={FriendsIcon} /> : <Avatar personId={chat.other_id ?? chat.id} size={46} name={showName(chat.name)} />}
                 title={showName(chat.name)}
-                subtitle={`${preview(chat)}${chat.last_message_at ? ` · ${ago(chat.last_message_at)}` : ''}`}
+                subtitle={preview(chat)}
+                meta={chat.last_message_at ? ago(chat.last_message_at) : null}
+                fresh={chat.unread > 0}
                 badge={chat.unread}
                 onPress={() => router.push({ pathname: '/social/chat/[id]', params: { id: chat.id } })}
               />

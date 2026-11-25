@@ -4,7 +4,9 @@ import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, PrimaryButton } from '@/components/ui';
 import { api } from '@/lib/api';
-import { Gate, Page, Row } from '@/social/parts';
+import { Gate, Page, Row, RowSign } from '@/social/parts';
+import { FriendsIcon } from '@/components/Icons';
+import { colors } from '@/theme/tokens';
 import type { GroupRow } from '@/social/types';
 
 export default function Groups() {
@@ -20,9 +22,11 @@ export default function Groups() {
             <EmptyState message={t('social.groups.empty')} />
           ) : (
             <>
-              {list.map((g) => (
+              {list.map((g, i) => (
                 <Row
                   key={g.id}
+                  index={i}
+                  lead={<RowSign icon={FriendsIcon} ink={colors.logoIndigo} back={colors.celebrationTint} />}
                   title={g.name}
                   subtitle={t('social.groups.memberCount', { count: g.members })}
                   onPress={() => router.push({ pathname: '/social/groups/[id]', params: { id: g.id } })}
