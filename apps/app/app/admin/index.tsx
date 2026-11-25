@@ -5,7 +5,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from '@/lib/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { ChevronIcon } from '@/components/Icons';
+import { Bouncy, Breathe } from '@/components/Motion';
 import { TwoStepSetup } from '@/admin/TwoStep';
 import { waitingFrom } from '@/admin/waiting';
 import { Actions, AdminPage, adminStyles, Panel, QueryState, Section, SecondaryButton, StatCard, StatRow } from '@/admin/ui';
@@ -47,11 +49,23 @@ export default function AdminDashboard() {
               ) : (
                 <View style={{ gap: 8 }}>
                   {waitingFrom(data).map((item) => (
-                    <Pressable key={item.key} accessibilityRole="link" onPress={() => router.navigate(item.href)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 36 }}>
-                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.alert }} />
+                    // Each thing waiting is a warm line of its own that gives when pressed, with a red dot that breathes.
+                    <Bouncy
+                      key={item.key}
+                      accessibilityRole="link"
+                      onPress={() => router.navigate(item.href)}
+                      to={0.985}
+                      hoverStyle={{ backgroundColor: colors.celebrationTint }}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, paddingHorizontal: 14, borderRadius: 14, backgroundColor: colors.warmTint, borderWidth: 1, borderColor: colors.warmBorder }}
+                    >
+                      <View style={{ width: 10, height: 10, alignItems: 'center', justifyContent: 'center' }}>
+                        <Breathe size={10} color={colors.alert} />
+                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.alert }} />
+                      </View>
                       <Text style={[adminStyles.cellStrong, { flex: 1 }]}>{t(`admin.waitingNow.items.${item.key}`, { count: item.count })}</Text>
-                      <Text style={[adminStyles.cellStrong, { textDecorationLine: 'underline' }]}>{t('admin.waitingNow.open')}</Text>
-                    </Pressable>
+                      <Text style={[adminStyles.cellStrong, { color: colors.ask }]}>{t('admin.waitingNow.open')}</Text>
+                      <ChevronIcon color={colors.ask} size={16} />
+                    </Bouncy>
                   ))}
                 </View>
               )}

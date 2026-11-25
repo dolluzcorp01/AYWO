@@ -3,15 +3,17 @@ import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-quer
 import type { UseQueryResult } from '@tanstack/react-query';
 import { usePathname } from 'expo-router';
 import { useRouter } from '@/lib/router';
-import { useEffect, useRef, useState } from 'react';
+import { Children, cloneElement, isValidElement, useEffect, useRef, useState } from 'react';
 import type { ComponentRef, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import type { StyleProp, TextStyle } from 'react-native';
 import { Spinner } from '@/components/Loaders';
 import { Bouncy, PageEnter, Rise, softLift } from '@/components/Motion';
-import { Card, Heading, Muted } from '@/components/ui';
+import { Card, EmptyState, Heading, Muted } from '@/components/ui';
 import { ApiFailure, api } from '@/lib/api';
-import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
+import { colors, fonts, gradients, minTapSize, radius, shadows } from '@/theme/tokens';
 import { useAdminAccess } from './access';
 import { AdminNames } from './AdminNames';
 import { downloadSheet, sheetDay } from './sheet';
@@ -228,7 +230,7 @@ export function QueryState<T>({
   if (isEmpty?.(query.data)) {
     return (
       <View style={styles.state}>
-        <Message text={emptyText ?? t('admin.common.empty')} />
+        <EmptyState message={emptyText ?? t('admin.common.empty')} />
       </View>
     );
   }
@@ -304,7 +306,16 @@ function TableRow({ marked, children }: { marked: boolean; children: ReactNode }
       pop.stopAnimation();
     };
   }, [marked, pop]);
-  if (!marked) return <View role="row" style={styles.row}>{children}</View>;
+  // Under the mouse a row is tinted, so the eye keeps its place across a wide table.
+  const [over, setOver] = useState(false);
+  if (!marked) {
+    return (
+      // A plain box, not a button: text in a row can still be selected and copied.
+      <View role="row" {...({ onMouseEnter: () => setOver(true), onMouseLeave: () => setOver(false) } as object)} style={[styles.row, softLift, over && styles.rowOver]}>
+        {children}
+      </View>
+    );
+  }
   return (
     <Animated.View role="row" style={[styles.row, styles.rowMarked, { transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [1, 1.012] }) }] }]}>
       {children}
@@ -521,24 +532,77 @@ export function formatDay(iso: string | null | undefined, language: string): str
   return new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(new Date(iso));
 }
 
-export function StatCard({ label, value, onPress }: { label: string; value: number | string; onPress?: () => void }) {
+/**
+ * A number counted up from zero when the page opens, so a dashboard arrives instead of just being there.
+ * Anything that is not a whole number (money, "12%") is shown as it is.
+ */
+function CountUp({ value, style }: { value: number | string; style: StyleProp<TextStyle> }) {
+  const whole = typeof value === 'number' && Number.isInteger(value) && value > 0 && value < 100000;
+  const [shown, setShown] = useState(whole ? 0 : value);
+  useEffect(() => {
+    if (!whole) {
+      setShown(value);
+      return undefined;
+    }
+    const target = value as number;
+    let left = false;
+    let frame = 0;
+    const started = Date.now();
+    void AccessibilityInfo.isReduceMotionEnabled().then((reduced) => {
+      if (left) return;
+      if (reduced) {
+        setShown(target);
+        return;
+      }
+      const tick = () => {
+        const part = Math.min(1, (Date.now() - started) / 600);
+        // Fast at first, easing to a stop on the real number.
+        setShown(Math.round(target * (1 - Math.pow(1 - part, 3))));
+        if (part < 1 && !left) frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
+    });
+    return () => {
+      left = true;
+      cancelAnimationFrame(frame);
+    };
+  }, [value, whole]);
+  return <Text style={style}>{shown}</Text>;
+}
+
+/**
+ * One number on a dashboard. A number above zero is in indigo under a thin band of the logo's colours; a zero is
+ * quiet grey with no band, so the cards that have something in them are found at a glance.
+ */
+export function StatCard({ label, value, onPress, index = 0 }: { label: string; value: number | string; onPress?: () => void; /** Its place in the row, set by StatRow: later cards rise in a moment later. */ index?: number }) {
+  const nothing = value === 0 || value === '0';
   const body = (
-    <Card>
-      <Text style={styles.statValue}>{value}</Text>
+    <Card style={styles.statCard}>
+      {nothing ? null : <LinearGradient colors={gradients.merge} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.statBand} />}
+      <CountUp value={value} style={[styles.statValue, nothing && styles.statValueNone]} />
       <Text style={styles.statLabel}>{label}</Text>
     </Card>
   );
-  return onPress ? (
-    <Pressable accessibilityRole="link" onPress={onPress} style={({ hovered }: { hovered?: boolean }) => [styles.stat, styles.statLink, hovered && styles.statHover]}>
-      {body}
-    </Pressable>
-  ) : (
-    <View style={styles.stat}>{body}</View>
+  return (
+    <Rise delay={Math.min(index, 8) * 50} style={styles.stat}>
+      {onPress ? (
+        <Pressable accessibilityRole="link" onPress={onPress} style={({ hovered }: { hovered?: boolean }) => [styles.statLink, hovered && styles.statHover]}>
+          {body}
+        </Pressable>
+      ) : (
+        body
+      )}
+    </Rise>
   );
 }
 
+/** A row of number cards. They rise in one after another, left to right. */
 export function StatRow({ children }: { children: ReactNode }) {
-  return <View style={styles.stats}>{children}</View>;
+  return (
+    <View style={styles.stats}>
+      {Children.toArray(children).map((child, i) => (isValidElement<{ index?: number }>(child) ? cloneElement(child, { index: i }) : child))}
+    </View>
+  );
 }
 
 export function DialogFrame({ title, text, children }: { title: string; text?: string; children: ReactNode }) {
@@ -899,9 +963,13 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   stat: { minWidth: 190, flexGrow: 1, flexBasis: 190 },
   // A number card that opens its list: the hand pointer, and it lifts a little under the mouse.
-  statLink: { cursor: 'pointer', borderRadius: radius.card, ...softLift },
+  statLink: { cursor: 'pointer', borderRadius: radius.card, flexGrow: 1, ...softLift },
   statHover: { transform: [{ translateY: -2 }], ...shadows.raised },
-  statValue: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 30, letterSpacing: -0.6 },
+  statValue: { color: colors.logoIndigo, fontFamily: fonts.extrabold, fontSize: 30, letterSpacing: -0.6 },
+  statValueNone: { color: colors.idleTab },
+  statCard: { overflow: 'hidden', flexGrow: 1 },
+  statBand: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
+  rowOver: { backgroundColor: colors.tint },
   statLabel: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 14 },
   backdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
   scrim: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: colors.text, opacity: 0.45 },
