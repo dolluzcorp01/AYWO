@@ -60,6 +60,9 @@ export default function InviteDetail() {
   const [menuTyped, setMenu] = useState<string | null>(null);
   const [clearingCanva, setClearingCanva] = useState(false);
   const [paymentNote, setPaymentNote] = useState(false);
+  // The card designs stay folded away until asked for. Open all the time, the long list of designs to buy sat
+  // between the invitation and its Edit and Cancel buttons, on an invitation that was already made.
+  const [designOpen, setDesignOpen] = useState(false);
   // The host fixes a wrong date, title or place, and takes off someone invited by mistake.
   const [details, setDetails] = useState<{ title: string; date: string; time: string; place: string; note: string } | null>(null);
   const [uninviting, setUninviting] = useState<{ id: string; name: string } | null>(null);
@@ -357,7 +360,24 @@ export default function InviteDetail() {
 
               {e.is_mine && !e.cancelled ? (
                 <>
-                  {!isPop ? (
+                  {!isPop || e.starts_at ? (
+                    <SecondaryButton
+                      label={t('social.invites.editDetails')}
+                      onPress={() => {
+                        const at = e.starts_at ? new Date(e.starts_at) : null;
+                        const two = (n: number) => String(n).padStart(2, '0');
+                        setDetails({
+                          title: e.title,
+                          date: at ? `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}` : '',
+                          time: at ? `${two(at.getHours())}:${two(at.getMinutes())}` : '',
+                          place: e.place ?? '',
+                          note: e.note ?? '',
+                        });
+                      }}
+                    />
+                  ) : null}
+                  {!isPop ? <SecondaryButton label={t('social.invites.design')} onPress={() => setDesignOpen(!designOpen)} /> : null}
+                  {!isPop && (designOpen || paymentNote || bought !== null) ? (
                     <Card style={styles.card}>
                       <SectionTitle>{t('social.invites.design')}</SectionTitle>
                       <Pills
@@ -388,22 +408,6 @@ export default function InviteDetail() {
                       ) : null}
                       {e.canva_url ? <TextButton label={t('social.invites.removeCanva')} danger onPress={() => setClearingCanva(true)} /> : null}
                     </Card>
-                  ) : null}
-                  {!isPop || e.starts_at ? (
-                    <SecondaryButton
-                      label={t('social.invites.editDetails')}
-                      onPress={() => {
-                        const at = e.starts_at ? new Date(e.starts_at) : null;
-                        const two = (n: number) => String(n).padStart(2, '0');
-                        setDetails({
-                          title: e.title,
-                          date: at ? `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}` : '',
-                          time: at ? `${two(at.getHours())}:${two(at.getMinutes())}` : '',
-                          place: e.place ?? '',
-                          note: e.note ?? '',
-                        });
-                      }}
-                    />
                   ) : null}
                   <TextButton label={t('social.invites.cancel')} danger onPress={() => setCancelling(true)} />
                 </>
