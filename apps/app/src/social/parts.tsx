@@ -192,8 +192,14 @@ export function parseDateTime(date: string, time: string): Date | null {
  */
 export function readDateOption(label: string): { date: string; time: string } | null {
   const m = label.trim().match(/^(\d{4}-\d{2}-\d{2})(?: (\d{2}:\d{2}))?$/);
-  if (!m) return null;
-  return { date: m[1], time: m[2] ?? '' };
+  if (m) return { date: m[1], time: m[2] ?? '' };
+  // A full timestamp (2026-12-19T12:30:00.000Z), as the demo family and older data have it: read as the reader's
+  // own local day and time. It used to be shown raw, letter for letter.
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(label.trim())) return null;
+  const at = new Date(label.trim());
+  if (Number.isNaN(at.getTime())) return null;
+  const two = (n: number) => String(n).padStart(2, '0');
+  return { date: `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}`, time: `${two(at.getHours())}:${two(at.getMinutes())}` };
 }
 
 /** How a Pop Party date choice reads on screen. Words typed by hand are shown as they are. */

@@ -2,9 +2,11 @@
 import { DateField, TimeField } from '@/components/DateTimeField';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, Share, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Linking, Share, StyleSheet, View } from 'react-native';
+import { CheckIcon } from '@/components/Icons';
+import { Bouncy } from '@/components/Motion';
 import { Text } from '@/components/Text';
 import { Card, ConfirmDialog, Field, Pills, PrimaryButton, SecondaryButton, SectionTitle, SmallButton, TextButton } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -17,21 +19,63 @@ import type { Design, EventDetail, PollRow, RsvpAnswer } from '@/social/types';
 import { DateTimeRow } from '@/components/DateTimeRow';
 import { colors, fonts } from '@/theme/tokens';
 
+/**
+ * One choice in a vote. A bar behind the words fills to its share of the votes and glides as votes come in, so who
+ * is ahead is seen without reading the numbers. The voter's own choice is ringed in purple with a tick.
+ */
+function PollOption({ title, votes, leading, share, mine, onPress }: { title: string; votes: string; leading: string | null; share: number; mine: boolean; onPress?: () => void }) {
+  const fill = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(fill, { toValue: share, duration: 450, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+  }, [fill, share]);
+  const body = (
+    <>
+      <Animated.View style={[styles.pollFill, mine && styles.pollFillMine, { width: fill.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]} />
+      <View style={styles.pollWords}>
+        <Text style={styles.pollTitle} numberOfLines={2}>{title}</Text>
+        <View style={styles.pollMeta}>
+          <Text style={styles.pollVotes}>{votes}</Text>
+          {leading ? (
+            <View style={styles.pollLead}>
+              <Text style={styles.pollLeadText}>{leading}</Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+      {mine ? (
+        <View style={styles.pollTick}>
+          <CheckIcon color={colors.white} size={14} width={3} />
+        </View>
+      ) : null}
+    </>
+  );
+  if (!onPress) return <View style={[styles.poll, mine && styles.pollMine]}>{body}</View>;
+  return (
+    <Bouncy accessibilityRole="button" accessibilityState={{ selected: mine }} onPress={onPress} to={0.98} style={[styles.poll, mine && styles.pollMine]}>
+      {body}
+    </Bouncy>
+  );
+}
+
 function PollCard({ poll, onVote, busy }: { poll: PollRow; onVote: (option: string) => void; busy: boolean }) {
   const { t } = useTranslation();
   const showDate = useDateOption();
   // A date choice picked from the calendar reads in the reader's own language.
   const label = (text: string) => (poll.topic === 'date' ? showDate(text) : text);
   const most = Math.max(...poll.options.map((o) => o.votes), 0);
+  const total = poll.options.reduce((sum, o) => sum + o.votes, 0);
   return (
     <Card style={styles.card}>
       <SectionTitle>{t(`social.pop.topics.${poll.topic}`)}</SectionTitle>
       {poll.closed ? <Note>{t('social.pop.pollClosed')}</Note> : null}
       {poll.options.map((o) => (
-        <Row
+        <PollOption
           key={o.id}
           title={poll.my_option === o.id ? t('social.pop.yourVote', { label: label(o.label) }) : label(o.label)}
-          subtitle={`${t('social.pop.votes', { count: o.votes })}${most > 0 && o.votes === most ? ` · ${t('social.pop.leading')}` : ''}`}
+          votes={t('social.pop.votes', { count: o.votes })}
+          leading={most > 0 && o.votes === most ? t('social.pop.leading') : null}
+          share={total > 0 ? o.votes / total : 0}
+          mine={poll.my_option === o.id}
           onPress={poll.closed || busy ? undefined : () => onVote(o.id)}
         />
       ))}
@@ -484,6 +528,17 @@ export default function InviteDetail() {
 }
 
 const styles = StyleSheet.create({
+  poll: { minHeight: 60, borderRadius: 16, borderWidth: 1, borderColor: colors.cardBorder, backgroundColor: colors.card, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, gap: 10 },
+  pollMine: { borderColor: colors.logoPurple, borderWidth: 2 },
+  pollFill: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: colors.tint },
+  pollFillMine: { backgroundColor: colors.tintDeep },
+  pollWords: { flex: 1, minWidth: 0, gap: 3 },
+  pollTitle: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 15, lineHeight: 20 },
+  pollMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  pollVotes: { color: colors.muted, fontFamily: fonts.semibold, fontSize: 13 },
+  pollLead: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: colors.logoYellow },
+  pollLeadText: { color: colors.text, fontFamily: fonts.bold, fontSize: 11 },
+  pollTick: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.logoPurple, alignItems: 'center', justifyContent: 'center' },
   card: { gap: 10 },
   premium: { gap: 8 },
   start: { alignSelf: 'flex-start' },

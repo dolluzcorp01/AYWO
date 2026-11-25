@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { ChevronIcon } from '@/components/Icons';
+import { Bouncy, Fade } from '@/components/Motion';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { LoadFailed, Loading, PrimaryButton, SecondaryButton, TopBar } from '@/components/ui';
@@ -135,7 +136,8 @@ export default function Calendar() {
               }}
             />
           ) : (
-          <>
+          // Each month fades in as it is turned to, in place of the numbers jumping.
+          <Fade key={`${year}-${month0}`} style={{ gap: 4 }}>
           <View style={styles.week}>
             {weekdays.map((w, i) => (
               <Text key={i} style={styles.weekday} numberOfLines={1}>{w}</Text>
@@ -186,7 +188,7 @@ export default function Calendar() {
               </View>
             ))}
           </View>
-          </>
+          </Fade>
           )}
         </View>
 
@@ -308,18 +310,19 @@ function ItemRow({ item, onPress }: { item: CalendarItem; onPress: () => void })
     sub = [item.event_kind ? t(`social.invites.kinds.${item.event_kind}`) : '', time, item.me ? t('social.invites.youHost') : ''].filter(Boolean).join(' · ');
   }
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.row}>
+    <Bouncy accessibilityRole="button" onPress={onPress} to={0.985} hoverStyle={styles.rowHover} style={styles.row}>
       <View style={[styles.rowMark, { backgroundColor: KIND_COLOUR[item.kind] }]} />
       <View style={styles.rowText}>
         <Text style={styles.rowTitle} numberOfLines={2}>{title}</Text>
         {sub ? <Text style={styles.rowSub} numberOfLines={2}>{sub}</Text> : null}
       </View>
       <ChevronIcon color={colors.muted} size={18} />
-    </Pressable>
+    </Bouncy>
   );
 }
 
 const styles = StyleSheet.create({
+  rowHover: { backgroundColor: colors.tint },
   scroll: { paddingTop: 14, paddingBottom: 24 },
   layout: { gap: 16 },
   layoutWide: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', width: '100%', maxWidth: 1140, alignSelf: 'center' },
