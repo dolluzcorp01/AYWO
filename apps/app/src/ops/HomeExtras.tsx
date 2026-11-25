@@ -3,9 +3,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from '@/lib/router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { PhotoIcon } from '@/components/Icons';
+import { SideStrip } from '@/components/SideStrip';
 import { Text } from '@/components/Text';
 import { api } from '@/lib/api';
 import { firstName } from '@/lib/account';
@@ -38,7 +39,7 @@ export function FamilyDates() {
           <Text style={styles.seeAll}>{t('calendar.seeAll')}</Text>
         </Pressable>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
+      <SideStrip contentStyle={styles.strip}>
         {list.map((d) => (
           <Pressable
             key={`${d.kind}-${d.person_id}`}
@@ -57,7 +58,7 @@ export function FamilyDates() {
             <Text style={[styles.when, d.days === 0 && styles.whenToday]}>{when(d)}</Text>
           </Pressable>
         ))}
-      </ScrollView>
+      </SideStrip>
     </View>
   );
 }
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
   headRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   seeAll: { color: colors.logoPurple, fontFamily: fonts.bold, fontSize: 14 },
   section: { color: colors.text, fontFamily: fonts.extrabold, fontSize: 18, letterSpacing: -0.3 },
-  strip: { gap: 10, paddingRight: 8 },
+  strip: { gap: 10, paddingRight: 8, paddingBottom: 6 },
   date: {
     width: 112,
     alignItems: 'center',

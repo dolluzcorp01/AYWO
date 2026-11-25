@@ -6,6 +6,7 @@ import { useRouter } from '@/lib/router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { SideStrip } from '@/components/SideStrip';
 import { PhoneField } from '@/components/PhoneField';
 import { Text } from '@/components/Text';
 import { Card, ConfirmDialog, Field, Label, Pills, PrimaryButton, SectionTitle, SmallButton } from '@/components/ui';
@@ -210,11 +211,11 @@ export default function Shop() {
             </View>
             {/* More pictures of the chosen product, when staff added more than one. */}
             {(price?.images?.length ?? 0) > 1 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery}>
+              <SideStrip contentStyle={styles.gallery}>
                 {(price?.images ?? []).slice(1).map((uri) => (
                   <Image key={uri} source={{ uri }} resizeMode="cover" accessibilityLabel={productWords.name(product)} style={styles.galleryPicture} />
                 ))}
-              </ScrollView>
+              </SideStrip>
             ) : null}
 
             {(trees.data ?? []).length > 1 ? (
