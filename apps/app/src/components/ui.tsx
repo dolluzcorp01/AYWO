@@ -1,13 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { PageLoader } from '@/components/Loaders';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { BackIcon } from '@/components/ContactIcon';
 import { CheckIcon, CloseIcon } from '@/components/Icons';
-import { Appear, Bouncy, Rise, useGlide } from '@/components/Motion';
+import { Appear, Bouncy, Rise, softHover, useGlide } from '@/components/Motion';
 import { Text, TextInput } from '@/components/Text';
 import { hideToastIf, showToast } from '@/components/Toast';
 import { useSimpleMode } from '@/lib/prefs';
@@ -172,6 +172,8 @@ export function ErrorText({ children }: { children: ReactNode }) {
 export function Field({ label, style, invalid, accessory, ...input }: { label?: string; invalid?: boolean; accessory?: ReactNode } & ComponentProps<typeof TextInput>) {
   // The box always sits in the same row, with or without something beside it. When the row was only added once an
   // accessory appeared (a Clear button after the first letter, say), the box was built again and lost the cursor.
+  // The box being typed in lights up in purple, so the eye never has to hunt for the cursor.
+  const [focused, setFocused] = useState(false);
   return (
     <View style={styles.field}>
       {label ? <Label>{label}</Label> : null}
@@ -180,7 +182,15 @@ export function Field({ label, style, invalid, accessory, ...input }: { label?: 
           accessibilityLabel={label}
           placeholderTextColor={colors.muted}
           {...input}
-          style={[styles.input, styles.inputBeside, style, invalid && styles.inputInvalid]}
+          onFocus={(event) => {
+            setFocused(true);
+            input.onFocus?.(event);
+          }}
+          onBlur={(event) => {
+            setFocused(false);
+            input.onBlur?.(event);
+          }}
+          style={[styles.input, styles.inputBeside, softHover, style, focused && styles.inputFocused, invalid && styles.inputInvalid]}
         />
         {accessory}
       </View>
@@ -370,6 +380,7 @@ const styles = StyleSheet.create({
   fieldRowTop: { alignItems: 'flex-start' },
   inputBeside: { flex: 1, minWidth: 0 },
   inputInvalid: { borderColor: colors.alert, borderWidth: 2 },
+  inputFocused: { borderColor: colors.logoPurple, backgroundColor: '#FDFBFF', ...Platform.select({ web: { boxShadow: '0 0 0 4px rgba(142,38,225,0.12)', outlineStyle: 'none' }, default: {} }) } as never,
   input: {
     minHeight: 54,
     borderRadius: radius.button,
