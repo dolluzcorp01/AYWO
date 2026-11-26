@@ -3910,5 +3910,20 @@
     "whichIsYou": "Tap your own name in the list first.",
     "relative": "Still needed: choose a relative of yours from the list.",
     "relation": "Still needed: how you are related to them."
+  },
+  "firstSteps": {
+    "title": "Your first steps",
+    "progress": "{{done}} of {{total}} done",
+    "doneWord": "Done",
+    "family": "Add your parents",
+    "familyHelp": "Start with your mother and father. It takes a minute.",
+    "invite": "Invite one relative",
+    "inviteName": "Invite {{name}}",
+    "inviteHelp": "They get a link and can add their side of the family.",
+    "inviteWait": "Add a relative first, then you can invite them.",
+    "photo": "Add your photo",
+    "photoHelp": "So your family knows it is you.",
+    "more": "See everything else in AYWO",
+    "hide": "Hide these steps"
   }
 }

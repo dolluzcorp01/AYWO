@@ -10,7 +10,10 @@ import { PageLoader } from '@/components/Loaders';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Heading, LoadFailed, Muted, PrimaryButton, SecondaryButton, TextButton } from '@/components/ui';
+import { closeFamily, focusView, graphFromApi } from '@aywo/layout';
+import { firstName } from '@/lib/account';
 import { useErrorText } from '@/lib/errors';
+import { canShare } from '@/tree/roles';
 import { FAMILY_STEPS, familyGaps, stepRoute } from '@/tree/familyGaps';
 import type { FamilyStep } from '@/tree/familyGaps';
 import { useTreeView } from '@/tree/useTreeView';
@@ -64,6 +67,13 @@ export default function FamilyGuide() {
   const people = tree.data.nodes.filter((n) => !n.nameUnknown).length;
 
   if (!current) {
+    // The next thing after adding family is bringing one of them in. Offer exactly that, by name, before the tree.
+    const data = tree.data;
+    const invite = canShare(data.role)
+      ? closeFamily(focusView(graphFromApi(data), me))
+          .map((id) => data.nodes.find((n) => n.id === id))
+          .find((n) => !!n && !n.joined && !n.nameUnknown && n.living !== 'deceased')
+      : undefined;
     return (
       <Screen>
         <View style={styles.centre}>
@@ -71,7 +81,17 @@ export default function FamilyGuide() {
           <Heading>{t('guide.doneTitle')}</Heading>
           <Muted>{t('guide.doneBody', { count: people })}</Muted>
         </View>
-        <PrimaryButton label={t('guide.openTree')} onPress={openTree} />
+        {invite ? (
+          <View style={styles.actions}>
+            <PrimaryButton
+              label={t('firstSteps.inviteName', { name: firstName(invite.name) })}
+              onPress={() => router.replace({ pathname: '/share/[treeId]', params: { treeId, personId: invite.id } })}
+            />
+            <SecondaryButton label={t('guide.openTree')} onPress={openTree} />
+          </View>
+        ) : (
+          <PrimaryButton label={t('guide.openTree')} onPress={openTree} />
+        )}
       </Screen>
     );
   }

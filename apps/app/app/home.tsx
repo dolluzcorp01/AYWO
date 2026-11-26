@@ -38,6 +38,7 @@ import type { RequestItem } from '@/tree/useEdit';
 import { useTreeView } from '@/tree/useTreeView';
 import type { TreeNode } from '@/tree/useTreeView';
 import { FamilyGuideCard } from '@/tree/FamilyGuideCard';
+import { AfterFirstSteps, FirstSteps, useJustStarted } from '@/tree/FirstSteps';
 import { colors, fonts, minTapSize, radius, shadows } from '@/theme/tokens';
 
 function useCounts() {
@@ -91,19 +92,24 @@ export default function Home() {
           <IncomingSos />
           <View style={styles.columns}>
             <View style={styles.leftColumn}>
+              <FirstSteps tree={main} />
               <FamilyCard tree={main} />
-              <FamilyDates />
-              <LatestMemory />
-              <OnThisDayCard />
+              <AfterFirstSteps tree={main}>
+                <FamilyDates />
+                <LatestMemory />
+                <OnThisDayCard />
+              </AfterFirstSteps>
             </View>
             <View style={styles.rightColumn}>
               <SosEntry />
               <NeedsYou />
-              <InviteRow tree={main} />
-              <QuickActions />
-              <HomeOfferCards />
-              <OtherTrees trees={others} />
-              <TextButton label={t('home.anotherTree')} onPress={() => router.push('/start')} />
+              <AfterFirstSteps tree={main}>
+                <InviteRow tree={main} />
+                <QuickActions />
+                <HomeOfferCards />
+                <OtherTrees trees={others} />
+                <TextButton label={t('home.anotherTree')} onPress={() => router.push('/start')} />
+              </AfterFirstSteps>
             </View>
           </View>
         </ScrollView>
@@ -123,18 +129,21 @@ export default function Home() {
           <SosEntry />
         </Rise>
         <Rise delay={90} style={styles.part}>
+          <FirstSteps tree={main} />
           <FamilyCard tree={main} />
           <NeedsYou />
-          <FamilyDates />
         </Rise>
         <Rise delay={180} style={styles.part}>
-          <InviteRow tree={main} />
-          <QuickActions />
-          <HomeOfferCards />
-          <OnThisDayCard />
-          <LatestMemory />
-          <OtherTrees trees={others} />
-          <TextButton label={t('home.anotherTree')} onPress={() => router.push('/start')} />
+          <AfterFirstSteps tree={main}>
+            <FamilyDates />
+            <InviteRow tree={main} />
+            <QuickActions />
+            <HomeOfferCards />
+            <OnThisDayCard />
+            <LatestMemory />
+            <OtherTrees trees={others} />
+            <TextButton label={t('home.anotherTree')} onPress={() => router.push('/start')} />
+          </AfterFirstSteps>
         </Rise>
       </ScrollView>
       <TabBar active="home" treeId={main.id} />
@@ -272,6 +281,8 @@ function FamilyCard({ tree }: { tree: TreeRow }) {
   const viewerId = data?.viewer_person_id && data.nodes.some((n) => n.id === data.viewer_person_id) ? data.viewer_person_id : null;
   const generations = data ? generationCount(data.nodes, data.links) : null;
   const open = () => router.push({ pathname: '/tree/[id]', params: { id: tree.id } });
+  // The first-steps card already asks for the parents; two cards asking the same thing is one too many.
+  const justStarted = useJustStarted(tree);
   return (
     <>
     {/* The whole card opens the tree by touch or mouse. It is not marked as a button itself: it holds the
@@ -297,7 +308,7 @@ function FamilyCard({ tree }: { tree: TreeRow }) {
       </View>
     </Pressable>
     {/* Outside the card's own button, so each relative button opens its own form. */}
-    {data ? <FamilyGuideCard treeId={tree.id} tree={data} me={viewerId} full /> : null}
+    {data && !justStarted ? <FamilyGuideCard treeId={tree.id} tree={data} me={viewerId} full /> : null}
     </>
   );
 }
